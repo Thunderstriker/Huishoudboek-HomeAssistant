@@ -1,0 +1,2 @@
+details summary { cursor: pointer; font-weight: 600; }
+details[open] summary { margin-bottom: 16px; }

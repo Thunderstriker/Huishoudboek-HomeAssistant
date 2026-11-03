@@ -1,0 +1,101 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div class="monthly-charts">
+    <section class="card chart-card">
+        <h2>Waar gaat het geld naartoe?</h2>
+        @if (spending.Count == 0)
+        {
+            <p class="muted">Nog geen uitgaven in deze maand.</p>
+        }
+        <div class="spending-summary" hidden="@(spending.Count == 0)">
+            <div class="doughnut-wrap">
+                <canvas @ref="spendingCanvas" role="img" aria-label="Uitgavenverdeling per categorie; bedragen en percentages staan ernaast."></canvas>
+                <div class="doughnut-total" aria-hidden="true"><small>Uitgegeven</small><strong>@Money(total)</strong></div>
+            </div>
+            <ul class="spending-legend">
+                @for (var index = 0; index < spending.Count; index++)
+                {
+                    var item = spending[index];
+                    <li><i style="background:@Colors[index]" aria-hidden="true"></i><span>@item.Name</span><strong>@Money(item.Spent)<small>@((item.Spent / total).ToString("P0", CultureInfo.GetCultureInfo("nl-NL")))</small></strong></li>
+                }
+            </ul>
+        </div>
+        <p class="muted chart-note">Grootste categorieën; kleinere uitgaven samengevoegd. Budgetten staan in de tabel hieronder.</p>
+    </section>
+    <section class="card chart-card">
+        <h2>Werkelijk en verwacht</h2>
+        @if (!hasCashFlow)
+        {
+            <p class="muted">Nog geen bedragen om te tonen in deze maand.</p>
+        }
+        <div class="forecast-wrap" hidden="@(!hasCashFlow)">
+            <canvas @ref="forecastCanvas" role="img" aria-label="Werkelijke inkomsten, lasten en over vergeleken met de maandprognose. Exacte bedragen staan in de samenvattingen op deze pagina."></canvas>
+        </div>
+        <p class="muted chart-note">Prognose = schatting einde maand. Over = inkomsten min lasten en netto opzijgezet; geen rekeningsaldo.</p>
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public MonthlyReport Report { get; set; } = null!;
+
+    private static readonly string[] Colors = ["#087f75", "#526dc1", "#be6432", "#8556a3", "#b18a28", "#8393a5"];
+    private List<CategoryResult> spending = [];
+    private decimal total;
+    private bool hasCashFlow;
+    private ElementReference spendingCanvas;
+    private ElementReference forecastCanvas;
+    private IJSObjectReference? module;
+    private IJSObjectReference? charts;
+    private readonly SemaphoreSlim chartLock = new(1, 1);
+    private bool disposed;
+
+    protected override void OnParametersSet()
+    {
+        var categories = Report.Categories.Where(c => c.Spent > 0).OrderByDescending(c => c.Spent).ToList();
+        spending = categories.Take(5).ToList();
+        if (categories.Count > 5)
+            spending.Add(new(Guid.Empty, "Overige categorieën", 0, categories.Skip(5).Sum(c => c.Spent)));
+        total = categories.Sum(c => c.Spent);
+        hasCashFlow = Report.Income != 0 || Report.Outflow != 0 || Report.Available != 0 ||
+            Report.Forecast.Income != 0 || Report.Forecast.Outflow != 0 || Report.Forecast.Available != 0;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await chartLock.WaitAsync();
+        try
+        {
+            if (disposed) return;
+            module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Huishoudboek.Web/financial-charts.js");
+            if (disposed) return;
+            charts ??= await module.InvokeAsync<IJSObjectReference>("create", spendingCanvas, forecastCanvas);
+            if (disposed) return;
+            await charts.InvokeVoidAsync("update", new {
+                labels = spending.Select(c => c.Name),
+                spending = spending.Select(c => c.Spent),
+                colors = Colors,
+                actual = new[] { Report.Income, Report.Outflow, Report.Available },
+                forecast = new[] { Report.Forecast.Income, Report.Forecast.Outflow, Report.Forecast.Available }
+            });
+        }
+        finally { chartLock.Release(); }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        disposed = true;
+        await chartLock.WaitAsync();
+        try
+        {
+            if (charts != null)
+            {
+                await charts.InvokeVoidAsync("destroy");
+                await charts.DisposeAsync();
+            }
+            if (module != null) await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException) { }
+        finally { chartLock.Release(); }
+    }
+}

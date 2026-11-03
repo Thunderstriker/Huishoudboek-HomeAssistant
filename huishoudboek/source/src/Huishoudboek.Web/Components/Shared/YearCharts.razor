@@ -1,0 +1,94 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div class="year-charts">
+    <section class="card trend-card">
+        <div class="chart-heading"><div><h2>Inkomsten en uitgaven</h2><p class="muted">Hoe ontwikkelen uw maandlasten zich?</p></div><div class="chart-stat"><small>Gemiddelde lasten / maand</small><strong>@Money(Months.Count > 0 ? Months.Average(m => m.Outflow) : 0)</strong></div></div>
+        @if (!hasActivity) { <p class="muted">Nog geen boekingen in dit jaar.</p> }
+        <div class="trend-canvas" hidden="@(!hasActivity)"><canvas @ref="trendCanvas" role="img" aria-label="Inkomsten als lijn en maandlasten als balken. Exacte bedragen staan in de maandtabel hieronder."></canvas></div>
+        <p class="muted chart-note">Alleen werkelijke boekingen; de huidige maand is nog onvolledig en telt mee in het gemiddelde.</p>
+    </section>
+    <section class="card category-card">
+        <h2>Verdeling van uw uitgaven</h2>
+        @if (total == 0) { <p class="muted">Nog geen uitgaven in dit jaar.</p> }
+        <div hidden="@(total == 0)">
+            <div class="doughnut-wrap"><canvas @ref="spendingCanvas" role="img" aria-label="Verdeling van jaaruitgaven; categorieën, bedragen en percentages staan hieronder."></canvas><div class="doughnut-total" aria-hidden="true"><small>Totaal uitgegeven</small><strong>@Money(total)</strong></div></div>
+            <ul class="spending-legend">
+                @for (var index = 0; index < spending.Count; index++)
+                {
+                    var item = spending[index];
+                    <li><i style="background:@Colors[index]" aria-hidden="true"></i><span>@item.Name</span><strong>@Money(item.Spent)<small>@((item.Spent / total).ToString("P0", CultureInfo.GetCultureInfo("nl-NL")))</small></strong></li>
+                }
+            </ul>
+        </div>
+    </section>
+    <section class="card savings-card">
+        <div class="chart-heading"><div><h2>Uw spaarritme</h2><p class="muted">Netto bijdragen aan sparen en beleggen</p></div><div class="chart-stat"><small>Opzijgezet dit jaar</small><strong>@Money(Months.Sum(m => m.Savings))</strong></div></div>
+        @if (!Months.Any(m => m.Savings != 0)) { <p class="muted">Nog geen spaar- of beleggingsbijdragen in dit jaar.</p> }
+        <div class="savings-canvas" hidden="@(!Months.Any(m => m.Savings != 0))"><canvas @ref="savingsCanvas" role="img" aria-label="Netto opzijgezet per maand en opgeteld sinds januari. Dit is geen spaarrekeningsaldo. Exacte maandbedragen staan in de tabel hieronder."></canvas></div>
+        <p class="muted chart-note">Lijn = bijdragen opgeteld sinds januari, geen rekeningsaldo of rendement. Negatieve bijdragen zijn netto-opnamen.</p>
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<AnnualMonth> Months { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<CategoryResult> Categories { get; set; } = [];
+
+    private static readonly string[] Colors = ["#087f75", "#526dc1", "#be6432", "#8556a3", "#b18a28", "#8393a5"];
+    private List<CategoryResult> spending = [];
+    private decimal total;
+    private bool hasActivity;
+    private ElementReference trendCanvas, spendingCanvas, savingsCanvas;
+    private IJSObjectReference? module, charts;
+    private readonly SemaphoreSlim chartLock = new(1, 1);
+    private bool disposed;
+
+    protected override void OnParametersSet()
+    {
+        var categories = Categories.Where(c => c.Spent > 0).OrderByDescending(c => c.Spent).ToList();
+        spending = categories.Take(5).ToList();
+        if (categories.Count > 5)
+            spending.Add(new(Guid.Empty, "Overige categorieën", 0, categories.Skip(5).Sum(c => c.Spent)));
+        total = categories.Sum(c => c.Spent);
+        hasActivity = Months.Any(m => m.Income != 0 || m.Outflow != 0);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await chartLock.WaitAsync();
+        try
+        {
+            if (disposed) return;
+            module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Huishoudboek.Web/financial-charts.js");
+            if (disposed) return;
+            charts ??= await module.InvokeAsync<IJSObjectReference>("createYear", trendCanvas, spendingCanvas, savingsCanvas);
+            if (disposed) return;
+            decimal cumulative = 0;
+            await charts.InvokeVoidAsync("update", new {
+                months = Months.Select(m => CultureInfo.GetCultureInfo("nl-NL").DateTimeFormat.GetAbbreviatedMonthName(m.Month)),
+                income = Months.Select(m => m.Income), outflow = Months.Select(m => m.Outflow),
+                savings = Months.Select(m => m.Savings),
+                cumulativeSavings = Months.Select(m => cumulative += m.Savings).ToArray(),
+                categories = spending.Select(c => c.Name), spending = spending.Select(c => c.Spent), colors = Colors
+            });
+        }
+        finally { chartLock.Release(); }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        disposed = true;
+        await chartLock.WaitAsync();
+        try
+        {
+            if (charts != null)
+            {
+                await charts.InvokeVoidAsync("destroy");
+                await charts.DisposeAsync();
+            }
+            if (module != null) await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException) { }
+        finally { chartLock.Release(); }
+    }
+}

@@ -9,11 +9,11 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
 ## Functies
 
 - **Maandoverzicht:** inkomsten, lasten, netto opzijgezet en het bedrag dat overblijft,
-  met uitgaven per categorie, budgetmarkeringen en zichtbare overschrijdingen.
+  met een compacte doughnutgrafiek per categorie en een budgettabel met overschrijdingen.
 - **Maandprognose:** vergelijk werkelijke inkomsten, lasten en het resterende bedrag
   met de schatting voor het einde van de maand.
-- **Jaaroverzicht:** vergelijk inkomsten, lasten, sparen en het resterende bedrag per
-  maand, plus jaaruitgaven per categorie tegenover het volledige jaarbudget.
+- **Jaaroverzicht:** inkomsten tegenover maandlasten, een uitgavendoughnut en de
+  ontwikkeling van netto spaarbijdragen. Exacte bedragen en jaarbudgetten zijn uitklapbaar.
 - **Transacties en budgetten:** categorieën, categorisatieregels, maandafwijkingen,
   vaste posten en filters per eigenaar.
 - **Rekeningen en vermogen:** betaal- en spaarrekeningen, beleggen, eigenaren en hypotheek.
@@ -23,8 +23,11 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   met een lege administratie.
 
 De grafieken behouden tabellen of samenvattingen met exacte bedragen.
-Negatieve spaarbijdragen en tekorten staan onder de nullijn. Op kleine schermen
-kunt u de bedragengrafieken horizontaal verschuiven.
+De grafieken gebruiken Chart.js (MIT-licentie), lokaal meegeleverd zonder CDN.
+De doughnut toont de vijf grootste categorieën en groepeert de rest.
+Negatieve spaarbijdragen en tekorten staan in bedragengrafieken onder de nullijn.
+De grafieken passen zich aan de schermbreedte aan zonder horizontaal scrollen.
+De spaarlijn toont bijdragen opgeteld sinds januari, geen saldo of beleggingsrendement.
 
 ## Installeren
 

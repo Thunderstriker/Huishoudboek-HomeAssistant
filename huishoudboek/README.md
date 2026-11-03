@@ -6,12 +6,15 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
 
 ## Inzicht in Uw Financiën
 
-- **Maandoverzicht:** uitgaven per categorie met budgetmarkeringen, percentages
-  en overschrijdingen, plus werkelijke bedragen tegenover de maandprognose.
-- **Jaaroverzicht:** maandelijkse inkomsten, lasten, netto opzijgezet en het bedrag
-  dat overblijft, plus categorie-uitgaven tegenover het volledige jaarbudget.
+- **Maandoverzicht:** compacte doughnutgrafiek met de grootste uitgavencategorieën
+  en percentages, plus werkelijke bedragen tegenover de maandprognose.
+  Budgetten en overschrijdingen staan in de bijbehorende tabel.
+- **Jaaroverzicht:** een inkomsten-en-lastentrend, een uitgavendoughnut en een
+  spaarritmegrafiek met maandbijdragen en het totaal sinds januari, geen rekeningsaldo.
+  Tabellen met exacte bedragen en jaarbudgetten zijn uitklapbaar.
 - Negatieve bedragen staan onder de nullijn; exacte bedragen blijven beschikbaar
-  in tabellen of samenvattingen. Grafieken zijn op kleine schermen horizontaal verschuifbaar.
+  in tabellen of samenvattingen. De grafieken passen zich aan de schermbreedte aan.
+  Chart.js is lokaal meegeleverd onder de MIT-licentie.
 - Excel/CSV-import met automatische Argenta-herkenning, categorisatieregels,
   CSV-export en volledige databaseback-ups met herstel.
 

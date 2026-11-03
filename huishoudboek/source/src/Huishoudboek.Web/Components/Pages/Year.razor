@@ -13,24 +13,17 @@
     <div class="card"><div class="metric-label">Opzijgezet</div><div class="metric-value">@Money(overview.Savings)</div></div>
     <div class="card"><div class="metric-label">Over</div><div class="metric-value">@Money(overview.Available)</div></div>
 </div>
-<section class="card"><h2>Werkelijke bedragen per maand</h2>
-<CashFlowChart Labels="actualMonths.Select(m => MonthName(m.Month)).ToList()"
-    Series='@(new CashFlowChart.SeriesData[] {
-        new("Inkomsten", "series-income", actualMonths.Select(m => m.Income).ToList()),
-        new("Lasten", "series-outflow", actualMonths.Select(m => m.Outflow).ToList()),
-        new("Opzijgezet", "series-savings", actualMonths.Select(m => m.Savings).ToList()),
-        new("Over", "series-available", actualMonths.Select(m => m.Available).ToList()) })'
-    Description="Inkomsten, lasten, netto opzijgezet en over per maand. Negatieve bedragen staan onder de nullijn; exacte waarden staan in de tabel hieronder." />
-<p class="muted">Alleen boekingen t/m vandaag; de huidige maand is nog onvolledig. Toekomstige maanden zijn niet getekend. Negatief opzijgezet = netto opgenomen uit sparen of beleggen. Over = inkomsten min lasten en opzijgezet; geen rekeningsaldo.</p>
+<YearCharts Months="actualMonths" Categories="overview.Categories" />
+<p class="muted">Alleen boekingen t/m vandaag. Toekomstige maanden zijn niet getekend. Over = inkomsten min lasten en opzijgezet; geen rekeningsaldo.</p>
+<details class="card"><summary>Maandbedragen bekijken</summary>
 <div class="table-scroll"><table><thead><tr><th>Maand</th><th class="money">Inkomsten</th><th class="money">Lasten</th><th class="money">Opzijgezet</th><th class="money">Over</th></tr></thead><tbody>
     @foreach (var row in overview.Months) { <tr><td>@MonthName(row.Month)</td><td class="money">@Money(row.Income)</td><td class="money">@Money(row.Outflow)</td><td class="money">@Money(row.Savings)</td><td class="money">@Money(row.Available)</td></tr> }
-</tbody></table></div></section>
-<section class="card"><h2>Jaaruitgaven per categorie</h2>
-<CategorySpendingChart Categories="overview.Categories" />
-<p class="muted">Budgetmarkeringen tonen het volledige jaarbudget (12 maanden), niet het budget tot vandaag. Budgetten zijn huishoudbudgetten, ook met eigenaarfilter.</p>
+</tbody></table></div></details>
+<details class="card"><summary>Categorieën en jaarbudgetten bekijken</summary>
+<p class="muted">Jaarbudgetten beslaan 12 maanden, niet alleen de periode tot vandaag. Budgetten zijn huishoudbudgetten, ook met eigenaarfilter. Budget 0 = geen limiet.</p>
 <div class="table-scroll"><table><thead><tr><th>Categorie</th><th class="money">Jaarbudget (12 maanden)</th><th class="money">Werkelijk uitgegeven</th></tr></thead><tbody>
     @foreach (var row in overview.Categories) { <tr><td>@row.Name</td><td class="money">@Money(row.Budget)</td><td class="money">@Money(row.Spent)</td></tr> }
-</tbody></table></div></section>
+</tbody></table></div></details>
 @code {
     private static string MonthName(int month) => CultureInfo.GetCultureInfo("nl-NL").DateTimeFormat.GetAbbreviatedMonthName(month);
 }

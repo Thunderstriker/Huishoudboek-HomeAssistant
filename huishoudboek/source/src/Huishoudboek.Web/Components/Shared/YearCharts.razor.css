@@ -1,0 +1,33 @@
+.year-charts { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(290px, 1fr); gap: 16px; }
+.year-charts .card { min-width: 0; margin-bottom: 0; }
+.trend-card { grid-column: 1; }
+.category-card { grid-column: 2; grid-row: 1 / 3; }
+.savings-card { grid-column: 1; }
+.chart-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 16px; }
+.chart-heading h2 { margin-bottom: 4px; }
+.chart-heading p { margin: 0; }
+.chart-stat { text-align: right; }
+.chart-stat small { display: block; }
+.chart-stat strong { display: block; font-size: 20px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.trend-canvas { position: relative; height: 230px; }
+.savings-canvas { position: relative; height: 180px; }
+.doughnut-wrap { position: relative; width: 200px; height: 200px; margin: 20px auto; }
+.doughnut-total { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; }
+.doughnut-total strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+.spending-legend { list-style: none; padding: 0; margin: 20px 0 0; }
+.spending-legend li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: baseline; gap: 10px; padding: 12px 0; border-top: 1px solid #edf2f7; }
+.spending-legend i { width: 10px; height: 10px; border-radius: 2px; }
+.spending-legend span { overflow-wrap: anywhere; }
+.spending-legend strong { text-align: right; white-space: nowrap; font-size: 13px; font-variant-numeric: tabular-nums; }
+.spending-legend small { display: block; font-weight: normal; }
+.chart-note { margin: 12px 0 0; }
+[hidden] { display: none; }
+@media (max-width: 1050px) {
+    .year-charts { grid-template-columns: 1fr; }
+    .trend-card, .category-card, .savings-card { grid-column: 1; grid-row: auto; }
+    .category-card { order: 3; }
+}
+@media (max-width: 600px) {
+    .chart-heading { flex-direction: column; gap: 8px; }
+    .chart-stat { text-align: left; }
+}

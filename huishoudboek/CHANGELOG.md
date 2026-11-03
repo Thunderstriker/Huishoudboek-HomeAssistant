@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.4
+
+- Maandoverzicht opnieuw ingericht met een compacte uitgavendoughnut en een
+  vergelijking van werkelijke bedragen met de maandprognose.
+- Jaaroverzicht vernieuwd met een inkomsten-en-lastentrend, een uitgavendoughnut
+  en netto spaarbijdragen per maand en opgeteld sinds januari.
+- Grootste vijf uitgavencategorieën zichtbaar; kleinere categorieën samengevoegd.
+- Jaartabellen met exacte bedragen en budgetten uitklapbaar gemaakt.
+- Chart.js 4.5.1 lokaal meegeleverd onder de MIT-licentie, zonder CDN-afhankelijkheid.
+- Responsieve grafieken zonder horizontaal scrollen, met afhandeling van lege
+  gegevens en veilige opruiming bij navigatie en filterwijzigingen.
+
 ## 0.1.3
 
 - Maandoverzicht uitgebreid met uitgavengrafieken per categorie, budgetmarkeringen
