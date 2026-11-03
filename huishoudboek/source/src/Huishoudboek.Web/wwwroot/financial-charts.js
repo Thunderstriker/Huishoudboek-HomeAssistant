@@ -2,6 +2,7 @@ import "./chart.umd.min.js";
 
 const money = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" });
 
+// Blazor wraps these return values when C# requests IJSObjectReference; return plain objects.
 export function create(spendingCanvas, forecastCanvas) {
     const spendingChart = new Chart(spendingCanvas, {
         type: "doughnut",
@@ -49,7 +50,7 @@ export function create(spendingCanvas, forecastCanvas) {
             }
         }
     });
-    return DotNet.createJSObjectReference({
+    return {
         update(data) {
             spendingChart.data.labels = data.labels;
             spendingChart.data.datasets[0].data = data.spending;
@@ -63,7 +64,7 @@ export function create(spendingCanvas, forecastCanvas) {
             spendingChart.destroy();
             forecastChart.destroy();
         }
-    });
+    };
 }
 
 export function createYear(trendCanvas, spendingCanvas, savingsCanvas) {
@@ -112,7 +113,7 @@ export function createYear(trendCanvas, spendingCanvas, savingsCanvas) {
         ] },
         options
     });
-    return DotNet.createJSObjectReference({
+    return {
         update(data) {
             trend.data.labels = savings.data.labels = data.months;
             trend.data.datasets[0].data = data.income;
@@ -131,5 +132,5 @@ export function createYear(trendCanvas, spendingCanvas, savingsCanvas) {
             spending.destroy();
             savings.destroy();
         }
-    });
+    };
 }

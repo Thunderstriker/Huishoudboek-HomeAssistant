@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5
+
+- Blazor-JavaScript-koppeling voor maand- en jaargrafieken hersteld: geen dubbele
+  objectreferenties meer, zodat grafiekupdates de verbinding niet verbreken.
+- Productiepublicatie gecontroleerd met gesimuleerde Home Assistant-ingress,
+  inclusief laden van scripts, navigatie en wijzigen van het jaarfilter.
+
 ## 0.1.4
 
 - Maandoverzicht opnieuw ingericht met een compacte uitgavendoughnut en een
