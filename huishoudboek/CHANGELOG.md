@@ -4,6 +4,11 @@
 
 - Add-on niet meer als experimenteel gemarkeerd, zodat installatie geen
   Advanced Mode meer vereist.
+- `arch` uitgebreid naar aarch64, amd64, armhf, armv7 en i386.
+  Let op: Microsoft publiceert geen .NET 10 SDK/ASP.NET-images voor
+  armhf/armv7 (32-bit ARM) of i386, dus de build zal op die
+  architecturen mislukken totdat een alternatieve .NET-runtime of
+  build-aanpak beschikbaar is.
 
 ## 0.1.0
 
