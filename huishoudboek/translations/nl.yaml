@@ -1,0 +1,4 @@
+configuration:
+  time_zone:
+    name: Tijdzone
+    description: "Bepaalt de datum voor werkelijke saldi en prognoses, bijvoorbeeld Europe/Amsterdam of Europe/Brussels."

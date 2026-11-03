@@ -1,0 +1,44 @@
+@inject WebState State
+<Modal Title="@Draft.Title" Cancel="Cancel">
+    <p class="muted">@Draft.Note</p>
+    @if (Draft.Error.Length > 0) { <p class="notice error" role="alert">@Draft.Error</p> }
+    <form @onsubmit="Save" @onsubmit:preventDefault>
+        <fieldset class="page-fieldset" disabled="@State.Busy">
+            <div class="fields">
+                @foreach (var field in Draft.Fields)
+                {
+                    @if (field.Type == "owners")
+                    {
+                        <div class="field-note"><strong>@field.Label</strong><div class="owner-choices">
+                            @foreach (var option in field.Options)
+                            { var id = Guid.Parse(option.Value); <label class="check"><input type="checkbox" checked="@field.OwnerIds.Contains(id)" @onchange="e => ToggleOwner(field, id, e)" />@option.Label</label> }
+                        </div></div>
+                    }
+                    else if (field.Type == "checkbox")
+                    { <label class="check"><input id="@field.Key" type="checkbox" checked="@bool.Parse(field.Value)" @onchange="e => field.Value = ((bool)e.Value!).ToString()" />@field.Label</label> }
+                    else
+                    {
+                        <label>@field.Label
+                            @if (field.Type == "select")
+                            { <select id="@field.Key" @bind="field.Value">@foreach (var option in field.Options) { <option value="@option.Value">@option.Label</option> }</select> }
+                            else
+                            { <input id="@field.Key" type="@(field.Type == "money" ? "text" : field.Type)" inputmode="@(field.Type == "money" ? "decimal" : null)" value="@field.Value" @onchange="e => field.Value = e.Value?.ToString() ?? string.Empty" required="@field.Required" maxlength="2000" /> }
+                        </label>
+                    }
+                }
+            </div>
+            <div class="actions"><button type="button" @onclick="Cancel">Annuleren</button><button type="submit" class="primary">Opslaan</button></div>
+        </fieldset>
+    </form>
+</Modal>
+@code {
+    [Parameter, EditorRequired] public EditorDraft Draft { get; set; } = null!;
+    [Parameter] public EventCallback Closed { get; set; }
+    private Task Cancel() => State.Busy ? Task.CompletedTask : Closed.InvokeAsync();
+    private static void ToggleOwner(EditorField field, Guid id, ChangeEventArgs args) { if ((bool)args.Value!) field.OwnerIds.Add(id); else field.OwnerIds.Remove(id); }
+    private async Task Save()
+    {
+        if (await State.RunAsync(() => State.SaveAsync(Draft.Apply, Draft.Revision), "Wijzigingen opgeslagen.")) await Closed.InvokeAsync();
+        else Draft.Error = State.Message;
+    }
+}

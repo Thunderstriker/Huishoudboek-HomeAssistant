@@ -1,0 +1,14 @@
+@page "/vaste-posten"
+@attribute [Authorize]
+@inherits EditPageBase
+<PageTitle>Vaste posten · Huishoudboek</PageTitle>
+<h1>Vaste inkomsten &amp; lasten</h1>
+<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Recurring(State)">+ Vaste post</button></div>
+<p class="muted">Plan salaris, hypotheek, verzekeringen en abonnementen. Positief = inkomen, negatief = maandlast. Planningen veranderen uw werkelijke saldo niet.</p>
+<section class="card"><div class="table-scroll"><table><thead><tr><th>Naam</th><th>Rekening</th><th class="money">Bedrag</th><th>Dag</th><th>Categorie</th><th>Periode</th><th>Herkenningstekst</th><th></th></tr></thead><tbody>
+@foreach (var r in State.Data.RecurringPayments)
+{ <tr><td>@r.Name @if (r.IsMortgage) { <span class="badge">Hypotheek</span> }</td><td>@State.AccountName(r.AccountId)</td><td class="money">@Money(r.Amount)</td><td>@r.DayOfMonth</td><td>@State.CategoryName(r.CategoryId)</td><td>@r.StartDate.ToString("dd-MM-yyyy") – @(r.EndDate?.ToString("dd-MM-yyyy") ?? "doorlopend")</td><td>@r.MatchText</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Recurring(State, r)">Bewerken</button><button @onclick="() => AskDelete(r)">Verwijderen</button></div></td></tr> }
+</tbody></table></div></section>
+<p class="muted">Koppel de echte betaling via Transacties → Bewerken. Vervallen, niet-gekoppelde posten blijven in de huidige maandprognose en krijgen een waarschuwing. Extra aflossingen mogen ongekoppeld blijven.</p>
+<EditDialogs Page="this" />
+@code { private void AskDelete(RecurringPayment item) => Ask("Vaste post verwijderen", "Werkelijke transacties blijven bestaan; hun koppeling aan deze vaste post wordt verwijderd.", d => HouseholdEdits.DeleteRecurring(d, item.Id), "Verwijderen"); }

@@ -1,0 +1,19 @@
+@inject IJSRuntime JS
+@implements IDisposable
+<dialog @ref="element" class="modal" aria-labelledby="dialog-title">
+    <h2 id="dialog-title">@Title</h2>
+    @ChildContent
+</dialog>
+@code {
+    [Parameter] public string Title { get; set; } = "Bevestigen";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback Cancel { get; set; }
+    private ElementReference element;
+    private DotNetObjectReference<Modal>? reference;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) { reference = DotNetObjectReference.Create(this); await JS.InvokeVoidAsync("huishoudboek.openDialog", element, reference); }
+    }
+    [JSInvokable] public Task CancelDialog() => Cancel.InvokeAsync();
+    public void Dispose() => reference?.Dispose();
+}

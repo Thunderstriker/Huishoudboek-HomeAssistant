@@ -1,0 +1,11 @@
+<div class="pager">
+    <button type="button" disabled="@(Page <= 0)" @onclick="() => PageChanged.InvokeAsync(Page - 1)">Vorige</button>
+    <span>@Count regels · pagina @(Page + 1) van @Math.Max(1, (Count + Size - 1) / Size)</span>
+    <button type="button" disabled="@((Page + 1) * Size >= Count)" @onclick="() => PageChanged.InvokeAsync(Page + 1)">Volgende</button>
+</div>
+@code {
+    [Parameter] public int Page { get; set; }
+    [Parameter] public int Count { get; set; }
+    [Parameter] public int Size { get; set; } = 100;
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+}

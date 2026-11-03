@@ -1,0 +1,11 @@
+@if (Page.Draft is { } draft) { <Editor @key="draft" Draft="draft" Closed="CloseDraft" /> }
+@if (Page.Confirmation is { } operation)
+{
+    <Confirm Title="@operation.Title" Text="@operation.Text" ActionLabel="@operation.Label" Accept="ConfirmAsync" Cancel="CloseConfirmation" />
+}
+@code {
+    [Parameter, EditorRequired] public EditPageBase Page { get; set; } = null!;
+    private void CloseDraft() { Page.CloseDraft(); }
+    private void CloseConfirmation() { Page.CloseConfirmation(); }
+    private async Task ConfirmAsync() { await Page.ConfirmAsync(); }
+}

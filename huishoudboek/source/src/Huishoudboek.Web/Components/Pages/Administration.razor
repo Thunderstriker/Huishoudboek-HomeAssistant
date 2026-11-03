@@ -1,0 +1,47 @@
+@page "/beheer"
+@attribute [Authorize]
+@inherits EditPageBase
+@inject IWebAdministration Backend
+@inject WebHostSettings HostSettings
+<PageTitle>Beheer &amp; import · Huishoudboek</PageTitle>
+<h1>Beheer &amp; import</h1>
+<section class="card"><h2>Uw administratie</h2><div class="actions">
+    <a class="button primary" href="importeren">Excel / CSV importeren</a><a class="button" href="website/export" data-enhance-nav="false">Alle transacties naar CSV</a><a class="button" href="website/backup" data-enhance-nav="false">Back-up maken</a>
+</div><p class="muted">Een databaseback-up bevat alle financiële gegevens. CSV bevat alle transacties ongeacht filters en is geen volledige herstelkopie. Mogelijke spreadsheetformules worden geneutraliseerd. Database en back-ups zijn niet versleuteld; bewaar downloads veilig. De website kan geen Windows-map op de server openen.</p>
+<details id="database" open="@(HostSettings.HomeAssistant && State.Data.Accounts.Count == 0)"><summary>Bestaande database importeren / back-up herstellen</summary>
+<p>Importeer uw bestaande Huishoudboek-database of databaseback-up (.db). Transacties, eigen omschrijvingen, rekeningen, eigenaren, budgetten, regels, vaste posten, waarderingen, hypotheek en importgeschiedenis blijven behouden. Uw bronbestand wordt niet gewijzigd.</p>
+@if (HostSettings.HomeAssistant) { <p>Na import draait de administratie volledig in de permanente Home Assistant-opslag. Een Windows-computer met de financiële app of een gedeelde netwerkmap is niet nodig.</p> }
+<p class="notice warning">Gebruik bij voorkeur een back-up uit de app. Sluit anders de Windows-app én financiële service voordat u de database kopieert: een kopie van alleen een actieve .db kan recente wijzigingen missen. Import vervangt de hele administratie voor ALLE gebruikers. Eerst worden bestandsformaat, ondersteunde versie, SQLite-integriteit en financiële verwijzingen gecontroleerd; daarna wordt een veiligheidskopie van de huidige administratie gemaakt. Het bestand wordt pas na expliciete bevestiging geüpload. Maximaal 64 MB.</p>
+<label>Huishoudboek-database of back-up (.db)<InputFile id="restoreFile" OnChange="SelectBackup" accept=".db" /></label><button disabled="@(restoreFile == null)" @onclick="() => restoreConfirm = true">Bestaande database importeren…</button></details></section>
+<section class="card"><h2>Importgeschiedenis</h2><div class="table-scroll"><table><thead><tr><th>Datum</th><th>Bestand</th><th>Rekening</th><th>Regels</th><th>Status</th><th></th></tr></thead><tbody>
+@foreach (var b in State.Data.ImportBatches.OrderByDescending(b => b.ImportedAt))
+{ <tr><td>@b.ImportedAt.ToString("dd-MM-yyyy HH:mm")</td><td>@b.FileName</td><td>@State.AccountName(b.AccountId)</td><td>@b.RowCount</td><td>@(b.Undone ? "Teruggedraaid" : "Verwerkt")</td><td>@if (!b.Undone) { <button @onclick="() => Undo(b)">Volledige import terugdraaien</button> }</td></tr> }
+</tbody></table></div></section>
+<section class="card"><h2>Automatische categorisatie</h2><div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Rule(State)">+ Regel</button><button @onclick="ApplyRules">Toepassen op bestaande transacties</button></div>
+<p class="muted">Regels worden uitgevoerd in toevoegvolgorde; de eerste passende regel wint. Bestaande categorieën blijven behouden. Transfers vallen buiten tekstregels. Herkenning kan ook vaste posten koppelen.</p>
+<div class="table-scroll"><table><thead><tr><th>Volgorde</th><th>Omschrijving bevat</th><th>Categorie</th><th></th></tr></thead><tbody>
+@foreach (var r in State.Data.Rules)
+{ <tr><td>@(State.Data.Rules.IndexOf(r) + 1)</td><td>@r.Contains</td><td>@State.CategoryName(r.CategoryId)</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Rule(State, r)">Bewerken</button><button @onclick="() => DeleteRule(r)">Verwijderen</button></div></td></tr> }
+</tbody></table></div></section>
+<EditDialogs Page="this" />
+@if (restoreConfirm)
+{ <Confirm Title="Bestaande database importeren" Text="Deze database vervangt de hele gedeelde administratie. Het bronbestand blijft ongewijzigd. De huidige gegevens worden eerst als veiligheidskopie bewaard. Niet opgeslagen wijzigingen en importvoorbeelden worden ongeldig. Doorgaan?" ActionLabel="Database importeren" Cancel="() => restoreConfirm = false" Accept="Restore" /> }
+@code {
+    private IBrowserFile? restoreFile; private string restoreRevision = ""; private bool restoreConfirm;
+    private void SelectBackup(InputFileChangeEventArgs args) { restoreFile = args.File; restoreRevision = State.Revision; }
+    private void Undo(ImportBatch batch) => Ask("Import terugdraaien", "Deze volledige import terugdraaien? Ook achteraf bewerkte transacties uit deze import worden verwijderd. Andere transacties en instellingen blijven bestaan.", d => HouseholdEdits.UndoImport(d, batch.Id), "Import terugdraaien");
+    private void DeleteRule(CategorizationRule rule) => Ask("Categorisatieregel verwijderen", "Deze regel verwijderen? Bestaande categorie-toewijzingen blijven behouden.", d => d.Rules.RemoveAll(r => r.Id == rule.Id), "Regel verwijderen");
+    private void ApplyRules() => Ask("Regels toepassen", "Regels toepassen op alle bestaande ongecategoriseerde, niet-interne betalingen? Bestaande categorieën blijven behouden; herkende vaste posten kunnen worden gekoppeld.", HouseholdEdits.ApplyRules, "Regels toepassen");
+    private async Task Restore()
+    {
+        if (restoreFile == null) return;
+        if (await State.RunAsync(async () =>
+        {
+            if (restoreFile.Size > 64L * 1024 * 1024) throw new InvalidDataException("De back-up is groter dan 64 MB.");
+            await using var stream = restoreFile.OpenReadStream(64L * 1024 * 1024);
+            await Backend.RestoreAsync(stream, restoreRevision, CancellationToken.None);
+            State.OwnerId = null; State.ReviewBatchId = null; await State.LoadAsync();
+        }, "Database geïmporteerd. De vorige administratie is als veiligheidskopie bewaard. Uw bronbestand is niet gewijzigd."))
+        { restoreConfirm = false; restoreFile = null; }
+    }
+}

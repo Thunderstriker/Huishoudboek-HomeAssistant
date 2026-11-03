@@ -1,0 +1,285 @@
+using System.Globalization;
+using System.Reflection;
+using System.Text.Json;
+using Huishoudboek.Core;
+using Microsoft.Data.Sqlite;
+
+namespace Huishoudboek.Infrastructure;
+
+/// <summary>
+/// A versioned, single-writer aggregate store. Each entity has its own typed SQLite table.
+/// Money is stored as invariant decimal TEXT, never floating point. A save is one atomic
+/// transaction. The desktop holds a per-database process mutex for its lifetime.
+/// </summary>
+public sealed class SqliteHouseholdStore : IAdministrationStore
+{
+    private const int SchemaVersion = 3;
+    private readonly string _path;
+    public string DatabasePath => _path;
+
+    public SqliteHouseholdStore(string path, bool allowCreate = true, bool allowUpgrade = true)
+    {
+        _path = Path.GetFullPath(path);
+        if (!allowCreate && !File.Exists(_path))
+            throw new InvalidDataException("De ingestelde database bestaat niet. Initialiseer de administratie eerst expliciet.");
+        if (!allowCreate)
+        {
+            // Validate an adopted database without changing journal settings or touching an unsupported schema.
+            using var existing = Open(_path, true);
+            CheckDatabase(existing, allowPrevious: allowUpgrade);
+            ReadData(existing, Version(existing));
+        }
+        Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
+        using var connection = Open(_path);
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
+        if (Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture) == 0)
+        {
+            if (!allowCreate) throw new InvalidDataException("De ingestelde database is leeg; automatisch initialiseren is uitgeschakeld.");
+            using var transaction = connection.BeginTransaction();
+            Execute(connection, transaction, "CREATE TABLE app_metadata (id INTEGER PRIMARY KEY CHECK(id=1), application TEXT NOT NULL, mortgage TEXT NULL)");
+            Execute(connection, transaction, "INSERT INTO app_metadata(id,application) VALUES(1,'Huishoudboek')");
+            foreach (var type in EntityTypes) CreateTable(connection, transaction, type);
+            Execute(connection, transaction, "CREATE INDEX ix_transactions_date_account ON [Transaction] ([Date], [AccountId])");
+            Execute(connection, transaction, $"PRAGMA user_version={SchemaVersion}");
+            transaction.Commit();
+            Save(HouseholdData.CreateEmpty());
+        }
+        else
+        {
+            CheckDatabase(connection, allowPrevious: allowUpgrade);
+            if (Version(connection) < SchemaVersion) UpgradePreviousVersion(connection);
+        }
+    }
+
+    private static readonly Type[] EntityTypes = [typeof(Owner), typeof(Account), typeof(Category),
+        typeof(BudgetOverride), typeof(Transaction), typeof(RecurringPayment), typeof(CategorizationRule),
+        typeof(InvestmentValuation), typeof(ImportBatch), typeof(ImportProfile)];
+
+    private static SqliteConnection Open(string path, bool readOnly = false)
+    {
+        var connection = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = path,
+            Mode = readOnly ? SqliteOpenMode.ReadOnly : SqliteOpenMode.ReadWriteCreate,
+            Pooling = false,
+            DefaultTimeout = 10
+        }.ToString());
+        connection.Open();
+        if (!readOnly)
+        {
+            using var pragma = connection.CreateCommand();
+            pragma.CommandText = "PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;";
+            pragma.ExecuteNonQuery();
+        }
+        return connection;
+    }
+
+    private static void Execute(SqliteConnection c, SqliteTransaction tx, string sql)
+    {
+        using var command = c.CreateCommand();
+        command.Transaction = tx;
+        command.CommandText = sql;
+        command.ExecuteNonQuery();
+    }
+
+    private static int Version(SqliteConnection connection)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA user_version";
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
+
+    private static void CheckDatabase(SqliteConnection connection, bool allowPrevious = false)
+    {
+        using var command = connection.CreateCommand();
+        var version = Version(connection);
+        if (version != SchemaVersion && !(allowPrevious && version is 1 or 2))
+            throw new InvalidDataException("Deze databaseversie wordt niet ondersteund. Gebruik de bijbehorende appversie.");
+        command.CommandText = "SELECT application FROM app_metadata WHERE id=1";
+        if (!Equals(command.ExecuteScalar(), "Huishoudboek"))
+            throw new InvalidDataException("Dit is geen Huishoudboek-database.");
+        command.CommandText = "PRAGMA quick_check";
+        if (!Equals(command.ExecuteScalar(), "ok")) throw new InvalidDataException("De SQLite-integriteitscontrole is mislukt.");
+    }
+
+    private void UpgradePreviousVersion(SqliteConnection connection)
+    {
+        // Validate first, then take a SQLite-aware backup (including WAL) before any schema change.
+        var version = Version(connection);
+        ReadData(connection, version);
+        Backup(_path + $".voor-versie-3-{DateTime.Now:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}.db");
+        using var tx = connection.BeginTransaction();
+        if (version == 1)
+        {
+            Execute(connection, tx, "ALTER TABLE [ImportProfile] ADD COLUMN [CounterAccountReferenceColumn] TEXT NOT NULL DEFAULT ''");
+            Execute(connection, tx, "UPDATE [ImportProfile] SET [CounterAccountReferenceColumn]='Rekening tegenpartij' WHERE [AccountReferenceColumn]='Rekening opdrachtgever'");
+        }
+        Execute(connection, tx, "ALTER TABLE [Transaction] ADD COLUMN [UserDescription] TEXT NOT NULL DEFAULT ''");
+        Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
+        tx.Commit();
+        CheckDatabase(connection);
+    }
+
+    private static void CreateTable(SqliteConnection c, SqliteTransaction tx, Type type)
+    {
+        var columns = type.GetProperties().Select(p => $"[{p.Name}] {(IsInteger(p.PropertyType) ? "INTEGER" : "TEXT")}{(p.Name == "Id" ? " PRIMARY KEY NOT NULL" : "")}");
+        Execute(c, tx, $"CREATE TABLE [{type.Name}] ({string.Join(",", columns)})");
+    }
+
+    private static bool IsInteger(Type type)
+    {
+        type = Nullable.GetUnderlyingType(type) ?? type;
+        return type == typeof(int) || type == typeof(bool) || type.IsEnum;
+    }
+
+    public HouseholdData Load()
+    {
+        using var connection = Open(_path, true);
+        CheckDatabase(connection);
+        return ReadData(connection);
+    }
+
+    private static HouseholdData ReadData(SqliteConnection connection, int version = SchemaVersion)
+    {
+        using var tx = connection.BeginTransaction(deferred: true);
+        var data = new HouseholdData
+        {
+            Owners = Read<Owner>(connection, tx), Accounts = Read<Account>(connection, tx),
+            Categories = Read<Category>(connection, tx), BudgetOverrides = Read<BudgetOverride>(connection, tx),
+            Transactions = Read<Transaction>(connection, tx, version), RecurringPayments = Read<RecurringPayment>(connection, tx),
+            Rules = Read<CategorizationRule>(connection, tx), Valuations = Read<InvestmentValuation>(connection, tx),
+            ImportBatches = Read<ImportBatch>(connection, tx), ImportProfiles = Read<ImportProfile>(connection, tx, version)
+        };
+        using var command = connection.CreateCommand();
+        command.Transaction = tx;
+        command.CommandText = "SELECT mortgage FROM app_metadata WHERE id=1";
+        if (command.ExecuteScalar() is string json) data.Mortgage = JsonSerializer.Deserialize<Mortgage>(json);
+        tx.Commit();
+        Validation.Validate(data);
+        return data;
+    }
+
+    public void Save(HouseholdData data)
+    {
+        Validation.Validate(data);
+        using var connection = Open(_path);
+        using var tx = connection.BeginTransaction();
+        Write(connection, tx, data.Owners); Write(connection, tx, data.Accounts);
+        Write(connection, tx, data.Categories); Write(connection, tx, data.BudgetOverrides);
+        Write(connection, tx, data.Transactions); Write(connection, tx, data.RecurringPayments);
+        Write(connection, tx, data.Rules); Write(connection, tx, data.Valuations);
+        Write(connection, tx, data.ImportBatches); Write(connection, tx, data.ImportProfiles);
+        using var command = connection.CreateCommand();
+        command.Transaction = tx;
+        command.CommandText = "UPDATE app_metadata SET mortgage=$mortgage WHERE id=1";
+        command.Parameters.AddWithValue("$mortgage", data.Mortgage == null ? DBNull.Value : JsonSerializer.Serialize(data.Mortgage));
+        command.ExecuteNonQuery();
+        tx.Commit();
+    }
+
+    private static List<T> Read<T>(SqliteConnection c, SqliteTransaction tx, int version = SchemaVersion) where T : new()
+    {
+        using var command = c.CreateCommand();
+        command.Transaction = tx;
+        var properties = typeof(T).GetProperties();
+        command.CommandText = $"SELECT {string.Join(",", properties.Select(p =>
+            (version == 1 && typeof(T) == typeof(ImportProfile) && p.Name == nameof(ImportProfile.CounterAccountReferenceColumn)) ||
+            (version < 3 && typeof(T) == typeof(Transaction) && p.Name == nameof(Transaction.UserDescription))
+                ? $"'' AS [{p.Name}]" : $"[{p.Name}]"))} FROM [{typeof(T).Name}]";
+        using var reader = command.ExecuteReader();
+        var result = new List<T>();
+        while (reader.Read())
+        {
+            var item = new T();
+            for (var i = 0; i < properties.Length; i++)
+            {
+                var p = properties[i];
+                if (reader.IsDBNull(i)) { p.SetValue(item, null); continue; }
+                var type = Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType;
+                object value = type == typeof(string) ? reader.GetString(i) :
+                    type == typeof(Guid) ? Guid.Parse(reader.GetString(i)) :
+                    type == typeof(DateOnly) ? DateOnly.ParseExact(reader.GetString(i), "yyyy-MM-dd", CultureInfo.InvariantCulture) :
+                    type == typeof(DateTime) ? DateTime.Parse(reader.GetString(i), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind) :
+                    type == typeof(decimal) ? decimal.Parse(reader.GetString(i), CultureInfo.InvariantCulture) :
+                    type == typeof(bool) ? reader.GetInt64(i) != 0 :
+                    type == typeof(int) ? reader.GetInt32(i) :
+                    type.IsEnum ? Enum.ToObject(type, reader.GetInt32(i)) :
+                    type == typeof(List<Guid>) ? JsonSerializer.Deserialize<List<Guid>>(reader.GetString(i))! :
+                    throw new NotSupportedException(type.Name);
+                p.SetValue(item, value);
+            }
+            result.Add(item);
+        }
+        return result;
+    }
+
+    private static void Write<T>(SqliteConnection c, SqliteTransaction tx, IEnumerable<T> items)
+    {
+        Execute(c, tx, $"DELETE FROM [{typeof(T).Name}]");
+        var properties = typeof(T).GetProperties();
+        using var command = c.CreateCommand();
+        command.Transaction = tx;
+        command.CommandText = $"INSERT INTO [{typeof(T).Name}] ({string.Join(",", properties.Select(p => $"[{p.Name}]"))}) VALUES ({string.Join(",", properties.Select((_, i) => $"$p{i}"))})";
+        for (var i = 0; i < properties.Length; i++) command.Parameters.Add(new SqliteParameter($"$p{i}", DBNull.Value));
+        command.Prepare();
+        foreach (var item in items)
+        {
+            for (var i = 0; i < properties.Length; i++)
+            {
+                var value = properties[i].GetValue(item);
+                command.Parameters[i].Value = value switch
+                {
+                    null => DBNull.Value,
+                    bool boolean => boolean ? 1 : 0,
+                    Enum enumeration => Convert.ToInt32(enumeration, CultureInfo.InvariantCulture),
+                    int number => number,
+                    decimal money => money.ToString(CultureInfo.InvariantCulture),
+                    DateOnly date => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    DateTime date => date.ToString("O", CultureInfo.InvariantCulture),
+                    List<Guid> ids => JsonSerializer.Serialize(ids),
+                    _ => value.ToString()!
+                };
+            }
+            command.ExecuteNonQuery();
+        }
+    }
+
+    private void CheckDifferentPath(string other)
+    {
+        if (string.Equals(_path, Path.GetFullPath(other), StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Kies een ander bestand dan de actieve database.");
+    }
+
+    public void Backup(string destination)
+    {
+        CheckDifferentPath(destination);
+        using var source = Open(_path, true);
+        using var target = Open(destination);
+        source.BackupDatabase(target);
+    }
+
+    public void Restore(string source)
+    {
+        CheckDifferentPath(source);
+        Save(ReadBackup(source));
+    }
+
+    public static HouseholdData ReadBackup(string source)
+    {
+        // Validate ALL entity references before touching the active database.
+        using var candidate = Open(source, true);
+        CheckDatabase(candidate, allowPrevious: true);
+        var version = Version(candidate);
+        var data = ReadData(candidate, version);
+        if (version == 1)
+            foreach (var profile in data.ImportProfiles.Where(p => p.AccountReferenceColumn == "Rekening opdrachtgever"))
+                profile.CounterAccountReferenceColumn = "Rekening tegenpartij";
+        return data;
+    }
+
+    public static void ValidateBackup(string source)
+    {
+        ReadBackup(source);
+    }
+}

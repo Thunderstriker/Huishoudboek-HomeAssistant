@@ -1,0 +1,24 @@
+# Only application source and app metadata belong in this repository.
+**/bin/
+**/obj/
+**/dist/
+**/.vs/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.xls
+*.xlsx
+*.csv
+*.dll
+*.exe
+*.pdb
+*.so
+service.json
+home-assistant.json
+desktop-service.json
+options.json
+website-auth/
+administration/

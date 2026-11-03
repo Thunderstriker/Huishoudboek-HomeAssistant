@@ -1,0 +1,4 @@
+configuration:
+  time_zone:
+    name: Time zone
+    description: "Determines today's date for actual balances and forecasts, for example Europe/Amsterdam or Europe/Brussels."

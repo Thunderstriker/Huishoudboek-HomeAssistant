@@ -1,0 +1,9 @@
+<Router AppAssembly="typeof(App).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
+            <NotAuthorized><p>Uw sessie is verlopen. <a href="login" data-enhance-nav="false">Opnieuw aanmelden</a></p></NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound><LayoutView Layout="typeof(MainLayout)"><h1>Pagina niet gevonden</h1><a href="">Naar maandoverzicht</a></LayoutView></NotFound>
+</Router>

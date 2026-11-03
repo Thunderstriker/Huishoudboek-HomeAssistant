@@ -1,0 +1,138 @@
+@page "/categoriseren"
+@attribute [Authorize]
+@inherits EditPageBase
+<PageTitle>Categoriseren · Huishoudboek</PageTitle>
+<h1>Categoriseren · alle datums</h1>
+<p class="muted">Deze werkruimte geldt voor alle datums, inclusief herkenbaar geplande boekingen. Het eigenaarfilter geldt wel. Transfers zijn alleen labels, geen inkomsten of uitgaven.</p>
+<div class="actions">
+    <button class="@(mode == "groups" ? "primary" : "")" @onclick='() => SetMode("groups")'>Per categorie</button>
+    <button class="@(mode == "inbox" ? "primary" : "")" @onclick='() => SetMode("inbox")'>Zonder categorie</button>
+    <button class="@(mode == "walk" ? "primary" : "")" @onclick="StartWalk">Stap voor stap</button>
+    <button @onclick="LatestImport">Laatste import</button><button @onclick="ClearFilters">Filters wissen</button>
+</div>
+<div class="filters"><label>Rekening<select @bind="accountId" @bind:after="FilterChanged"><option value="">Alle rekeningen</option>@foreach (var a in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@a.Id">@a.Name</option> }</select></label>
+<label>Import<select @bind="batchId" @bind:after="FilterChanged"><option value="">Alle imports</option>@foreach (var batch in State.Data.ImportBatches.Where(b => !b.Undone).OrderByDescending(b => b.ImportedAt)) { <option value="@batch.Id">@batch.FileName · @batch.ImportedAt.ToString("dd-MM-yyyy HH:mm")</option> }</select></label>
+<label>Omschrijving zoeken<input type="search" @bind="search" @bind:event="oninput" @bind:after="FilterChanged" /></label>
+<label class="check"><input type="checkbox" @bind="includeTransfers" @bind:after="FilterChanged" />Interne overboekingen ook tonen</label></div>
+@{ var rows = VisibleRows.ToList(); page = Math.Min(page, Math.Max(0, (rows.Count - 1) / 100)); var totals = Categorization.ReviewTotals(rows); }
+<div class="category-layout">
+    @if (mode == "groups")
+    {
+        <aside class="card category-list" aria-label="Categoriegroepen">
+            @foreach (var group in Groups)
+            { <button class="@(group.Id == groupCategory ? "active" : "") @(group.Count == 0 ? "muted" : "")" @onclick="() => SelectGroup(group.Id)"><span>@group.Name</span><span class="badge">@group.Count</span></button> }
+        </aside>
+    }
+    <section class="card" style="@(mode != "groups" ? "grid-column:1/-1" : null)">
+        <div class="page-heading"><h2>@(mode == "walk" ? "Stap voor stap" : mode == "inbox" ? "Zonder categorie" : State.CategoryName(groupCategory))</h2>
+        @if (mode == "groups" && groupCategory is { } categoryId && State.Data.Categories.FirstOrDefault(c => c.Id == categoryId) is { } category)
+        { <div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, category, true)">Categorie hernoemen</button><button @onclick="() => DeleteCategory(category)">Categorie verwijderen</button></div> }
+        </div>
+        @if (mode != "walk") { <p class="muted">@rows.Count betalingen · inkomsten @Money(totals.Income) · uitgaand @Money(totals.Outflow). Inclusief geplande boekingen, exclusief transfers; geen uitsluitend werkelijke rapporttotalen.</p> }
+        @if (mode == "walk")
+        {
+            @if (Current is { } current)
+            {
+                <h3>@current.Date.ToString("dd-MM-yyyy") · @State.AccountName(current.AccountId) · @Money(current.Amount)</h3><p class="description">@current.Description</p>
+                @if (current.Date > State.Today) { <p class="badge">Geplande toekomstige betaling</p> }
+                <p class="muted">@WalkRows.Count() resterend in deze ronde. Overslaan verandert niets en de betaling komt in een nieuwe ronde terug.</p>
+            }
+            else { <p class="empty">Deze ronde is voltooid. Overgeslagen betalingen zijn niet gewijzigd.</p><button @onclick="StartWalk">Nieuwe ronde starten</button> }
+        }
+        else
+        {
+            <div class="table-scroll"><table id="category-transactions"><thead><tr><th>Kies</th><th>Datum</th><th>Rekening</th><th>Bankomschrijving / eigen omschrijving</th><th class="money">Bedrag</th><th>Categorie / type</th></tr></thead><tbody>
+            @foreach (var t in rows.Skip(page * 100).Take(100))
+            { <tr @key="t.Id"><td><input type="checkbox" aria-label="Selecteer betaling" checked="@selected.Contains(t.Id)" @onchange="e => Select(t, (bool)e.Value!)" /></td><td>@t.Date.ToString("dd-MM-yyyy") @if (t.Date > State.Today) { <span class="badge">Gepland</span> }</td><td>@State.AccountName(t.AccountId) @if (t.Kind == TransactionKind.Transfer) { <span>→ @State.AccountName(t.CounterAccountId)</span> }</td><td class="description">@if (t.UserDescription.Length > 0) { <strong>@t.UserDescription</strong><small>@t.Description</small> } else { @t.Description }</td><td class="money">@Money(t.Amount)</td><td>@State.CategoryName(t.CategoryId) @if (t.Kind == TransactionKind.Transfer) { <span class="badge">Interne overboeking</span> }</td></tr> }
+            </tbody></table></div>
+            @if (rows.Count == 0) { <p class="empty">Geen betalingen in deze groep en filters.</p> }
+            <Pager Count="rows.Count" @bind-Page="page" />
+        }
+        @if (mode != "walk" || Current != null)
+        {
+            <form @onsubmit="Assign" @onsubmit:preventDefault>
+                <div class="fields"><label>Categorie<select id="assignCategory" @bind="assignCategory"><option value="">Zonder categorie</option>@foreach (var c in State.Data.Categories) { <option value="@c.Id">@c.Name</option> }</select></label>
+                @if (mode == "walk" || selected.Count == 1) { <label>Eigen omschrijving (optioneel)<input id="ownDescription" @bind="ownDescription" maxlength="2000" /></label> }</div>
+                <label class="check"><input id="rememberRule" type="checkbox" @bind="remember" />Onthouden voor volgende imports</label>
+                @if (remember)
+                {
+                    <label>Omschrijving bevat<input id="rememberText" @bind="rememberText" @bind:event="oninput" maxlength="500" required /></label>
+                    var preview = Categorization.Preview(State.Data, rememberText, assignCategory, FilteredRows.Select(t => t.Id).ToHashSet());
+                    <p class="muted">@preview.Matches.Count overeenkomsten, @preview.UncategorizedCount zonder categorie. @(preview.ReusesRule ? "Bestaande regel wordt hergebruikt." : "Regel geldt bij volgende imports voor het hele huishouden.")</p>
+                    @foreach (var sample in preview.Matches.Take(3)) { <small class="description">@sample.Description · @Money(sample.Amount)</small><br /> }
+                    @if (preview.ConflictingExactRule) { <p class="notice error">Deze exacte tekst heeft al een andere categorie. Bewerk de bestaande regel via Beheer &amp; import.</p> }
+                    @if (preview.EarlierConflictCount > 0) { <p class="notice warning">Overlap met andere regels: @preview.EarlierConflictCount betalingen. De eerste passende regel blijft winnen.</p> }
+                    <label class="check"><input type="checkbox" @bind="applyMatches" />Ook passende ongecategoriseerde betalingen binnen eigenaar/rekening/import/zoekfilters aanpassen</label>
+                }
+                <div class="actions"><button class="primary" type="submit" disabled="@(mode == "walk" ? assignCategory == null : selected.Count == 0)">@(mode == "walk" ? "Opslaan & volgende" : $"Categorie opslaan ({selected.Count})")</button>
+                    @if (mode == "walk") { <button type="button" @onclick="Skip">Overslaan</button><button type="button" @onclick='() => SetMode("inbox")'>Rondgang sluiten</button> }
+                </div>
+            </form>
+        }
+    </section>
+</div>
+<EditDialogs Page="this" />
+@code {
+    private string mode = "groups", search = "", ownDescription = "", rememberText = "";
+    private Guid? accountId, batchId, groupCategory, assignCategory, lastReview, lastOwner;
+    private Guid? walkDraftId;
+    private string? assignmentRevision;
+    private bool includeTransfers, remember, applyMatches;
+    private int page;
+    private readonly HashSet<Guid> selected = [], skipped = [];
+    private IEnumerable<Transaction> FilteredRows => State.Data.Transactions.Where(t => (State.Scope.Contains(t.AccountId) || t.CounterAccountId is { } counter && State.Scope.Contains(counter)) &&
+        (accountId == null || t.AccountId == accountId || t.CounterAccountId == accountId) && (batchId == null || t.ImportBatchId == batchId) &&
+        (includeTransfers || t.Kind != TransactionKind.Transfer) && (search.Length == 0 || $"{t.Description} {t.UserDescription}".Contains(search, StringComparison.OrdinalIgnoreCase)))
+        .OrderBy(t => t.Date).ThenBy(t => t.Id);
+    private IEnumerable<Transaction> VisibleRows => FilteredRows.Where(t => t.CategoryId == (mode == "groups" ? groupCategory : null));
+    private IEnumerable<Transaction> WalkRows => FilteredRows.Where(t => t.CategoryId == null && t.Kind != TransactionKind.Transfer && !skipped.Contains(t.Id));
+    private Transaction? Current => WalkRows.FirstOrDefault();
+    private IEnumerable<(Guid? Id, string Name, int Count)> Groups => new[] { ((Guid?)null, "Zonder categorie", FilteredRows.Count(t => t.CategoryId == null)) }
+        .Concat(State.Data.Categories.Select(c => ((Guid?)c.Id, c.Name, FilteredRows.Count(t => t.CategoryId == c.Id))).OrderByDescending(c => c.Item3 > 0).ThenBy(c => c.Name));
+    protected override void OnParametersSet()
+    {
+        if (State.ReviewBatchId is { } review && review != lastReview) { batchId = review; lastReview = review; State.ReviewBatchId = null; includeTransfers = true; mode = "groups"; FilterChanged(); }
+    }
+    protected override void OnStateChanged()
+    {
+        if (lastOwner != State.OwnerId) { lastOwner = State.OwnerId; FilterChanged(); }
+        if (groupCategory != null && !State.Data.Categories.Any(c => c.Id == groupCategory)) groupCategory = null;
+        if (mode == "walk" && walkDraftId != Current?.Id) { ResetDraft(); PrefillWalk(); }
+    }
+    private void ResetDraft() { selected.Clear(); remember = false; applyMatches = false; rememberText = ""; ownDescription = ""; assignmentRevision = null; walkDraftId = null; }
+    private void FilterChanged() { page = 0; skipped.Clear(); ResetDraft(); if (mode == "walk") PrefillWalk(); }
+    private void SelectGroup(Guid? id) { groupCategory = id; page = 0; ResetDraft(); }
+    private void SetMode(string value) { mode = value; FilterChanged(); }
+    private void StartWalk() { mode = "walk"; skipped.Clear(); ResetDraft(); PrefillWalk(); }
+    private void PrefillWalk() { if (Current is { } t) { walkDraftId = t.Id; assignmentRevision = State.Revision; ownDescription = t.UserDescription; rememberText = t.Description; } }
+    private void Skip() { if (Current is { } t) skipped.Add(t.Id); ResetDraft(); PrefillWalk(); }
+    private void LatestImport() { batchId = State.Data.ImportBatches.Where(b => !b.Undone).OrderByDescending(b => b.ImportedAt).FirstOrDefault()?.Id; FilterChanged(); }
+    private void ClearFilters() { accountId = null; batchId = null; search = ""; includeTransfers = false; State.ReviewBatchId = null; FilterChanged(); }
+    private void Select(Transaction t, bool value)
+    {
+        if (value) selected.Add(t.Id); else selected.Remove(t.Id);
+        assignmentRevision ??= State.Revision;
+        remember = false; applyMatches = false;
+        var single = selected.Count == 1 ? State.Data.Transactions.FirstOrDefault(x => selected.Contains(x.Id)) : null;
+        ownDescription = single?.UserDescription ?? ""; rememberText = single?.Description ?? "";
+    }
+    private async Task Assign()
+    {
+        var ids = mode == "walk" ? Current is { } t ? new HashSet<Guid> { t.Id } : [] : selected.Intersect(VisibleRows.Select(x => x.Id)).ToHashSet();
+        var category = assignCategory; var text = remember ? rememberText : null;
+        var matches = remember && applyMatches ? FilteredRows.Where(t => t.Kind != TransactionKind.Transfer && t.CategoryId == null).Select(t => t.Id).ToHashSet() : null;
+        var description = ids.Count == 1 ? ownDescription : null;
+        var revision = assignmentRevision ?? State.Revision;
+        if (await State.RunAsync(() =>
+        {
+            if (mode == "walk" && category == null) throw new InvalidOperationException("Kies eerst een categorie of kies Overslaan.");
+            return State.SaveAsync(d => Categorization.Assign(d, ids, category, text, matches, description), revision);
+        }, "Categorie opgeslagen."))
+        { ResetDraft(); if (mode == "walk") PrefillWalk(); }
+    }
+    private void DeleteCategory(Category category)
+    {
+        var p = Categorization.PreviewCategoryDeletion(State.Data, category.Id);
+        Ask("Categorie verwijderen", $"Categorie ‘{p.Name}’ verwijderen in de HELE administratie?\n{p.TransactionCount} transacties en {p.RecurringPaymentCount} vaste posten blijven bestaan en worden Zonder categorie.\n{p.RuleCount} regels, {p.BudgetOverrideCount} maandbudgetten en standaardbudget {Money(p.MonthlyBudget)} worden verwijderd.\nBedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden. Geen directe undo; maak zo nodig eerst een back-up.", d => Categorization.DeleteCategory(d, category.Id), "Categorie verwijderen");
+    }
+}

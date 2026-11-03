@@ -1,0 +1,39 @@
+@page "/"
+@attribute [Authorize]
+@inherits PageBase
+@inject WebHostSettings HostSettings
+<PageTitle>Maandoverzicht · Huishoudboek</PageTitle>
+@{ var overview = DetailedReporting.Dashboard(State.Data, State.Year, State.Month, State.Today, State.OwnerId); var report = overview.Report; }
+<h1>Maandoverzicht · @(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", CultureInfo.GetCultureInfo("nl-NL")))</h1>
+@if (HostSettings.HomeAssistant && State.Data.Accounts.Count == 0)
+{
+    <section class="card" id="first-use"><h2>Welkom in Huishoudboek voor Home Assistant</h2>
+        <p>Gebruik uw bestaande administratie: importeer uw Huishoudboek-database (.db). Alle financiële gegevens worden daarna uitsluitend in de opslag van deze Home Assistant-app bewaard. Geen Windows-verbinding of nieuwe bankimport nodig.</p>
+        <div class="actions"><a class="button primary" href="beheer#database">Bestaande database importeren</a><a class="button" href="rekeningen">Beginnen met een lege administratie</a></div>
+        <p class="muted">Gebruik een databaseback-up uit de Windows-app, of sluit zowel de Windows-app als de financiële service voordat u het .db-bestand kopieert. Bewerk na de overstap niet beide kopieën afzonderlijk.</p>
+    </section>
+}
+<section class="notice @(report.NeedsAttention ? "warning" : "success")">
+    <h2>@overview.Status</h2><p>@overview.Explanation</p><small>Werkelijke saldi t/m @overview.AsOf.ToString("dd-MM-yyyy"); toekomstige boekingen staan alleen in de prognose.</small>
+</section>
+<div class="metrics">
+    <div class="card"><div class="metric-label">Inkomsten</div><div class="metric-value positive">@Money(report.Income)</div><small>Werkelijk ontvangen</small></div>
+    <div class="card"><div class="metric-label">Uitgaven &amp; woonlasten</div><div class="metric-value">@Money(report.Outflow)</div><small>Inclusief hypotheekaflossing</small></div>
+    <div class="card"><div class="metric-label">Opzijgezet</div><div class="metric-value">@Money(report.Savings)</div><small>Netto naar sparen &amp; beleggen</small></div>
+    <div class="card"><div class="metric-label">Over deze maand</div><div class="metric-value @(report.Available < 0 ? "negative" : "positive")">@Money(report.Available)</div><small>Inkomsten − lasten − opzijgezet; geen rekeningsaldo</small></div>
+</div>
+<section class="card"><h2>Budget per categorie</h2><div class="table-scroll"><table><thead><tr><th>Categorie</th><th class="money">Budget</th><th class="money">Uitgegeven</th><th class="money">Resterend</th><th>Verbruik</th></tr></thead><tbody>
+    @foreach (var category in report.Categories)
+    { <tr><td>@category.Name</td><td class="money">@(category.Budget == 0 ? "Geen limiet" : Money(category.Budget))</td><td class="money">@Money(category.Spent)</td><td class="money @(category.IsOverBudget ? "negative" : "")">@(category.Budget == 0 ? "—" : Money(category.Remaining))</td><td><progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@($"Verbruik {category.Name}")"></progress></td></tr> }
+</tbody></table></div><p class="muted">Budget 0 = geen limiet ingesteld. Budgetten zijn huishoudbudgetten, ook met eigenaarfilter.</p></section>
+<section class="card"><h2>Prognose einde maand · schatting</h2><div class="metrics">
+    <div><div class="metric-label">Verwachte inkomsten</div><div class="metric-value">@Money(report.Forecast.Income)</div></div>
+    <div><div class="metric-label">Verwachte lasten</div><div class="metric-value">@Money(report.Forecast.Outflow)</div></div>
+    <div><div class="metric-label">Naar verwachting over</div><div class="metric-value @(report.Forecast.Available < 0 ? "negative" : "positive")">@Money(report.Forecast.Available)</div></div>
+    <div><div class="metric-label">Verwacht eindsaldo betaalrekeningen</div><div class="metric-value">@Money(overview.ProjectedCurrentCash)</div></div>
+</div><p class="muted">@overview.ForecastNote</p></section>
+<div class="metrics">
+    <div class="card"><div class="metric-label">Saldo betaalrekeningen</div><div class="metric-value">@Money(overview.CurrentCash)</div></div>
+    <div class="card"><div class="metric-label">Spaarbuffer</div><div class="metric-value">@Money(overview.SavingsBalance)</div></div>
+    <div class="card"><div class="metric-label">Nettovermogen excl. woning</div><div class="metric-value">@Money(overview.NetWorth)</div><small>Saldi + effecten − hypotheekschuld</small></div>
+</div>

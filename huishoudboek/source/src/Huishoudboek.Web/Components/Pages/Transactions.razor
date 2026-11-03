@@ -1,0 +1,26 @@
+@page "/transacties"
+@attribute [Authorize]
+@inherits EditPageBase
+<PageTitle>Transacties · Huishoudboek</PageTitle>
+<h1>Transacties</h1>
+<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Transaction(State)">+ Transactie</button><a class="button" href="importeren">Excel / CSV importeren</a></div>
+<div class="filters"><label>Zoeken<input type="search" @bind="search" @bind:event="oninput" @bind:after="Reset" placeholder="Omschrijving, categorie of rekening" /></label>
+<label>Rekening<select @bind="accountId" @bind:after="Reset"><option value="">Alle rekeningen</option>@foreach (var a in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@a.Id">@a.Name</option> }</select></label>
+<label class="check"><input type="checkbox" @bind="allDates" @bind:after="Reset" />Alle datums</label></div>
+@{ var rows = Rows.ToList(); page = Math.Min(page, Math.Max(0, (rows.Count - 1) / 100)); }
+<section class="card"><div class="table-scroll"><table id="transactions"><thead><tr><th>Datum</th><th>Rekening</th><th>Omschrijving</th><th class="money">Bedrag</th><th>Categorie / type</th><th class="money">Aflossing</th><th>Vaste post</th><th class="money">Banksaldo importrekening</th><th>Acties</th></tr></thead><tbody>
+@foreach (var row in rows.Skip(page * 100).Take(100))
+{ <tr @key="row.Id"><td>@row.Date.ToString("dd-MM-yyyy") @if (row.Date > State.Today) { <span class="badge">Gepland</span> }</td><td>@State.AccountName(row.AccountId) @if (row.Kind == TransactionKind.Transfer) { <span>→ @State.AccountName(row.CounterAccountId)</span> }</td><td class="description">@if (row.UserDescription.Length > 0) { <strong>@row.UserDescription</strong><small>@row.Description</small> } else { @row.Description }</td><td class="money">@Money(row.Amount)</td><td>@State.CategoryName(row.CategoryId)<small class="badge">@TransactionType(row)</small></td><td class="money">@Money(row.PrincipalComponent)</td><td>@(State.Data.RecurringPayments.FirstOrDefault(r => r.Id == row.RecurringPaymentId)?.Name ?? "—")</td><td class="money">@(row.StatementBalance is { } balance ? Money(balance) : "—")</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Transaction(State, row)">Bewerken</button><button @onclick="() => AskDelete(row)">Verwijderen</button></div></td></tr> }
+</tbody></table></div>@if (rows.Count == 0) { <p class="empty">Geen transacties binnen deze filters.</p> }<Pager Count="rows.Count" @bind-Page="page" /></section>
+<p class="muted">Toekomstige transacties zijn gepland: ze tellen pas op hun datum als werkelijk. Interne overboekingen zijn geen inkomsten of uitgaven.</p>
+<EditDialogs Page="this" />
+@code {
+    private string search = ""; private Guid? accountId; private bool allDates; private int page;
+    private void Reset() => page = 0;
+    private IEnumerable<Transaction> Rows => State.Data.Transactions.Where(t => (State.Scope.Contains(t.AccountId) || t.CounterAccountId is { } counter && State.Scope.Contains(counter)) &&
+        (allDates || t.Date.Year == State.Year && t.Date.Month == State.Month) && (accountId == null || t.AccountId == accountId || t.CounterAccountId == accountId) &&
+        (string.IsNullOrWhiteSpace(search) || $"{t.Description} {t.UserDescription} {State.CategoryName(t.CategoryId)} {State.AccountName(t.AccountId)} {State.AccountName(t.CounterAccountId)}".Contains(search, StringComparison.OrdinalIgnoreCase)))
+        .OrderByDescending(t => t.Date).ThenBy(t => t.Id);
+    private static string TransactionType(Transaction t) => t.Kind switch { TransactionKind.Transfer => "Overboeking", TransactionKind.Mortgage => "Hypotheek", _ => t.Amount > 0 ? "Inkomst" : "Uitgave" };
+    private void AskDelete(Transaction row) => Ask("Transactie verwijderen", "Deze transactie verwijderen? Een interne overboeking verdwijnt uit beide rekeningen.", d => d.Transactions.RemoveAll(t => t.Id == row.Id), "Verwijderen");
+}

@@ -1,0 +1,23 @@
+name: "Huishoudboek"
+version: "0.1.0"
+slug: "huishoudboek"
+description: "Volledig lokaal huishoudboek met database-import, budgetten en prognoses"
+arch:
+  - amd64
+startup: application
+boot: auto
+init: true
+stage: experimental
+timeout: 30
+ingress: true
+ingress_port: 8099
+ingress_stream: true
+panel_icon: mdi:finance
+panel_title: Huishoudboek
+panel_admin: true
+watchdog: "http://[HOST]:8099/health"
+backup: cold
+options:
+  time_zone: Europe/Amsterdam
+schema:
+  time_zone: str

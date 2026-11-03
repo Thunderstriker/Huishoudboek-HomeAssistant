@@ -1,0 +1,66 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject WebState State
+@inject IJSRuntime JS
+@inject WebHostSettings HostSettings
+
+<a class="skip-link" href="#content">Naar inhoud</a>
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand">huishoudboek<small>Rust in uw financiën</small></div>
+        <nav aria-label="Hoofdnavigatie">
+            @foreach (var entry in Navigation)
+            {
+                <NavLink href="@entry.Path.TrimStart('/')" Match="@(entry.Path == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)"><span aria-hidden="true">@entry.Symbol</span>@entry.Label</NavLink>
+            }
+        </nav>
+        <p class="sidebar-note">Lokaal · EUR · privé<br />Geen bankverbinding</p>
+    </aside>
+    <div class="workspace">
+        <header class="topbar">
+            <div><strong>Huishoudboek · @(HostSettings.HomeAssistant ? "Home Assistant" : "website")</strong><small>@(State.OwnerId == null ? "Hele huishouden · gedeelde rekeningen tellen één keer mee." : "Eigenaarfilter · volledige gedeelde saldi; budgetten blijven huishoudbudgetten.")</small></div>
+            <div class="toolbar">
+                <button title="Ook wijzigingen van andere browsers en de desktop laden" disabled="@State.Busy" @onclick="Reload">↻ Vernieuwen</button>
+                <button aria-label="Vorige maand" @onclick="() => Shift(-1)">‹</button>
+                <label class="compact"><span class="sr-only">Maand</span><select @bind="State.Month" @bind:after="State.Notify">@for (var m = 1; m <= 12; m++) { <option value="@m">@CultureInfo.GetCultureInfo("nl-NL").DateTimeFormat.GetMonthName(m)</option> }</select></label>
+                <label class="compact"><span class="sr-only">Jaar</span><input type="number" min="1900" max="2200" value="@State.Year" @onchange="YearChanged" class="year" /></label>
+                <button aria-label="Volgende maand" @onclick="() => Shift(1)">›</button>
+                <label class="compact"><span class="sr-only">Eigenaar</span><select @bind="State.OwnerId" @bind:after="State.Notify"><option value="">Alle eigenaren</option>@foreach (var owner in State.Data.Owners) { <option value="@owner.Id">@owner.Name</option> }</select></label>
+                @if (!HostSettings.HomeAssistant) { <a class="button" href="signout" data-enhance-nav="false">Afmelden</a> }
+            </div>
+        </header>
+        <main id="content" aria-busy="@State.Busy">
+            @if (!string.IsNullOrEmpty(State.Message)) { <div id="message" class="notice @(State.IsError ? "error" : "success")" role="status" aria-live="polite">@State.Message</div> }
+            @if (State.Loaded) { <div id="application"><fieldset class="page-fieldset" disabled="@State.Busy">@Body</fieldset></div> }
+            else { <h1>Administratie laden…</h1><p>Alleen verbinding met uw lokale service.</p> }
+        </main>
+        <footer>Gedeelde administratie · bedragen uit geregistreerde gegevens · <a href="beheer">Back-up &amp; beheer</a></footer>
+    </div>
+</div>
+
+@code {
+    private static readonly (string Path, string Symbol, string Label)[] Navigation = [
+        ("/", "◷", "Maandoverzicht"), ("/jaar", "▥", "Jaaroverzicht"), ("/transacties", "⇄", "Transacties"),
+        ("/categoriseren", "✓", "Categoriseren"), ("/rekeningen", "▣", "Rekeningen"), ("/budgetten", "◉", "Budgetten"),
+        ("/vaste-posten", "↻", "Vaste posten"), ("/hypotheek", "⌂", "Hypotheek"), ("/beheer", "⚙", "Beheer & import")];
+    protected override async Task OnInitializedAsync()
+    {
+        State.Changed += Changed;
+        if (!State.Loaded) await State.RunAsync(State.LoadAsync);
+    }
+    private void Changed() => _ = InvokeAsync(StateHasChanged);
+    private bool ready;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!ready && State.Loaded) { ready = true; await JS.InvokeVoidAsync("huishoudboek.markReady"); }
+    }
+    private async Task Reload() => await State.RunAsync(State.LoadAsync, "Actuele administratie geladen. Niet opgeslagen formulieren zijn niet opnieuw toegepast.");
+    private void Shift(int step)
+    {
+        var date = new DateOnly(State.Year, State.Month, 1).AddMonths(step);
+        if (date.Year is < 1900 or > 2200) return;
+        State.Year = date.Year; State.Month = date.Month; State.Notify();
+    }
+    private void YearChanged(ChangeEventArgs args) { if (int.TryParse(args.Value?.ToString(), out var year) && year is >= 1900 and <= 2200) State.Year = year; State.Notify(); }
+    public void Dispose() => State.Changed -= Changed;
+}
