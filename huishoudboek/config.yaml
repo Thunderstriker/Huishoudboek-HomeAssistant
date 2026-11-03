@@ -7,7 +7,6 @@ arch:
 startup: application
 boot: auto
 init: true
-stage: experimental
 timeout: 30
 ingress: true
 ingress_port: 8099
