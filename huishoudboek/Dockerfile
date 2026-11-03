@@ -11,7 +11,7 @@ RUN dotnet publish src/Huishoudboek.Service/Huishoudboek.Service.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 LABEL io.hass.name="Huishoudboek" \
       io.hass.description="Lokaal huishoudboek met volledige webinterface" \
-      io.hass.version="0.1.0" \
+      io.hass.version="0.1.1" \
       io.hass.type="addon" \
       io.hass.arch="amd64"
 WORKDIR /app

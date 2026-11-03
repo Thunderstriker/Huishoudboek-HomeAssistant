@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Add-on niet meer als experimenteel gemarkeerd, zodat installatie geen
+  Advanced Mode meer vereist.
+
 ## 0.1.0
 
 - Eerste lokale amd64 Home Assistant-app met volledige Nederlandstalige Blazor-interface.
