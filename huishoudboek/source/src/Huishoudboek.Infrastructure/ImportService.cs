@@ -292,16 +292,19 @@ public static class ImportService
         string Find(params string[] candidates) => candidates.Select(c => headers.FirstOrDefault(h => h.Equals(c, StringComparison.OrdinalIgnoreCase)))
             .FirstOrDefault(h => h != null) ?? "";
         var known = headers.Contains("Rekening opdrachtgever") && headers.Contains("Saldo na verrichting");
+        // Argenta's "verrichtingen" export uses its own Dutch-language column names
+        // without an opening/running balance per row.
+        var argenta = headers.Contains("Boekingsdatum") && headers.Contains("Rekening tegenpartij") && !known;
         return new ImportProfile
         {
-            Name = known ? "Bankexport (template.xls)" : "Standaard import",
-            DateColumn = Find("Datum", "Boekdatum", "Date", "Transactiedatum"),
-            DescriptionColumn = Find("Tegenpartij", "Omschrijving", "Description", "Mededeling"),
-            ExtraDescriptionColumn = known ? Find("Mededeling") : "",
+            Name = known ? "Bankexport (template.xls)" : argenta ? "Bankexport (Argenta)" : "Standaard import",
+            DateColumn = Find("Datum", "Boekdatum", "Boekingsdatum", "Date", "Transactiedatum"),
+            DescriptionColumn = Find("Tegenpartij", "Naam tegenpartij", "Omschrijving", "Description", "Mededeling"),
+            ExtraDescriptionColumn = known ? Find("Mededeling") : argenta ? Find("Vrije mededeling", "Mededelingen", "Mededeling") : "",
             FallbackDescriptionColumn = Find("Type verrichting"),
             AmountColumn = Find("Bedrag", "Amount"), DebitColumn = Find("Af", "Debit"), CreditColumn = Find("Bij", "Credit"),
             CurrencyColumn = Find("Munt", "Valuta", "Currency"),
-            AccountReferenceColumn = Find("Rekening opdrachtgever"), BalanceColumn = Find("Saldo na verrichting"),
+            AccountReferenceColumn = Find("Rekening opdrachtgever", argenta ? "Rekening" : ""), BalanceColumn = Find("Saldo na verrichting"),
             CounterAccountReferenceColumn = Find("Rekening tegenpartij", "Tegenrekening", "Counterparty account"),
             DirectionColumn = Find("Af Bij", "Af/Bij")
         };

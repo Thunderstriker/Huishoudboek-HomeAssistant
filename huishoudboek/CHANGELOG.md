@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Automatische herkenning van het Argenta-exportformaat (Boekingsdatum,
+  Rekening tegenpartij, Munt, Mededeling) bij importeren.
+
 ## 0.1.1
 
 - Add-on niet meer als experimenteel gemarkeerd, zodat installatie geen
