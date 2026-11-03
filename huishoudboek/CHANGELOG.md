@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.3
+
+- Maandoverzicht uitgebreid met uitgavengrafieken per categorie, budgetmarkeringen
+  en zichtbare budgetoverschrijdingen.
+- Werkelijke inkomsten, lasten en het resterende bedrag visueel vergelijken met
+  de prognose voor het einde van de maand.
+- Jaargrafiek toont inkomsten, lasten, netto opzijgezet en het resterende bedrag
+  met negatieve bedragen onder de nullijn; toekomstige maanden worden niet getekend.
+- Jaaruitgaven per categorie vergelijken met het volledige jaarbudget.
+- Grafieken met lege toestanden, toegankelijke labels en horizontaal scrollen
+  op kleine schermen; exacte bedragen blijven beschikbaar.
+- README-bestanden vernieuwd met installatie, gebruik, grafiekuitleg en beperkingen.
+
 ## 0.1.2
 
 - Automatische herkenning van het Argenta-exportformaat (Boekingsdatum,

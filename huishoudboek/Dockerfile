@@ -19,7 +19,7 @@ RUN case "$TARGETARCH" in \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 LABEL io.hass.name="Huishoudboek" \
       io.hass.description="Lokaal huishoudboek met volledige webinterface" \
-      io.hass.version="0.1.2" \
+      io.hass.version="0.1.3" \
       io.hass.type="addon" \
       io.hass.arch="aarch64|amd64|armhf|armv7|i386"
 WORKDIR /app

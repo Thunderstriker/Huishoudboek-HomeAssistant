@@ -22,6 +22,9 @@
     <div class="card"><div class="metric-label">Opzijgezet</div><div class="metric-value">@Money(report.Savings)</div><small>Netto naar sparen &amp; beleggen</small></div>
     <div class="card"><div class="metric-label">Over deze maand</div><div class="metric-value @(report.Available < 0 ? "negative" : "positive")">@Money(report.Available)</div><small>Inkomsten − lasten − opzijgezet; geen rekeningsaldo</small></div>
 </div>
+<section class="card"><h2>Waar gaat het geld naartoe?</h2>
+    <CategorySpendingChart Categories="report.Categories" />
+</section>
 <section class="card"><h2>Budget per categorie</h2><div class="table-scroll"><table><thead><tr><th>Categorie</th><th class="money">Budget</th><th class="money">Uitgegeven</th><th class="money">Resterend</th><th>Verbruik</th></tr></thead><tbody>
     @foreach (var category in report.Categories)
     { <tr><td>@category.Name</td><td class="money">@(category.Budget == 0 ? "Geen limiet" : Money(category.Budget))</td><td class="money">@Money(category.Spent)</td><td class="money @(category.IsOverBudget ? "negative" : "")">@(category.Budget == 0 ? "—" : Money(category.Remaining))</td><td><progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@($"Verbruik {category.Name}")"></progress></td></tr> }
@@ -31,7 +34,14 @@
     <div><div class="metric-label">Verwachte lasten</div><div class="metric-value">@Money(report.Forecast.Outflow)</div></div>
     <div><div class="metric-label">Naar verwachting over</div><div class="metric-value @(report.Forecast.Available < 0 ? "negative" : "positive")">@Money(report.Forecast.Available)</div></div>
     <div><div class="metric-label">Verwacht eindsaldo betaalrekeningen</div><div class="metric-value">@Money(overview.ProjectedCurrentCash)</div></div>
-</div><p class="muted">@overview.ForecastNote</p></section>
+</div>
+<CashFlowChart Labels='@(new[] { "Inkomsten", "Lasten", "Over" })'
+    Series='@(new CashFlowChart.SeriesData[] {
+        new("Werkelijk", "series-income", [report.Income, report.Outflow, report.Available]),
+        new("Prognose einde maand", "series-forecast", [report.Forecast.Income, report.Forecast.Outflow, report.Forecast.Available]) })'
+    Description="Werkelijke maandbedragen versus de schatting voor einde maand. Bedragen onder nul wijzen op een tekort." />
+<p class="muted">Over = inkomsten min lasten en netto opzijgezet; geen rekeningsaldo. Prognosebalken zijn schattingen.</p>
+<p class="muted">@overview.ForecastNote</p></section>
 <div class="metrics">
     <div class="card"><div class="metric-label">Saldo betaalrekeningen</div><div class="metric-value">@Money(overview.CurrentCash)</div></div>
     <div class="card"><div class="metric-label">Spaarbuffer</div><div class="metric-value">@Money(overview.SavingsBalance)</div></div>

@@ -1,0 +1,65 @@
+@{
+    var values = Series.SelectMany(s => s.Values).ToList();
+    var minimum = Math.Min(0m, values.DefaultIfEmpty().Min());
+    var maximum = Math.Max(0m, values.DefaultIfEmpty().Max());
+    var range = Math.Max(1m, maximum - minimum);
+    decimal Y(decimal value) => 30 + (maximum - value) / range * 230;
+    var zero = Y(0);
+    var chartWidth = Labels.Count > 6 ? 1000 : 600;
+    var plotEnd = chartWidth - 25;
+    var groupWidth = (chartWidth - 150m) / Math.Max(1, Labels.Count);
+    var barWidth = Math.Min(45m, groupWidth * 0.78m / Math.Max(1, Series.Count));
+}
+@if (values.All(v => v == 0))
+{
+    <p class="muted">Nog geen bedragen om te tonen in deze periode.</p>
+}
+else
+{
+    <div class="cashflow-legend">
+        @foreach (var series in Series)
+        {
+            <span><i class="chart-key @series.ColorClass" aria-hidden="true"></i>@series.Name</span>
+        }
+    </div>
+    <div class="table-scroll">
+        <svg class="cashflow-chart @(Labels.Count > 6 ? "annual-chart" : "")" viewBox="@($"0 0 {chartWidth} 310")" role="img" aria-label="@Description">
+            <title>@Description</title>
+            @for (var tick = 0; tick <= 4; tick++)
+            {
+                var amount = maximum - range * tick / 4;
+                <g class="chart-grid">
+                    <line x1="125" x2="@plotEnd" y1="@Number(Y(amount))" y2="@Number(Y(amount))" />
+                    <text x="115" y="@Number(Y(amount) + 4)" text-anchor="end">@Money(amount)</text>
+                </g>
+            }
+            <line class="chart-zero" x1="125" x2="@plotEnd" y1="@Number(zero)" y2="@Number(zero)" />
+            @for (var index = 0; index < Labels.Count; index++)
+            {
+                var center = 125 + groupWidth * (index + 0.5m);
+                <g>
+                    @for (var seriesIndex = 0; seriesIndex < Series.Count; seriesIndex++)
+                    {
+                        var series = Series[seriesIndex];
+                        var value = series.Values[index];
+                        var x = center + (seriesIndex - Series.Count / 2m) * barWidth;
+                        <rect class="cashflow-bar @series.ColorClass" x="@Number(x)" y="@Number(Math.Min(zero, Y(value)))" width="@Number(barWidth - 2)" height="@Number(Math.Abs(Y(value) - zero))" tabindex="0" role="img" aria-label="@($"{Labels[index]}, {series.Name}: {Money(value)}")">
+                            <title>@Labels[index] · @series.Name: @Money(value)</title>
+                        </rect>
+                    }
+                    <text class="chart-label" x="@Number(center)" y="290" text-anchor="middle">@Labels[index]</text>
+                </g>
+            }
+        </svg>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<string> Labels { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<SeriesData> Series { get; set; } = [];
+    [Parameter, EditorRequired] public string Description { get; set; } = "";
+
+    public sealed record SeriesData(string Name, string ColorClass, IReadOnlyList<decimal> Values);
+
+    private static string Number(decimal value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+}

@@ -2,7 +2,10 @@
 @attribute [Authorize]
 @inherits PageBase
 <PageTitle>Jaaroverzicht · Huishoudboek</PageTitle>
-@{ var overview = DetailedReporting.Year(State.Data, State.Year, State.Today, State.OwnerId); var maximum = Math.Max(1, overview.Months.Max(r => Math.Max(r.Income, Math.Max(r.Outflow, Math.Abs(r.Savings))))); }
+@{
+    var overview = DetailedReporting.Year(State.Data, State.Year, State.Today, State.OwnerId);
+    var actualMonths = overview.Months.Where(m => State.Year < State.Today.Year || (State.Year == State.Today.Year && m.Month <= State.Today.Month)).ToList();
+}
 <h1>Jaaroverzicht @State.Year</h1>
 <div class="metrics">
     <div class="card"><div class="metric-label">Inkomsten</div><div class="metric-value positive">@Money(overview.Income)</div></div>
@@ -10,18 +13,24 @@
     <div class="card"><div class="metric-label">Opzijgezet</div><div class="metric-value">@Money(overview.Savings)</div></div>
     <div class="card"><div class="metric-label">Over</div><div class="metric-value">@Money(overview.Available)</div></div>
 </div>
-<section class="card"><h2>Werkelijke bedragen per maand</h2><div class="legend"><span>● Inkomsten</span><span>● Lasten</span><span>● Opzijgezet</span></div>
-<div class="table-scroll"><div class="chart" role="img" aria-label="Maandbedragen; exacte waarden staan in de tabel hieronder">
-    @foreach (var row in overview.Months)
-    { <div class="chart-month"><div class="bars"><div class="bar" style="height:@Height(row.Income, maximum)px" title="@Money(row.Income)"></div><div class="bar outflow" style="height:@Height(row.Outflow, maximum)px" title="@Money(row.Outflow)"></div><div class="bar savings" style="height:@Height(Math.Abs(row.Savings), maximum)px" title="@Money(row.Savings)"></div></div><small>@MonthName(row.Month)</small></div> }
-</div></div><p class="muted">Alleen boekingen t/m vandaag. Netto-opnamen hebben een absolute balkhoogte; de tabel toont het negatieve bedrag.</p>
+<section class="card"><h2>Werkelijke bedragen per maand</h2>
+<CashFlowChart Labels="actualMonths.Select(m => MonthName(m.Month)).ToList()"
+    Series='@(new CashFlowChart.SeriesData[] {
+        new("Inkomsten", "series-income", actualMonths.Select(m => m.Income).ToList()),
+        new("Lasten", "series-outflow", actualMonths.Select(m => m.Outflow).ToList()),
+        new("Opzijgezet", "series-savings", actualMonths.Select(m => m.Savings).ToList()),
+        new("Over", "series-available", actualMonths.Select(m => m.Available).ToList()) })'
+    Description="Inkomsten, lasten, netto opzijgezet en over per maand. Negatieve bedragen staan onder de nullijn; exacte waarden staan in de tabel hieronder." />
+<p class="muted">Alleen boekingen t/m vandaag; de huidige maand is nog onvolledig. Toekomstige maanden zijn niet getekend. Negatief opzijgezet = netto opgenomen uit sparen of beleggen. Over = inkomsten min lasten en opzijgezet; geen rekeningsaldo.</p>
 <div class="table-scroll"><table><thead><tr><th>Maand</th><th class="money">Inkomsten</th><th class="money">Lasten</th><th class="money">Opzijgezet</th><th class="money">Over</th></tr></thead><tbody>
     @foreach (var row in overview.Months) { <tr><td>@MonthName(row.Month)</td><td class="money">@Money(row.Income)</td><td class="money">@Money(row.Outflow)</td><td class="money">@Money(row.Savings)</td><td class="money">@Money(row.Available)</td></tr> }
 </tbody></table></div></section>
-<section class="card"><h2>Jaaruitgaven per categorie</h2><div class="table-scroll"><table><thead><tr><th>Categorie</th><th class="money">Jaarbudget (12 maanden)</th><th class="money">Werkelijk uitgegeven</th></tr></thead><tbody>
+<section class="card"><h2>Jaaruitgaven per categorie</h2>
+<CategorySpendingChart Categories="overview.Categories" />
+<p class="muted">Budgetmarkeringen tonen het volledige jaarbudget (12 maanden), niet het budget tot vandaag. Budgetten zijn huishoudbudgetten, ook met eigenaarfilter.</p>
+<div class="table-scroll"><table><thead><tr><th>Categorie</th><th class="money">Jaarbudget (12 maanden)</th><th class="money">Werkelijk uitgegeven</th></tr></thead><tbody>
     @foreach (var row in overview.Categories) { <tr><td>@row.Name</td><td class="money">@Money(row.Budget)</td><td class="money">@Money(row.Spent)</td></tr> }
 </tbody></table></div></section>
 @code {
     private static string MonthName(int month) => CultureInfo.GetCultureInfo("nl-NL").DateTimeFormat.GetAbbreviatedMonthName(month);
-    private static string Height(decimal amount, decimal maximum) => (amount / maximum * 180).ToString("0.##", CultureInfo.InvariantCulture);
 }

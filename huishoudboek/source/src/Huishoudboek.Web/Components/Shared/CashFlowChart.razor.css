@@ -1,0 +1,18 @@
+.cashflow-legend { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin: 1rem 0; }
+.cashflow-legend span { display: inline-flex; align-items: center; gap: .45rem; }
+.chart-key { display: inline-block; width: 13px; height: 13px; background: var(--series-color); }
+.series-income { --series-color: #087f75; }
+.series-outflow { --series-color: #be6432; }
+.series-savings { --series-color: #526dc1; }
+.series-available { --series-color: #8556a3; }
+.series-forecast { --series-color: #5c86ab; }
+.chart-key.series-forecast { background: #d7e5ef; border: 2px dashed #5c86ab; }
+.cashflow-chart { display: block; width: 100%; min-width: 600px; }
+.annual-chart { min-width: 850px; }
+.chart-grid line { stroke: #dce4ed; stroke-dasharray: 3 4; }
+.chart-grid text, .chart-label { fill: #607188; font-size: 16px; font-family: inherit; }
+.chart-label { fill: #213247; }
+.chart-zero { stroke: #607188; stroke-width: 1.5; }
+.cashflow-bar { fill: var(--series-color); }
+.cashflow-bar.series-forecast { fill: #d7e5ef; stroke: #5c86ab; stroke-width: 2; stroke-dasharray: 4 3; }
+.cashflow-bar:focus, .cashflow-bar:hover { opacity: .75; stroke: #213247; stroke-width: 2; outline: none; }

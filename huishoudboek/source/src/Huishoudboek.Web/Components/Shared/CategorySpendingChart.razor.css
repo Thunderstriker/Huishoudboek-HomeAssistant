@@ -1,0 +1,12 @@
+.spending-chart { display: grid; gap: 1.1rem; }
+.spending-label { display: flex; justify-content: space-between; gap: .75rem; margin-bottom: .35rem; }
+.spending-label strong { overflow-wrap: anywhere; }
+.spending-label span { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.spending-track { position: relative; height: 14px; background: #edf2f7; border-radius: 3px; margin-right: 2px; }
+.spending-fill { height: 100%; background: #087f75; border-radius: 3px; }
+.spending-fill.over-budget { background: #ad3535; }
+.budget-marker { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #213247; transform: translateX(-1px); }
+.chart-note { margin: 1.25rem 0 0; }
+@media (max-width: 700px) {
+    .spending-label { flex-wrap: wrap; gap: .1rem .75rem; }
+}

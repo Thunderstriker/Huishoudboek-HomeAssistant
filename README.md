@@ -1,97 +1,107 @@
 # Huishoudboek voor Home Assistant
 
-Volledig lokaal huishoudboek in de Home Assistant-zijbalk: transacties,
-categorisatie, rekeningen/eigenaren, budgetten, prognoses, vaste posten,
-hypotheek, Excel/CSV-import, export en databaseback-ups. Nederlands, EUR.
+Een lokaal, Nederlandstalig huishoudboek in de Home Assistant-zijbalk.
+Houd inkomsten, uitgaven, budgetten en spaargeld bij zonder cloudverbinding,
+automatische bankkoppeling of aparte Windows-backend. Alle bedragen zijn in EUR.
 
-**Dit is een app-/add-onrepository, niet HACS.** De app draait in Home Assistant OS
-op amd64/x64, bijvoorbeeld een VM op een Windows-pc. De host en VM moeten aan
-blijven; een Windows-financebackend is niet nodig.
+Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
 
-## Zelf op GitHub publiceren
+## Functies
 
-1. Maak een **publieke GitHub-repository** in uw eigen account. De naam is vrij:
-   bijvoorbeeld `huishoudboek-home-assistant`. Er is geen vaste gebruikersnaam,
-   repository-URL of containerregister ingesteld.
-2. Pak `Huishoudboek-HomeAssistant-Repository.zip` uit.
-3. Upload de **inhoud** naar de hoofdmap van uw repository en commit. De structuur
-   moet direct zo zijn, zonder extra omvattende map:
+- **Maandoverzicht:** inkomsten, lasten, netto opzijgezet en het bedrag dat overblijft,
+  met uitgaven per categorie, budgetmarkeringen en zichtbare overschrijdingen.
+- **Maandprognose:** vergelijk werkelijke inkomsten, lasten en het resterende bedrag
+  met de schatting voor het einde van de maand.
+- **Jaaroverzicht:** vergelijk inkomsten, lasten, sparen en het resterende bedrag per
+  maand, plus jaaruitgaven per categorie tegenover het volledige jaarbudget.
+- **Transacties en budgetten:** categorieën, categorisatieregels, maandafwijkingen,
+  vaste posten en filters per eigenaar.
+- **Rekeningen en vermogen:** betaal- en spaarrekeningen, beleggen, eigenaren en hypotheek.
+- **Import en export:** Excel/CSV-import, automatische herkenning van Argenta-exports,
+  CSV-export en volledige databaseback-ups met herstel.
+- **Bestaande administratie:** importeer een Huishoudboek-database (`.db`) of begin
+  met een lege administratie.
 
-   ```text
-   repository.yaml
-   README.md
-   .gitignore
-   huishoudboek/
-     config.yaml
-     Dockerfile
-     .dockerignore
-     DOCS.md
-     source/
-       Directory.Build.props
-       src/
-         Huishoudboek.Core/
-         Huishoudboek.Infrastructure/
-         Huishoudboek.Web/
-         Huishoudboek.Service/
-   ```
+De grafieken behouden tabellen of samenvattingen met exacte bedragen.
+Negatieve spaarbijdragen en tekorten staan onder de nullijn. Op kleine schermen
+kunt u de bedragengrafieken horizontaal verschuiven.
 
-4. Publiceer **geen database, back-up, bankexport of lokale serviceconfiguratie**.
-   Het gegenereerde pakket bevat alleen geselecteerde applicatiebroncode en
-   documentatie. Uw financiële gegevens worden pas na installatie in de app
-   geïmporteerd en komen niet op GitHub.
+## Installeren
 
-Geen GitHub Actions, GitHub-token, GHCR-account of vooraf gepubliceerde
-container-images nodig. De Home Assistant-VM bouwt tijdens installatie zelf
-vanuit de meegeleverde broncode. Daarom heeft de appconfiguratie bewust geen
-`image`-verwijzing. De eerste installatie/update kan een paar minuten duren en
-vraagt extra VM-geheugen, opslag en internet voor de officiële .NET SDK/runtime
-en NuGet-pakketten. De SDK blijft buiten het uiteindelijke runtime-image.
+1. Open in Home Assistant **Instellingen → Apps/Add-ons → Appwinkel → ⋮ → Repositories**.
+2. Voeg deze repository toe:
+   `https://github.com/Thunderstriker/Huishoudboek-HomeAssistant`.
+3. Zoek **Huishoudboek** en kies **Installeren**.
+4. Controleer de tijdzone, standaard `Europe/Amsterdam`, en kies **Starten**.
+5. Open de webinterface of kies **Tonen in zijbalk**. Uw Home Assistant-aanmelding
+   geeft toegang; een apart appwachtwoord of API-token is niet nodig.
+6. Maak eigenaren en rekeningen aan, of kies **Bestaande database importeren**.
 
-Voor brede distributie zijn vooraf gebouwde images sneller; die zijn in deze
-eenvoudige, accountonafhankelijke repository niet ingesteld. De broncode alleen
-publiek uploaden kiest niet automatisch een opensourcelicentie. Bepaal zelf de
-licentie/rechten voordat u het gebruik door anderen toestaat.
+Home Assistant bouwt de app vanuit de broncode in deze repository. Er zijn geen
+vooraf gebouwde container-images. Installatie en updates vragen daarom internet,
+extra opslag en geheugen voor de .NET 10 SDK en NuGet-pakketten. Normaal gebruik
+heeft daarna geen internet nodig. De Home Assistant-host moet blijven draaien.
 
-## In Home Assistant installeren
+### Architecturen
 
-1. Open **Instellingen → Apps/Add-ons → Appwinkel → ⋮ → Repositories**.
-2. Voeg de URL van **uw repository** toe, bijvoorbeeld:
-   `https://github.com/UW-ACCOUNT/UW-REPOSITORY`.
-   Gebruik de repository-URL, niet de ZIP-download, een Release of `/tree/...`.
-3. Zoek **Huishoudboek**, kies **Installeren**, daarna **Starten** en desgewenst
-   **Tonen in zijbalk**. Controleer de tijdzone (standaard `Europe/Amsterdam`).
-4. Open de webinterface. Alleen uw **Home Assistant-aanmelding** is nodig;
-   geen apart appwachtwoord, certificaat of API-token instellen.
-5. Kies **Bestaande database importeren** en importeer uw bestaande Huishoudboek
-   `.db` of databaseback-up. Daarna staat de actieve database volledig in de
-   permanente Home Assistant-appopslag. Uw Windows-bronbestand blijft ongewijzigd.
+Gebruik Home Assistant OS met Supervisor, bij voorkeur op **amd64/x64**.
+De configuratie vermeldt ook `aarch64`, `armhf`, `armv7` en `i386`.
+Voor `aarch64` is de containerbuild ingericht, maar controleer de werking op uw
+doelapparaat. De huidige Microsoft .NET 10-container-images ondersteunen geen
+32-bit ARM of i386; installatie op `armhf`, `armv7` en `i386` zal daarmee mislukken.
 
-Gebruik bij voorkeur een back-up uit de Windows-app. Sluit anders zowel de app
-als de financiële Windows-service voordat u een raw `.db` kopieert; een kopie
-van alleen een actieve database kan recente SQLite-WAL-wijzigingen missen.
+## Overzichten Lezen
 
-Meer uitleg: [Documentatie](huishoudboek/DOCS.md).
+- Werkelijke bedragen bevatten alleen boekingen tot en met vandaag. De huidige
+  maand is dus nog onvolledig; toekomstige maanden staan niet in de jaargrafiek.
+- **Over** betekent inkomsten min lasten en netto opzijgezet. Het is geen rekeningsaldo.
+- **Negatief opzijgezet** betekent dat er netto geld uit sparen of beleggen is opgenomen.
+- **Budget 0** betekent geen ingestelde limiet. Jaarbudgetten beslaan alle twaalf
+  maanden, ook wanneer het jaar nog niet voorbij is.
+- Budgetten gelden voor het huishouden, ook wanneer u op een eigenaar filtert.
+- Prognoses zijn schattingen op basis van geregistreerde boekingen, vaste posten
+  en het waargenomen uitgavenpatroon. Onvolledige imports kunnen het beeld vertekenen.
 
-## Updates en een stabiele repository
+## Gegevens en Back-ups
 
-- Account en repositorynaam zijn vrij, maar houd **na installatie de repository-URL,
-  appmap `huishoudboek` en `slug` stabiel**. Een andere repository kan door Home
-  Assistant als een andere app worden behandeld, met andere opslag.
-- Publiceer bij een update de bijgewerkte broncode en documentatie. Verhoog
-  `version` in `huishoudboek/config.yaml` en houd het versielabel in de Dockerfile
-  gelijk. Werk daarna bij via de Home Assistant-appwinkel.
-- Verwijder/herinstalleer de app niet om bij te werken. Maak eerst een back-up;
-  normaal bijwerken behoudt de permanente opslag.
-- Overstappen van een eerdere **lokale** installatie naar deze repository is geen
-  automatische datamigratie. Download eerst een databaseback-up, installeer de
-  repository-app en importeer de back-up daar. Bewerk niet beide kopieën verder.
+De administratie staat in de permanente private opslag van de Home Assistant-app.
+Er is geen synchronisatie met een eventuele Windows-kopie.
 
-## Status
+Gebruik voor database-import bij voorkeur een back-up uit Huishoudboek. Sluit
+anders zowel de Windows-app als de financiële Windows-service voordat u een
+`.db` kopieert: een kopie van een actieve SQLite-database kan recente wijzigingen missen.
+Database-import vervangt de volledige administratie en voegt geen databases samen.
 
-Experimentele eerste versie, alleen amd64. De financiële logica, database-import
-en ingress zijn geautomatiseerd getest, inclusief Linux-container en browser.
-Een echte installatie vanuit uw GitHub-repository in Home Assistant OS moet nog
-in de doelomgeving worden gecontroleerd. De app gebruikt geen MQTT, cloud,
-telemetry of automatische bankverbinding. Database/back-ups zijn niet door de
-app versleuteld. Alle toegelaten ingress-gebruikers hebben volledige financiële
-rechten; de interne ingresscontrole voorkomt directe toegang buiten de HA-gate.
+Maak regelmatig een databaseback-up via **Beheer & import** en bewaar een kopie
+buiten Home Assistant. CSV-export is geen volledige back-up. Databasebestanden
+en back-ups worden niet door de app versleuteld; publiceer ze nooit in deze repository.
+
+## Bijwerken
+
+Maak eerst een back-up en werk vervolgens bij via de Home Assistant-appwinkel.
+Normale updates behouden de permanente opslag. Verwijder de app niet als
+updateprocedure en houd de repository-URL en app-slug gelijk.
+
+Wijzigingen per versie staan in de [changelog](huishoudboek/CHANGELOG.md).
+
+## Beveiliging
+
+De webinterface is alleen bereikbaar via Home Assistant-ingress, zonder externe
+app-poort. Alle toegelaten ingress-gebruikers hebben dezelfde volledige financiële
+rechten. Geef daarom alleen vertrouwde personen toegang. Er is geen cloud,
+telemetrie, MQTT of automatische bankverbinding.
+
+Meer informatie over database-import, opslag en veiligheidsbeperkingen:
+[documentatie](huishoudboek/DOCS.md).
+
+## Ontwikkelen
+
+De app gebruikt .NET 10, Blazor Interactive Server en SQLite. De broncode staat
+onder `huishoudboek/source/src`, verdeeld over Core, Infrastructure, Web en Service.
+
+```powershell
+dotnet build huishoudboek/source/src/Huishoudboek.Service/Huishoudboek.Service.csproj
+```
+
+Voor een nieuwe appversie moeten `version` in `huishoudboek/config.yaml` en het
+`io.hass.version`-label in `huishoudboek/Dockerfile` gelijk zijn. Werk ook de changelog bij.

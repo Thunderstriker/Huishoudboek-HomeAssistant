@@ -1,23 +1,49 @@
 # Huishoudboek voor Home Assistant
 
-Een volledig lokaal, Nederlandstalig huishoudboek in de Home Assistant-zijbalk.
-Inclusief maand-/jaaroverzicht, transacties, categorisatie, rekeningen/eigenaren,
-budgetten, vaste posten, hypotheek, Excel/CSV-import, regels, export en back-up/herstel.
-EUR, geen MQTT, cloud, telemetry of automatische bankverbinding.
+Een lokaal, Nederlandstalig huishoudboek in uw Home Assistant-zijbalk.
+Beheer transacties, rekeningen, eigenaren, budgetten, vaste posten en hypotheek
+zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
 
-Importeer uw **bestaande Huishoudboek-database (.db)**. Daarna draait de administratie
-volledig in de opslag van deze app, zonder Windows-backend of gedeelde netwerkmap.
+## Inzicht in Uw Financiën
 
-Deze eerste versie is voor **Home Assistant OS op amd64/x64**, bijvoorbeeld een VM
-op een Windows-pc. De host en VM moeten blijven draaien. De Windows-financeapp niet.
-De installatie in een echte Supervisor moet nog in uw doelomgeving worden gecontroleerd.
-Zie **Documentatie** voor installatie, database-import en veiligheidsbeperkingen.
+- **Maandoverzicht:** uitgaven per categorie met budgetmarkeringen, percentages
+  en overschrijdingen, plus werkelijke bedragen tegenover de maandprognose.
+- **Jaaroverzicht:** maandelijkse inkomsten, lasten, netto opzijgezet en het bedrag
+  dat overblijft, plus categorie-uitgaven tegenover het volledige jaarbudget.
+- Negatieve bedragen staan onder de nullijn; exacte bedragen blijven beschikbaar
+  in tabellen of samenvattingen. Grafieken zijn op kleine schermen horizontaal verschuifbaar.
+- Excel/CSV-import met automatische Argenta-herkenning, categorisatieregels,
+  CSV-export en volledige databaseback-ups met herstel.
 
-Publiceren vanuit de bron: `Publish-HuishoudboekHomeAssistant.ps1`.
-Installeer de complete gegenereerde map, niet alleen deze metadata.
+**Over** is inkomsten min lasten en netto opzijgezet, geen rekeningsaldo.
+Prognoses zijn schattingen; werkelijke bedragen bevatten alleen boekingen tot
+en met vandaag. Budget 0 betekent geen limiet. Jaarbudgetten beslaan twaalf maanden.
 
-Liever via uw eigen GitHub-repository installeren? Genereer met
-`Publish-HuishoudboekHomeAssistantRepository.ps1` een accountonafhankelijk
-broncoderepositorypakket. Upload de inhoud naar uw eigen publieke repository
-en voeg die URL toe aan de Home Assistant-appwinkel. Geen GitHub-token of
-vooraf gepubliceerde container-image nodig; Home Assistant bouwt de broncode.
+## Beginnen
+
+Installeer Huishoudboek via de Home Assistant-appwinkel met deze repository:
+`https://github.com/Thunderstriker/Huishoudboek-HomeAssistant`.
+Controleer de tijdzone, start de app en open de webinterface via Home Assistant.
+Een apart appwachtwoord of API-token is niet nodig.
+
+Begin met een lege administratie of importeer uw bestaande Huishoudboek-database
+(`.db`) via **Beheer & import**. Importeren vervangt de volledige administratie.
+De actieve database blijft daarna in de permanente opslag van deze app.
+Er is geen synchronisatie met een Windows-kopie.
+
+Home Assistant bouwt de app vanuit de meegeleverde broncode. Gebruik bij voorkeur
+amd64/x64; aarch64 is ook geconfigureerd. De vermelde 32-bit architecturen
+armhf, armv7 en i386 werken niet met de huidige .NET 10-container-images.
+
+## Privacy en Back-ups
+
+Geen MQTT, cloud, telemetrie of automatische bankverbinding. Alle toegelaten
+ingress-gebruikers hebben volledige financiële rechten. Database en back-ups
+zijn niet door de app versleuteld.
+
+Maak regelmatig een databaseback-up en altijd vóór een update. Werk bij via de
+appwinkel; verwijder de app niet om bij te werken. CSV-export is geen volledige back-up.
+
+Zie de [repository-README](../README.md) voor installatie en ontwikkeling,
+[documentatie](DOCS.md) voor database-import en veiligheidsbeperkingen en de
+[changelog](CHANGELOG.md) voor wijzigingen per versie.
