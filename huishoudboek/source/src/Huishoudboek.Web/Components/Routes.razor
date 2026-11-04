@@ -1,9 +1,9 @@
 <Router AppAssembly="typeof(App).Assembly">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
-            <NotAuthorized><p>Uw sessie is verlopen. <a href="login" data-enhance-nav="false">Opnieuw aanmelden</a></p></NotAuthorized>
+            <NotAuthorized><p>@L["SessionExpired"] <a href="login" data-enhance-nav="false">@L["SignInAgain"]</a></p></NotAuthorized>
         </AuthorizeRouteView>
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
-    <NotFound><LayoutView Layout="typeof(MainLayout)"><h1>Pagina niet gevonden</h1><a href="">Naar maandoverzicht</a></LayoutView></NotFound>
+    <NotFound><LayoutView Layout="typeof(MainLayout)"><h1>@L["PageNotFound"]</h1><a href="">@L["GoToMonthlyOverview"]</a></LayoutView></NotFound>
 </Router>

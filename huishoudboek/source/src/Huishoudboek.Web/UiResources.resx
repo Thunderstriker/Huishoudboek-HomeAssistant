@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <data name="Language" xml:space="preserve"><value>Taal</value></data>
+  <data name="ApplyLanguage" xml:space="preserve"><value>Taal toepassen</value></data>
+  <data name="LanguageReloadWarning" xml:space="preserve"><value>Taal wijzigen herlaadt de pagina. Sla uw wijzigingen eerst op.</value></data>
+  <data name="SkipToContent" xml:space="preserve"><value>Naar inhoud</value></data>
+  <data name="Tagline" xml:space="preserve"><value>Rust in uw financiën</value></data>
+  <data name="MainNavigation" xml:space="preserve"><value>Hoofdnavigatie</value></data>
+  <data name="LocalPrivate" xml:space="preserve"><value>Lokaal · EUR · privé</value></data>
+  <data name="NoBankConnection" xml:space="preserve"><value>Geen bankverbinding</value></data>
+  <data name="HouseholdFilterNote" xml:space="preserve"><value>Hele huishouden · gedeelde rekeningen tellen één keer mee.</value></data>
+  <data name="OwnerFilterNote" xml:space="preserve"><value>Eigenaarfilter · volledige gedeelde saldi; budgetten blijven huishoudbudgetten.</value></data>
+  <data name="RefreshHint" xml:space="preserve"><value>Ook wijzigingen van andere browsers en de desktop laden</value></data>
+  <data name="Refresh" xml:space="preserve"><value>↻ Vernieuwen</value></data>
+  <data name="PreviousMonth" xml:space="preserve"><value>Vorige maand</value></data>
+  <data name="NextMonth" xml:space="preserve"><value>Volgende maand</value></data>
+  <data name="Month" xml:space="preserve"><value>Maand</value></data>
+  <data name="Year" xml:space="preserve"><value>Jaar</value></data>
+  <data name="Owner" xml:space="preserve"><value>Eigenaar</value></data>
+  <data name="AllOwners" xml:space="preserve"><value>Alle eigenaren</value></data>
+  <data name="SignOut" xml:space="preserve"><value>Afmelden</value></data>
+  <data name="LoadingRecords" xml:space="preserve"><value>Administratie laden…</value></data>
+  <data name="LocalConnectionNote" xml:space="preserve"><value>Alleen verbinding met uw lokale service.</value></data>
+  <data name="FooterNote" xml:space="preserve"><value>Gedeelde administratie · bedragen uit geregistreerde gegevens ·</value></data>
+  <data name="BackupAdministration" xml:space="preserve"><value>Back-up &amp; beheer</value></data>
+  <data name="MonthlyOverview" xml:space="preserve"><value>Maandoverzicht</value></data>
+  <data name="AnnualOverview" xml:space="preserve"><value>Jaaroverzicht</value></data>
+  <data name="Transactions" xml:space="preserve"><value>Transacties</value></data>
+  <data name="Categorize" xml:space="preserve"><value>Categoriseren</value></data>
+  <data name="MatchTransfers" xml:space="preserve"><value>Transfers koppelen</value></data>
+  <data name="Accounts" xml:space="preserve"><value>Rekeningen</value></data>
+  <data name="Budgets" xml:space="preserve"><value>Budgetten</value></data>
+  <data name="RecurringPayments" xml:space="preserve"><value>Vaste posten</value></data>
+  <data name="Mortgage" xml:space="preserve"><value>Hypotheek</value></data>
+  <data name="AdministrationImport" xml:space="preserve"><value>Beheer &amp; import</value></data>
+  <data name="RecordsRefreshed" xml:space="preserve"><value>Actuele administratie geladen. Niet opgeslagen formulieren zijn niet opnieuw toegepast.</value></data>
+  <data name="ConnectionInterrupted" xml:space="preserve"><value>Verbinding met de service onderbroken</value></data>
+  <data name="ReconnectWarning" xml:space="preserve"><value>Wacht op herstel. Een onderbroken antwoord kan betekenen dat een wijziging wel is opgeslagen. Controleer vóór opnieuw opslaan.</value></data>
+  <data name="ReconnectSignIn" xml:space="preserve"><value>Opnieuw verbinden / aanmelden</value></data>
+  <data name="UnexpectedErrorWarning" xml:space="preserve"><value>Er is een fout opgetreden. Controleer uw gegevens vóór opnieuw opslaan.</value></data>
+  <data name="Reload" xml:space="preserve"><value>Opnieuw laden</value></data>
+  <data name="SessionExpired" xml:space="preserve"><value>Uw sessie is verlopen.</value></data>
+  <data name="SignInAgain" xml:space="preserve"><value>Opnieuw aanmelden</value></data>
+  <data name="PageNotFound" xml:space="preserve"><value>Pagina niet gevonden</value></data>
+  <data name="GoToMonthlyOverview" xml:space="preserve"><value>Naar maandoverzicht</value></data>
+  <data name="Confirm" xml:space="preserve"><value>Bevestigen</value></data>
+  <data name="ImmediateSaveNote" xml:space="preserve"><value>Deze handeling wordt direct opgeslagen. Annuleren wijzigt niets.</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Annuleren</value></data>
+  <data name="Save" xml:space="preserve"><value>Opslaan</value></data>
+  <data name="Previous" xml:space="preserve"><value>Vorige</value></data>
+  <data name="Next" xml:space="preserve"><value>Volgende</value></data>
+  <data name="PagerSummary" xml:space="preserve"><value>{0} regels · pagina {1} van {2}</value></data>
+  <data name="TransferFrom" xml:space="preserve"><value>Van:</value></data>
+  <data name="TransferTo" xml:space="preserve"><value>Naar:</value></data>
+</root>

@@ -2,8 +2,8 @@
 <Modal Title="@Title" Cancel="Cancel">
     <p class="preserve-lines">@Text</p>
     @if (State.IsError) { <p class="notice error" role="alert">@State.Message</p> }
-    <p class="muted">Deze handeling wordt direct opgeslagen. Annuleren wijzigt niets.</p>
-    <div class="actions"><button type="button" autofocus @onclick="Cancel">Annuleren</button><button type="button" class="danger" @onclick="Accept">@ActionLabel</button></div>
+    <p class="muted">@L["ImmediateSaveNote"]</p>
+    <div class="actions"><button type="button" autofocus @onclick="Cancel">@L["Cancel"]</button><button type="button" class="danger" @onclick="Accept">@ActionLabel</button></div>
 </Modal>
 @code {
     [Parameter] public string Title { get; set; } = "Bevestigen";

@@ -3,46 +3,53 @@
 @inject WebState State
 @inject IJSRuntime JS
 @inject WebHostSettings HostSettings
+@inject NavigationManager NavigationManager
 
-<a class="skip-link" href="#content">Naar inhoud</a>
+<a class="skip-link" href="#content">@L["SkipToContent"]</a>
 <div class="app-shell">
     <aside class="sidebar">
-        <div class="brand">huishoudboek<small>Rust in uw financiën</small></div>
-        <nav aria-label="Hoofdnavigatie">
+        <div class="brand">huishoudboek<small>@L["Tagline"]</small></div>
+        <nav aria-label="@L["MainNavigation"]">
             @foreach (var entry in Navigation)
             {
-                <NavLink href="@entry.Path.TrimStart('/')" Match="@(entry.Path == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)"><span aria-hidden="true">@entry.Symbol</span>@entry.Label</NavLink>
+                <NavLink href="@entry.Path.TrimStart('/')" Match="@(entry.Path == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)"><span aria-hidden="true">@entry.Symbol</span>@L[entry.Label]</NavLink>
             }
         </nav>
-        <p class="sidebar-note">Lokaal · EUR · privé<br />Geen bankverbinding</p>
+        <p class="sidebar-note">@L["LocalPrivate"]<br />@L["NoBankConnection"]</p>
     </aside>
     <div class="workspace">
         <header class="topbar">
-            <div><strong>Huishoudboek · @(HostSettings.HomeAssistant ? "Home Assistant" : "website")</strong><small>@(State.OwnerId == null ? "Hele huishouden · gedeelde rekeningen tellen één keer mee." : "Eigenaarfilter · volledige gedeelde saldi; budgetten blijven huishoudbudgetten.")</small></div>
+            <div><strong>Huishoudboek · @(HostSettings.HomeAssistant ? "Home Assistant" : "website")</strong><small>@L[State.OwnerId == null ? "HouseholdFilterNote" : "OwnerFilterNote"]</small></div>
             <div class="toolbar">
-                <button title="Ook wijzigingen van andere browsers en de desktop laden" disabled="@State.Busy" @onclick="Reload">↻ Vernieuwen</button>
-                <button aria-label="Vorige maand" @onclick="() => Shift(-1)">‹</button>
-                <label class="compact"><span class="sr-only">Maand</span><select @bind="State.Month" @bind:after="State.Notify">@for (var m = 1; m <= 12; m++) { <option value="@m">@CultureInfo.GetCultureInfo("nl-NL").DateTimeFormat.GetMonthName(m)</option> }</select></label>
-                <label class="compact"><span class="sr-only">Jaar</span><input type="number" min="1900" max="2200" value="@State.Year" @onchange="YearChanged" class="year" /></label>
-                <button aria-label="Volgende maand" @onclick="() => Shift(1)">›</button>
-                <label class="compact"><span class="sr-only">Eigenaar</span><select @bind="State.OwnerId" @bind:after="State.Notify"><option value="">Alle eigenaren</option>@foreach (var owner in State.Data.Owners) { <option value="@owner.Id">@owner.Name</option> }</select></label>
-                @if (!HostSettings.HomeAssistant) { <a class="button" href="signout" data-enhance-nav="false">Afmelden</a> }
+                <button title="@L["RefreshHint"]" disabled="@State.Busy" @onclick="Reload">@L["Refresh"]</button>
+                <button aria-label="@L["PreviousMonth"]" @onclick="() => Shift(-1)">‹</button>
+                <label class="compact"><span class="sr-only">@L["Month"]</span><select @bind="State.Month" @bind:after="State.Notify">@for (var m = 1; m <= 12; m++) { <option value="@m">@UiCulture.Culture.DateTimeFormat.GetMonthName(m)</option> }</select></label>
+                <label class="compact"><span class="sr-only">@L["Year"]</span><input type="number" min="1900" max="2200" value="@State.Year" @onchange="YearChanged" class="year" /></label>
+                <button aria-label="@L["NextMonth"]" @onclick="() => Shift(1)">›</button>
+                <label class="compact"><span class="sr-only">@L["Owner"]</span><select @bind="State.OwnerId" @bind:after="State.Notify"><option value="">@L["AllOwners"]</option>@foreach (var owner in State.Data.Owners) { <option value="@owner.Id">@owner.Name</option> }</select></label>
+                <form method="post" action="website/language" data-enhance="false" class="toolbar" title="@L["LanguageReloadWarning"]">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="returnPath" value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
+                    <label class="compact">@L["Language"]<select name="language" disabled="@State.Busy"><option value="nl" selected="@(UiCulture.Language == "nl")">Nederlands</option><option value="en" selected="@(UiCulture.Language == "en")">English</option></select></label>
+                    <button type="submit" disabled="@State.Busy">@L["ApplyLanguage"]</button>
+                </form>
+                @if (!HostSettings.HomeAssistant) { <a class="button" href="signout" data-enhance-nav="false">@L["SignOut"]</a> }
             </div>
         </header>
         <main id="content" aria-busy="@State.Busy">
             @if (!string.IsNullOrEmpty(State.Message)) { <div id="message" class="notice @(State.IsError ? "error" : "success")" role="status" aria-live="polite">@State.Message</div> }
             @if (State.Loaded) { <div id="application"><fieldset class="page-fieldset" disabled="@State.Busy">@Body</fieldset></div> }
-            else { <h1>Administratie laden…</h1><p>Alleen verbinding met uw lokale service.</p> }
+            else { <h1>@L["LoadingRecords"]</h1><p>@L["LocalConnectionNote"]</p> }
         </main>
-        <footer>Gedeelde administratie · bedragen uit geregistreerde gegevens · <a href="beheer">Back-up &amp; beheer</a></footer>
+        <footer>@L["FooterNote"] <a href="beheer">@L["BackupAdministration"]</a></footer>
     </div>
 </div>
 
 @code {
     private static readonly (string Path, string Symbol, string Label)[] Navigation = [
-        ("/", "◷", "Maandoverzicht"), ("/jaar", "▥", "Jaaroverzicht"), ("/transacties", "⇄", "Transacties"),
-        ("/categoriseren", "✓", "Categoriseren"), ("/overboekingen", "⇆", "Transfers koppelen"), ("/rekeningen", "▣", "Rekeningen"), ("/budgetten", "◉", "Budgetten"),
-        ("/vaste-posten", "↻", "Vaste posten"), ("/hypotheek", "⌂", "Hypotheek"), ("/beheer", "⚙", "Beheer & import")];
+        ("/", "◷", "MonthlyOverview"), ("/jaar", "▥", "AnnualOverview"), ("/transacties", "⇄", "Transactions"),
+        ("/categoriseren", "✓", "Categorize"), ("/overboekingen", "⇆", "MatchTransfers"), ("/rekeningen", "▣", "Accounts"), ("/budgetten", "◉", "Budgets"),
+        ("/vaste-posten", "↻", "RecurringPayments"), ("/hypotheek", "⌂", "Mortgage"), ("/beheer", "⚙", "AdministrationImport")];
     protected override async Task OnInitializedAsync()
     {
         State.Changed += Changed;
@@ -54,7 +61,7 @@
     {
         if (!ready && State.Loaded) { ready = true; await JS.InvokeVoidAsync("huishoudboek.markReady"); }
     }
-    private async Task Reload() => await State.RunAsync(State.LoadAsync, "Actuele administratie geladen. Niet opgeslagen formulieren zijn niet opnieuw toegepast.");
+    private async Task Reload() => await State.RunAsync(State.LoadAsync, L["RecordsRefreshed"]);
     private void Shift(int step)
     {
         var date = new DateOnly(State.Year, State.Month, 1).AddMonths(step);

@@ -49,6 +49,6 @@ public sealed class WebState(IWebAdministration backend)
         var snapshot = await backend.UpdateAsync(revision ?? Revision, change);
         Data = snapshot.Data; Revision = snapshot.Revision; Notify();
     }
-    public static string Money(decimal amount) => amount.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    public static string Money(decimal amount) => UiCulture.Euro(amount);
     public static string Kind(AccountKind kind) => kind switch { AccountKind.Current => "Betaalrekening", AccountKind.Savings => "Spaarrekening", _ => "Effectenrekening" };
 }

@@ -42,6 +42,7 @@ public static class ServiceApplication
         if (homeAssistant.Enabled && !website.Enabled) throw new InvalidOperationException("Schakel de website in voor Home Assistant.");
         WebsiteAuthentication.Register(builder, website, options);
         builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+        WebsiteLanguage.Register(builder.Services);
         builder.Services.AddScoped<IWebAdministration, WebAdministration>();
         builder.Services.AddScoped<WebState>();
         builder.Services.AddSingleton(_ => new AdministrationCoordinator(options.DataDirectory, initialize, claim, allowUpgrade: homeAssistant.Enabled));
@@ -69,6 +70,7 @@ public static class ServiceApplication
             app.UseForwardedHeaders(forwarding);
         }
         app.UseRouting();
+        app.UseRequestLocalization();
         app.Use(async (context, next) =>
         {
             context.Response.Headers.CacheControl = "no-store";
@@ -125,6 +127,7 @@ public static class ServiceApplication
         app.MapGet("/favicon.ico", (HttpContext context) => Results.Redirect(context.Request.PathBase + "/_content/Huishoudboek.Web/favicon.svg"));
         if (homeAssistant.Enabled) app.MapGet("/health", () => Results.Text("ok"));
         WebsiteAuthentication.Map(app, website);
+        WebsiteLanguage.Map(app);
         app.MapGet("/website/backup", () => Results.File(coordinator.Backup(), "application/octet-stream", $"huishoudboek-backup-{DateTime.Now:yyyyMMdd-HHmmss}.db")).RequireAuthorization();
         app.MapGet("/website/export", () =>
         {

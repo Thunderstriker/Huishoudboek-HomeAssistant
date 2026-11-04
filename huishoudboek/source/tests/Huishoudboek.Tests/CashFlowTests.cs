@@ -510,7 +510,7 @@ public sealed class CashFlowTests
 
     private static async Task<string> Render<T>(HouseholdData data) where T : IComponent
     {
-        var services = new ServiceCollection(); services.AddLogging();
+        var services = new ServiceCollection(); services.AddLogging(); services.AddLocalization();
         services.AddSingleton<IWebAdministration>(new Backend(data)); services.AddSingleton<WebState>();
         using var provider = services.BuildServiceProvider(); await provider.GetRequiredService<WebState>().LoadAsync();
         await using var renderer = new HtmlRenderer(provider, provider.GetRequiredService<ILoggerFactory>());

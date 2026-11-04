@@ -1,6 +1,6 @@
 @inject NavigationManager Navigation
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="@UiCulture.Language">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -13,10 +13,10 @@
 <body>
     <Routes @rendermode="InteractiveServer" />
     <div id="components-reconnect-modal" role="alert" aria-live="assertive">
-        <h2>Verbinding met de service onderbroken</h2><p>Wacht op herstel. Een onderbroken antwoord kan betekenen dat een wijziging wel is opgeslagen. Controleer vóór opnieuw opslaan.</p>
-        <a href="" data-enhance-nav="false">Opnieuw verbinden / aanmelden</a>
+        <h2>@L["ConnectionInterrupted"]</h2><p>@L["ReconnectWarning"]</p>
+        <a href="" data-enhance-nav="false">@L["ReconnectSignIn"]</a>
     </div>
-    <div id="blazor-error-ui" role="alert">Er is een fout opgetreden. Controleer uw gegevens vóór opnieuw opslaan. <a href="" data-enhance-nav="false">Opnieuw laden</a></div>
+    <div id="blazor-error-ui" role="alert">@L["UnexpectedErrorWarning"] <a href="" data-enhance-nav="false">@L["Reload"]</a></div>
     <script src="_content/Huishoudboek.Web/site.js"></script>
     <script src="_framework/blazor.web.js"></script>
 </body>

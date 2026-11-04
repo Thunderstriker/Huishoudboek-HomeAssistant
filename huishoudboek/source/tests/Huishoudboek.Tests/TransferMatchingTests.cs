@@ -417,6 +417,7 @@ public sealed class TransferMatchingTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddLocalization();
         services.AddSingleton<IWebAdministration>(new ReadOnlyBackend(data));
         services.AddSingleton<WebState>();
         using var provider = services.BuildServiceProvider();

@@ -2,6 +2,16 @@
 
 ## 0.1.8
 
+- Taalkeuze in de werkbalk: Nederlands (standaard) en Engels, per browser onthouden.
+  Wijzigen van de taal herlaadt de pagina; sla open formulieren eerst op.
+- Vertaalbasis met standaard .NET-`.resx`-bestanden, benoemde sleutels en
+  `IStringLocalizer`. Navigatie, werkbalk, gedeelde knoppen, paginering en
+  verbindingsmeldingen zijn vertaald. Overige paginateksten zijn nog Nederlandstalig;
+  de Engelse vertaling is dus nog niet volledig.
+- Maandnamen en getoonde bedragen volgen de gekozen taal; de valuta blijft EUR.
+  Rekeningnamen, categorieën en bankomschrijvingen blijven ongewijzigd.
+- Lokalisatietests voor beide resourcebestanden, standaardtaal, ondersteunde
+  browservoorkeuren, veilige terugkeeradressen, EUR-notatie en Razor-weergave.
 - Bestedingsruimte vanaf vandaag per betaalrekening, tot het volgende inkomen,
   na bekende betalingen, dagelijkse uitgavenschatting en een instelbare cashbuffer.
 - Aankoopcontrole (bijvoorbeeld € 150), betalingen over 7/30 dagen, dagelijkse
