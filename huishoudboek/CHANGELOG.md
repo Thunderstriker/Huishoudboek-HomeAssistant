@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.10
+
+- Automatische dubbelcontrole bij bankimports verwijderd: alle geldige regels binnen
+  de gekozen periode zijn standaard geselecteerd, ook identieke en eerder geïmporteerde
+  boekingen. Handmatig uitvinken en invoervalidatie blijven behouden. Een afschrift
+  opnieuw importeren voegt de geselecteerde boekingen opnieuw toe.
+
 ## 0.1.9
 
 - Eerste-weekchecklist: eigenaren en rekeningen → beginsaldi → afschriften importeren

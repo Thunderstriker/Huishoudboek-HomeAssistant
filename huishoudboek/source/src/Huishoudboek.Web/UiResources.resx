@@ -526,7 +526,7 @@ Deze boeking vervangt alleen deze geplande betaling. Controleer dat het dezelfde
 {1} transacties en {2} vaste posten blijven bestaan en worden Zonder categorie.
 {3} regels, {4} maandbudgetten en standaardbudget {5} worden verwijderd.
 Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden. Geen directe undo; maak zo nodig eerst een back-up.</value></data>
-  <data name="ImportAccountNote" xml:space="preserve"><value>Elke import boekt alleen op de gekozen rekening, met het bedrag uit het bestand. Andere rekeningen worden niet automatisch gekoppeld of aangepast; importeer voor elke rekening het eigen bestand. Controleer dubbelen, valuta, rekening en openingsdatum. Er wordt pas na expliciete bevestiging opgeslagen.</value></data>
+  <data name="ImportAccountNote" xml:space="preserve"><value>Elke import boekt alleen op de gekozen rekening, met het bedrag uit het bestand. Andere rekeningen worden niet automatisch gekoppeld of aangepast; importeer voor elke rekening het eigen bestand. Er is geen dubbelfilter: hetzelfde afschrift opnieuw importeren voegt de boekingen opnieuw toe. Controleer valuta, rekening en openingsdatum. Er wordt pas na expliciete bevestiging opgeslagen.</value></data>
   <data name="AfterImportBothAccounts" xml:space="preserve"><value>Na import van beide rekeningen kunt u</value></data>
   <data name="ImportTransferReportingNote" xml:space="preserve"><value>voor rapportage, zonder extra boekingen of saldoaanpassingen.</value></data>
   <data name="ImportFileHint" xml:space="preserve"><value>Bestand (.xls, .xlsx of .csv; maximaal 50 MB en 100.000 niet-lege regels)</value></data>
@@ -552,17 +552,17 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="NoFileSelected" xml:space="preserve"><value>Geen bestand geselecteerd</value></data>
   <data name="UploadExpiryNote" xml:space="preserve"><value>Wijzigingen in instellingen maken het oude voorbeeld ongeldig. Verlaten uploads vervallen na 20 minuten; maximaal vier open uploads voor het huishouden.</value></data>
   <data name="UnsavedImportPreview" xml:space="preserve"><value>Importvoorbeeld · nog niet opgeslagen</value></data>
-  <data name="PreviewRowsNote" xml:space="preserve"><value>{0} regels · {1} geselecteerd. Waarschijnlijke dubbelen zijn niet voorgeselecteerd maar blijven expliciet selecteerbaar. Ongeldige regels kunnen niet worden opgeslagen.</value></data>
+  <data name="PreviewRowsNote" xml:space="preserve"><value>{0} regels · {1} geselecteerd. Alle geldige regels binnen de gekozen periode zijn standaard geselecteerd, ook gelijke of eerder geïmporteerde regels. U kunt regels handmatig uitvinken. Ongeldige regels kunnen niet worden opgeslagen.</value></data>
   <data name="Row" xml:space="preserve"><value>Regel</value></data>
   <data name="Check" xml:space="preserve"><value>Controle</value></data>
   <data name="SelectImportRow" xml:space="preserve"><value>Importregel selecteren</value></data>
   <data name="ImportRowCategory" xml:space="preserve"><value>Categorie importregel</value></data>
   <data name="SaveSelectedRows" xml:space="preserve"><value>Geselecteerde regels definitief opslaan</value></data>
   <data name="CommitImport" xml:space="preserve"><value>Import definitief opslaan</value></data>
-  <data name="CommitImportQuestion" xml:space="preserve"><value>{0} geselecteerde regels opslaan op {1}? Andere rekeningen blijven ongewijzigd. Controleer categorieën en expliciet geselecteerde dubbelen. Na opslaan verschijnt de saldocontrole.</value></data>
+  <data name="CommitImportQuestion" xml:space="preserve"><value>{0} geselecteerde regels opslaan op {1}? Andere rekeningen blijven ongewijzigd. Alle geselecteerde regels worden zonder dubbelfilter geïmporteerd. Controleer categorieën. Na opslaan verschijnt de saldocontrole.</value></data>
   <data name="SaveImport" xml:space="preserve"><value>Import opslaan</value></data>
   <data name="ImportCompleteBalanceCheck" xml:space="preserve"><value>Import voltooid — saldocontrole</value></data>
-  <data name="ImportSavedCount" xml:space="preserve"><value>{0} transacties opgeslagen. {1} regels niet geïmporteerd.</value></data>
+  <data name="ImportSavedCount" xml:space="preserve"><value>{0} transacties opgeslagen. {1} ongeldige of handmatig uitgevinkte regels niet geïmporteerd.</value></data>
   <data name="BalanceAsOf" xml:space="preserve"><value>Saldo per {0}: {1}</value></data>
   <data name="BalanceMatches" xml:space="preserve"><value>Saldo komt overeen</value></data>
   <data name="BalanceDifference" xml:space="preserve"><value>Verschil: {0} (berekend min bank)</value></data>
@@ -644,7 +644,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="AddExpense" xml:space="preserve"><value>Uitgave toevoegen</value></data>
   <data name="AddIncome" xml:space="preserve"><value>Inkomst toevoegen</value></data>
   <data name="AdvancedTransaction" xml:space="preserve"><value>Uitgebreide boeking</value></data>
-  <data name="SimpleEntryNote" xml:space="preserve"><value>Voer een positief bedrag in; de gekozen uitgave of inkomst bepaalt het teken. Voor transfers, hypotheekbetalingen en vaste-postkoppelingen gebruikt u de uitgebreide boeking. Importeert u later dezelfde boeking, controleer dan het importvoorbeeld op dubbelen.</value></data>
+  <data name="SimpleEntryNote" xml:space="preserve"><value>Voer een positief bedrag in; de gekozen uitgave of inkomst bepaalt het teken. Voor transfers, hypotheekbetalingen en vaste-postkoppelingen gebruikt u de uitgebreide boeking. Importeert u later dezelfde boeking, dan wordt deze opnieuw toegevoegd tenzij u de regel handmatig uitvinkt in het importvoorbeeld.</value></data>
   <data name="PositiveAmountEuro" xml:space="preserve"><value>Bedrag (€), positief</value></data>
   <data name="PositiveEntryAmountError" xml:space="preserve"><value>Voer een bedrag groter dan nul in.</value></data>
   <data name="ExpandTransaction" xml:space="preserve"><value>Details en acties uitklappen</value></data>

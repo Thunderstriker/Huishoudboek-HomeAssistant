@@ -153,9 +153,6 @@ public static class ImportService
             throw new InvalidDataException("Kies een datumkolom en omschrijvingskolom.");
         if (string.IsNullOrWhiteSpace(profile.AmountColumn) && (string.IsNullOrWhiteSpace(profile.DebitColumn) || string.IsNullOrWhiteSpace(profile.CreditColumn)))
             throw new InvalidDataException("Kies één bedragkolom, of zowel een af- als bij-kolom.");
-        var counts = data.Transactions.Where(t => t.AccountId == accountId)
-            .GroupBy(Signature).ToDictionary(g => g.Key, g => g.Count());
-        var seen = new Dictionary<string, int>();
         var result = new List<ImportRow>();
         var account = data.Accounts.Single(a => a.Id == accountId);
         var categoryChoices = new[] { new ImportCategoryChoice(null, "Zonder categorie") }
@@ -204,21 +201,16 @@ public static class ImportService
                 var balanceCell = Cell(row, profile.BalanceColumn, true);
                 var transaction = new Transaction { AccountId = accountId, Date = date, Description = description, Amount = amount,
                     StatementBalance = string.IsNullOrWhiteSpace(balanceCell.Text) ? null : ParseAmount(balanceCell, culture) };
-                var signature = Signature(transaction);
-                var occurrence = seen.GetValueOrDefault(signature) + 1;
-                seen[signature] = occurrence;
-                var exists = occurrence <= counts.GetValueOrDefault(signature);
-                var repeated = occurrence > 1;
                 // A statement row belongs only to the selected account, even when its counterparty is another own account.
                 Finance.ApplySuggestions(data, transaction);
                 var preview = new ImportRow
                 {
                     RowNumber = table.SourceRows?[i] ?? i + 2, Transaction = transaction,
                     CategoryChoices = categoryChoices,
-                    Note = exists ? "Al aanwezig; controleer vóór opnieuw importeren." :
-                        repeated ? "Gelijke regel in dit bestand; kan een aparte betaling zijn." : "Gereed"
+                    Note = "Gereed"
                 };
-                preview.Include = !exists && !repeated;
+                // Every valid statement row is selected, including identical payments and previously imported rows.
+                preview.Include = true;
                 result.Add(preview);
             }
             catch (Exception ex) when (ex is FormatException or InvalidDataException or OverflowException or ArgumentException)
@@ -228,8 +220,6 @@ public static class ImportService
         }
         return result;
     }
-
-    public static string Signature(Transaction t) => $"{t.AccountId:N}|{t.Date:yyyy-MM-dd}|{t.Amount.ToString("F2", CultureInfo.InvariantCulture)}|{t.Description.Trim().ToUpperInvariant()}";
 
     public static ImportProfile SuggestProfile(IReadOnlyList<string> headers)
     {

@@ -96,7 +96,8 @@ Bij **Transacties** bieden **Uitgave toevoegen** en **Inkomst toevoegen** een ko
 Voer een positief bedrag in; de knop bepaalt het teken. **Uitgebreide boeking** blijft
 beschikbaar voor transfers, hypotheekbetalingen en vaste-postkoppelingen. De editor
 verbergt tegenrekening/aflossing wanneer die niet van toepassing zijn. Importeert u later
-dezelfde handmatige boeking, controleer dan het voorbeeld op dubbelen.
+dezelfde handmatige boeking, dan wordt deze opnieuw toegevoegd tenzij u de regel
+handmatig uitvinkt in het importvoorbeeld.
 
 Op schermen tot 700 px vervangt een compacte lijst de transactietabel. Tik op een boeking
 voor de oorspronkelijke banktekst, eventuele hypotheek-/transfer-/vaste-postgegevens,
@@ -164,8 +165,11 @@ ander product en is niet automatisch met deze ingress-only app verbonden.
   rekeningen. Gebruik **Transfers koppelen** om twee bestaande bankboekingen voor
   rapportage te koppelen. Handmatig aangemaakte interne overboekingen werken wel
   beide rekeningen bij; combineer die niet met twee afzonderlijke statementboekingen.
-- Dubbelen worden gecontroleerd op rekening, datum, bedrag en omschrijving.
-  Boekingen op andere rekeningen houden een eigen import niet tegen.
+- Alle geldige regels binnen de gekozen periode zijn standaard geselecteerd, ook
+  identieke betalingen en regels die overeenkomen met bestaande boekingen. Er is
+  geen automatische dubbelcontrole. Hetzelfde afschrift opnieuw importeren voegt
+  alle geselecteerde boekingen opnieuw toe. Handmatig uitvinken blijft mogelijk;
+  ongeldige regels kunnen niet worden opgeslagen.
 - De update wijzigt bestaande opgeslagen overboekingen niet. Maak eerst een
   databaseback-up. Corrigeer een oude automatisch gekoppelde import via
   **Transacties → Bewerken**: kies de oorspronkelijke importrekening, het type

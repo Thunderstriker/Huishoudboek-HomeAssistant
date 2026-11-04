@@ -95,7 +95,7 @@ public sealed class AccountLocalImportTests
     }
 
     [Fact]
-    public void DuplicatesOnlyUseRowsOnTheSelectedAccount()
+    public void ExistingTransactionsNeverDeselectStatementRows()
     {
         var data = CreateData();
         var otherRow = Preview(data, 1).Transaction!;
@@ -104,9 +104,9 @@ public sealed class AccountLocalImportTests
 
         var ownRow = Preview(data).Transaction!;
         data.Transactions.Add(ownRow);
-        var duplicate = Preview(data);
-        Assert.False(duplicate.Include);
-        Assert.Contains("Al aanwezig", duplicate.Note);
+        var repeated = Preview(data);
+        Assert.True(repeated.Include);
+        Assert.Equal("Gereed", repeated.Note);
     }
 
     [Fact]
@@ -122,20 +122,96 @@ public sealed class AccountLocalImportTests
     }
 
     [Fact]
-    public void RepeatedRowsAndSourceAccountValidationStillWork()
+    public void RepeatedRowsAreSelectedAndSourceAccountValidationStillWorks()
     {
         var data = CreateData();
         var cells = Cells(data.Accounts[0], data.Accounts[1].BankReference, Amount);
         var table = new ImportTable(Headers, [cells, cells]);
         var rows = ImportService.Preview(table, Profile(), data.Accounts[0].Id, Date, Date, data);
         Assert.True(rows[0].Include);
-        Assert.False(rows[1].Include);
+        Assert.True(rows[1].Include);
         Assert.True(rows[1].IsValid);
+        Assert.Equal("Gereed", rows[1].Note);
 
         var wrongAccount = ImportService.Preview(table, Profile(), data.Accounts[1].Id, Date, Date, data);
-        Assert.All(wrongAccount, row => Assert.False(row.IsValid));
+        Assert.All(wrongAccount, row => { Assert.False(row.IsValid); Assert.False(row.Include); });
         data.Accounts[0].OpeningDate = Date.AddDays(1);
         Assert.False(Preview(data).IsValid);
+    }
+
+    [Fact]
+    public void DateRangeInvalidRowsAndManualDeselectionArePreserved()
+    {
+        var data = CreateData();
+        var table = new ImportTable(["Datum", "Omschrijving", "Bedrag"], [
+            new ImportCell[] { new("2026-11-02"), new("Buiten periode"), new("-1,00") },
+            new ImportCell[] { new("2026-11-03"), new("Betaling"), new("-1,00") },
+            new ImportCell[] { new("2026-11-03"), new("Betaling"), new("-1,00") },
+            new ImportCell[] { new("2026-11-03"), new("Ongeldig bedrag"), new("invalid") },
+            new ImportCell[] { new("invalid"), new("Ongeldige datum"), new("-1,00") },
+            new ImportCell[] { new("2026-11-04"), new("Buiten periode"), new("-1,00") }
+        ]);
+        var rows = ImportService.Preview(table, ImportService.SuggestProfile(table.Headers), data.Accounts[0].Id, Date, Date, data);
+
+        Assert.Equal(new[] { 3, 4, 5, 6 }, rows.Select(r => r.RowNumber));
+        Assert.All(rows.Take(2), row => Assert.True(row.Include));
+        rows[1].Include = false;
+        Assert.False(rows[1].Include);
+        Assert.All(rows.Skip(2), row =>
+        {
+            Assert.False(row.IsValid);
+            row.Include = true;
+            Assert.False(row.Include);
+        });
+    }
+
+    [Fact]
+    public async Task ThousandRepeatedStatementRowsAreAllSelectedAndSavedEvenOnReimport()
+    {
+        using var fixture = new ImportFixture();
+        var data = fixture.Coordinator.Read().Data;
+        var current = data.Accounts[0];
+        var savings = data.Accounts[1];
+        const int rowCount = 1000;
+        var culture = CultureInfo.GetCultureInfo("nl-NL");
+        var csv = new StringBuilder().AppendLine(string.Join(';', Headers));
+        for (var i = 1; i <= rowCount; i++)
+            csv.AppendLine($"2026-11-03;Betaling;-1,00;{current.BankReference};{savings.BankReference};{(current.OpeningBalance - i).ToString(culture)}");
+
+        for (var import = 1; import <= 2; import++)
+        {
+            var preview = await fixture.PreviewCsvAsync(current, csv.ToString());
+            Assert.Equal(rowCount, preview.Rows.Count);
+            Assert.Equal(rowCount, preview.Rows.Count(r => r.Include));
+            Assert.All(preview.Rows, row =>
+            {
+                Assert.True(row.IsValid, row.Note);
+                Assert.True(row.Include);
+                Assert.Equal("Gereed", row.Note);
+            });
+            Assert.Equal((import - 1) * rowCount, fixture.Coordinator.Read().Data.Transactions.Count);
+            var selections = preview.Rows.Where(r => r.Include)
+                .Select(r => new ImportSelection(r.RowNumber, r.CategoryId, null)).ToArray();
+            var result = fixture.Workspace.Commit(new(preview.PreviewId, selections), preview.Revision, fixture.Coordinator, Date);
+            var saved = fixture.Coordinator.Read().Data;
+
+            Assert.Equal(rowCount, result.Count);
+            Assert.Equal(import * rowCount, saved.Transactions.Count);
+            Assert.Equal(import * rowCount, saved.Transactions.Select(t => t.Id).Distinct().Count());
+            Assert.Equal(rowCount, saved.ImportBatches.Single(b => b.Id == result.BatchId).RowCount);
+            Assert.Equal(rowCount, saved.Transactions.Count(t => t.ImportBatchId == result.BatchId));
+            Assert.All(saved.Transactions, t =>
+            {
+                Assert.Equal(current.Id, t.AccountId);
+                Assert.Equal(Date, t.Date);
+                Assert.Equal(-1m, t.Amount);
+                Assert.Equal("Betaling", t.Description);
+            });
+            Assert.Equal(current.OpeningBalance - import * rowCount, Finance.Balance(saved, current, Date));
+            Assert.Equal(savings.OpeningBalance, Finance.Balance(saved, savings, Date));
+            Assert.Equal(StatementBalanceStatus.Available, result.Balance.Status);
+            Assert.Equal(-(import - 1) * rowCount, result.Balance.Difference);
+        }
     }
 
     [Theory]
@@ -196,7 +272,7 @@ public sealed class AccountLocalImportTests
     }
 
     [Fact]
-    public async Task ConfirmedStatementPairsPreserveAccountLocalImportsAndDuplicateChecks()
+    public async Task ConfirmedStatementPairsPreserveAccountLocalImportsAndAllowReimport()
     {
         using var fixture = new ImportFixture();
         var data = fixture.Coordinator.Read().Data;
@@ -220,7 +296,7 @@ public sealed class AccountLocalImportTests
         foreach (var (account, counter, amount) in new[] { (current, savings, Amount), (savings, current, -Amount) })
         {
             var repeated = await fixture.PreviewAsync(account, counter, amount);
-            Assert.False(Assert.Single(repeated.Rows).Include);
+            Assert.True(Assert.Single(repeated.Rows).Include);
         }
         var undone = fixture.Coordinator.Update(matched.Revision, d => HouseholdEdits.UndoImport(d, credit.ImportBatchId!.Value));
         Assert.Empty(undone.Data.TransferMatches);
@@ -329,10 +405,15 @@ public sealed class AccountLocalImportTests
             Workspace = new ImportWorkspace(_directory);
         }
 
-        public async Task<PreviewResponse> PreviewAsync(Account account, Account counter, decimal amount)
+        public Task<PreviewResponse> PreviewAsync(Account account, Account counter, decimal amount)
         {
             var culture = CultureInfo.GetCultureInfo("nl-NL");
             var csv = string.Join(';', Headers) + "\n" + $"2026-11-03;Notaris kosten;{amount.ToString(culture)};{account.BankReference};{counter.BankReference};{(account.OpeningBalance + amount).ToString(culture)}\n";
+            return PreviewCsvAsync(account, csv);
+        }
+
+        public async Task<PreviewResponse> PreviewCsvAsync(Account account, string csv)
+        {
             using var source = new MemoryStream(Encoding.UTF8.GetBytes(csv));
             var upload = await Workspace.UploadAsync(source, "statement.csv", CancellationToken.None);
             return Workspace.Preview(new(upload.UploadId, account.Id, Date, Date, Profile()), Coordinator.Read());

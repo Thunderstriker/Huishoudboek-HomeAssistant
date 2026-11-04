@@ -526,7 +526,7 @@ This entry replaces only this planned payment. Check that it is the same payment
 {1} transactions and {2} recurring payments remain and become Uncategorized.
 {3} rules, {4} monthly budgets and default budget {5} are removed.
 Amounts, bank text, balances, principal repayments and import history are preserved. No immediate undo; make a backup first if needed.</value></data>
-  <data name="ImportAccountNote" xml:space="preserve"><value>Each import records entries only on the selected account, using the amount from the file. Other accounts are not automatically matched or adjusted; import each account's own file. Check duplicates, currency, account and opening date. Nothing is saved until explicit confirmation.</value></data>
+  <data name="ImportAccountNote" xml:space="preserve"><value>Each import records entries only on the selected account, using the amount from the file. Other accounts are not automatically matched or adjusted; import each account's own file. No duplicate filtering is applied: importing the same statement again adds its transactions again. Check currency, account and opening date. Nothing is saved until explicit confirmation.</value></data>
   <data name="AfterImportBothAccounts" xml:space="preserve"><value>After importing both accounts, you can</value></data>
   <data name="ImportTransferReportingNote" xml:space="preserve"><value>for reporting, without extra entries or balance adjustments.</value></data>
   <data name="ImportFileHint" xml:space="preserve"><value>File (.xls, .xlsx or .csv; maximum 50 MB and 100,000 non-empty rows)</value></data>
@@ -552,17 +552,17 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="NoFileSelected" xml:space="preserve"><value>No file selected</value></data>
   <data name="UploadExpiryNote" xml:space="preserve"><value>Settings changes invalidate the old preview. Abandoned uploads expire after 20 minutes; up to four open uploads for the household.</value></data>
   <data name="UnsavedImportPreview" xml:space="preserve"><value>Import preview · not saved yet</value></data>
-  <data name="PreviewRowsNote" xml:space="preserve"><value>{0} rows · {1} selected. Likely duplicates are not preselected but can still be selected explicitly. Invalid rows cannot be saved.</value></data>
+  <data name="PreviewRowsNote" xml:space="preserve"><value>{0} rows · {1} selected. All valid rows within the chosen date range are selected by default, including identical or previously imported rows. You can deselect rows manually. Invalid rows cannot be saved.</value></data>
   <data name="Row" xml:space="preserve"><value>Row</value></data>
   <data name="Check" xml:space="preserve"><value>Check</value></data>
   <data name="SelectImportRow" xml:space="preserve"><value>Select import row</value></data>
   <data name="ImportRowCategory" xml:space="preserve"><value>Import row category</value></data>
   <data name="SaveSelectedRows" xml:space="preserve"><value>Save selected rows permanently</value></data>
   <data name="CommitImport" xml:space="preserve"><value>Save import permanently</value></data>
-  <data name="CommitImportQuestion" xml:space="preserve"><value>Save {0} selected rows to {1}? Other accounts remain unchanged. Check categories and explicitly selected duplicates. The balance check appears after saving.</value></data>
+  <data name="CommitImportQuestion" xml:space="preserve"><value>Save {0} selected rows to {1}? Other accounts remain unchanged. All selected rows will be imported without duplicate filtering. Check categories. The balance check appears after saving.</value></data>
   <data name="SaveImport" xml:space="preserve"><value>Save import</value></data>
   <data name="ImportCompleteBalanceCheck" xml:space="preserve"><value>Import complete — balance check</value></data>
-  <data name="ImportSavedCount" xml:space="preserve"><value>{0} transactions saved. {1} rows not imported.</value></data>
+  <data name="ImportSavedCount" xml:space="preserve"><value>{0} transactions saved. {1} invalid or manually deselected rows not imported.</value></data>
   <data name="BalanceAsOf" xml:space="preserve"><value>Balance on {0}: {1}</value></data>
   <data name="BalanceMatches" xml:space="preserve"><value>Balance matches</value></data>
   <data name="BalanceDifference" xml:space="preserve"><value>Difference: {0} (calculated minus bank)</value></data>
@@ -644,7 +644,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="AddExpense" xml:space="preserve"><value>Add expense</value></data>
   <data name="AddIncome" xml:space="preserve"><value>Add income</value></data>
   <data name="AdvancedTransaction" xml:space="preserve"><value>Advanced entry</value></data>
-  <data name="SimpleEntryNote" xml:space="preserve"><value>Enter a positive amount; the selected expense or income determines its sign. Use Advanced entry for transfers, mortgage payments and recurring links. If you later import the same entry, check the preview for duplicates.</value></data>
+  <data name="SimpleEntryNote" xml:space="preserve"><value>Enter a positive amount; the selected expense or income determines its sign. Use Advanced entry for transfers, mortgage payments and recurring links. If you later import the same entry, it will be added again unless you manually deselect it in the import preview.</value></data>
   <data name="PositiveAmountEuro" xml:space="preserve"><value>Amount (€), positive</value></data>
   <data name="PositiveEntryAmountError" xml:space="preserve"><value>Enter an amount greater than zero.</value></data>
   <data name="ExpandTransaction" xml:space="preserve"><value>Expand details and actions</value></data>

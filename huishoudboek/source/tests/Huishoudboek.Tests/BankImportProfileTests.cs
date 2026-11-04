@@ -28,7 +28,7 @@ public sealed class BankImportProfileTests
         Assert.True(row.IsValid, row.Note); Assert.True(row.Include); Assert.Equal(expected, row.Amount); Assert.Equal(Date, row.Date); Assert.Equal(balance, row.Transaction!.StatementBalance);
         Assert.Equal(TransactionKind.Normal, row.Transaction.Kind); Assert.Null(row.Transaction.CounterAccountId); Assert.Empty(data.Transactions);
         data.Transactions.Add(row.Transaction);
-        Assert.False(Assert.Single(ImportService.Preview(table, profile, data.Accounts[0].Id, Date, Date, data)).Include);
+        Assert.True(Assert.Single(ImportService.Preview(table, profile, data.Accounts[0].Id, Date, Date, data)).Include);
         data.Accounts[0].BankReference = "NL00TEST0000000099";
         var wrongAccount = Assert.Single(ImportService.Preview(table, profile, data.Accounts[0].Id, Date, Date, data));
         Assert.False(wrongAccount.IsValid); Assert.Contains("Rekening opdrachtgever", wrongAccount.Note);

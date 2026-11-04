@@ -56,13 +56,12 @@ public sealed class TransactionAccountingTests
     public void SupermarketSplitPreservesTheExactBankEntryAndAllCashEffects()
     {
         var data = Data(); var bank = Entry(data, -120);
-        var original = JsonSerializer.Serialize(bank); var signature = ImportService.Signature(bank);
+        var original = JsonSerializer.Serialize(bank);
         var balance = Finance.Balance(data, data.Accounts[0], Today);
         var cash = CashFlow.Project(data, Today).Accounts[0];
         TransactionAccounting.SaveAllocations(data, bank.Id, [Split(bank, -70, data.Categories[0].Id),
             Split(bank, -30, data.Categories[1].Id), Split(bank, -20, data.Categories[2].Id)]);
         Assert.Equal(original, JsonSerializer.Serialize(bank)); Assert.Single(data.Transactions);
-        Assert.Equal(signature, ImportService.Signature(bank));
         Assert.Equal(balance, Finance.Balance(data, data.Accounts[0], Today));
         var after = CashFlow.Project(data, Today).Accounts[0];
         Assert.Equal(cash.DailyVariableEstimate, after.DailyVariableEstimate);
@@ -357,7 +356,7 @@ public sealed class TransactionAccountingTests
     }
 
     [Fact]
-    public void SplittingDoesNotChangeBankImportDuplicateDetection()
+    public void ExistingSplitTransactionDoesNotDeselectBankStatementRow()
     {
         var data = Data(); var expense = Entry(data, -100);
         TransactionAccounting.SaveAllocations(data, expense.Id, [Split(expense, -60, expense.CategoryId), Split(expense, -40, data.Categories[1].Id)]);
@@ -365,7 +364,7 @@ public sealed class TransactionAccountingTests
             { new("2026-11-30"), new(expense.Description), new("-100,00") }]);
         var profile = ImportService.SuggestProfile(table.Headers);
         var preview = Assert.Single(ImportService.Preview(table, profile, expense.AccountId, Today, Today, data));
-        Assert.False(preview.Include); Assert.Contains("Al aanwezig", preview.Note);
+        Assert.True(preview.Include); Assert.Equal("Gereed", preview.Note);
         Assert.Single(data.Transactions); Assert.Equal(2, data.TransactionAllocations.Count);
     }
 
