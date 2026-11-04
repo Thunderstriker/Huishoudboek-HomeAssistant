@@ -54,4 +54,44 @@
   <data name="PagerSummary" xml:space="preserve"><value>{0} regels · pagina {1} van {2}</value></data>
   <data name="TransferFrom" xml:space="preserve"><value>Van:</value></data>
   <data name="TransferTo" xml:space="preserve"><value>Naar:</value></data>
+  <data name="Actions" xml:space="preserve"><value>Acties</value></data>
+  <data name="AddAllocation" xml:space="preserve"><value>+ Splitsing</value></data>
+  <data name="AddExpectedRepayment" xml:space="preserve"><value>+ Verwachte terugbetaling</value></data>
+  <data name="AllDates" xml:space="preserve"><value>Alle datums</value></data>
+  <data name="AllocatedTransaction" xml:space="preserve"><value>Verdeelde / expliciet verwerkte boeking</value></data>
+  <data name="AllocationNote" xml:space="preserve"><value>Toelichting (optioneel)</value></data>
+  <data name="AllocationRemainder" xml:space="preserve"><value>Nog te verdelen (moet € 0 zijn)</value></data>
+  <data name="AllocationTotalRequired" xml:space="preserve"><value>Voeg minstens één splitsing toe en verdeel het bankbedrag volledig (nog te verdelen = € 0), of schakel de verdeling uit.</value></data>
+  <data name="Amount" xml:space="preserve"><value>Bedrag</value></data>
+  <data name="Category" xml:space="preserve"><value>Categorie</value></data>
+  <data name="CategoryOnly" xml:space="preserve"><value>Alleen categorie (zonder aankoopkoppeling)</value></data>
+  <data name="CloseExpectation" xml:space="preserve"><value>Verwachting sluiten / geen verdere terugbetaling verwacht</value></data>
+  <data name="Counterparty" xml:space="preserve"><value>Wie betaalt terug?</value></data>
+  <data name="Delete" xml:space="preserve"><value>Verwijderen</value></data>
+  <data name="Edit" xml:space="preserve"><value>Bewerken</value></data>
+  <data name="ExpectationClosed" xml:space="preserve"><value>Gesloten</value></data>
+  <data name="ExpectedAmount" xml:space="preserve"><value>Verwacht bedrag</value></data>
+  <data name="ExpectedRepaymentDate" xml:space="preserve"><value>Verwachte betaaldatum (optioneel)</value></data>
+  <data name="ExpectedRepayments" xml:space="preserve"><value>Vergoedingen en gedeelde aankopen</value></data>
+  <data name="Expense" xml:space="preserve"><value>Uitgave</value></data>
+  <data name="ExpenseUntilPaidNote" xml:space="preserve"><value>Een voorgeschoten bedrag blijft een uitgave totdat terugbetaling is ontvangen. Retouren en vergoedingen verlagen de uitgavencategorie in de maand van ontvangst, niet het inkomen. Verwachte bedragen zijn geen beschikbaar geld.</value></data>
+  <data name="IncomeSingle" xml:space="preserve"><value>Inkomst</value></data>
+  <data name="InvalidAllocationAmount" xml:space="preserve"><value>Vul geldige bedragen in met maximaal twee decimalen, zonder duizendtallen.</value></data>
+  <data name="OriginalPurchase" xml:space="preserve"><value>Oorspronkelijke aankoop / verwachting</value></data>
+  <data name="Outstanding" xml:space="preserve"><value>Openstaand</value></data>
+  <data name="PurchasePart" xml:space="preserve"><value>Deel van de aankoop</value></data>
+  <data name="Received" xml:space="preserve"><value>Ontvangen</value></data>
+  <data name="RecoveryChartNote" xml:space="preserve"><value>De cirkel toont alleen categorieën met positieve netto uitgaven. Negatieve categoriebedragen door retouren/vergoedingen staan in de tabel en zijn niet in het cirkeltotaal verwerkt.</value></data>
+  <data name="Refund" xml:space="preserve"><value>Retour</value></data>
+  <data name="Reimbursement" xml:space="preserve"><value>Vergoeding</value></data>
+  <data name="RemoveAllocation" xml:space="preserve"><value>Splitsing verwijderen</value></data>
+  <data name="TransactionHandling" xml:space="preserve"><value>Splitsen / retour / vergoeding</value></data>
+  <data name="TransactionHandlingNote" xml:space="preserve"><value>De oorspronkelijke bankboeking, omschrijving, datum, bedrag en saldo blijven intact. Alleen categorieën en rapportage veranderen. Gebruik positieve bedragen voor ontvangsten en negatieve bedragen voor uitgaven.</value></data>
+  <data name="TransactionHandlingSaved" xml:space="preserve"><value>Splitsingen en vergoedingen opgeslagen; bankboekingen ongewijzigd.</value></data>
+  <data name="Treatment" xml:space="preserve"><value>Verwerking</value></data>
+  <data name="Uncategorized" xml:space="preserve"><value>Zonder categorie</value></data>
+  <data name="UnlinkHandlingNote" xml:space="preserve"><value>Uitschakelen herstelt gewone inkomsten/uitgaven. Verwijder of wijzig afhankelijke ontvangst-/verwachtingskoppelingen eerst; deze worden nooit stilzwijgend weggehaald. Ontkoppelen via ‘Alleen categorie’ behoudt de vergoeding als uitgavenvermindering; kies ‘Inkomst’ om die verwerking ongedaan te maken.</value></data>
+  <data name="UseAllocations" xml:space="preserve"><value>Bankbedrag verdelen / ontvangst expliciet verwerken</value></data>
+  <data name="UsesOriginalCategory" xml:space="preserve"><value>Gebruikt de categorie van de oorspronkelijke aankoop of splitsing.</value></data>
+  <data name="WholePurchase" xml:space="preserve"><value>Hele aankoop</value></data>
 </root>

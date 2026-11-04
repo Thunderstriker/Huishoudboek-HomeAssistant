@@ -14,7 +14,7 @@
 <label>Import<select @bind="batchId" @bind:after="FilterChanged"><option value="">Alle imports</option>@foreach (var batch in State.Data.ImportBatches.Where(b => !b.Undone).OrderByDescending(b => b.ImportedAt)) { <option value="@batch.Id">@batch.FileName · @batch.ImportedAt.ToString("dd-MM-yyyy HH:mm")</option> }</select></label>
 <label>Omschrijving zoeken<input type="search" @bind="search" @bind:event="oninput" @bind:after="FilterChanged" /></label>
 <label class="check"><input type="checkbox" @bind="includeTransfers" @bind:after="FilterChanged" />Interne overboekingen ook tonen</label></div>
-@{ var rows = VisibleRows.ToList(); page = Math.Min(page, Math.Max(0, (rows.Count - 1) / 100)); var totals = Categorization.ReviewTotals(rows, TransferMatching.ConfirmedTransactionIds(State.Data)); }
+@{ var rows = VisibleRows.ToList(); page = Math.Min(page, Math.Max(0, (rows.Count - 1) / 100)); var totals = Categorization.ReviewTotals(State.Data, rows); }
 <div class="category-layout">
     @if (mode == "groups")
     {
@@ -45,12 +45,12 @@
             @foreach (var t in rows.Skip(page * 100).Take(100))
             {
                 <tr @key="t.Id">
-                    <td><input type="checkbox" aria-label="Selecteer betaling" checked="@selected.Contains(t.Id)" @onchange="e => Select(t, (bool)e.Value!)" /></td>
+                    <td><input type="checkbox" aria-label="Selecteer betaling" checked="@selected.Contains(t.Id)" disabled="@State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id)" @onchange="e => Select(t, (bool)e.Value!)" /></td>
                     <td>@t.Date.ToString("dd-MM-yyyy") @if (t.Date > State.Today) { <span class="badge">Gepland</span> }</td>
                     <td>@State.AccountName(t.AccountId) @if (t.Kind == TransactionKind.Transfer) { <span>→ @State.AccountName(t.CounterAccountId)</span> }</td>
                     <td class="description">@if (t.UserDescription.Length > 0) { <strong>@t.UserDescription</strong><small>@t.Description</small> } else { @t.Description }</td>
                     <td class="money">@Money(t.Amount)</td>
-                    <td>@State.CategoryName(t.CategoryId) @if (TransferMatching.IsInternal(State.Data, t)) { <span class="badge">@(t.Kind == TransactionKind.Transfer ? "Interne overboeking" : "Gekoppelde transfer")</span> }</td>
+                    <td><TransactionAllocationSummary Transaction="t" /> @if (State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id)) { <a href="transacties">@L["TransactionHandling"]</a> } @if (TransferMatching.IsInternal(State.Data, t)) { <span class="badge">@(t.Kind == TransactionKind.Transfer ? "Interne overboeking" : "Gekoppelde transfer")</span> }</td>
                 </tr>
             }
             </tbody></table></div>
@@ -101,18 +101,18 @@
                 (search.Length == 0 || $"{t.Description} {t.UserDescription}".Contains(search, StringComparison.OrdinalIgnoreCase))).OrderBy(t => t.Date).ThenBy(t => t.Id);
         }
     }
-    private IEnumerable<Transaction> VisibleRows => FilteredRows.Where(t => t.CategoryId == (mode == "groups" ? groupCategory : null));
+    private IEnumerable<Transaction> VisibleRows => FilteredRows.Where(t => Categorization.HasCategory(State.Data, t, mode == "groups" ? groupCategory : null));
     private IEnumerable<Transaction> WalkRows
     {
         get
         {
             var linked = TransferMatching.ConfirmedTransactionIds(State.Data);
-            return FilteredRows.Where(t => t.CategoryId == null && t.Kind != TransactionKind.Transfer && !linked.Contains(t.Id) && !skipped.Contains(t.Id));
+            return FilteredRows.Where(t => t.CategoryId == null && !State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id) && t.Kind != TransactionKind.Transfer && !linked.Contains(t.Id) && !skipped.Contains(t.Id));
         }
     }
     private Transaction? Current => WalkRows.FirstOrDefault();
-    private IEnumerable<(Guid? Id, string Name, int Count)> Groups => new[] { ((Guid?)null, "Zonder categorie", FilteredRows.Count(t => t.CategoryId == null)) }
-        .Concat(State.Data.Categories.Select(c => ((Guid?)c.Id, c.Name, FilteredRows.Count(t => t.CategoryId == c.Id))).OrderByDescending(c => c.Item3 > 0).ThenBy(c => c.Name));
+    private IEnumerable<(Guid? Id, string Name, int Count)> Groups => new[] { ((Guid?)null, "Zonder categorie", FilteredRows.Count(t => Categorization.HasCategory(State.Data, t, null))) }
+        .Concat(State.Data.Categories.Select(c => ((Guid?)c.Id, c.Name, FilteredRows.Count(t => Categorization.HasCategory(State.Data, t, c.Id)))).OrderByDescending(c => c.Item3 > 0).ThenBy(c => c.Name));
     protected override void OnParametersSet()
     {
         if (State.ReviewBatchId is { } review && review != lastReview) { batchId = review; lastReview = review; State.ReviewBatchId = null; includeTransfers = true; mode = "groups"; FilterChanged(); }

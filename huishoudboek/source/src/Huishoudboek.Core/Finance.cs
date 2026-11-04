@@ -68,23 +68,25 @@ public static class Finance
         var transactions = data.Transactions.ToDictionary(t => t.Id);
         var actual = data.Transactions.Where(t => t.Date >= first && t.Date <= cutoff).ToList();
         var ordinary = actual.Where(t => t.Kind != TransactionKind.Transfer && !matched.ContainsKey(t.Id) && InScope(t)).ToList();
-        var income = ordinary.Where(t => t.Amount > 0).Sum(t => t.Amount);
-        var outflow = -ordinary.Where(t => t.Amount < 0).Sum(t => t.Amount);
+        var lines = TransactionAccounting.Lines(data, ordinary).ToList();
+        var income = lines.Sum(l => l.Income);
+        var outflow = lines.Sum(l => l.Spending);
         var savings = actual.Sum(t => SavingsEffect(data, t, scope, matched, transactions));
         var principal = ordinary.Where(t => t.Kind == TransactionKind.Mortgage).Sum(t => t.PrincipalComponent);
         var categories = data.Categories.Select(c => new CategoryResult(c.Id, c.Name,
             data.BudgetOverrides.FirstOrDefault(b => b.CategoryId == c.Id && b.Year == year && b.Month == month)?.Amount
                 ?? c.MonthlyBudget,
-            -ordinary.Where(t => t.CategoryId == c.Id && t.Amount < 0).Sum(t => t.Amount)))
-            .Where(c => c.Budget > 0 || c.Spent > 0).OrderByDescending(c => c.Overspent)
+            lines.Where(l => l.CategoryId == c.Id).Sum(l => l.Spending)))
+            .Where(c => c.Budget > 0 || c.Spent != 0).OrderByDescending(c => c.Overspent)
             .ThenByDescending(c => c.Spent).ToList();
-        var uncategorized = -ordinary.Where(t => t.CategoryId == null && t.Amount < 0).Sum(t => t.Amount);
-        if (uncategorized > 0) categories.Add(new(Guid.Empty, "Zonder categorie", 0, uncategorized));
+        var uncategorized = lines.Where(l => l.CategoryId == null).Sum(l => l.Spending);
+        if (uncategorized != 0) categories.Add(new(Guid.Empty, "Zonder categorie", 0, uncategorized));
 
         var future = data.Transactions.Where(t => t.Date >= first && t.Date > cutoff && t.Date <= last).ToList();
         var futureOrdinary = future.Where(t => t.Kind != TransactionKind.Transfer && !matched.ContainsKey(t.Id) && InScope(t)).ToList();
-        var plannedIncome = futureOrdinary.Where(t => t.Amount > 0).Sum(t => t.Amount);
-        var plannedOutflow = -futureOrdinary.Where(t => t.Amount < 0).Sum(t => t.Amount);
+        var futureLines = TransactionAccounting.Lines(data, futureOrdinary).ToList();
+        var plannedIncome = futureLines.Sum(l => l.Income);
+        var plannedOutflow = futureLines.Sum(l => l.Spending);
         var plannedSavings = future.Sum(t => SavingsEffect(data, t, scope, matched, transactions));
         var overdue = 0;
         if (today <= last)
@@ -103,8 +105,8 @@ public static class Finance
 
         var elapsed = cutoff < first ? 0 : cutoff.Day;
         var remainingDays = DateTime.DaysInMonth(year, month) - elapsed;
-        var observedVariable = -ordinary.Where(t => t.Amount < 0 && t.Kind != TransactionKind.Mortgage &&
-            t.RecurringPaymentId == null).Sum(t => t.Amount);
+        var observedVariable = Math.Max(0, lines.Where(l => l.Transaction.Kind != TransactionKind.Mortgage &&
+            l.Transaction.RecurringPaymentId == null).Sum(l => l.Spending));
         var estimate = elapsed > 0 && remainingDays > 0
             ? decimal.Round(observedVariable / elapsed * remainingDays, 2) : 0;
         // Future variable entries occupy part of the run-rate estimate, not an extra layer on top.
@@ -174,6 +176,7 @@ public static class Finance
     public static void ApplySuggestions(HouseholdData data, Transaction transaction, bool suggestCategory = true)
     {
         if (data.TransferMatches.Any(m => m.IsConfirmed && (m.DebitTransactionId == transaction.Id || m.CreditTransactionId == transaction.Id))) return;
+        if (data.TransactionAllocations.Any(a => a.TransactionId == transaction.Id)) return;
         // Import-save rechecks may recognize recurring items, but must preserve a deliberate null category too.
         if (transaction.Kind == TransactionKind.Transfer)
         {

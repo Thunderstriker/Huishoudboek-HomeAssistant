@@ -219,6 +219,56 @@ aankoop die rekenkundig past krijgt dan geen stellige bevestiging. Onverwachte k
 gewijzigde facturen en niet-geregistreerde overboekingen ontbreken. Dit blijft een
 schatting, geen bankverbinding of garantie. Maak regelmatig een volledige back-up.
 
+## Splitsingen, retouren en vergoedingen
+
+Open **Transacties → Splitsen / retour / vergoeding** bij een gewone bankboeking.
+De bankdatum, oorspronkelijke omschrijving, bedrag, import en saldo blijven intact.
+Activeer de verdeling om categoriebedragen toe te voegen: uitgaven negatief,
+ontvangsten positief, maximaal twee decimalen. Het nog te verdelen bedrag moet exact
+€ 0 zijn. Handmatige/gekoppelde transfers en hypotheekbetalingen zijn niet splitsbaar.
+
+- **Supermarkt:** verdeel bijvoorbeeld een bankbetaling van € 120 in € 70 voeding,
+  € 30 kleding en € 20 huishouden. Het banksaldo verandert slechts eenmaal met € 120.
+- **Retour:** selecteer bij de bijschrijving **Retour** en de oorspronkelijke aankoop
+  of splitsing. De ontvangst verlaagt die categorie in de ontvangstmaand, niet inkomsten
+  of het historische aankoopbedrag. Zonder aankoopkoppeling kunt u zelf een categorie kiezen.
+- **Werkgever of gedeelde aankoop:** registreer bij de uitgave wie terugbetaalt, welk
+  bedrag en eventueel wanneer. De volledige aankoop blijft een uitgave totdat betaling
+  is ontvangen. Registreer de bankontvangst als **Vergoeding**, gekoppeld aan die
+  verwachting. Deelbetalingen verlagen het openstaande bedrag. Eén ontvangst kan
+  meerdere verwachtingen aflossen, of gewone inkomsten plus vergoeding bevatten.
+- **Openstaand:** de tabel onder Transacties toont verwachtingen voor alle datums
+  binnen het eigenaarfilter, onafhankelijk van het maandfilter. Verwachtingen verhogen
+  nooit saldi, vermogen of bestedingsruimte en worden niet als toekomstige bankontvangst
+  aangenomen. Een geplande bankontvangst telt pas op zijn bankdatum als werkelijk.
+- **Niet terugbetaald:** sluit de verwachting als geen verdere betaling wordt verwacht.
+  Ontvangen vergoedingen blijven behouden; er ontstaat geen extra afschrijving, omdat
+  het onbetaalde deel al als uitgave is geboekt.
+- **Ongedaan maken:** kies bij een ontvangst ‘Alleen categorie’ om alleen de koppeling
+  te verwijderen en de uitgavenvermindering te behouden; kies ‘Inkomst’ of schakel de
+  verdeling uit om de classificatie ongedaan te maken. Verwijder afhankelijke koppelingen
+  eerst voordat u een aankoop/splitsing of verwachting verwijdert. Ook import-undo weigert
+  een aankoop te verwijderen zolang buiten die import nog gekoppelde ontvangsten bestaan.
+
+Gekoppelde retouren en vergoedingen mogen samen de oorspronkelijke uitgave niet
+overschrijden. Verwachtingen moeten passen binnen de aankoop na retouren; pas ze zo
+nodig aan of sluit ze eerst. Een gesplitste aankoop vereist een specifieke splitsing
+als bron. Categorisatieregels en de gewone categorie-editor wijzigen geen splitsingen.
+Categorieën hernoemen werkt ook door naar gekoppelde ontvangsten; verwijderen maakt
+de betreffende bedragen ongecategoriseerd zonder bankgegevens te verwijderen.
+
+Maand-/jaarbudgetten tonen netto uitgaven, inclusief negatieve categoriebedragen in
+maanden met meer retouren/vergoedingen dan aankopen. De cirkelgrafiek toont alleen
+positieve netto categorieën; de toelichting en tabellen tonen het verschil. De dagelijkse
+cashprognose gebruikt het volledige bankbedrag en bruto uitgavenhistorie, zodat
+een incidentele terugbetaling de noodzakelijke dagelijkse cashreserve niet verkleint.
+Retouren/vergoedingen zijn geen volgende reguliere inkomensdatum.
+
+CSV-export bevat één rij per bankboeking. De JSON-kolommen **Splitsingen (JSON)** en
+**Vergoedingsverwachtingen (JSON)** bewaren bedragen, verwerking, toelichtingen en
+koppelingen zonder het bankbedrag te herhalen. Bankimport herstelt deze metagegevens
+niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
+
 ## Opslag, back-ups en updates
 
 - Actieve administratie: `/data/administration/huishoudboek.db`, met bijbehorende
@@ -226,11 +276,11 @@ schatting, geen bankverbinding of garantie. Maak regelmatig een volledige back-u
   `/data` is de private, permanente app-opslag van de Supervisor, geen Windows-pad.
 - Normale herstarts en updates behouden `/data`. Een bestaande ontbrekende of
   beschadigde database wordt nooit automatisch vervangen door een lege database.
-- Bij een Home Assistant-update worden ondersteunde schema's 1–4 na validatie
-  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 5. Vooraf wordt
-  een SQLite-bewuste `.voor-versie-5-….db`-veiligheidskopie naast de database gemaakt.
+- Bij een Home Assistant-update worden ondersteunde schema's 1–5 na validatie
+  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 6. Vooraf wordt
+  een SQLite-bewuste `.voor-versie-6-….db`-veiligheidskopie naast de database gemaakt.
   Onbekende schema's worden geweigerd. Teruggaan naar een oude appversie vereist
-  herstel van een passende oude back-up; schema-5-back-ups zijn niet leesbaar in
+  herstel van een passende oude back-up; schema-6-back-ups zijn niet leesbaar in
   oudere apps. De normale Windows-service blijft automatische upgrades weigeren.
 - Alleen een werkelijk nieuwe installatie begint met een lege administratie en
   standaardcategorieën, zonder fictieve bedragen. U kunt ook zelf rekeningen aanmaken.
@@ -266,7 +316,7 @@ schatting, geen bankverbinding of garantie. Maak regelmatig een volledige back-u
 - Database, configuratie en gedownloade databaseback-ups zijn **niet door deze app
   versleuteld**. Beveilig de Windows-host, VM-schijf en back-ups. Zet geen financiële
   bestanden of proxyheaders in gedeelde logs/screenshots.
-- Geldberekeningen blijven decimal, schema is versie 5. Saldi zijn berekend uit
+- Geldberekeningen blijven decimal, schema is versie 6. Saldi zijn berekend uit
   geregistreerde gegevens, geen live bankgegevens. Prognoses blijven schattingen.
 - Geen publieke internet-/Cloudflare-configuratie, automatische discovery of HACS.
   Dit is de volledige app, niet een HACS-integratie.

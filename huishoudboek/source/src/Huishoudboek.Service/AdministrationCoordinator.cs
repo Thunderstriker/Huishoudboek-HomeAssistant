@@ -68,6 +68,8 @@ public sealed class AdministrationCoordinator : IDisposable
         candidate.Owners = data.Owners; candidate.Accounts = data.Accounts; candidate.Categories = data.Categories;
         candidate.Transactions = data.Transactions; candidate.RecurringPayments = data.RecurringPayments;
         candidate.TransferMatches = data.TransferMatches;
+        candidate.TransactionAllocations = data.TransactionAllocations;
+        candidate.ReimbursementClaims = data.ReimbursementClaims;
         candidate.BudgetOverrides = data.BudgetOverrides; candidate.Valuations = data.Valuations;
         candidate.ImportBatches = data.ImportBatches; candidate.ImportProfiles = data.ImportProfiles;
         candidate.Rules = data.Rules; candidate.Mortgage = data.Mortgage;

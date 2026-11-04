@@ -22,6 +22,7 @@
             </ul>
         </div>
         <p class="muted chart-note">Grootste categorieën; kleinere uitgaven samengevoegd. Budgetten staan in de tabel hieronder.</p>
+        @if (Report.Categories.Any(c => c.Spent < 0)) { <p class="muted chart-note">@L["RecoveryChartNote"]</p> }
     </section>
     <section class="card chart-card">
         <h2>Werkelijk en verwacht</h2>

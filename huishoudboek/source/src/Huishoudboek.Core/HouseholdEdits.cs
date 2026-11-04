@@ -29,6 +29,10 @@ public static class HouseholdEdits
     public static void SaveTransaction(HouseholdData data, Transaction item, bool useTransferDefault = false)
     {
         var original = data.Transactions.FirstOrDefault(t => t.Id == item.Id);
+        if (original != null && TransactionAccounting.HasDetails(data, item.Id) &&
+            (original.AccountId != item.AccountId || original.Amount != item.Amount || original.Date != item.Date ||
+             original.Description != item.Description.Trim() || original.Kind != item.Kind))
+            throw new InvalidOperationException("Deze bankboeking heeft splitsingen of retour-/vergoedingskoppelingen. Verwijder deze eerst vóór het wijzigen van bankgegevens of type.");
         if (original != null && (original.AccountId != item.AccountId || original.Amount != item.Amount || original.Date != item.Date ||
             original.Kind != item.Kind || original.CounterAccountId != item.CounterAccountId ||
             original.RecurringPaymentId != item.RecurringPaymentId || original.PrincipalComponent != item.PrincipalComponent))
@@ -54,6 +58,7 @@ public static class HouseholdEdits
 
     public static void DeleteTransaction(HouseholdData data, Guid id)
     {
+        TransactionAccounting.RemoveForTransactions(data, new HashSet<Guid> { id });
         TransferMatching.RemoveForTransactions(data, new HashSet<Guid> { id });
         data.Transactions.RemoveAll(t => t.Id == id);
     }
@@ -83,6 +88,7 @@ public static class HouseholdEdits
         var batch = data.ImportBatches.FirstOrDefault(b => b.Id == id && !b.Undone)
             ?? throw new InvalidOperationException("Deze import bestaat niet of is al teruggedraaid.");
         var removed = data.Transactions.Where(t => t.ImportBatchId == id).Select(t => t.Id).ToHashSet();
+        TransactionAccounting.RemoveForTransactions(data, removed);
         TransferMatching.RemoveForTransactions(data, removed);
         data.Transactions.RemoveAll(t => t.ImportBatchId == id);
         batch.Undone = true;

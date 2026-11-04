@@ -1,0 +1,106 @@
+@inject WebState State
+
+<Modal Title="@L["TransactionHandling"]" Cancel="Cancel">
+    <p><strong>@Transaction.Date.ToString("dd-MM-yyyy") · @State.AccountName(Transaction.AccountId) · @WebState.Money(Transaction.Amount)</strong><br />@Transaction.Description</p>
+    <p class="muted">@L["TransactionHandlingNote"]</p>
+    @if (Draft.Error.Length > 0) { <p class="notice error" role="alert">@Draft.Error</p> }
+    <form @onsubmit="Save" @onsubmit:preventDefault>
+        <fieldset class="page-fieldset" disabled="@State.Busy">
+            <label class="check"><input type="checkbox" @bind="Draft.UseAllocations" />@L["UseAllocations"]</label>
+            @if (Draft.UseAllocations)
+            {
+                @foreach (var row in Draft.Allocations)
+                {
+                    <section class="card" @key="row.Id">
+                        <div class="fields">
+                            <label>@L["Amount"] (€)<input type="text" inputmode="decimal" @bind="row.Amount" @bind:event="oninput" required /></label>
+                            <label>@L["Treatment"]<select @bind="row.Treatment" @bind:after="() => row.Source = string.Empty">
+                                <option value="@AllocationTreatment.Ordinary">@L[Transaction.Amount > 0 ? "IncomeSingle" : "Expense"]</option>
+                                @if (Transaction.Amount > 0)
+                                {
+                                    <option value="@AllocationTreatment.Refund">@L["Refund"]</option>
+                                    <option value="@AllocationTreatment.Reimbursement">@L["Reimbursement"]</option>
+                                }
+                            </select></label>
+                            @if (row.Treatment != AllocationTreatment.Ordinary)
+                            {
+                                <label>@L["OriginalPurchase"]<select @bind="row.Source">
+                                    <option value="">@L["CategoryOnly"]</option>
+                                    @foreach (var option in Sources(row.Treatment)) { <option value="@option.Value">@option.Label</option> }
+                                </select></label>
+                            }
+                            @if (row.Source.Length == 0)
+                            {
+                                <label>@L["Category"]<select @bind="row.CategoryId"><option value="">@L["Uncategorized"]</option>
+                                    @foreach (var category in State.Data.Categories) { <option value="@category.Id">@category.Name</option> }
+                                </select></label>
+                            }
+                            else { <p class="muted">@L["UsesOriginalCategory"]</p> }
+                            <label>@L["AllocationNote"]<input @bind="row.Note" maxlength="2000" /></label>
+                        </div>
+                        <button type="button" @onclick="() => Draft.Allocations.Remove(row)">@L["RemoveAllocation"]</button>
+                    </section>
+                }
+                <p role="status">@L["AllocationRemainder"]: <strong>@Remainder</strong></p>
+                <button type="button" @onclick="AddAllocation">@L["AddAllocation"]</button>
+            }
+            @if (Transaction.Amount < 0)
+            {
+                <h3>@L["ExpectedRepayments"]</h3><p class="muted">@L["ExpenseUntilPaidNote"]</p>
+                @foreach (var claim in Draft.Claims)
+                {
+                    <section class="card" @key="claim.Id"><div class="fields">
+                        <label>@L["Counterparty"]<input @bind="claim.Counterparty" required maxlength="2000" /></label>
+                        <label>@L["ExpectedAmount"] (€)<input inputmode="decimal" @bind="claim.Amount" required /></label>
+                        <label>@L["PurchasePart"]<select @bind="claim.AllocationId">
+                            @if (!Draft.UseAllocations) { <option value="">@L["WholePurchase"]</option> }
+                            @foreach (var row in Draft.UseAllocations ? Draft.Allocations : [])
+                            { <option value="@row.Id">@State.CategoryName(row.CategoryId) · @row.Amount · @row.Note</option> }
+                        </select></label>
+                        <label>@L["ExpectedRepaymentDate"]<input type="date" value="@claim.DueDate" @onchange="e => claim.DueDate = e.Value?.ToString() ?? string.Empty" /></label>
+                        <label>@L["AllocationNote"]<input @bind="claim.Note" maxlength="2000" /></label>
+                        <label class="check"><input type="checkbox" @bind="claim.IsClosed" />@L["CloseExpectation"]</label>
+                    </div>
+                    @{ var saved = State.Data.ReimbursementClaims.FirstOrDefault(c => c.Id == claim.Id); }
+                    @if (saved != null) { <p>@L["Received"]: @WebState.Money(TransactionAccounting.Paid(State.Data, saved, State.Today)) · @L["Outstanding"]: @WebState.Money(TransactionAccounting.Outstanding(State.Data, saved, State.Today))</p> }
+                    <button type="button" @onclick="() => Draft.Claims.Remove(claim)">@L["Delete"]</button></section>
+                }
+                <button type="button" @onclick="AddClaim">@L["AddExpectedRepayment"]</button>
+            }
+            <p class="muted">@L["UnlinkHandlingNote"]</p>
+            <div class="actions"><button type="button" @onclick="Cancel">@L["Cancel"]</button><button class="primary" type="submit">@L["Save"]</button></div>
+        </fieldset>
+    </form>
+</Modal>
+
+@code {
+    [Parameter, EditorRequired] public Transaction Transaction { get; set; } = null!;
+    [Parameter, EditorRequired] public TransactionDetailsDraft Draft { get; set; } = null!;
+    [Parameter] public EventCallback Closed { get; set; }
+    private string Remainder
+    {
+        get
+        {
+            try { return WebState.Money(Transaction.Amount - Draft.Allocations.Sum(a => TransactionDetailsDraft.Parse(a.Amount))); }
+            catch (InvalidOperationException) { return L["InvalidAllocationAmount"]; }
+        }
+    }
+    private void AddAllocation() => Draft.Allocations.Add(new() { Amount = TransactionDetailsDraft.Format(0) });
+    private void AddClaim() => Draft.Claims.Add(new() { AllocationId = Draft.UseAllocations ? Draft.Allocations.FirstOrDefault()?.Id : null });
+    private IEnumerable<FieldOption> Sources(AllocationTreatment treatment)
+    {
+        if (treatment == AllocationTreatment.Reimbursement)
+            foreach (var claim in State.Data.ReimbursementClaims.Where(c => State.Data.Transactions.Single(t => t.Id == c.ExpenseTransactionId).Date <= Transaction.Date))
+                yield return new("claim:" + claim.Id, $"{claim.Counterparty} · {WebState.Money(TransactionAccounting.Outstanding(State.Data, claim, State.Today))} · {State.Data.Transactions.Single(t => t.Id == claim.ExpenseTransactionId).Description}");
+        foreach (var line in TransactionAccounting.Lines(State.Data, State.Data.Transactions.Where(t => t.Date <= Transaction.Date && t.Kind == TransactionKind.Normal && t.Amount < 0))
+            .Where(l => l.Spending > 0).OrderByDescending(l => l.Transaction.Date))
+            yield return new(TransactionDetailsDraft.SourceKey(line.Transaction.Id, line.AllocationId),
+                $"{line.Transaction.Date:dd-MM-yyyy} · {line.Transaction.Description} · {State.CategoryName(line.CategoryId)} · {WebState.Money(line.Spending)}");
+    }
+    private Task Cancel() => State.Busy ? Task.CompletedTask : Closed.InvokeAsync();
+    private async Task Save()
+    {
+        if (await State.RunAsync(() => State.SaveAsync(Draft.Apply, Draft.Revision), L["TransactionHandlingSaved"])) await Closed.InvokeAsync();
+        else Draft.Error = State.Message;
+    }
+}

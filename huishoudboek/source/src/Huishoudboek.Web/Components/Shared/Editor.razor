@@ -20,9 +20,9 @@
                     {
                         <label>@field.Label
                             @if (field.Type == "select")
-                            { <select id="@field.Key" @bind="field.Value">@foreach (var option in field.Options) { <option value="@option.Value">@option.Label</option> }</select> }
+                            { <select id="@field.Key" @bind="field.Value" disabled="@field.ReadOnly">@foreach (var option in field.Options) { <option value="@option.Value">@option.Label</option> }</select> }
                             else
-                            { <input id="@field.Key" type="@(field.Type == "money" ? "text" : field.Type)" inputmode="@(field.Type == "money" ? "decimal" : null)" value="@field.Value" @onchange="e => field.Value = e.Value?.ToString() ?? string.Empty" required="@field.Required" maxlength="2000" /> }
+                            { <input id="@field.Key" type="@(field.Type == "money" ? "text" : field.Type)" inputmode="@(field.Type == "money" ? "decimal" : null)" value="@field.Value" @onchange="e => field.Value = e.Value?.ToString() ?? string.Empty" required="@field.Required" disabled="@field.ReadOnly" maxlength="2000" /> }
                         </label>
                     }
                 }

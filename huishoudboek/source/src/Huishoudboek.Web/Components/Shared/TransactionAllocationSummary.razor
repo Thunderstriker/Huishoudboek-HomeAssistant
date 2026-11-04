@@ -1,0 +1,15 @@
+@inject WebState State
+@if (State.Data.TransactionAllocations.Any(a => a.TransactionId == Transaction.Id))
+{
+    @foreach (var line in TransactionAccounting.Lines(State.Data, new[] { Transaction }))
+    {
+        <small>@State.CategoryName(line.CategoryId) · @WebState.Money(line.Amount)
+            @if (line.Treatment != AllocationTreatment.Ordinary) { <span class="badge">@L[line.Treatment == AllocationTreatment.Refund ? "Refund" : "Reimbursement"]</span> }
+            @if (line.Note.Length > 0) { <span> · @line.Note</span> }
+        </small>
+    }
+}
+else { @State.CategoryName(Transaction.CategoryId) }
+@code {
+    [Parameter, EditorRequired] public Transaction Transaction { get; set; } = null!;
+}

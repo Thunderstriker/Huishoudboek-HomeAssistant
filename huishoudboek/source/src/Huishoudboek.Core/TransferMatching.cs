@@ -8,8 +8,9 @@ public static class TransferMatching
 {
     public const int SuggestionWindowDays = 5;
 
-    public static bool IsEligible(Transaction transaction) => transaction.Kind == TransactionKind.Normal &&
-        transaction.CounterAccountId == null && transaction.RecurringPaymentId == null && transaction.PrincipalComponent == 0;
+    public static bool IsEligible(Transaction transaction, HouseholdData? data = null) => transaction.Kind == TransactionKind.Normal &&
+        transaction.CounterAccountId == null && transaction.RecurringPaymentId == null && transaction.PrincipalComponent == 0 &&
+        (data == null || !TransactionAccounting.HasDetails(data, transaction.Id));
 
     public static HashSet<Guid> ConfirmedTransactionIds(HouseholdData data) => data.TransferMatches
         .Where(m => m.IsConfirmed).SelectMany(m => new[] { m.DebitTransactionId, m.CreditTransactionId }).ToHashSet();
@@ -21,7 +22,7 @@ public static class TransferMatching
     public static IEnumerable<TransferCandidate> Candidates(HouseholdData data, DateOnly today)
     {
         var linked = ConfirmedTransactionIds(data);
-        var entries = data.Transactions.Where(t => IsEligible(t) && t.Date <= today && !linked.Contains(t.Id)).ToList();
+        var entries = data.Transactions.Where(t => IsEligible(t, data) && t.Date <= today && !linked.Contains(t.Id)).ToList();
         var debits = entries.Where(t => t.Amount < 0).OrderByDescending(t => t.Date).ToList();
         var credits = entries.Where(t => t.Amount > 0).ToList();
         var debitIndex = debits.ToLookup(t => (-t.Amount, t.Date.DayNumber));
@@ -66,7 +67,7 @@ public static class TransferMatching
     {
         var debit = data.Transactions.FirstOrDefault(t => t.Id == debitId);
         var credit = data.Transactions.FirstOrDefault(t => t.Id == creditId);
-        if (debit == null || credit == null || !IsEligible(debit) || !IsEligible(credit) ||
+        if (debit == null || credit == null || !IsEligible(debit, data) || !IsEligible(credit, data) ||
             debit.AccountId == credit.AccountId || debit.Amount >= 0 || credit.Amount != -debit.Amount)
             throw new InvalidOperationException("Kies twee gewone, even grote af- en bijboekingen op verschillende eigen rekeningen, zonder vaste-postkoppeling.");
         if (debit.Date > today || credit.Date > today)

@@ -13,7 +13,7 @@ namespace Huishoudboek.Infrastructure;
 /// </summary>
 public sealed class SqliteHouseholdStore : IAdministrationStore
 {
-    private const int SchemaVersion = 5;
+    private const int SchemaVersion = 6;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -54,7 +54,8 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
 
     private static readonly Type[] EntityTypes = [typeof(Owner), typeof(Account), typeof(Category),
         typeof(BudgetOverride), typeof(Transaction), typeof(RecurringPayment), typeof(CategorizationRule),
-        typeof(InvestmentValuation), typeof(ImportBatch), typeof(ImportProfile), typeof(TransferMatch)];
+        typeof(InvestmentValuation), typeof(ImportBatch), typeof(ImportProfile), typeof(TransferMatch),
+        typeof(TransactionAllocation), typeof(ReimbursementClaim)];
 
     private static SqliteConnection Open(string path, bool readOnly = false)
     {
@@ -94,7 +95,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
     {
         using var command = connection.CreateCommand();
         var version = Version(connection);
-        if (version != SchemaVersion && !(allowPrevious && version is 1 or 2 or 3 or 4))
+        if (version != SchemaVersion && !(allowPrevious && version is 1 or 2 or 3 or 4 or 5))
             throw new InvalidDataException("Deze databaseversie wordt niet ondersteund. Gebruik de bijbehorende appversie.");
         command.CommandText = "SELECT application FROM app_metadata WHERE id=1";
         if (!Equals(command.ExecuteScalar(), "Huishoudboek"))
@@ -117,11 +118,16 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         }
         if (version < 3) Execute(connection, tx, "ALTER TABLE [Transaction] ADD COLUMN [UserDescription] TEXT NOT NULL DEFAULT ''");
         if (version < 4) CreateTable(connection, tx, typeof(TransferMatch));
-        Execute(connection, tx, "ALTER TABLE [Account] ADD COLUMN [MinimumCashBuffer] TEXT NOT NULL DEFAULT '0'");
-        Execute(connection, tx, "ALTER TABLE [Transaction] ADD COLUMN [RecurringOccurrenceDate] TEXT NULL");
-        Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [Frequency] INTEGER NOT NULL DEFAULT 0");
-        Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [MatchTolerance] TEXT NOT NULL DEFAULT '0.01'");
-        Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [MatchWindowDays] INTEGER NOT NULL DEFAULT 5");
+        if (version < 5)
+        {
+            Execute(connection, tx, "ALTER TABLE [Account] ADD COLUMN [MinimumCashBuffer] TEXT NOT NULL DEFAULT '0'");
+            Execute(connection, tx, "ALTER TABLE [Transaction] ADD COLUMN [RecurringOccurrenceDate] TEXT NULL");
+            Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [Frequency] INTEGER NOT NULL DEFAULT 0");
+            Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [MatchTolerance] TEXT NOT NULL DEFAULT '0.01'");
+            Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [MatchWindowDays] INTEGER NOT NULL DEFAULT 5");
+        }
+        CreateTable(connection, tx, typeof(TransactionAllocation));
+        CreateTable(connection, tx, typeof(ReimbursementClaim));
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -156,7 +162,9 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             Transactions = Read<Transaction>(connection, tx, version), RecurringPayments = Read<RecurringPayment>(connection, tx, version),
             Rules = Read<CategorizationRule>(connection, tx), Valuations = Read<InvestmentValuation>(connection, tx),
             ImportBatches = Read<ImportBatch>(connection, tx), ImportProfiles = Read<ImportProfile>(connection, tx, version),
-            TransferMatches = version >= 4 ? Read<TransferMatch>(connection, tx) : []
+            TransferMatches = version >= 4 ? Read<TransferMatch>(connection, tx) : [],
+            TransactionAllocations = version >= 6 ? Read<TransactionAllocation>(connection, tx) : [],
+            ReimbursementClaims = version >= 6 ? Read<ReimbursementClaim>(connection, tx) : []
         };
         using var command = connection.CreateCommand();
         command.Transaction = tx;
@@ -178,6 +186,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         Write(connection, tx, data.Rules); Write(connection, tx, data.Valuations);
         Write(connection, tx, data.ImportBatches); Write(connection, tx, data.ImportProfiles);
         Write(connection, tx, data.TransferMatches);
+        Write(connection, tx, data.TransactionAllocations); Write(connection, tx, data.ReimbursementClaims);
         using var command = connection.CreateCommand();
         command.Transaction = tx;
         command.CommandText = "UPDATE app_metadata SET mortgage=$mortgage WHERE id=1";

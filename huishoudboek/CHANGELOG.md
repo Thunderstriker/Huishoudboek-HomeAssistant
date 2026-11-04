@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.1.9
+
+- Bankboekingen verdelen over meerdere categorieën met bedragen die exact aansluiten
+  op het oorspronkelijke bankbedrag. De banktekst, datum, importgegevens en saldi blijven intact.
+- Expliciete retouren en vergoedingen verlagen uitgaven in de ontvangstmaand, nooit
+  inkomsten. Koppel de oorspronkelijke aankoop of splitsing, of kies alleen een categorie.
+- Verwachte vergoedingen en gedeelde aankopen bijhouden per betaler, met optionele
+  betaaldatum, deelbetalingen en sluiten van een verwachting. Voorschotten blijven
+  uitgaven totdat terugbetaling is ontvangen; verwachtingen zijn geen beschikbaar geld.
+- Eén ontvangst kan meerdere aankopen vergoeden of salaris en vergoeding combineren.
+  Openstaande bedragen en ontvangen betalingen zijn zichtbaar bij Transacties.
+- Budgetten, maand-/jaaroverzichten en prognoses gebruiken dezelfde verwerking.
+  Negatieve uitgavencategorieën blijven zichtbaar; de cirkelgrafiek licht het verschil toe.
+- Afhankelijke koppelingen beschermen tegen onbedoeld wijzigen/verwijderen en import-undo.
+  Categorisatieregels en transferkoppelingen overschrijven geen expliciete splitsingen.
+- Databaseschema 6, met veilige migratie van schema's 1–5 en een veiligheidskopie vooraf.
+  Volledige back-ups bewaren alle gegevens; CSV blijft één rij per bankboeking en
+  bevat splitsingen en vergoedingsverwachtingen als JSON-kolommen.
+- Tests voor splitsingen, retouren, deelbetalingen, maandgrenzen, cashveiligheid,
+  eigenaarfilters, koppelingen, migratie, back-up/herstel, export en beide interfacetalen.
+
 ## 0.1.8
 
 - Taalkeuze in de werkbalk: Nederlands (standaard) en Engels, per browser onthouden.

@@ -19,6 +19,8 @@ public static class Validation
         Unique(data.Accounts.Select(x => x.Id), "rekeningen");
         Unique(data.Categories.Select(x => x.Id), "categorieën");
         Unique(data.Transactions.Select(x => x.Id), "transacties");
+        Unique(data.TransactionAllocations.Select(x => x.Id), "transactiesplitsingen");
+        Unique(data.ReimbursementClaims.Select(x => x.Id), "vergoedingsverwachtingen");
         Unique(data.TransferMatches.Select(x => x.Id), "transferbeslissingen");
         Unique(data.RecurringPayments.Select(x => x.Id), "vaste posten");
         Unique(data.BudgetOverrides.Select(x => x.Id), "maandbudgetten");
@@ -85,11 +87,12 @@ public static class Validation
             var debit = transactions[match.DebitTransactionId];
             var credit = transactions[match.CreditTransactionId];
             Require(debit.AccountId != credit.AccountId && debit.Amount < 0 && credit.Amount == -debit.Amount &&
-                (!match.IsConfirmed || TransferMatching.IsEligible(debit) && TransferMatching.IsEligible(credit)),
+                (!match.IsConfirmed || TransferMatching.IsEligible(debit, data) && TransferMatching.IsEligible(credit, data)),
                 "Een transferkoppeling vereist even grote af- en bijboekingen op verschillende rekeningen, zonder vaste-postkoppeling.");
             if (match.IsConfirmed)
                 Require(confirmedEntries.Add(debit.Id) && confirmedEntries.Add(credit.Id), "Een boeking kan maar aan één bevestigde transfer gekoppeld zijn.");
         }
+        TransactionAccounting.Validate(data);
         var links = data.Transactions.Where(t => t.RecurringPaymentId != null).Select(t => (t.RecurringPaymentId,
             Due: RecurringSchedule.LinkedDate(data.RecurringPayments.Single(r => r.Id == t.RecurringPaymentId), t))).ToList();
         Require(links.Distinct().Count() == links.Count, "Per geplande betaling kan één transactie worden gekoppeld. Laat extra of deelbetalingen ongekoppeld.");

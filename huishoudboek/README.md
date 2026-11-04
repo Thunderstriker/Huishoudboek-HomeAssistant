@@ -28,6 +28,10 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
 - **Transfers koppelen:** bekijk en bevestig twee bestaande bankboekingen als één
   interne geldbeweging. Saldi en originele boekingen blijven intact; alleen de
   rapportage verandert. Bevestigingen en afwijzingen zijn omkeerbaar.
+- **Splitsingen, retouren en vergoedingen:** verdeel één bankboeking over meerdere
+  categorieën en verwerk terugbetalingen als lagere uitgaven, nooit als inkomsten.
+  Houd werkgeversvergoedingen en gedeelde aankopen bij, met deelbetalingen en
+  openstaande bedragen. Bankboekingen en saldi blijven intact.
 
 **Over** is inkomsten min lasten en netto opzijgezet, geen rekeningsaldo.
 Prognoses zijn schattingen; werkelijke bedragen bevatten alleen boekingen tot

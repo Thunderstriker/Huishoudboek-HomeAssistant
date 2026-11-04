@@ -15,6 +15,17 @@ public static class Categorization
         return (ordinary.Where(t => t.Amount > 0).Sum(t => t.Amount), -ordinary.Where(t => t.Amount < 0).Sum(t => t.Amount));
     }
 
+    public static (decimal Income, decimal Outflow) ReviewTotals(HouseholdData data, IEnumerable<Transaction> transactions)
+    {
+        var lines = TransactionAccounting.Lines(data, transactions).ToList();
+        return (lines.Sum(l => l.Income), lines.Sum(l => l.Spending));
+    }
+
+    public static bool HasCategory(HouseholdData data, Transaction transaction, Guid? categoryId) =>
+        data.TransactionAllocations.Any(a => a.TransactionId == transaction.Id)
+            ? TransactionAccounting.Lines(data, new[] { transaction }).Any(l => l.CategoryId == categoryId)
+            : transaction.CategoryId == categoryId;
+
     public static void RenameCategory(HouseholdData data, Guid categoryId, string name)
     {
         var category = data.Categories.FirstOrDefault(c => c.Id == categoryId)
@@ -30,7 +41,7 @@ public static class Categorization
     {
         var category = data.Categories.FirstOrDefault(c => c.Id == categoryId && categoryId != Guid.Empty)
             ?? throw new InvalidOperationException("Kies een bestaande categorie om te verwijderen.");
-        return new(category.Name, category.MonthlyBudget, data.Transactions.Count(t => t.CategoryId == categoryId),
+        return new(category.Name, category.MonthlyBudget, data.Transactions.Count(t => HasCategory(data, t, categoryId)),
             data.RecurringPayments.Count(r => r.CategoryId == categoryId), data.Rules.Count(r => r.CategoryId == categoryId),
             data.BudgetOverrides.Count(b => b.CategoryId == categoryId));
     }
@@ -41,6 +52,7 @@ public static class Categorization
             throw new InvalidOperationException("Kies een bestaande categorie om te verwijderen.");
         // Only labels and category settings are removed, never financial records or recurring links.
         foreach (var t in data.Transactions.Where(t => t.CategoryId == categoryId)) t.CategoryId = null;
+        foreach (var a in data.TransactionAllocations.Where(a => a.CategoryId == categoryId)) a.CategoryId = null;
         foreach (var r in data.RecurringPayments.Where(r => r.CategoryId == categoryId)) r.CategoryId = null;
         data.Rules.RemoveAll(r => r.CategoryId == categoryId);
         data.BudgetOverrides.RemoveAll(b => b.CategoryId == categoryId);
@@ -56,7 +68,8 @@ public static class Categorization
         text = text.Trim();
         var linked = TransferMatching.ConfirmedTransactionIds(data);
         var matches = text.Length == 0 ? [] : data.Transactions.Where(t => t.Kind != TransactionKind.Transfer &&
-            !linked.Contains(t.Id) && (scope == null || scope.Contains(t.Id)) && t.Description.Contains(text, StringComparison.OrdinalIgnoreCase)).ToList();
+            !linked.Contains(t.Id) && !data.TransactionAllocations.Any(a => a.TransactionId == t.Id) &&
+            (scope == null || scope.Contains(t.Id)) && t.Description.Contains(text, StringComparison.OrdinalIgnoreCase)).ToList();
         var exact = data.Rules.Where(r => string.Equals(r.Contains.Trim(), text, StringComparison.OrdinalIgnoreCase)).ToList();
         return new(matches, matches.Count(t => t.CategoryId == null),
             matches.Count(t => Match(data, t.Description) is { } rule && rule.CategoryId != categoryId),
@@ -71,6 +84,8 @@ public static class Categorization
             throw new InvalidOperationException("Kies een bestaande categorie.");
         var selected = data.Transactions.Where(t => transactionIds.Contains(t.Id)).ToList();
         if (selected.Count != transactionIds.Count) throw new InvalidOperationException("Een geselecteerde transactie bestaat niet meer. Vernieuw de selectie.");
+        if (selected.Any(t => data.TransactionAllocations.Any(a => a.TransactionId == t.Id)))
+            throw new InvalidOperationException("Bewerk categorieën van splitsingen en retouren/vergoedingen via Transacties → Splitsen / retour / vergoeding.");
         if (userDescription != null && selected.Count != 1)
             throw new InvalidOperationException("Voeg een eigen omschrijving toe aan één betaling tegelijk.");
         CategorizationRule? newRule = null;

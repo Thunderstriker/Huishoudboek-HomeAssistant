@@ -55,9 +55,10 @@ public static class DetailedReporting
         if (unbudgeted > 0) reason += $" {Money(unbudgeted)} uitgaven zonder ingesteld budget.";
         if (report.Forecast.Available < 0) reason += $" Verwacht tekort uit maandinkomen: {Money(-report.Forecast.Available)}.";
         var linked = TransferMatching.ConfirmedTransactionIds(data);
-        var largest = data.Transactions.Where(t => t.Date.Year == year && t.Date.Month == month && t.Date <= today &&
-            t.Kind != TransactionKind.Transfer && !linked.Contains(t.Id) && t.Amount < 0 && scope.Contains(t.AccountId) && big.Any(c => c.Id == t.CategoryId)).OrderBy(t => t.Amount).Take(2).ToList();
-        if (largest.Count > 0) reason += " Grootste betalingen: " + string.Join("; ", largest.Select(t => $"{t.Description} ({Money(-t.Amount)})")) + ".";
+        var largest = TransactionAccounting.Lines(data, data.Transactions.Where(t => t.Date.Year == year && t.Date.Month == month &&
+            t.Date <= today && scope.Contains(t.AccountId))).Where(l => l.Spending > 0 && big.Any(c => c.Id == l.CategoryId))
+            .OrderByDescending(l => l.Spending).Take(2).ToList();
+        if (largest.Count > 0) reason += " Grootste betalingen: " + string.Join("; ", largest.Select(l => $"{l.Transaction.Description} ({Money(l.Spending)})")) + ".";
         var note = $"Schatting: geboekte bedragen + nog niet gekoppelde vaste posten + {Money(report.Forecast.VariableEstimate)} extra variabele uitgaven op basis van het daggemiddelde. " +
             (report.Forecast.OverdueCount > 0 ? $"{report.Forecast.OverdueCount} vervallen vaste post(en) nog niet gekoppeld; controleer op dubbeltelling. " : "") +
             "Geen automatische prognose van toekomstige spaaroverboekingen. " +

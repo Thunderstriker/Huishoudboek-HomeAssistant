@@ -23,6 +23,9 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   ontwikkeling van netto spaarbijdragen. Exacte bedragen en jaarbudgetten zijn uitklapbaar.
 - **Transacties en budgetten:** categorieën, categorisatieregels, maandafwijkingen,
   vaste posten en filters per eigenaar.
+- **Splitsingen, retouren en vergoedingen:** verdeel één bankboeking over categorieën,
+  verwerk ontvangsten als vermindering van uitgaven en volg verwachte terugbetalingen
+  voor werkgeverskosten of gedeelde aankopen. Oorspronkelijke bankboekingen blijven intact.
 - **Rekeningen en vermogen:** betaal- en spaarrekeningen, beleggen, eigenaren en hypotheek.
 - **Import en export:** Excel/CSV-import, automatische herkenning van Argenta-exports,
   CSV-export en volledige databaseback-ups met herstel.

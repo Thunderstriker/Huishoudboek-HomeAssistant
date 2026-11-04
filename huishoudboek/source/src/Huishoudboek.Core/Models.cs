@@ -3,6 +3,7 @@ namespace Huishoudboek.Core;
 public enum AccountKind { Current, Savings, Investment }
 public enum TransactionKind { Normal, Transfer, Mortgage }
 public enum PaymentFrequency { Monthly, Quarterly, Yearly, Once }
+public enum AllocationTreatment { Ordinary, Refund, Reimbursement }
 
 public sealed record Owner
 {
@@ -55,6 +56,33 @@ public sealed record Transaction
     public DateOnly? RecurringOccurrenceDate { get; set; }
     public Guid? ImportBatchId { get; set; }
     public decimal? StatementBalance { get; set; }
+}
+
+/// <summary>Reporting allocations only; the parent bank entry retains its original cash effect.</summary>
+public sealed record TransactionAllocation
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid TransactionId { get; set; }
+    public decimal Amount { get; set; }
+    public Guid? CategoryId { get; set; }
+    public string Note { get; set; } = "";
+    public AllocationTreatment Treatment { get; set; }
+    public Guid? OriginalTransactionId { get; set; }
+    public Guid? OriginalAllocationId { get; set; }
+    public Guid? ReimbursementClaimId { get; set; }
+}
+
+/// <summary>An expectation, not a bank entry or spendable cash. Expenses remain until paid.</summary>
+public sealed record ReimbursementClaim
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid ExpenseTransactionId { get; set; }
+    public Guid? ExpenseAllocationId { get; set; }
+    public string Counterparty { get; set; } = "";
+    public decimal ExpectedAmount { get; set; }
+    public DateOnly? DueDate { get; set; }
+    public string Note { get; set; } = "";
+    public bool IsClosed { get; set; }
 }
 
 public sealed record RecurringPayment
@@ -149,6 +177,8 @@ public sealed class HouseholdData
     public List<Category> Categories { get; set; } = [];
     public List<BudgetOverride> BudgetOverrides { get; set; } = [];
     public List<Transaction> Transactions { get; set; } = [];
+    public List<TransactionAllocation> TransactionAllocations { get; set; } = [];
+    public List<ReimbursementClaim> ReimbursementClaims { get; set; } = [];
     public List<TransferMatch> TransferMatches { get; set; } = [];
     public List<RecurringPayment> RecurringPayments { get; set; } = [];
     public List<CategorizationRule> Rules { get; set; } = [];

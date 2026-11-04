@@ -97,7 +97,7 @@ else
         get
         {
             var linked = TransferMatching.ConfirmedTransactionIds(State.Data);
-            return State.Data.Transactions.Where(t => TransferMatching.IsEligible(t) && t.Date <= State.Today && !linked.Contains(t.Id));
+            return State.Data.Transactions.Where(t => TransferMatching.IsEligible(t, State.Data) && t.Date <= State.Today && !linked.Contains(t.Id));
         }
     }
     private IEnumerable<Transaction> ManualDebits => AvailableEntries.Where(t => t.Amount < 0 && t.AccountId == manualAccountId && State.Scope.Contains(t.AccountId) &&

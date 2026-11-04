@@ -21,6 +21,7 @@
                 }
             </ul>
         </div>
+        @if (Categories.Any(c => c.Spent < 0)) { <p class="muted chart-note">@L["RecoveryChartNote"]</p> }
     </section>
     <section class="card savings-card">
         <div class="chart-heading"><div><h2>Uw spaarritme</h2><p class="muted">Netto bijdragen aan sparen en beleggen</p></div><div class="chart-stat"><small>Opzijgezet dit jaar</small><strong>@Money(Months.Sum(m => m.Savings))</strong></div></div>

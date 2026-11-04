@@ -71,8 +71,10 @@ public static class CashFlow
 
         // A future linked bank entry replaces the estimate on its real date, even across month boundaries.
         var transactions = data.Transactions.ToDictionary(t => t.Id);
+        var incomeIds = TransactionAccounting.Lines(data, data.Transactions.Where(t => t.Date > today && t.Date <= searchEnd))
+            .Where(l => l.Income > 0).Select(l => l.Transaction.Id).ToHashSet();
         var nextIncome = events.Where(e => e.Amount > 0 && (e.TransactionId == null ||
-            transactions[e.TransactionId.Value].Kind != TransactionKind.Transfer && !transfers.Contains(e.TransactionId.Value)))
+            incomeIds.Contains(e.TransactionId.Value)))
             .Select(e => (DateOnly?)e.Date).Min();
         var until = nextIncome ?? today.AddDays(minimumDays);
         var end = until > today.AddDays(minimumDays) ? until : today.AddDays(minimumDays);

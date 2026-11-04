@@ -11,6 +11,7 @@ public sealed class EditorField(string key, string label, string type, string va
     public string Type { get; } = type;
     public string Value { get; set; } = value;
     public bool Required { get; } = required;
+    public bool ReadOnly { get; set; }
     public List<FieldOption> Options { get; set; } = [];
     public HashSet<Guid> OwnerIds { get; set; } = [];
 }
@@ -115,6 +116,13 @@ public sealed class EditorDraft(string title, string revision)
         draft.Choice("recurring", "Koppeling vaste post (voorkomt dubbele prognose)", new[] { new FieldOption("", "Geen koppeling") }.Concat(s.Data.RecurringPayments.Select(r => new FieldOption(r.Id.ToString(), r.Name))), item.RecurringPaymentId?.ToString() ?? "");
         draft.DateField("occurrence", "Geplande betaaldatum vaste post (optioneel; leeg = bankmaand)", item.RecurringOccurrenceDate, false);
         draft.Note += " Koppel bij voorkeur via Vaste posten, vooral als de bankdatum in een andere maand valt. Een afwijkend werkelijk bedrag verandert de schatting van volgende betalingen niet.";
+        if (TransactionAccounting.HasDetails(s.Data, item.Id))
+        {
+            draft.Note += " " + UiCulture.Text("TransactionHandlingNote");
+            foreach (var field in draft.Fields.Where(f => f.Key is "date" or "account" or "description" or "amount" or "kind")) field.ReadOnly = true;
+            if (s.Data.TransactionAllocations.Any(a => a.TransactionId == item.Id))
+                draft.Fields.Single(f => f.Key == "category").ReadOnly = true;
+        }
         if (item.StatementBalance is { } balance)
         {
             var source = s.Data.ImportBatches.FirstOrDefault(b => b.Id == item.ImportBatchId)?.AccountId ?? item.AccountId;
