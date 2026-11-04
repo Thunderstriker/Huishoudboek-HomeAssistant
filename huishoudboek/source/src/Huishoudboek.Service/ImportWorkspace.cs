@@ -141,10 +141,10 @@ public sealed class ImportWorkspace : IDisposable
                     transaction.ImportBatchId = batchId;
                     transaction.RecurringPaymentId = null;
                     transaction.RecurringOccurrenceDate = null;
-                    Finance.ApplySuggestions(data, transaction, suggestCategory: false);
-                    data.Transactions.Add(transaction);
                     selected.Add(transaction);
                 }
+                Finance.ApplySuggestions(data, selected, suggestCategory: false);
+                data.Transactions.AddRange(selected);
                 data.ImportBatches.Add(new ImportBatch { Id = batchId, AccountId = upload.Request.AccountId, FileName = upload.Name, RowCount = selected.Count });
                 var index = data.ImportProfiles.FindIndex(p => p.Id == upload.Profile!.Id);
                 if (index >= 0) data.ImportProfiles[index] = upload.Profile!; else data.ImportProfiles.Add(upload.Profile!);

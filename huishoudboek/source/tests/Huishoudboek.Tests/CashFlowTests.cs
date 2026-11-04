@@ -248,7 +248,7 @@ public sealed class CashFlowTests
     }
 
     [Fact]
-    public void WiderSalaryToleranceCreatesAProposalAndLinkUsesActualAmountWithoutChangingNextEstimate()
+    public void WiderSalaryToleranceAutomaticallyLinksActualAmountWithoutChangingNextEstimate()
     {
         var data = Data();
         var salary = Plan(data, 3000, new(2026, 11, 1), PaymentFrequency.Monthly);
@@ -257,10 +257,10 @@ public sealed class CashFlowTests
         var candidate = Assert.Single(RecurringSchedule.Candidates(data, Today));
         Assert.Equal(salary.StartDate, candidate.DueDate);
         Assert.Equal(3.25m, candidate.Difference);
-        Finance.ApplySuggestions(data, actual);
-        Assert.Null(actual.RecurringPaymentId);
         var originalAmount = actual.Amount; var originalDate = actual.Date;
-        RecurringSchedule.Link(data, actual.Id, salary.Id, candidate.DueDate);
+        Finance.ApplySuggestions(data, actual);
+        Assert.Equal(salary.Id, actual.RecurringPaymentId);
+        Assert.Equal(candidate.DueDate, actual.RecurringOccurrenceDate);
         Validation.Validate(data);
         var saved = data.Transactions.Single(t => t.Id == actual.Id);
         Assert.Equal((originalAmount, originalDate, "Salaris werkgever"), (saved.Amount, saved.Date, saved.Description));
@@ -288,7 +288,7 @@ public sealed class CashFlowTests
     }
 
     [Fact]
-    public void StrictAutomaticRecognitionStillWorksAcrossMonthBoundariesAndAvoidsAmbiguity()
+    public void AutomaticRecognitionWorksAcrossMonthBoundariesAndAvoidsAmbiguity()
     {
         var data = Data();
         var salary = Plan(data, 3000, new(2026, 11, 1), PaymentFrequency.Monthly);
@@ -381,7 +381,7 @@ public sealed class CashFlowTests
     }
 
     [Fact]
-    public void LargerDateWindowRequiresReviewEvenIfTheAmountIsExact()
+    public void LargerConfiguredDateWindowAutomaticallyLinksAnUnambiguousPayment()
     {
         var data = Data();
         var bill = Plan(data, -100, Today.AddDays(-7));
@@ -389,7 +389,8 @@ public sealed class CashFlowTests
         var actual = Entry(data, -100, Today, "Verzekeraar");
         Assert.Single(RecurringSchedule.Candidates(data, Today));
         Finance.ApplySuggestions(data, actual);
-        Assert.Null(actual.RecurringPaymentId);
+        Assert.Equal(bill.Id, actual.RecurringPaymentId);
+        Assert.Equal(bill.StartDate, actual.RecurringOccurrenceDate);
     }
 
     [Fact]

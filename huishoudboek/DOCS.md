@@ -232,8 +232,10 @@ andere rekening of spaarrekening dekt een rekeninggebonden betaling niet automat
    worden overgeslagen. Dag 29–31 wordt in korte maanden ingekort. Eenmalig gebruikt
    de startdatum als betaaldatum. Een planning maakt geen echte bankboeking aan.
 2. Stel herkenningstekst en een passende bedrag-/datummarge in, bijvoorbeeld € 10
-   voor een salaris dat enkele euro's varieert. Automatische herkenning blijft strikt
-    (binnen uw ingestelde marges, maximaal ± 1 cent en 5 dagen, één kandidaat).
+   voor een salaris dat enkele euro's varieert. Bij import worden eenduidige matches
+    automatisch gekoppeld binnen deze ingestelde bedrag- en datummarges, zonder
+    extra limiet van 1 cent of 5 dagen. Eén bankboeking moet bij precies één geplande
+    betaling passen en die betaling mag maar één mogelijke bankboeking hebben.
     Opslaan controleert ook eerder geïmporteerde bankboekingen en toont hoeveel
     eenduidige matches binnen uw ingestelde marges zijn gevonden. Kies **Opslaan
     en … boekingen koppelen** om ze met één bevestiging te koppelen, of **Opslaan

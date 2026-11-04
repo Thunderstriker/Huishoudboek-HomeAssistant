@@ -132,16 +132,16 @@ public sealed class RecurringBatchMatchingTests
     [Theory]
     [InlineData(0, -6.50)]
     [InlineData(7, -6)]
-    public void ExplicitBatchConfirmationUsesConfiguredMarginsNotTheStrictImportCaps(int offset, double amount)
+    public void AutomaticRecognitionUsesConfiguredAmountAndDateMargins(int offset, double amount)
     {
         var data = Data();
         var entry = Entry(data, offset, (decimal)amount);
         var plan = Plan(data) with { MatchTolerance = 1, MatchWindowDays = 10 };
         data.RecurringPayments.Add(plan);
         Finance.ApplySuggestions(data, entry);
-        Assert.Null(entry.RecurringPaymentId);
+        Assert.Equal(plan.Id, entry.RecurringPaymentId);
         var proposal = Draft(data, plan).PrepareSave(data, Today.AddDays(10));
-        Assert.Equal(1, proposal.MatchCount);
+        Assert.Equal(0, proposal.MatchCount);
         proposal.SaveAndLink(data);
         Assert.Equal(plan.Id, Saved(data, entry).RecurringPaymentId);
         Assert.Equal(-6m, data.RecurringPayments.Single().Amount);

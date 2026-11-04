@@ -174,22 +174,32 @@ public static class Finance
         => RecurringSchedule.Occurrence(item, year, month);
 
     public static void ApplySuggestions(HouseholdData data, Transaction transaction, bool suggestCategory = true)
+        => ApplySuggestions(data, [transaction], suggestCategory);
+
+    public static void ApplySuggestions(HouseholdData data, IReadOnlyList<Transaction> transactions, bool suggestCategory = true)
     {
-        if (data.TransferMatches.Any(m => m.IsConfirmed && (m.DebitTransactionId == transaction.Id || m.CreditTransactionId == transaction.Id))) return;
-        if (data.TransactionAllocations.Any(a => a.TransactionId == transaction.Id)) return;
-        // Import-save rechecks may recognize recurring items, but must preserve a deliberate null category too.
-        if (transaction.Kind == TransactionKind.Transfer)
+        var transfers = TransferMatching.ConfirmedTransactionIds(data);
+        foreach (var transaction in transactions)
         {
-            if (suggestCategory) TransferCategories.ApplyDefault(data, transaction);
-            return;
+            if (transfers.Contains(transaction.Id) || TransactionAccounting.HasDetails(data, transaction.Id)) continue;
+            // Import-save rechecks must preserve a deliberately empty category too.
+            if (transaction.Kind == TransactionKind.Transfer)
+            {
+                if (suggestCategory) TransferCategories.ApplyDefault(data, transaction);
+                continue;
+            }
+            if (suggestCategory) transaction.CategoryId ??= Categorization.Match(data, transaction.Description)?.CategoryId;
         }
-        if (suggestCategory) transaction.CategoryId ??= Categorization.Match(data, transaction.Description)?.CategoryId;
-        // Keep automatic import recognition strict. Wider amount/date tolerances are review proposals only.
-        var matches = RecurringSchedule.Matches(data, transaction).ToList();
-        if (transaction.RecurringPaymentId == null && matches.Count == 1)
+
+        if (transactions.Count == 0 || data.RecurringPayments.Count == 0) return;
+        var selectedIds = transactions.Select(t => t.Id).ToHashSet();
+        // Include pending rows together and existing entries as competitors, but only update
+        // the selected transactions. Use the same configured margins as review proposals.
+        var entries = transactions.Concat(data.Transactions).DistinctBy(t => t.Id);
+        var matches = RecurringSchedule.UnambiguousCandidates(data, entries);
+        foreach (var candidate in matches.Where(c => selectedIds.Contains(c.Transaction.Id)))
         {
-            var candidate = matches[0];
-            if (Math.Abs(candidate.Difference) > 0.01m || Math.Abs(candidate.DueDate.DayNumber - transaction.Date.DayNumber) > 5) return;
+            var transaction = candidate.Transaction;
             var match = candidate.Payment;
             transaction.RecurringPaymentId = match.Id;
             transaction.RecurringOccurrenceDate = candidate.DueDate;

@@ -81,7 +81,7 @@ public static class HouseholdEdits
     public static void ApplyRules(HouseholdData data)
     {
         var linked = TransferMatching.ConfirmedTransactionIds(data);
-        foreach (var t in data.Transactions.Where(t => t.Kind != TransactionKind.Transfer && !linked.Contains(t.Id))) Finance.ApplySuggestions(data, t);
+        Finance.ApplySuggestions(data, data.Transactions.Where(t => t.Kind != TransactionKind.Transfer && !linked.Contains(t.Id)).ToList());
     }
     public static void UndoImport(HouseholdData data, Guid id)
     {

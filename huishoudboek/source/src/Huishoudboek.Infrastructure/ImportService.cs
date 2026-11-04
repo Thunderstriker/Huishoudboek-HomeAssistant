@@ -202,7 +202,6 @@ public static class ImportService
                 var transaction = new Transaction { AccountId = accountId, Date = date, Description = description, Amount = amount,
                     StatementBalance = string.IsNullOrWhiteSpace(balanceCell.Text) ? null : ParseAmount(balanceCell, culture) };
                 // A statement row belongs only to the selected account, even when its counterparty is another own account.
-                Finance.ApplySuggestions(data, transaction);
                 var preview = new ImportRow
                 {
                     RowNumber = table.SourceRows?[i] ?? i + 2, Transaction = transaction,
@@ -218,6 +217,7 @@ public static class ImportService
                 result.Add(new ImportRow { RowNumber = table.SourceRows?[i] ?? i + 2, SourceDate = sourceDate, Note = ex.Message });
             }
         }
+        Finance.ApplySuggestions(data, result.Where(r => r.IsValid).Select(r => r.Transaction!).ToList());
         return result;
     }
 

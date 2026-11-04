@@ -2,6 +2,10 @@
 
 ## 0.1.10
 
+- Automatische koppeling van vaste posten bij bankimport respecteert nu de ingestelde
+  bedrag- en datummarges, zonder verborgen limiet van 1 cent of 5 dagen. De geselecteerde
+  regels worden samen beoordeeld: meerdere mogelijke boekingen of geplande betalingen
+  blijven ter controle. Werkelijke bankbedragen en volgende schattingen blijven intact.
 - Automatische dubbelcontrole bij bankimports verwijderd: alle geldige regels binnen
   de gekozen periode zijn standaard geselecteerd, ook identieke en eerder geïmporteerde
   boekingen. Handmatig uitvinken en invoervalidatie blijven behouden. Een afschrift
