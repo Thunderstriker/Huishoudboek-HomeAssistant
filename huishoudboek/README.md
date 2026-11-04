@@ -9,6 +9,12 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
 - **Maandoverzicht:** compacte doughnutgrafiek met de grootste uitgavencategorieën
   en percentages, plus werkelijke bedragen tegenover de maandprognose.
   Budgetten en overschrijdingen staan in de bijbehorende tabel.
+- **Hoeveel kan ik verantwoord uitgeven?** Bestedingsruimte tot het volgende inkomen,
+  komende betalingen over 7/30 dagen en dagelijkse saldi per betaalrekening. Met
+  minimale cashbuffer, aankoopcontrole, laagste saldo/datum en waarschuwingen bij oude imports.
+- **Vaste posten:** maand-, kwartaal-, jaar- en eenmalige inkomsten/lasten vooraf
+  plannen. Echte bankboekingen vervangen één schatting, ook met een afwijkend bedrag
+  of datum. Herkenningsmarges en handmatig koppelen voorkomen dubbele prognoses.
 - **Jaaroverzicht:** een inkomsten-en-lastentrend, een uitgavendoughnut en een
   spaarritmegrafiek met maandbijdragen en het totaal sinds januari, geen rekeningsaldo.
   Tabellen met exacte bedragen en jaarbudgetten zijn uitklapbaar.
@@ -19,6 +25,9 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
   CSV-export en volledige databaseback-ups met herstel.
 - Elke bankimport werkt alleen de gekozen rekening bij, met de bedragen uit het
   bestand. Gebruik voor elke rekening het eigen bestand; geen automatische koppelingen.
+- **Transfers koppelen:** bekijk en bevestig twee bestaande bankboekingen als één
+  interne geldbeweging. Saldi en originele boekingen blijven intact; alleen de
+  rapportage verandert. Bevestigingen en afwijzingen zijn omkeerbaar.
 
 **Over** is inkomsten min lasten en netto opzijgezet, geen rekeningsaldo.
 Prognoses zijn schattingen; werkelijke bedragen bevatten alleen boekingen tot

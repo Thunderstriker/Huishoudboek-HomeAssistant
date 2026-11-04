@@ -15,7 +15,7 @@ public sealed class AdministrationCoordinator : IDisposable
     public string DirectoryPath { get; }
     public Guid AdministrationId { get; }
 
-    public AdministrationCoordinator(string directory, bool initialize = false, bool claim = false)
+    public AdministrationCoordinator(string directory, bool initialize = false, bool claim = false, bool allowUpgrade = false)
     {
         DirectoryPath = Path.GetFullPath(directory);
         if (!initialize && !Directory.Exists(DirectoryPath)) throw new InvalidDataException("De administratie bestaat niet. Gebruik --initialize alleen voor een nieuwe administratie.");
@@ -27,8 +27,9 @@ public sealed class AdministrationCoordinator : IDisposable
             var marker = Path.Combine(DirectoryPath, AdministrationLease.ServiceMarker);
             if (!initialize && !claim && !File.Exists(marker))
                 throw new InvalidDataException("Deze administratie is nog niet aan de service toegewezen. Maak eerst een back-up en start eenmalig met --claim.");
-            // Startup never upgrades an existing administration. Do that explicitly with the desktop before adoption.
-            _store = new SqliteHouseholdStore(path, allowCreate: initialize, allowUpgrade: false);
+            // Home Assistant upgrades supported schemas under the writer lease, after validation and a SQLite-aware backup.
+            // Normal Windows-service adoption still requires an explicit upgrade beforehand.
+            _store = new SqliteHouseholdStore(path, allowCreate: initialize, allowUpgrade: allowUpgrade);
             _data = _store.Load();
             if (!File.Exists(marker)) File.WriteAllText(marker, Guid.NewGuid().ToString("D"));
             AdministrationId = Guid.Parse(File.ReadAllText(marker).Trim());
@@ -66,6 +67,7 @@ public sealed class AdministrationCoordinator : IDisposable
         // The desktop compatibility endpoint is intentionally editor-only and guarded by an exact revision.
         candidate.Owners = data.Owners; candidate.Accounts = data.Accounts; candidate.Categories = data.Categories;
         candidate.Transactions = data.Transactions; candidate.RecurringPayments = data.RecurringPayments;
+        candidate.TransferMatches = data.TransferMatches;
         candidate.BudgetOverrides = data.BudgetOverrides; candidate.Valuations = data.Valuations;
         candidate.ImportBatches = data.ImportBatches; candidate.ImportProfiles = data.ImportProfiles;
         candidate.Rules = data.Rules; candidate.Mortgage = data.Mortgage;

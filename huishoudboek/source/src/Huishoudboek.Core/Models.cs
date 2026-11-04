@@ -2,6 +2,7 @@ namespace Huishoudboek.Core;
 
 public enum AccountKind { Current, Savings, Investment }
 public enum TransactionKind { Normal, Transfer, Mortgage }
+public enum PaymentFrequency { Monthly, Quarterly, Yearly, Once }
 
 public sealed record Owner
 {
@@ -19,6 +20,7 @@ public sealed record Account
     public decimal OpeningBalance { get; set; }
     public DateOnly OpeningDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     public decimal? SavingsGoal { get; set; }
+    public decimal MinimumCashBuffer { get; set; }
 }
 
 public sealed record Category
@@ -50,6 +52,7 @@ public sealed record Transaction
     public Guid? CounterAccountId { get; set; }
     public decimal PrincipalComponent { get; set; }
     public Guid? RecurringPaymentId { get; set; }
+    public DateOnly? RecurringOccurrenceDate { get; set; }
     public Guid? ImportBatchId { get; set; }
     public decimal? StatementBalance { get; set; }
 }
@@ -62,10 +65,22 @@ public sealed record RecurringPayment
     public Guid? CategoryId { get; set; }
     public decimal Amount { get; set; }
     public int DayOfMonth { get; set; } = 1;
+    public PaymentFrequency Frequency { get; set; }
+    public decimal MatchTolerance { get; set; } = 0.01m;
+    public int MatchWindowDays { get; set; } = 5;
     public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     public DateOnly? EndDate { get; set; }
     public string MatchText { get; set; } = "";
     public bool IsMortgage { get; set; }
+}
+
+/// <summary>A reporting-only decision about two existing entries; never changes their account effects.</summary>
+public sealed record TransferMatch
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid DebitTransactionId { get; set; }
+    public Guid CreditTransactionId { get; set; }
+    public bool IsConfirmed { get; set; } = true;
 }
 
 public sealed record CategorizationRule
@@ -134,6 +149,7 @@ public sealed class HouseholdData
     public List<Category> Categories { get; set; } = [];
     public List<BudgetOverride> BudgetOverrides { get; set; } = [];
     public List<Transaction> Transactions { get; set; } = [];
+    public List<TransferMatch> TransferMatches { get; set; } = [];
     public List<RecurringPayment> RecurringPayments { get; set; } = [];
     public List<CategorizationRule> Rules { get; set; } = [];
     public List<InvestmentValuation> Valuations { get; set; } = [];

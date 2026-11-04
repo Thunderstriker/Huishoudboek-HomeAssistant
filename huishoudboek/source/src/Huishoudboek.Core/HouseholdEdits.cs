@@ -28,6 +28,11 @@ public static class HouseholdEdits
 
     public static void SaveTransaction(HouseholdData data, Transaction item, bool useTransferDefault = false)
     {
+        var original = data.Transactions.FirstOrDefault(t => t.Id == item.Id);
+        if (original != null && (original.AccountId != item.AccountId || original.Amount != item.Amount || original.Date != item.Date ||
+            original.Kind != item.Kind || original.CounterAccountId != item.CounterAccountId ||
+            original.RecurringPaymentId != item.RecurringPaymentId || original.PrincipalComponent != item.PrincipalComponent))
+            TransferMatching.RemoveForTransactions(data, new HashSet<Guid> { item.Id });
         item = item with { Description = item.Description.Trim(), UserDescription = item.UserDescription.Trim() };
         if (item.Kind != TransactionKind.Transfer) item.CounterAccountId = null;
         else
@@ -36,7 +41,21 @@ public static class HouseholdEdits
             if (useTransferDefault) { item.CategoryId = null; TransferCategories.ApplyDefault(data, item); }
         }
         if (item.Kind != TransactionKind.Mortgage) item.PrincipalComponent = 0;
+        if (item.RecurringPaymentId == null) item.RecurringOccurrenceDate = null;
+        else if (item.RecurringOccurrenceDate == null &&
+            (original == null || original.RecurringPaymentId != item.RecurringPaymentId || original.Date != item.Date || original.RecurringOccurrenceDate != null) &&
+            data.RecurringPayments.FirstOrDefault(r => r.Id == item.RecurringPaymentId) is { } recurring)
+        {
+            item.RecurringOccurrenceDate = RecurringSchedule.Occurrence(recurring, item.Date.Year, item.Date.Month)
+                ?? throw new InvalidOperationException("Geen geplande betaling in deze bankmaand. Kies de geplande betaaldatum of koppel via Vaste posten.");
+        }
         Put(data.Transactions, item, x => x.Id);
+    }
+
+    public static void DeleteTransaction(HouseholdData data, Guid id)
+    {
+        TransferMatching.RemoveForTransactions(data, new HashSet<Guid> { id });
+        data.Transactions.RemoveAll(t => t.Id == id);
     }
 
     public static void SaveRecurring(HouseholdData data, RecurringPayment item) => Put(data.RecurringPayments,
@@ -44,7 +63,8 @@ public static class HouseholdEdits
     public static void DeleteRecurring(HouseholdData data, Guid id)
     {
         data.RecurringPayments.RemoveAll(r => r.Id == id);
-        foreach (var t in data.Transactions.Where(t => t.RecurringPaymentId == id)) t.RecurringPaymentId = null;
+        foreach (var t in data.Transactions.Where(t => t.RecurringPaymentId == id))
+        { t.RecurringPaymentId = null; t.RecurringOccurrenceDate = null; }
     }
     public static void SaveValuation(HouseholdData data, InvestmentValuation item) => Put(data.Valuations, item, x => x.Id);
     public static void SaveRule(HouseholdData data, CategorizationRule item)
@@ -55,12 +75,15 @@ public static class HouseholdEdits
     }
     public static void ApplyRules(HouseholdData data)
     {
-        foreach (var t in data.Transactions.Where(t => t.Kind != TransactionKind.Transfer)) Finance.ApplySuggestions(data, t);
+        var linked = TransferMatching.ConfirmedTransactionIds(data);
+        foreach (var t in data.Transactions.Where(t => t.Kind != TransactionKind.Transfer && !linked.Contains(t.Id))) Finance.ApplySuggestions(data, t);
     }
     public static void UndoImport(HouseholdData data, Guid id)
     {
         var batch = data.ImportBatches.FirstOrDefault(b => b.Id == id && !b.Undone)
             ?? throw new InvalidOperationException("Deze import bestaat niet of is al teruggedraaid.");
+        var removed = data.Transactions.Where(t => t.ImportBatchId == id).Select(t => t.Id).ToHashSet();
+        TransferMatching.RemoveForTransactions(data, removed);
         data.Transactions.RemoveAll(t => t.ImportBatchId == id);
         batch.Undone = true;
     }

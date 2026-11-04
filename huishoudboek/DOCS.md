@@ -82,12 +82,12 @@ naar GitHub of een containerregister. Alleen amd64 is in deze versie opgenomen.
 4. Controleer de waarschuwing en bevestig expliciet met **Database importeren**.
    Annuleren wijzigt niets. Een import vervangt de volledige administratie;
    het is geen samenvoeging van twee huishoudboeken.
-5. De app valideert applicatiemarker, schema (versies 1–3), SQLite-integriteit en
+5. De app valideert applicatiemarker, schema (versies 1–5), SQLite-integriteit en
    financiële verwijzingen. Vervolgens bewaart hij de huidige administratie als
    veiligheidskopie en slaat hij de geïmporteerde administratie atomair op.
    Een onbekende versie of ongeldig bestand wordt geweigerd, niet gereset.
 6. Controleer na afloop rekeningen, transacties en bedragen. Uw bronbestand op
-   Windows blijft ongewijzigd. Bestaande versies 1–2 worden bij import ingelezen
+   Windows blijft ongewijzigd. Bestaande versies 1–4 worden bij import ingelezen
    naar de huidige structuur zonder het bronbestand te migreren.
 
 Alle financiële gegevens blijven behouden: transacties en eigen omschrijvingen,
@@ -110,10 +110,11 @@ ander product en is niet automatisch met deze ingress-only app verbonden.
 - Importeer voor zicht-/betaal-, spaar- en beleggingsrekeningen ieder het eigen
   bestand, of voer de eigen transacties handmatig in. Ook beide zijden van een
   betaling tussen eigen rekeningen worden zo afzonderlijk geregistreerd.
-- Zonder expliciete handmatige overboeking zijn deze boekingen gewone inkomsten
-  of uitgaven in de overzichten. Een categorie is alleen een label en koppelt geen
-  rekeningen. Handmatig aangemaakte interne overboekingen werken wel beide rekeningen
-  bij; combineer die niet met twee afzonderlijke statementboekingen.
+- Zonder bevestigde transferkoppeling zijn deze boekingen gewone inkomsten of
+  uitgaven in de overzichten. Een categorie is alleen een label en koppelt geen
+  rekeningen. Gebruik **Transfers koppelen** om twee bestaande bankboekingen voor
+  rapportage te koppelen. Handmatig aangemaakte interne overboekingen werken wel
+  beide rekeningen bij; combineer die niet met twee afzonderlijke statementboekingen.
 - Dubbelen worden gecontroleerd op rekening, datum, bedrag en omschrijving.
   Boekingen op andere rekeningen houden een eigen import niet tegen.
 - De update wijzigt bestaande opgeslagen overboekingen niet. Maak eerst een
@@ -125,6 +126,99 @@ ander product en is niet automatisch met deze ingress-only app verbonden.
   en eventuele dubbelen. U kunt ook de betreffende import terugdraaien en opnieuw
   importeren; daarmee verwijdert u ook eventuele handmatige wijzigingen aan die import.
 
+## Transfers tussen eigen rekeningen koppelen
+
+1. Importeer het eigen afschrift van iedere betrokken rekening. Open daarna
+   **Transfers koppelen**, ook bereikbaar vanuit Transacties en na een import.
+2. Controleer mogelijke paren: even grote tegengestelde bedragen op verschillende
+   eigen rekeningen, tot en met vandaag en maximaal vijf dagen datumverschil.
+   Een rekeningnummer in de opgeslagen bankomschrijving ondersteunt het voorstel;
+   gelijke bedragen en nabijgelegen datums alleen bewijzen geen transfer.
+   Bij meerdere kandidaten kiest de app niet automatisch.
+3. Controleer rekening, originele datum, omschrijving en bedrag van beide zijden.
+   Kies **Transfer bevestigen…** en bevestig de getoonde rapportagewijziging.
+   Beide bankboekingen blijven apart opgeslagen en werken uitsluitend hun eigen
+   rekening bij. Er wordt geen extra ontvangst, saldoaanpassing of boeking aangemaakt.
+4. Bevestigde paren tellen niet als inkomen, uitgaven, categoriebestedingen of
+   variabele uitgavenprognose. Betaalrekening → sparen/beleggen telt als positief
+   opzijgezet; de omgekeerde richting als negatief. Tussen twee betaalrekeningen
+   of twee spaar-/beleggingsrekeningen is de netto spaarbijdrage nul.
+5. Netto opzijgezet telt één keer op de originele bankdatum van de **betaalrekening**,
+   ook bij maand- of jaargrenzen. Beide bankdatums blijven intact. Zoals bij
+   handmatige transfers telt de volledige bijdrage mee als minstens één rekening
+   onder het eigenaarfilter valt. De werkruimte toont de andere zijde ter controle;
+   een eigenaarfilter is geen toegangsbeperking.
+6. Een onjuist voorstel kunt u als **Geen transfer** afwijzen; alleen dat specifieke
+   paar wordt verborgen. Bij **Bevestigde koppelingen** of **Geen transfer** kunt u
+   de beslissing weer verwijderen. Ontkoppelen wijzigt geen saldi; de boekingen
+   tellen weer als gewone inkomsten/uitgaven.
+7. Voor een groter datumverschil gebruikt u **Handmatig twee bestaande boekingen
+   koppelen**. Zonder tweede zijde blijft de bestaande rapportage ongewijzigd:
+   importeer eerst de andere rekening. Vaste-postkoppelingen, hypotheekboekingen,
+   bestaande handmatige transfers en reeds bevestigde boekingen zijn uitgesloten.
+
+Wijziging van bedrag, datum, rekening, type of vaste-postkoppeling verwijdert
+betrokken transferbeslissingen. Categorieën en eigen omschrijvingen wijzigen alleen
+labels. Verwijderen van een bankboeking of terugdraaien van een import verwijdert
+de betrokken beslissing, niet de andere bankboeking. Controleer die overgebleven
+zijde vervolgens opnieuw. Zet een gekoppelde bankboeking niet zomaar om naar het
+oude handmatige transfertype: dat type werkt beide rekeningen bij en kan een al
+geïmporteerde ontvangst dubbel tellen.
+
+## Bestedingsruimte en vaste inkomsten/lasten
+
+Op **Maandoverzicht → Hoeveel kan ik verantwoord uitgeven?** staat een schatting
+vanaf vandaag, onafhankelijk van het geselecteerde maandfilter. De berekening
+blijft per betaalrekening: gedeelde rekeningen tellen eenmaal, maar geld op een
+andere rekening of spaarrekening dekt een rekeninggebonden betaling niet automatisch.
+
+1. Voeg via **Vaste posten → + Vaste post** bekende inkomsten en lasten toe.
+   Positief is inkomen, negatief is een uitgave. Kies maandelijks, per kwartaal,
+   jaarlijks of eenmalig, een bedrag per betaling en de juiste rekening.
+   Kwartaal/jaar volgen de startmaand en ingestelde dag; betalingen vóór de startdatum
+   worden overgeslagen. Dag 29–31 wordt in korte maanden ingekort. Eenmalig gebruikt
+   de startdatum als betaaldatum. Een planning maakt geen echte bankboeking aan.
+2. Stel herkenningstekst en een passende bedrag-/datummarge in, bijvoorbeeld € 10
+   voor een salaris dat enkele euro's varieert. Automatische herkenning blijft strikt
+   (± 1 cent en maximaal 5 dagen, één kandidaat). Ruimere marges leveren voorstellen
+   in **Bankboekingen koppelen aan een geplande betaling**; controleer en bevestig.
+3. Gebruik **Handmatig koppelen** als de omschrijving of het bedrag niet past.
+   Kies de bankboeking, vaste post en de **geplande** betaaldatum. Die mag in een
+   andere maand vallen dan de bankdatum. Eén bankboeking vervangt één schatting,
+   met het echte bedrag en de echte datum. Bankbedragen, omschrijvingen en saldi
+   blijven intact; het ingestelde bedrag van volgende betalingen verandert niet.
+   Extra of deelbetalingen blijven ongekoppeld. Koppelingen zijn te verwijderen.
+4. Stel via **Buffer instellen** of **Rekeningen → Bewerken** een minimale
+   cashbuffer per rekening in. De bestedingsruimte is het laagste verwachte saldo
+   tot en met de volgende inkomensdag minus deze buffer, minimaal 0.
+5. Kies de rekening van uw aankoop en voer bijvoorbeeld `150,00` in. De controle
+   kijkt naar alle geprojecteerde dagen: minstens 30, of tot het volgende inkomen
+   als dat later valt (zoekhorizon maximaal 366 dagen). De dagelijkse saldotabel
+   toont ook het laagste saldo en zijn datum. Kosten gaan voorzichtig vóór ontvangsten
+   op dezelfde dag, zodat een positief maandultimo een eerder tekort niet verbergt.
+
+De komende betalingen over 7/30 dagen omvatten vaste-postschattingen en geregistreerde
+toekomstige afboekingen, inclusief expliciete overboekingen. Extra variabele uitgaven
+worden apart geschat met maximaal 90 dagen historie tot de laatste geïmporteerde
+bankdatum (zonder import: vandaag). Gekoppelde vaste lasten, hypotheekbetalingen
+en bevestigde transfers vallen buiten dat gemiddelde. Geplande variabele boekingen
+vullen het gemiddelde per dag in, zonder dubbele laag. Het eindsaldo van de
+betaalrekeningen gebruikt deze dagelijkse schatting; het maandresultaat behoudt zijn
+maandgebonden daggemiddelde en is daarom niet dezelfde prognose.
+
+De laatste vervallen, niet-gekoppelde uitgave per post wordt voor morgen gereserveerd;
+oudere ontbrekende betalingen worden niet opgeteld. Koppel echte betalingen om
+dubbeltelling te voorkomen. Achterstallig inkomen wordt niet als beschikbaar
+aangenomen. Zonder volgende inkomensdatum wordt voor 30 dagen gereserveerd met
+een waarschuwing. Oude databases behouden hun maandgebonden koppelingen.
+
+Imports zijn na 7 dagen verouderd. Ook een recente import met alleen oude bankdatums
+geeft geen zekerheid over het huidige saldo. Ontbrekende imports, beperkte historie,
+een buffer van 0 en niet-gekoppelde vervallen posten krijgen waarschuwingen; een
+aankoop die rekenkundig past krijgt dan geen stellige bevestiging. Onverwachte kosten,
+gewijzigde facturen en niet-geregistreerde overboekingen ontbreken. Dit blijft een
+schatting, geen bankverbinding of garantie. Maak regelmatig een volledige back-up.
+
 ## Opslag, back-ups en updates
 
 - Actieve administratie: `/data/administration/huishoudboek.db`, met bijbehorende
@@ -132,6 +226,12 @@ ander product en is niet automatisch met deze ingress-only app verbonden.
   `/data` is de private, permanente app-opslag van de Supervisor, geen Windows-pad.
 - Normale herstarts en updates behouden `/data`. Een bestaande ontbrekende of
   beschadigde database wordt nooit automatisch vervangen door een lege database.
+- Bij een Home Assistant-update worden ondersteunde schema's 1–4 na validatie
+  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 5. Vooraf wordt
+  een SQLite-bewuste `.voor-versie-5-….db`-veiligheidskopie naast de database gemaakt.
+  Onbekende schema's worden geweigerd. Teruggaan naar een oude appversie vereist
+  herstel van een passende oude back-up; schema-5-back-ups zijn niet leesbaar in
+  oudere apps. De normale Windows-service blijft automatische upgrades weigeren.
 - Alleen een werkelijk nieuwe installatie begint met een lege administratie en
   standaardcategorieën, zonder fictieve bedragen. U kunt ook zelf rekeningen aanmaken.
 - Download regelmatig een databaseback-up via **Beheer & import → Back-up maken**.
@@ -166,7 +266,7 @@ ander product en is niet automatisch met deze ingress-only app verbonden.
 - Database, configuratie en gedownloade databaseback-ups zijn **niet door deze app
   versleuteld**. Beveilig de Windows-host, VM-schijf en back-ups. Zet geen financiële
   bestanden of proxyheaders in gedeelde logs/screenshots.
-- Geldberekeningen blijven decimal, schema blijft versie 3. Saldi zijn berekend uit
+- Geldberekeningen blijven decimal, schema is versie 5. Saldi zijn berekend uit
   geregistreerde gegevens, geen live bankgegevens. Prognoses blijven schattingen.
 - Geen publieke internet-/Cloudflare-configuratie, automatische discovery of HACS.
   Dit is de volledige app, niet een HACS-integratie.

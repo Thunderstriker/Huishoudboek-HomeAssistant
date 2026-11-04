@@ -12,6 +12,13 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   met een compacte doughnutgrafiek per categorie en een budgettabel met overschrijdingen.
 - **Maandprognose:** vergelijk werkelijke inkomsten, lasten en het resterende bedrag
   met de schatting voor het einde van de maand.
+- **Verantwoord besteden:** geschatte bestedingsruimte tot het volgende inkomen,
+  bekende betalingen over 7/30 dagen en dagelijkse saldi per betaalrekening,
+  met het laagste saldo en zijn datum. Stel een minimale cashbuffer in en controleer
+  een aankoopbedrag. Verouderde imports en ontbrekende gegevens krijgen waarschuwingen.
+- **Vaste inkomsten en lasten:** plan maand-, kwartaal-, jaar- en eenmalige betalingen.
+  Koppel een echte bankboeking aan één geplande betaling, ook bij afwijkende bedragen
+  of een andere bankmaand. Voorstellen met instelbare herkenningsmarges zijn te bevestigen.
 - **Jaaroverzicht:** inkomsten tegenover maandlasten, een uitgavendoughnut en de
   ontwikkeling van netto spaarbijdragen. Exacte bedragen en jaarbudgetten zijn uitklapbaar.
 - **Transacties en budgetten:** categorieën, categorisatieregels, maandafwijkingen,
@@ -21,6 +28,9 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   CSV-export en volledige databaseback-ups met herstel.
 - **Imports per rekening:** alleen de gekozen rekening wordt bijgewerkt, met de
   bedragen uit het bestand. Geen automatische koppeling tussen eigen rekeningen.
+- **Transfers koppelen:** bevestig twee bestaande bankboekingen als één interne
+  geldbeweging, zonder saldi of originele boekingen te wijzigen. Voorstellen en
+  handmatig koppelen, met omkeerbare bevestigingen en afwijzingen.
 - **Bestaande administratie:** importeer een Huishoudboek-database (`.db`) of begin
   met een lege administratie.
 
@@ -66,6 +76,10 @@ doelapparaat. De huidige Microsoft .NET 10-container-images ondersteunen geen
 - Budgetten gelden voor het huishouden, ook wanneer u op een eigenaar filtert.
 - Prognoses zijn schattingen op basis van geregistreerde boekingen, vaste posten
   en het waargenomen uitgavenpatroon. Onvolledige imports kunnen het beeld vertekenen.
+- Bevestigde transferparen zijn geen inkomsten of uitgaven. Netto opzijgezet telt
+  eenmaal op de bankdatum van de betaalrekening, ook als de ontvangst in een andere
+  maand valt. Een eigenaarfilter neemt de hele spaarbijdrage mee als minstens één
+  betrokken rekening onder het filter valt, zoals bij handmatige transfers.
 
 ## Gegevens en Back-ups
 

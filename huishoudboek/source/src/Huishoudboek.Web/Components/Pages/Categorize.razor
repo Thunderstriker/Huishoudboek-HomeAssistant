@@ -3,7 +3,7 @@
 @inherits EditPageBase
 <PageTitle>Categoriseren · Huishoudboek</PageTitle>
 <h1>Categoriseren · alle datums</h1>
-<p class="muted">Deze werkruimte geldt voor alle datums, inclusief herkenbaar geplande boekingen. Het eigenaarfilter geldt wel. Transfers zijn alleen labels, geen inkomsten of uitgaven.</p>
+<p class="muted">Deze werkruimte geldt voor alle datums, inclusief herkenbaar geplande boekingen. Het eigenaarfilter geldt wel. Categorieën van handmatige en gekoppelde transfers zijn alleen labels, geen inkomsten of uitgaven. <a href="overboekingen">Transfers koppelen</a></p>
 <div class="actions">
     <button class="@(mode == "groups" ? "primary" : "")" @onclick='() => SetMode("groups")'>Per categorie</button>
     <button class="@(mode == "inbox" ? "primary" : "")" @onclick='() => SetMode("inbox")'>Zonder categorie</button>
@@ -14,7 +14,7 @@
 <label>Import<select @bind="batchId" @bind:after="FilterChanged"><option value="">Alle imports</option>@foreach (var batch in State.Data.ImportBatches.Where(b => !b.Undone).OrderByDescending(b => b.ImportedAt)) { <option value="@batch.Id">@batch.FileName · @batch.ImportedAt.ToString("dd-MM-yyyy HH:mm")</option> }</select></label>
 <label>Omschrijving zoeken<input type="search" @bind="search" @bind:event="oninput" @bind:after="FilterChanged" /></label>
 <label class="check"><input type="checkbox" @bind="includeTransfers" @bind:after="FilterChanged" />Interne overboekingen ook tonen</label></div>
-@{ var rows = VisibleRows.ToList(); page = Math.Min(page, Math.Max(0, (rows.Count - 1) / 100)); var totals = Categorization.ReviewTotals(rows); }
+@{ var rows = VisibleRows.ToList(); page = Math.Min(page, Math.Max(0, (rows.Count - 1) / 100)); var totals = Categorization.ReviewTotals(rows, TransferMatching.ConfirmedTransactionIds(State.Data)); }
 <div class="category-layout">
     @if (mode == "groups")
     {
@@ -43,7 +43,16 @@
         {
             <div class="table-scroll"><table id="category-transactions"><thead><tr><th>Kies</th><th>Datum</th><th>Rekening</th><th>Bankomschrijving / eigen omschrijving</th><th class="money">Bedrag</th><th>Categorie / type</th></tr></thead><tbody>
             @foreach (var t in rows.Skip(page * 100).Take(100))
-            { <tr @key="t.Id"><td><input type="checkbox" aria-label="Selecteer betaling" checked="@selected.Contains(t.Id)" @onchange="e => Select(t, (bool)e.Value!)" /></td><td>@t.Date.ToString("dd-MM-yyyy") @if (t.Date > State.Today) { <span class="badge">Gepland</span> }</td><td>@State.AccountName(t.AccountId) @if (t.Kind == TransactionKind.Transfer) { <span>→ @State.AccountName(t.CounterAccountId)</span> }</td><td class="description">@if (t.UserDescription.Length > 0) { <strong>@t.UserDescription</strong><small>@t.Description</small> } else { @t.Description }</td><td class="money">@Money(t.Amount)</td><td>@State.CategoryName(t.CategoryId) @if (t.Kind == TransactionKind.Transfer) { <span class="badge">Interne overboeking</span> }</td></tr> }
+            {
+                <tr @key="t.Id">
+                    <td><input type="checkbox" aria-label="Selecteer betaling" checked="@selected.Contains(t.Id)" @onchange="e => Select(t, (bool)e.Value!)" /></td>
+                    <td>@t.Date.ToString("dd-MM-yyyy") @if (t.Date > State.Today) { <span class="badge">Gepland</span> }</td>
+                    <td>@State.AccountName(t.AccountId) @if (t.Kind == TransactionKind.Transfer) { <span>→ @State.AccountName(t.CounterAccountId)</span> }</td>
+                    <td class="description">@if (t.UserDescription.Length > 0) { <strong>@t.UserDescription</strong><small>@t.Description</small> } else { @t.Description }</td>
+                    <td class="money">@Money(t.Amount)</td>
+                    <td>@State.CategoryName(t.CategoryId) @if (TransferMatching.IsInternal(State.Data, t)) { <span class="badge">@(t.Kind == TransactionKind.Transfer ? "Interne overboeking" : "Gekoppelde transfer")</span> }</td>
+                </tr>
+            }
             </tbody></table></div>
             @if (rows.Count == 0) { <p class="empty">Geen betalingen in deze groep en filters.</p> }
             <Pager Count="rows.Count" @bind-Page="page" />
@@ -80,12 +89,27 @@
     private bool includeTransfers, remember, applyMatches;
     private int page;
     private readonly HashSet<Guid> selected = [], skipped = [];
-    private IEnumerable<Transaction> FilteredRows => State.Data.Transactions.Where(t => (State.Scope.Contains(t.AccountId) || t.CounterAccountId is { } counter && State.Scope.Contains(counter)) &&
-        (accountId == null || t.AccountId == accountId || t.CounterAccountId == accountId) && (batchId == null || t.ImportBatchId == batchId) &&
-        (includeTransfers || t.Kind != TransactionKind.Transfer) && (search.Length == 0 || $"{t.Description} {t.UserDescription}".Contains(search, StringComparison.OrdinalIgnoreCase)))
-        .OrderBy(t => t.Date).ThenBy(t => t.Id);
+    private IEnumerable<Transaction> FilteredRows
+    {
+        get
+        {
+            var linked = TransferMatching.ConfirmedTransactionIds(State.Data);
+            var scope = State.Scope;
+            return State.Data.Transactions.Where(t => (scope.Contains(t.AccountId) || t.CounterAccountId is { } counter && scope.Contains(counter)) &&
+                (accountId == null || t.AccountId == accountId || t.CounterAccountId == accountId) && (batchId == null || t.ImportBatchId == batchId) &&
+                (includeTransfers || t.Kind != TransactionKind.Transfer && !linked.Contains(t.Id)) &&
+                (search.Length == 0 || $"{t.Description} {t.UserDescription}".Contains(search, StringComparison.OrdinalIgnoreCase))).OrderBy(t => t.Date).ThenBy(t => t.Id);
+        }
+    }
     private IEnumerable<Transaction> VisibleRows => FilteredRows.Where(t => t.CategoryId == (mode == "groups" ? groupCategory : null));
-    private IEnumerable<Transaction> WalkRows => FilteredRows.Where(t => t.CategoryId == null && t.Kind != TransactionKind.Transfer && !skipped.Contains(t.Id));
+    private IEnumerable<Transaction> WalkRows
+    {
+        get
+        {
+            var linked = TransferMatching.ConfirmedTransactionIds(State.Data);
+            return FilteredRows.Where(t => t.CategoryId == null && t.Kind != TransactionKind.Transfer && !linked.Contains(t.Id) && !skipped.Contains(t.Id));
+        }
+    }
     private Transaction? Current => WalkRows.FirstOrDefault();
     private IEnumerable<(Guid? Id, string Name, int Count)> Groups => new[] { ((Guid?)null, "Zonder categorie", FilteredRows.Count(t => t.CategoryId == null)) }
         .Concat(State.Data.Categories.Select(c => ((Guid?)c.Id, c.Name, FilteredRows.Count(t => t.CategoryId == c.Id))).OrderByDescending(c => c.Item3 > 0).ThenBy(c => c.Name));
@@ -120,7 +144,8 @@
     {
         var ids = mode == "walk" ? Current is { } t ? new HashSet<Guid> { t.Id } : [] : selected.Intersect(VisibleRows.Select(x => x.Id)).ToHashSet();
         var category = assignCategory; var text = remember ? rememberText : null;
-        var matches = remember && applyMatches ? FilteredRows.Where(t => t.Kind != TransactionKind.Transfer && t.CategoryId == null).Select(t => t.Id).ToHashSet() : null;
+        var linked = TransferMatching.ConfirmedTransactionIds(State.Data);
+        var matches = remember && applyMatches ? FilteredRows.Where(t => t.Kind != TransactionKind.Transfer && !linked.Contains(t.Id) && t.CategoryId == null).Select(t => t.Id).ToHashSet() : null;
         var description = ids.Count == 1 ? ownDescription : null;
         var revision = assignmentRevision ?? State.Revision;
         if (await State.RunAsync(() =>

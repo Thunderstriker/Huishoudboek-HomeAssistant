@@ -44,7 +44,7 @@ public static class ServiceApplication
         builder.Services.AddRazorComponents().AddInteractiveServerComponents();
         builder.Services.AddScoped<IWebAdministration, WebAdministration>();
         builder.Services.AddScoped<WebState>();
-        builder.Services.AddSingleton(_ => new AdministrationCoordinator(options.DataDirectory, initialize, claim));
+        builder.Services.AddSingleton(_ => new AdministrationCoordinator(options.DataDirectory, initialize, claim, allowUpgrade: homeAssistant.Enabled));
         builder.Services.AddSingleton(sp => new ImportWorkspace(sp.GetRequiredService<AdministrationCoordinator>().DirectoryPath));
         var app = builder.Build();
         try { Configure(app, options, website, homeAssistant); return app; }

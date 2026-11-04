@@ -13,7 +13,7 @@ namespace Huishoudboek.Infrastructure;
 /// </summary>
 public sealed class SqliteHouseholdStore : IAdministrationStore
 {
-    private const int SchemaVersion = 3;
+    private const int SchemaVersion = 5;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -54,7 +54,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
 
     private static readonly Type[] EntityTypes = [typeof(Owner), typeof(Account), typeof(Category),
         typeof(BudgetOverride), typeof(Transaction), typeof(RecurringPayment), typeof(CategorizationRule),
-        typeof(InvestmentValuation), typeof(ImportBatch), typeof(ImportProfile)];
+        typeof(InvestmentValuation), typeof(ImportBatch), typeof(ImportProfile), typeof(TransferMatch)];
 
     private static SqliteConnection Open(string path, bool readOnly = false)
     {
@@ -94,7 +94,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
     {
         using var command = connection.CreateCommand();
         var version = Version(connection);
-        if (version != SchemaVersion && !(allowPrevious && version is 1 or 2))
+        if (version != SchemaVersion && !(allowPrevious && version is 1 or 2 or 3 or 4))
             throw new InvalidDataException("Deze databaseversie wordt niet ondersteund. Gebruik de bijbehorende appversie.");
         command.CommandText = "SELECT application FROM app_metadata WHERE id=1";
         if (!Equals(command.ExecuteScalar(), "Huishoudboek"))
@@ -108,14 +108,20 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         // Validate first, then take a SQLite-aware backup (including WAL) before any schema change.
         var version = Version(connection);
         ReadData(connection, version);
-        Backup(_path + $".voor-versie-3-{DateTime.Now:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}.db");
+        Backup(_path + $".voor-versie-{SchemaVersion}-{DateTime.Now:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}.db");
         using var tx = connection.BeginTransaction();
         if (version == 1)
         {
             Execute(connection, tx, "ALTER TABLE [ImportProfile] ADD COLUMN [CounterAccountReferenceColumn] TEXT NOT NULL DEFAULT ''");
             Execute(connection, tx, "UPDATE [ImportProfile] SET [CounterAccountReferenceColumn]='Rekening tegenpartij' WHERE [AccountReferenceColumn]='Rekening opdrachtgever'");
         }
-        Execute(connection, tx, "ALTER TABLE [Transaction] ADD COLUMN [UserDescription] TEXT NOT NULL DEFAULT ''");
+        if (version < 3) Execute(connection, tx, "ALTER TABLE [Transaction] ADD COLUMN [UserDescription] TEXT NOT NULL DEFAULT ''");
+        if (version < 4) CreateTable(connection, tx, typeof(TransferMatch));
+        Execute(connection, tx, "ALTER TABLE [Account] ADD COLUMN [MinimumCashBuffer] TEXT NOT NULL DEFAULT '0'");
+        Execute(connection, tx, "ALTER TABLE [Transaction] ADD COLUMN [RecurringOccurrenceDate] TEXT NULL");
+        Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [Frequency] INTEGER NOT NULL DEFAULT 0");
+        Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [MatchTolerance] TEXT NOT NULL DEFAULT '0.01'");
+        Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [MatchWindowDays] INTEGER NOT NULL DEFAULT 5");
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -145,11 +151,12 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         using var tx = connection.BeginTransaction(deferred: true);
         var data = new HouseholdData
         {
-            Owners = Read<Owner>(connection, tx), Accounts = Read<Account>(connection, tx),
+            Owners = Read<Owner>(connection, tx), Accounts = Read<Account>(connection, tx, version),
             Categories = Read<Category>(connection, tx), BudgetOverrides = Read<BudgetOverride>(connection, tx),
-            Transactions = Read<Transaction>(connection, tx, version), RecurringPayments = Read<RecurringPayment>(connection, tx),
+            Transactions = Read<Transaction>(connection, tx, version), RecurringPayments = Read<RecurringPayment>(connection, tx, version),
             Rules = Read<CategorizationRule>(connection, tx), Valuations = Read<InvestmentValuation>(connection, tx),
-            ImportBatches = Read<ImportBatch>(connection, tx), ImportProfiles = Read<ImportProfile>(connection, tx, version)
+            ImportBatches = Read<ImportBatch>(connection, tx), ImportProfiles = Read<ImportProfile>(connection, tx, version),
+            TransferMatches = version >= 4 ? Read<TransferMatch>(connection, tx) : []
         };
         using var command = connection.CreateCommand();
         command.Transaction = tx;
@@ -170,6 +177,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         Write(connection, tx, data.Transactions); Write(connection, tx, data.RecurringPayments);
         Write(connection, tx, data.Rules); Write(connection, tx, data.Valuations);
         Write(connection, tx, data.ImportBatches); Write(connection, tx, data.ImportProfiles);
+        Write(connection, tx, data.TransferMatches);
         using var command = connection.CreateCommand();
         command.Transaction = tx;
         command.CommandText = "UPDATE app_metadata SET mortgage=$mortgage WHERE id=1";
@@ -184,9 +192,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         command.Transaction = tx;
         var properties = typeof(T).GetProperties();
         command.CommandText = $"SELECT {string.Join(",", properties.Select(p =>
-            (version == 1 && typeof(T) == typeof(ImportProfile) && p.Name == nameof(ImportProfile.CounterAccountReferenceColumn)) ||
-            (version < 3 && typeof(T) == typeof(Transaction) && p.Name == nameof(Transaction.UserDescription))
-                ? $"'' AS [{p.Name}]" : $"[{p.Name}]"))} FROM [{typeof(T).Name}]";
+            PreviousDefault(typeof(T), p.Name, version) is { } fallback ? $"{fallback} AS [{p.Name}]" : $"[{p.Name}]"))} FROM [{typeof(T).Name}]";
         using var reader = command.ExecuteReader();
         var result = new List<T>();
         while (reader.Read())
@@ -212,6 +218,21 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             result.Add(item);
         }
         return result;
+    }
+
+    private static string? PreviousDefault(Type type, string property, int version)
+    {
+        if (version == 1 && type == typeof(ImportProfile) && property == nameof(ImportProfile.CounterAccountReferenceColumn) ||
+            version < 3 && type == typeof(Transaction) && property == nameof(Transaction.UserDescription)) return "''";
+        if (version >= 5) return null;
+        if (type == typeof(Account) && property == nameof(Account.MinimumCashBuffer)) return "'0'";
+        if (type == typeof(Transaction) && property == nameof(Transaction.RecurringOccurrenceDate)) return "NULL";
+        if (type == typeof(RecurringPayment)) return property switch
+        {
+            nameof(RecurringPayment.Frequency) => "0", nameof(RecurringPayment.MatchTolerance) => "'0.01'",
+            nameof(RecurringPayment.MatchWindowDays) => "5", _ => null
+        };
+        return null;
     }
 
     private static void Write<T>(SqliteConnection c, SqliteTransaction tx, IEnumerable<T> items)

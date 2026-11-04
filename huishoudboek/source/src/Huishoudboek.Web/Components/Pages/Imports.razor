@@ -6,6 +6,7 @@
 <PageTitle>Importeren · Huishoudboek</PageTitle>
 <h1>Excel / CSV importeren</h1>
 <p class="notice">Elke import boekt alleen op de gekozen rekening, met het bedrag uit het bestand. Andere rekeningen worden niet automatisch gekoppeld of aangepast; importeer voor elke rekening het eigen bestand. Controleer dubbelen, valuta, rekening en openingsdatum. Er wordt pas na expliciete bevestiging opgeslagen.</p>
+<p class="muted">Na import van beide rekeningen kunt u <a href="overboekingen">transfers koppelen</a> voor rapportage, zonder extra boekingen of saldoaanpassingen.</p>
 <section class="card">
     <label>Bestand (.xls, .xlsx of .csv; maximaal 50 MB en 100.000 niet-lege regels)<InputFile id="importFile" OnChange="Upload" accept=".xls,.xlsx,.csv" /></label>
     <div class="fields"><label>Importrekening<select id="importAccount" @bind="accountId" @bind:after="Invalidate"><option value="">Kies rekening</option>@foreach (var a in State.Data.Accounts) { <option value="@a.Id">@a.Name</option> }</select></label>
@@ -50,6 +51,7 @@
         <p class="muted">Alle geboekte transacties t/m de controledatum tellen mee, niet alleen deze import. Toekomstige transacties en effecten tellen niet mee. Uw beginsaldo is nooit aangepast. Een overeenkomend saldo bewijst geen volledige of foutloze import.</p>
         <p>Ongeldige regels: @saved.Balance.InvalidRowCount · Toekomstige regels: @saved.Balance.FutureRowCount.</p>
         <button class="primary" autofocus @onclick="OpenReview">Verder: categorieën controleren</button>
+        <a class="button" href="overboekingen">Transfers tussen eigen rekeningen controleren</a>
     </Modal>
 }
 @code {

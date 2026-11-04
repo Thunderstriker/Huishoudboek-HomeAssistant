@@ -1,0 +1,140 @@
+@page "/overboekingen"
+@attribute [Authorize]
+@inherits EditPageBase
+<PageTitle>Transfers koppelen · Huishoudboek</PageTitle>
+<h1>Transfers koppelen · alle datums</h1>
+<p class="notice">Koppel twee bestaande bankboekingen na controle. Bedragen, bankdatums, omschrijvingen en rekeningsaldi blijven ongewijzigd. Bevestigde paren tellen niet als inkomsten of uitgaven. Er wordt nooit een ontvangst of een extra boeking aangemaakt.</p>
+<div class="actions">
+    <button class="@(mode == "suggestions" ? "primary" : "")" @onclick='() => SetMode("suggestions")'>Mogelijke transfers</button>
+    <button class="@(mode == "confirmed" ? "primary" : "")" @onclick='() => SetMode("confirmed")'>Bevestigde koppelingen</button>
+    <button class="@(mode == "rejected" ? "primary" : "")" @onclick='() => SetMode("rejected")'>Geen transfer</button>
+</div>
+<div class="filters">
+    <label>Rekening<select @bind="accountId" @bind:after="ResetPage"><option value="">Alle rekeningen</option>@foreach (var account in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@account.Id">@account.Name</option> }</select></label>
+    <label>Omschrijving zoeken<input type="search" @bind="search" @bind:event="oninput" @bind:after="ResetPage" /></label>
+</div>
+<p class="muted">Het eigenaarfilter toont paren waarbij minstens één rekening binnen het filter valt; de andere zijde blijft zichtbaar ter controle. Een voorstel is geen bewijs. Onbevestigde boekingen blijven gewone inkomsten/uitgaven.</p>
+@if (mode == "suggestions")
+{
+    var candidates = TransferMatching.Candidates(State.Data, State.Today).Where(c => InFilter(c.Debit, c.Credit)).Take(501).ToList();
+    var count = Math.Min(candidates.Count, 500);
+    page = Math.Min(page, Math.Max(0, (count - 1) / 25));
+    <p class="muted">Voorstellen: gelijke tegengestelde bedragen, verschillende eigen rekeningen, maximaal @TransferMatching.SuggestionWindowDays dagen verschil. Alleen werkelijke boekingen zonder vaste-postkoppeling. @(candidates.Count > 500 ? "De eerste 500 voorstellen worden getoond; verfijn de filters voor meer." : $"{count} mogelijke paren.")</p>
+    @foreach (var candidate in candidates.Take(500).Skip(page * 25).Take(25))
+    {
+        <section class="card" @key="(candidate.Debit.Id, candidate.Credit.Id)">
+            <TransferPair Debit="candidate.Debit" Credit="candidate.Credit" />
+            <p class="muted">@candidate.DaysApart dag(en) verschil. @(candidate.HasAccountReference ? "Rekeningnummer gevonden in bankomschrijving." : "Geen ondersteunend rekeningnummer in bankomschrijving gevonden.")</p>
+            @if (candidate.HasAlternatives) { <p class="notice warning">Er zijn meerdere mogelijke tegenboekingen. Controleer de juiste ontvangst; de app kiest niet automatisch.</p> }
+            <p>@Effect(candidate.Debit, candidate.Credit)</p>
+            <div class="actions"><button class="primary" @onclick="() => ConfirmPair(candidate.Debit, candidate.Credit)">Transfer bevestigen…</button><button @onclick="() => RejectPair(candidate)">Geen transfer…</button></div>
+        </section>
+    }
+    @if (count == 0) { <section class="card"><p class="empty">Geen mogelijke paren binnen deze filters. Ontbreekt één zijde? Importeer de andere rekening. Gebruik handmatig koppelen voor een groter datumverschil.</p></section> }
+    <Pager Count="count" Size="25" @bind-Page="page" />
+}
+else
+{
+    var entries = State.Data.Transactions.ToDictionary(t => t.Id);
+    var matches = State.Data.TransferMatches.Where(m => m.IsConfirmed == (mode == "confirmed") && InFilter(entries[m.DebitTransactionId], entries[m.CreditTransactionId]))
+        .OrderByDescending(m => entries[m.DebitTransactionId].Date).ToList();
+    page = Math.Min(page, Math.Max(0, (matches.Count - 1) / 25));
+    @foreach (var match in matches.Skip(page * 25).Take(25))
+    {
+        var debit = entries[match.DebitTransactionId]; var credit = entries[match.CreditTransactionId];
+        <section class="card" @key="match.Id">
+            <TransferPair Debit="debit" Credit="credit" />
+            <p>@(match.IsConfirmed ? Effect(debit, credit) : "Afgewezen voorstel: beide boekingen behouden hun gewone rapportage. Dit specifieke paar wordt niet opnieuw voorgesteld.")</p>
+            <div class="actions">
+                <button @onclick="() => RemoveMatch(match)">@(match.IsConfirmed ? "Koppeling verwijderen…" : "Beslissing verwijderen…")</button>
+                <button @onclick="() => Draft = EditorDraft.Transaction(State, debit)">Afboeking bewerken</button>
+                <button @onclick="() => Draft = EditorDraft.Transaction(State, credit)">Bijboeking bewerken</button>
+            </div>
+        </section>
+    }
+    @if (matches.Count == 0) { <section class="card"><p class="empty">Geen transferbeslissingen binnen deze filters.</p></section> }
+    <Pager Count="matches.Count" Size="25" @bind-Page="page" />
+}
+<details class="card">
+    <summary>Handmatig twee bestaande boekingen koppelen</summary>
+    <p class="muted">Voor een groter datumverschil of als een voorstel ontbreekt. Kies eerst de afboeking. Alleen even grote ontvangsten op een andere rekening zijn selecteerbaar. Bestaande handmatige transfers en vaste-postkoppelingen zijn uitgesloten.</p>
+    <div class="fields">
+        <label>Van rekening<select @bind="manualAccountId" @bind:after="ResetManual"><option value="">Kies rekening</option>@foreach (var account in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@account.Id">@account.Name</option> }</select></label>
+        <label>Afboeking zoeken<input type="search" @bind="manualSearch" @bind:event="oninput" @bind:after="ResetManual" /></label>
+        <label>Afboeking<select @bind="manualDebitId" @bind:after="ResetCredit"><option value="">Kies afboeking</option>@foreach (var debit in ManualDebits) { <option value="@debit.Id">@EntryLabel(debit)</option> }</select></label>
+        <label>Ontvangst zoeken<input type="search" @bind="manualCreditSearch" @bind:event="oninput" @bind:after="ResetCredit" /></label>
+        <label>Ontvangst<select @bind="manualCreditId"><option value="">Kies ontvangst</option>@foreach (var credit in ManualCredits) { <option value="@credit.Id">@EntryLabel(credit)</option> }</select></label>
+    </div>
+    <p class="muted">Maximaal 100 afboekingen en 100 ontvangsten zichtbaar; verfijn rekening/zoektekst. Er wordt niets opgeslagen door een selectie te maken.</p>
+    @if (ManualDebit is { } debitEntry && ManualCredit is { } creditEntry)
+    {
+        <TransferPair Debit="debitEntry" Credit="creditEntry" />
+        <p>@Effect(debitEntry, creditEntry)</p>
+        <button class="primary" @onclick="() => ConfirmPair(debitEntry, creditEntry)">Transfer bevestigen…</button>
+    }
+</details>
+<p class="muted">Netto opzijgezet telt één keer, op de bankdatum van de betaalrekening, ook bij verschillende maanden. Zoals bij handmatige transfers telt de volledige spaarbijdrage mee als minstens één rekening onder het eigenaarfilter valt. Wijziging van bedrag, datum, rekening, type of vaste-postkoppeling verwijdert de transferbeslissing; categorieën en eigen omschrijvingen veranderen de koppeling niet.</p>
+<EditDialogs Page="this" />
+@code {
+    private string mode = "suggestions", search = "", manualSearch = "", manualCreditSearch = "", lastRevision = "";
+    private Guid? accountId, manualAccountId, manualDebitId, manualCreditId;
+    private int page;
+    private void ResetPage() => page = 0;
+    private void SetMode(string value) { mode = value; ResetPage(); }
+    private void ResetManual() { manualDebitId = null; manualCreditId = null; }
+    private void ResetCredit() => manualCreditId = null;
+    protected override void OnStateChanged()
+    {
+        if (lastRevision != State.Revision) { lastRevision = State.Revision; ResetManual(); }
+        if (manualAccountId != null && !State.Scope.Contains(manualAccountId.Value)) { manualAccountId = null; ResetManual(); }
+    }
+    private bool InFilter(Transaction debit, Transaction credit) =>
+        (State.Scope.Contains(debit.AccountId) || State.Scope.Contains(credit.AccountId)) &&
+        (accountId == null || debit.AccountId == accountId || credit.AccountId == accountId) &&
+        (string.IsNullOrWhiteSpace(search) || $"{debit.Description} {debit.UserDescription} {credit.Description} {credit.UserDescription}".Contains(search, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<Transaction> AvailableEntries
+    {
+        get
+        {
+            var linked = TransferMatching.ConfirmedTransactionIds(State.Data);
+            return State.Data.Transactions.Where(t => TransferMatching.IsEligible(t) && t.Date <= State.Today && !linked.Contains(t.Id));
+        }
+    }
+    private IEnumerable<Transaction> ManualDebits => AvailableEntries.Where(t => t.Amount < 0 && t.AccountId == manualAccountId && State.Scope.Contains(t.AccountId) &&
+        (string.IsNullOrWhiteSpace(manualSearch) || $"{t.Description} {t.UserDescription}".Contains(manualSearch, StringComparison.OrdinalIgnoreCase))).OrderByDescending(t => t.Date).Take(100);
+    private Transaction? ManualDebit => ManualDebits.FirstOrDefault(t => t.Id == manualDebitId);
+    private IEnumerable<Transaction> ManualCredits => ManualDebit is { } debit ? AvailableEntries.Where(t => t.Amount == -debit.Amount && t.AccountId != debit.AccountId &&
+        (string.IsNullOrWhiteSpace(manualCreditSearch) || $"{State.AccountName(t.AccountId)} {t.Description} {t.UserDescription}".Contains(manualCreditSearch, StringComparison.OrdinalIgnoreCase)))
+        .OrderBy(t => Math.Abs(t.Date.DayNumber - debit.Date.DayNumber)).Take(100) : [];
+    private Transaction? ManualCredit => ManualCredits.FirstOrDefault(t => t.Id == manualCreditId);
+    private string EntryLabel(Transaction entry) => $"{entry.Date:dd-MM-yyyy} · {State.AccountName(entry.AccountId)} · {Money(entry.Amount)} · {entry.Description}";
+    private string Effect(Transaction debit, Transaction credit)
+    {
+        var from = State.Data.Accounts.Single(a => a.Id == debit.AccountId);
+        var to = State.Data.Accounts.Single(a => a.Id == credit.AccountId);
+        var savings = from.Kind == AccountKind.Current && to.Kind != AccountKind.Current ? -debit.Amount :
+            from.Kind != AccountKind.Current && to.Kind == AccountKind.Current ? debit.Amount : 0;
+        var date = from.Kind == AccountKind.Current ? debit.Date : credit.Date;
+        return "Rekeningsaldi ongewijzigd. Uitgesloten van inkomsten, uitgaven en variabele uitgavenprognose. " +
+            (savings == 0 ? "Geen netto spaarbijdrage." : $"Netto opzijgezet: {Money(savings)} op {date:dd-MM-yyyy}.");
+    }
+    private void ConfirmPair(Transaction debit, Transaction credit)
+    {
+        var debitId = debit.Id; var creditId = credit.Id; var today = State.Today;
+        Ask("Interne transfer bevestigen", $"{EntryLabel(debit)}\n{EntryLabel(credit)}\n\n{Effect(debit, credit)}\nControleer dat dit dezelfde geldbeweging tussen uw eigen rekeningen is. Gelijke bedragen alleen bewijzen dat niet.",
+            d => TransferMatching.Confirm(d, debitId, creditId, today), "Transfer bevestigen");
+    }
+    private void RejectPair(TransferCandidate candidate)
+    {
+        var debitId = candidate.Debit.Id; var creditId = candidate.Credit.Id; var today = State.Today;
+        Ask("Voorstel afwijzen", "Dit specifieke paar niet meer voorstellen? Boekingen, saldi en rapportage blijven ongewijzigd. Andere mogelijke paren blijven beschikbaar. U kunt deze beslissing later verwijderen.",
+            d => TransferMatching.Reject(d, debitId, creditId, today), "Geen transfer");
+    }
+    private void RemoveMatch(TransferMatch match)
+    {
+        var id = match.Id;
+        Ask("Transferbeslissing verwijderen", match.IsConfirmed ?
+            "De koppeling verwijderen? Beide originele boekingen blijven staan en tellen weer als gewone inkomsten/uitgaven. Rekeningsaldi blijven ongewijzigd. Het paar kan opnieuw worden voorgesteld." :
+            "De afwijzing verwijderen? Het paar kan opnieuw worden voorgesteld. Boekingen, saldi en rapportage blijven ongewijzigd.", d => TransferMatching.Remove(d, id), "Beslissing verwijderen");
+    }
+}

@@ -196,6 +196,40 @@ public sealed class AccountLocalImportTests
     }
 
     [Fact]
+    public async Task ConfirmedStatementPairsPreserveAccountLocalImportsAndDuplicateChecks()
+    {
+        using var fixture = new ImportFixture();
+        var data = fixture.Coordinator.Read().Data;
+        var current = data.Accounts[0];
+        var savings = data.Accounts[1];
+        foreach (var (account, counter, amount) in new[] { (current, savings, Amount), (savings, current, -Amount) })
+        {
+            var preview = await fixture.PreviewAsync(account, counter, amount);
+            var row = Assert.Single(preview.Rows);
+            fixture.Workspace.Commit(new(preview.PreviewId, [new(row.RowNumber, null, null)]), preview.Revision, fixture.Coordinator, Date);
+        }
+        var imported = fixture.Coordinator.Read();
+        var debit = imported.Data.Transactions.Single(t => t.Amount < 0);
+        var credit = imported.Data.Transactions.Single(t => t.Amount > 0);
+        var matched = fixture.Coordinator.Update(imported.Revision, d => TransferMatching.Confirm(d, debit.Id, credit.Id, Date));
+        Assert.Equal(imported.Data.Transactions, matched.Data.Transactions);
+        Assert.Equal(current.OpeningBalance + Amount, Finance.Balance(matched.Data, current, Date));
+        Assert.Equal(savings.OpeningBalance - Amount, Finance.Balance(matched.Data, savings, Date));
+        var report = Finance.Report(matched.Data, Date.Year, Date.Month, Date);
+        Assert.Equal((0m, 0m, -Amount), (report.Income, report.Outflow, report.Savings));
+        foreach (var (account, counter, amount) in new[] { (current, savings, Amount), (savings, current, -Amount) })
+        {
+            var repeated = await fixture.PreviewAsync(account, counter, amount);
+            Assert.False(Assert.Single(repeated.Rows).Include);
+        }
+        var undone = fixture.Coordinator.Update(matched.Revision, d => HouseholdEdits.UndoImport(d, credit.ImportBatchId!.Value));
+        Assert.Empty(undone.Data.TransferMatches);
+        Assert.Equal(debit, Assert.Single(undone.Data.Transactions));
+        Assert.Equal(current.OpeningBalance, Finance.Balance(undone.Data, current, Date));
+        Assert.Equal(savings.OpeningBalance - Amount, Finance.Balance(undone.Data, savings, Date));
+    }
+
+    [Fact]
     public async Task LegacyClientCannotLinkAnAccountThroughAdjustOrCommit()
     {
         using var fixture = new ImportFixture();

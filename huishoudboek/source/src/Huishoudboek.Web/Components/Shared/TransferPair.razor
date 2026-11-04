@@ -1,0 +1,19 @@
+@inject WebState State
+<div class="transfer-pair">
+    <div>
+        <strong>Van: @State.AccountName(Debit.AccountId)</strong>
+        <p>@Debit.Date.ToString("dd-MM-yyyy") · <span class="negative">@WebState.Money(Debit.Amount)</span></p>
+        <p class="description">@Debit.Description</p>
+        @if (Debit.UserDescription.Length > 0) { <small>@Debit.UserDescription</small> }
+    </div>
+    <div>
+        <strong>Naar: @State.AccountName(Credit.AccountId)</strong>
+        <p>@Credit.Date.ToString("dd-MM-yyyy") · <span class="positive">@WebState.Money(Credit.Amount)</span></p>
+        <p class="description">@Credit.Description</p>
+        @if (Credit.UserDescription.Length > 0) { <small>@Credit.UserDescription</small> }
+    </div>
+</div>
+@code {
+    [Parameter, EditorRequired] public Transaction Debit { get; set; } = null!;
+    [Parameter, EditorRequired] public Transaction Credit { get; set; } = null!;
+}

@@ -65,9 +65,19 @@ public sealed class EditorDraft(string title, string revision)
         draft.Field("reference", "Rekeningnummer / IBAN", "text", item.BankReference, false); draft.Owners(s.Data, item.OwnerIds);
         draft.DateField("date", "Openingsdatum", item.OpeningDate); draft.Money("balance", "Beginsaldo (€)", item.OpeningBalance);
         draft.Field("goal", "Spaardoel (€), optioneel", "money", item.SavingsGoal?.ToString("0.00", Dutch) ?? "", false);
+        draft.Money("buffer", "Minimale cashbuffer op deze rekening (€)", item.MinimumCashBuffer);
         draft.Apply = d => HouseholdEdits.SaveAccount(d, item with { Name = draft.Text("name"), Kind = Enum.Parse<AccountKind>(draft.Text("kind")),
             BankReference = draft.Text("reference"), OwnerIds = draft.Fields.Single(f => f.Key == "owners").OwnerIds.ToList(), OpeningDate = draft.Date("date"),
-            OpeningBalance = draft.Number("balance"), SavingsGoal = draft.Text("goal").Length == 0 ? null : draft.Number("goal") }); return draft;
+            OpeningBalance = draft.Number("balance"), SavingsGoal = draft.Text("goal").Length == 0 ? null : draft.Number("goal"),
+            MinimumCashBuffer = draft.Number("buffer") }); return draft;
+    }
+    public static EditorDraft CashBuffer(WebState s, Account item)
+    {
+        var draft = new EditorDraft($"Cashbuffer · {item.Name}", s.Revision)
+        { Note = "Deze reserve wordt niet als bestedingsruimte gerekend. Geld op andere rekeningen dekt deze buffer of betalingen niet automatisch. 0 betekent geen extra reserve." };
+        draft.Money("buffer", "Minimale cashbuffer (€)", item.MinimumCashBuffer);
+        draft.Apply = d => HouseholdEdits.SaveAccount(d, d.Accounts.Single(a => a.Id == item.Id) with { MinimumCashBuffer = draft.Number("buffer") });
+        return draft;
     }
     public static EditorDraft Category(WebState s, Category? original = null, bool renameOnly = false)
     {
@@ -90,6 +100,8 @@ public sealed class EditorDraft(string title, string revision)
     {
         var item = original ?? new Transaction { AccountId = s.Data.Accounts.FirstOrDefault()?.Id ?? Guid.Empty, Kind = mortgage ? TransactionKind.Mortgage : TransactionKind.Normal };
         var draft = new EditorDraft("Transactie", s.Revision) { Note = "Inkomsten positief; uitgaven, hypotheek en overboekingen negatief. Een transfer wordt één keer opgeslagen en werkt beide rekeningen bij. Bij hypotheek: alleen werkelijke aflossing invullen; onbekend = 0. De volledige betaling is een cashlast." };
+        if (s.Data.TransferMatches.Any(m => m.DebitTransactionId == item.Id || m.CreditTransactionId == item.Id))
+            draft.Note += " Deze boeking heeft een transferbeslissing. Wijzigen van bedrag, datum, rekening, type of vaste-postkoppeling verwijdert die beslissing. Gebruik Transfers koppelen voor twee geïmporteerde boekingen; omzetting naar een handmatige transfer kan de andere rekening dubbel bijwerken.";
         draft.DateField("date", "Datum", item.Date); draft.Choice("account", "Rekening (bij overboeking: VAN)", Accounts(s.Data), item.AccountId.ToString());
         draft.Field("description", "Oorspronkelijke omschrijving", "text", item.Description);
         draft.Field("userDescription", "Eigen omschrijving (optioneel)", "text", item.UserDescription, false); draft.Money("amount", "Bedrag (€)", item.Amount);
@@ -101,6 +113,8 @@ public sealed class EditorDraft(string title, string revision)
         draft.Choice("counter", "NAAR rekening (alleen transfer)", new[] { new FieldOption("", "Niet van toepassing") }.Concat(Accounts(s.Data)), item.CounterAccountId?.ToString() ?? "");
         draft.Money("principal", "Werkelijke aflossing (€), alleen hypotheek", item.PrincipalComponent);
         draft.Choice("recurring", "Koppeling vaste post (voorkomt dubbele prognose)", new[] { new FieldOption("", "Geen koppeling") }.Concat(s.Data.RecurringPayments.Select(r => new FieldOption(r.Id.ToString(), r.Name))), item.RecurringPaymentId?.ToString() ?? "");
+        draft.DateField("occurrence", "Geplande betaaldatum vaste post (optioneel; leeg = bankmaand)", item.RecurringOccurrenceDate, false);
+        draft.Note += " Koppel bij voorkeur via Vaste posten, vooral als de bankdatum in een andere maand valt. Een afwijkend werkelijk bedrag verandert de schatting van volgende betalingen niet.";
         if (item.StatementBalance is { } balance)
         {
             var source = s.Data.ImportBatches.FirstOrDefault(b => b.Id == item.ImportBatchId)?.AccountId ?? item.AccountId;
@@ -111,21 +125,30 @@ public sealed class EditorDraft(string title, string revision)
             CategoryId = draft.Text("category") == "default" ? null : draft.OptionalId("category"),
             CounterAccountId = draft.Text("kind") == "Transfer" ? draft.OptionalId("counter") : null,
             PrincipalComponent = draft.Text("kind") == "Mortgage" ? draft.Number("principal") : 0,
-            RecurringPaymentId = draft.Text("kind") == "Transfer" ? null : draft.OptionalId("recurring") }, draft.Text("category") == "default"); return draft;
+            RecurringPaymentId = draft.Text("kind") == "Transfer" ? null : draft.OptionalId("recurring"),
+            RecurringOccurrenceDate = draft.Text("kind") == "Transfer" || draft.OptionalId("recurring") == null || draft.Text("occurrence").Length == 0
+                ? null : draft.Date("occurrence") }, draft.Text("category") == "default"); return draft;
     }
     public static EditorDraft Recurring(WebState s, RecurringPayment? original = null)
     {
-        var item = original ?? new RecurringPayment { AccountId = s.Data.Accounts.FirstOrDefault()?.Id ?? Guid.Empty };
-        var draft = new EditorDraft("Vaste post", s.Revision) { Note = "Dit is een planning, geen werkelijke transactie. Koppel de betaling om dubbeltelling te voorkomen. Herkenning vereist rekening, bedrag (± 1 cent), tekst en een datum binnen 5 dagen met precies één kandidaat." };
+        var item = original ?? new RecurringPayment { AccountId = s.Data.Accounts.FirstOrDefault()?.Id ?? Guid.Empty, StartDate = s.Today, DayOfMonth = s.Today.Day };
+        var draft = new EditorDraft("Vaste post", s.Revision) { Note = "Een planning verandert uw werkelijke saldo niet. Kwartaal/jaar beginnen in de startmaand; eenmalig gebruikt de startdatum. Dag 29–31 wordt in korte maanden ingekort. Een koppeling vervangt één schatting door het echte bankbedrag. Ruimere herkenningsmarges leveren controlevoorstellen; automatisch koppelen blijft beperkt tot ± 1 cent en 5 dagen. Wijziging van een gekoppelde planning kan eerst ontkoppelen vereisen." };
         draft.Field("name", "Naam", "text", item.Name); draft.Choice("account", "Rekening", Accounts(s.Data), item.AccountId.ToString());
-        draft.Money("amount", "Maandelijks bedrag (€), negatief voor uitgave", item.Amount); draft.Field("day", "Dag (1–31)", "number", item.DayOfMonth.ToString(CultureInfo.InvariantCulture));
+        draft.Money("amount", "Bedrag per betaling (€), negatief voor uitgave", item.Amount); draft.Field("day", "Dag (1–31; niet voor eenmalig)", "number", item.DayOfMonth.ToString(CultureInfo.InvariantCulture));
+        draft.Choice("frequency", "Frequentie", Enum.GetValues<PaymentFrequency>().Select(f => new FieldOption(f.ToString(), Frequency(f))), item.Frequency.ToString());
         draft.Choice("category", "Categorie", Categories(s.Data), item.CategoryId?.ToString() ?? "");
         draft.DateField("start", "Startdatum", item.StartDate); draft.DateField("end", "Einddatum (optioneel)", item.EndDate, false);
         draft.Field("text", "Herkenningstekst (optioneel)", "text", item.MatchText, false); draft.Field("mortgage", "Dit is de hypotheekbetaling", "checkbox", item.IsMortgage.ToString());
+        draft.Money("tolerance", "Herkenning: maximale bedragafwijking (€)", item.MatchTolerance);
+        draft.Field("window", "Herkenning: maximaal datumverschil (0–31 dagen)", "number", item.MatchWindowDays.ToString(CultureInfo.InvariantCulture));
         draft.Apply = d => HouseholdEdits.SaveRecurring(d, item with { Name = draft.Text("name"), AccountId = draft.Id("account"), Amount = draft.Number("amount"),
             DayOfMonth = int.TryParse(draft.Text("day"), out var day) ? day : 0, CategoryId = draft.OptionalId("category"), StartDate = draft.Date("start"),
-            EndDate = draft.Text("end").Length == 0 ? null : draft.Date("end"), MatchText = draft.Text("text"), IsMortgage = bool.Parse(draft.Text("mortgage")) }); return draft;
+            EndDate = draft.Text("end").Length == 0 ? null : draft.Date("end"), MatchText = draft.Text("text"), IsMortgage = bool.Parse(draft.Text("mortgage")),
+            Frequency = Enum.Parse<PaymentFrequency>(draft.Text("frequency")), MatchTolerance = draft.Number("tolerance"),
+            MatchWindowDays = int.TryParse(draft.Text("window"), out var window) ? window : -1 }); return draft;
     }
+    public static string Frequency(PaymentFrequency frequency) => frequency switch
+    { PaymentFrequency.Monthly => "Maandelijks", PaymentFrequency.Quarterly => "Per kwartaal", PaymentFrequency.Yearly => "Jaarlijks", _ => "Eenmalig" };
     public static EditorDraft Rule(WebState s, CategorizationRule? original = null)
     {
         var item = original ?? new CategorizationRule(); var draft = new EditorDraft("Categorisatieregel", s.Revision) { Note = "Eerste passende regel wint. Bestaande categorieën worden niet overschreven; transfers vallen buiten tekstregels." };

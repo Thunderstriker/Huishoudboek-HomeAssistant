@@ -139,6 +139,7 @@ public sealed class ImportWorkspace : IDisposable
                     var transaction = row.Transaction;
                     transaction.ImportBatchId = batchId;
                     transaction.RecurringPaymentId = null;
+                    transaction.RecurringOccurrenceDate = null;
                     Finance.ApplySuggestions(data, transaction, suggestCategory: false);
                     data.Transactions.Add(transaction);
                     selected.Add(transaction);

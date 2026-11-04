@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.1.8
+
+- Bestedingsruimte vanaf vandaag per betaalrekening, tot het volgende inkomen,
+  na bekende betalingen, dagelijkse uitgavenschatting en een instelbare cashbuffer.
+- Aankoopcontrole (bijvoorbeeld € 150), betalingen over 7/30 dagen, dagelijkse
+  saldotabel en het laagste verwachte saldo met datum. Geen automatische dekking
+  door geld op een andere rekening; kosten gaan voorzichtig vóór ontvangsten op dezelfde dag.
+- Waarschuwingen bij oude/ontbrekende imports, beperkte historie, onbekende betaaldag
+  en vervallen, niet-gekoppelde posten. Achterstallig inkomen wordt niet aangenomen.
+- Vaste posten uitgebreid met kwartaal-, jaar- en eenmalige betalingen. Bankboekingen
+  zijn aan een specifieke geplande betaling te koppelen, ook over maandgrenzen en
+  met een afwijkend bedrag. Volgende schattingen en oorspronkelijke boekingen blijven intact.
+- Controlevoorstellen met instelbare bedrag-/datummarges, handmatig koppelen en
+  ontkoppelen. Automatische herkenning blijft strikt (± 1 cent, maximaal 5 dagen).
+- Databaseschema 5 bewaart buffers, frequenties en geplande betaaldatums, met veilige
+  migratie van schema's 1–4 en een veiligheidskopie vooraf. CSV-export bevat vaste-postkoppelingen.
+- Tests voor betaaldagtekorten, rekeninggrenzen, dagelijkse uitgaven, importactualiteit,
+  frequenties, koppelingen, maandgrenzen, migratie/back-ups en gerenderde schermen.
+
+## 0.1.7
+
+- Nieuwe werkruimte **Transfers koppelen**: mogelijke paren van bestaande af- en
+  bijboekingen bekijken, expliciet bevestigen, afwijzen of handmatig koppelen.
+- Transferkoppelingen wijzigen alleen rapportage: beide bankboekingen, bedragen,
+  datums, omschrijvingen en rekeningsaldi blijven intact. Geen automatische
+  tegenboekingen of koppelingen tijdens import.
+- Bevestigde paren uitgesloten van inkomsten, uitgaven, categoriebestedingen en
+  variabele uitgavenprognose. Netto spaar-/beleggingsbijdragen tellen één keer op
+  de bankdatum van de betaalrekening, ook bij verschillende maanden.
+- Koppelingen en afwijzingen zijn omkeerbaar. Financiële wijzigingen, verwijderen
+  van een boeking en terugdraaien van een import verwijderen betrokken beslissingen.
+- Databaseschema 4 bewaart transferbeslissingen in volledige back-ups. Home
+  Assistant werkt ondersteunde eerdere schema's bij onder de schrijfvergrendeling,
+  na validatie en een SQLite-bewuste veiligheidskopie. Onbekende versies worden geweigerd.
+- CSV-export aangevuld met transactie-ID's en bevestigde transferkoppelingen.
+- Tests voor saldobehoud, rapportage, prognoses, maandgrenzen, eigenaarfilters,
+  conflicterende voorstellen, wijzigingen, import-undo en migratie/back-up/herstel.
+
 ## 0.1.6
 
 - Excel/CSV-imports boeken uitsluitend op de gekozen rekening en behouden het

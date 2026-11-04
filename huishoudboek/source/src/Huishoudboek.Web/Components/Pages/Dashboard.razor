@@ -16,6 +16,7 @@
 <section class="notice @(report.NeedsAttention ? "warning" : "success")">
     <h2>@overview.Status</h2><p>@overview.Explanation</p><small>Werkelijke saldi t/m @overview.AsOf.ToString("dd-MM-yyyy"); toekomstige boekingen staan alleen in de prognose.</small>
 </section>
+<SafeSpending />
 <div class="metrics">
     <div class="card"><div class="metric-label">Inkomsten</div><div class="metric-value positive">@Money(report.Income)</div><small>Werkelijk ontvangen</small></div>
     <div class="card"><div class="metric-label">Uitgaven &amp; woonlasten</div><div class="metric-value">@Money(report.Outflow)</div><small>Inclusief hypotheekaflossing</small></div>
@@ -23,6 +24,7 @@
     <div class="card"><div class="metric-label">Over deze maand</div><div class="metric-value @(report.Available < 0 ? "negative" : "positive")">@Money(report.Available)</div><small>Inkomsten − lasten − opzijgezet; geen rekeningsaldo</small></div>
 </div>
 <MonthlyCharts Report="report" />
+<p class="muted">Bankboekingen tussen eigen rekeningen geïmporteerd? <a href="overboekingen">Controleer en koppel transfers</a> om inkomsten, uitgaven en netto opzijgezet juist te onderscheiden. Saldi blijven ongewijzigd.</p>
 <section class="card"><h2>Budget per categorie</h2><div class="table-scroll"><table><thead><tr><th>Categorie</th><th class="money">Budget</th><th class="money">Uitgegeven</th><th class="money">Resterend</th><th>Verbruik</th></tr></thead><tbody>
     @foreach (var category in report.Categories)
     { <tr><td>@category.Name</td><td class="money">@(category.Budget == 0 ? "Geen limiet" : Money(category.Budget))</td><td class="money">@Money(category.Spent)</td><td class="money @(category.IsOverBudget ? "negative" : "")">@(category.Budget == 0 ? "—" : Money(category.Remaining))</td><td><progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@($"Verbruik {category.Name}")"></progress></td></tr> }

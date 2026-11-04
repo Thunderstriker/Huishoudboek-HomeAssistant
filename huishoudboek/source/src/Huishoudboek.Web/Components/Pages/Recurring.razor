@@ -4,11 +4,76 @@
 <PageTitle>Vaste posten · Huishoudboek</PageTitle>
 <h1>Vaste inkomsten &amp; lasten</h1>
 <div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Recurring(State)">+ Vaste post</button></div>
-<p class="muted">Plan salaris, hypotheek, verzekeringen en abonnementen. Positief = inkomen, negatief = maandlast. Planningen veranderen uw werkelijke saldo niet.</p>
-<section class="card"><div class="table-scroll"><table><thead><tr><th>Naam</th><th>Rekening</th><th class="money">Bedrag</th><th>Dag</th><th>Categorie</th><th>Periode</th><th>Herkenningstekst</th><th></th></tr></thead><tbody>
-@foreach (var r in State.Data.RecurringPayments)
-{ <tr><td>@r.Name @if (r.IsMortgage) { <span class="badge">Hypotheek</span> }</td><td>@State.AccountName(r.AccountId)</td><td class="money">@Money(r.Amount)</td><td>@r.DayOfMonth</td><td>@State.CategoryName(r.CategoryId)</td><td>@r.StartDate.ToString("dd-MM-yyyy") – @(r.EndDate?.ToString("dd-MM-yyyy") ?? "doorlopend")</td><td>@r.MatchText</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Recurring(State, r)">Bewerken</button><button @onclick="() => AskDelete(r)">Verwijderen</button></div></td></tr> }
+<p class="muted">Plan salaris, hypotheek, verzekeringen, water en energie: maandelijks, per kwartaal, jaarlijks of eenmalig. Positief = inkomen, negatief = uitgave. Planningen veranderen uw werkelijke saldo niet. <a href="#koppelen">Koppel echte bankboekingen</a> om dubbele schattingen te voorkomen, ook met een afwijkend bedrag of bankdatum.</p>
+<section class="card"><div class="table-scroll"><table><thead><tr><th>Naam</th><th>Rekening</th><th class="money">Bedrag per betaling</th><th>Frequentie / dag</th><th>Categorie</th><th>Periode</th><th>Herkenning</th><th></th></tr></thead><tbody>
+@foreach (var r in State.Data.RecurringPayments.Where(r => State.Scope.Contains(r.AccountId)))
+{ <tr><td>@r.Name @if (r.IsMortgage) { <span class="badge">Hypotheek</span> }</td><td>@State.AccountName(r.AccountId)</td><td class="money">@Money(r.Amount)</td><td>@EditorDraft.Frequency(r.Frequency) @(r.Frequency == PaymentFrequency.Once ? "" : $"· dag {r.DayOfMonth}")</td><td>@State.CategoryName(r.CategoryId)</td><td>@r.StartDate.ToString("dd-MM-yyyy") – @(r.EndDate?.ToString("dd-MM-yyyy") ?? (r.Frequency == PaymentFrequency.Once ? "eenmalig" : "doorlopend"))</td><td>@r.MatchText<small>± @Money(r.MatchTolerance) / @r.MatchWindowDays dagen</small></td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Recurring(State, r)">Bewerken</button><button @onclick="() => AskDelete(r)">Verwijderen</button></div></td></tr> }
 </tbody></table></div></section>
-<p class="muted">Koppel de echte betaling via Transacties → Bewerken. Vervallen, niet-gekoppelde posten blijven in de huidige maandprognose en krijgen een waarschuwing. Extra aflossingen mogen ongekoppeld blijven.</p>
+<section class="card" id="koppelen"><h2>Bankboekingen koppelen aan een geplande betaling</h2>
+    <p class="muted">Een koppeling vervangt één schatting door het echte bankbedrag en de echte bankdatum. Het volgende salaris of de volgende factuur blijft op uw ingestelde bedrag staan. Bedrag, bankdatum, omschrijving en saldo worden niet aangepast. Eén boeking per geplande betaling; laat extra of deelbetalingen ongekoppeld.</p>
+    <div class="filters"><label>Zoeken<input type="search" @bind="search" @bind:event="oninput" @bind:after="ResetPage" /></label></div>
+    @{ var candidates = RecurringSchedule.Candidates(State.Data, State.Today).Where(c => State.Scope.Contains(c.Payment.AccountId) && InSearch(c.Payment.Name, c.Transaction)).ToList(); page = Math.Min(page, Math.Max(0, (candidates.Count - 1) / 20)); }
+    <h3>Mogelijke koppelingen (@candidates.Count)</h3>
+    @foreach (var candidate in candidates.Skip(page * 20).Take(20))
+    {
+        <div class="card" @key="(candidate.Payment.Id, candidate.Transaction.Id, candidate.DueDate)">
+            <strong>@candidate.Payment.Name · gepland @candidate.DueDate.ToString("dd-MM-yyyy") · @Money(candidate.Payment.Amount)</strong>
+            <p>@EntryLabel(candidate.Transaction)<br />Verschil met schatting: @Money(candidate.Difference).</p>
+            @if (candidates.Count(c => c.Transaction.Id == candidate.Transaction.Id || c.Payment.Id == candidate.Payment.Id && c.DueDate == candidate.DueDate) > 1)
+            { <p class="notice warning">Meerdere kandidaten; controleer welke boeking bij deze geplande betaling hoort.</p> }
+            <button class="primary" @onclick="() => ConfirmLink(candidate.Transaction, candidate.Payment, candidate.DueDate)">Koppeling bevestigen…</button>
+        </div>
+    }
+    @if (candidates.Count == 0) { <p class="muted">Geen voorstellen. Stel herkenningstekst en marges in, of koppel hieronder handmatig.</p> }
+    <Pager Count="candidates.Count" Size="20" @bind-Page="page" />
+    <details><summary>Handmatig koppelen · ook zonder herkenning of buiten de marge</summary>
+        <div class="fields">
+            <label>Bankboeking<select @bind="transactionId" @bind:after="ResetPayment"><option value="">Kies bankboeking</option>@foreach (var t in AvailableTransactions.Where(t => InSearch("", t)).OrderByDescending(t => t.Date).Take(100)) { <option value="@t.Id">@EntryLabel(t)</option> }</select></label>
+            <label>Vaste post<select @bind="paymentId" @bind:after="ResetDue"><option value="">Kies vaste post</option>@foreach (var r in AvailablePayments) { <option value="@r.Id">@r.Name · @Money(r.Amount)</option> }</select></label>
+            <label>Geplande betaaldatum<input type="date" @bind="dueDate" /></label>
+        </div>
+        <p class="muted">Maximaal 100 boekingen; gebruik Zoeken om te verfijnen. Kies de geplande betaaldatum, niet noodzakelijk de bankdatum. De boeking en vaste post moeten dezelfde rekening en betaalrichting hebben. Er wordt niets opgeslagen door te selecteren.</p>
+        @if (SelectedTransaction is { } transaction && SelectedPayment is { } payment && dueDate is { } due)
+        { <button class="primary" @onclick="() => ConfirmLink(transaction, payment, due)">Koppeling bevestigen…</button> }
+    </details>
+    <details><summary>Gekoppelde bankboekingen bekijken / ontkoppelen</summary>
+        @{ var linked = State.Data.Transactions.Where(t => t.RecurringPaymentId != null && State.Scope.Contains(t.AccountId) && InSearch(State.Data.RecurringPayments.Single(r => r.Id == t.RecurringPaymentId).Name, t)).OrderByDescending(t => t.Date).ToList(); }
+        <div class="table-scroll"><table><thead><tr><th>Geplande betaling</th><th>Bankboeking</th><th class="money">Werkelijk</th><th></th></tr></thead><tbody>
+        @foreach (var t in linked.Take(100))
+        { var r = State.Data.RecurringPayments.Single(r => r.Id == t.RecurringPaymentId);
+            <tr><td>@r.Name · @RecurringSchedule.LinkedDate(r, t).ToString("dd-MM-yyyy")</td><td>@t.Date.ToString("dd-MM-yyyy") · @State.AccountName(t.AccountId) · @t.Description</td><td class="money">@Money(t.Amount)</td><td><button @onclick="() => AskUnlink(t)">Ontkoppelen…</button></td></tr>
+        }
+        </tbody></table></div><p class="muted">@linked.Count koppelingen; maximaal 100 zichtbaar. Verfijn Zoeken voor oudere koppelingen.</p>
+    </details>
+</section>
 <EditDialogs Page="this" />
-@code { private void AskDelete(RecurringPayment item) => Ask("Vaste post verwijderen", "Werkelijke transacties blijven bestaan; hun koppeling aan deze vaste post wordt verwijderd.", d => HouseholdEdits.DeleteRecurring(d, item.Id), "Verwijderen"); }
+@code {
+    private string search = "", lastRevision = "";
+    private Guid? transactionId, paymentId;
+    private DateOnly? dueDate;
+    private int page;
+    private void ResetPage() => page = 0;
+    private void ResetPayment() { paymentId = null; dueDate = null; }
+    private void ResetDue()
+    {
+        dueDate = SelectedPayment is { } r && SelectedTransaction is { } t
+            ? RecurringSchedule.Occurrences(r, t.Date.AddYears(-1), t.Date.AddYears(1)).OrderBy(d => Math.Abs(d.DayNumber - t.Date.DayNumber)).Select(d => (DateOnly?)d).FirstOrDefault()
+            : null;
+    }
+    protected override void OnStateChanged()
+    { if (lastRevision != State.Revision || SelectedTransaction != null && !State.Scope.Contains(SelectedTransaction.AccountId)) { lastRevision = State.Revision; transactionId = null; ResetPayment(); } }
+    private bool InSearch(string name, Transaction t) => string.IsNullOrWhiteSpace(search) || $"{name} {State.AccountName(t.AccountId)} {t.Description} {t.UserDescription}".Contains(search, StringComparison.OrdinalIgnoreCase);
+    private IEnumerable<Transaction> AvailableTransactions
+    {
+        get { var transfers = TransferMatching.ConfirmedTransactionIds(State.Data); return State.Data.Transactions.Where(t => t.Date <= State.Today && t.Kind != TransactionKind.Transfer && t.RecurringPaymentId == null && State.Scope.Contains(t.AccountId) && !transfers.Contains(t.Id)); }
+    }
+    private Transaction? SelectedTransaction => AvailableTransactions.FirstOrDefault(t => t.Id == transactionId);
+    private IEnumerable<RecurringPayment> AvailablePayments => SelectedTransaction is { } t ? State.Data.RecurringPayments.Where(r => r.AccountId == t.AccountId && Math.Sign(r.Amount) == Math.Sign(t.Amount)) : [];
+    private RecurringPayment? SelectedPayment => AvailablePayments.FirstOrDefault(r => r.Id == paymentId);
+    private string EntryLabel(Transaction t) => $"{t.Date:dd-MM-yyyy} · {State.AccountName(t.AccountId)} · {Money(t.Amount)} · {t.Description}";
+    private void ConfirmLink(Transaction t, RecurringPayment r, DateOnly due) => Ask("Geplande betaling koppelen",
+        $"{r.Name}: gepland {due:dd-MM-yyyy}, geschat {Money(r.Amount)}.\n{EntryLabel(t)}\n\nDeze boeking vervangt alleen deze geplande betaling. Controleer dat het dezelfde betaling is; de bankboeking en volgende schattingen blijven ongewijzigd.",
+        d => RecurringSchedule.Link(d, t.Id, r.Id, due), "Koppeling bevestigen");
+    private void AskUnlink(Transaction t) => Ask("Vaste-postkoppeling verwijderen", "De bankboeking blijft ongewijzigd. De geplande betaling wordt weer apart geschat; controleer op dubbeltelling.", d => RecurringSchedule.Unlink(d, t.Id), "Ontkoppelen");
+    private void AskDelete(RecurringPayment item) => Ask("Vaste post verwijderen", "Werkelijke transacties blijven bestaan; hun koppeling aan deze vaste post wordt verwijderd.", d => HouseholdEdits.DeleteRecurring(d, item.Id), "Verwijderen");
+}

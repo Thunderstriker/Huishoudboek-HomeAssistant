@@ -19,6 +19,7 @@ public static class Validation
         Unique(data.Accounts.Select(x => x.Id), "rekeningen");
         Unique(data.Categories.Select(x => x.Id), "categorieën");
         Unique(data.Transactions.Select(x => x.Id), "transacties");
+        Unique(data.TransferMatches.Select(x => x.Id), "transferbeslissingen");
         Unique(data.RecurringPayments.Select(x => x.Id), "vaste posten");
         Unique(data.BudgetOverrides.Select(x => x.Id), "maandbudgetten");
         Unique(data.Valuations.Select(x => x.Id), "waarderingen");
@@ -38,6 +39,7 @@ public static class Validation
             Require(a.OwnerIds.Count > 0 && a.OwnerIds.All(owners.Contains), "Kies minstens één geldige eigenaar per rekening.");
             Require(a.SavingsGoal is null or > 0, "Een spaardoel moet positief zijn.");
             Require(Money(a.OpeningBalance) && (a.SavingsGoal == null || Money(a.SavingsGoal.Value)), "Rekeningsaldi en doelen hebben maximaal twee decimalen.");
+            Require(a.MinimumCashBuffer >= 0 && Money(a.MinimumCashBuffer), "De minimale cashbuffer moet niet-negatief zijn en heeft maximaal twee decimalen.");
         }
         Require(data.Categories.All(c => !string.IsNullOrWhiteSpace(c.Name) && c.MonthlyBudget >= 0 && Money(c.MonthlyBudget)), "Ongeldige categorie of budget (maximaal twee decimalen).");
         foreach (var t in data.Transactions)
@@ -48,6 +50,7 @@ public static class Validation
             Require(Enum.IsDefined(t.Kind), "Onbekend transactietype.");
             Require(t.CategoryId == null || categories.Contains(t.CategoryId.Value), "Onbekende categorie.");
             Require(t.RecurringPaymentId == null || recurring.Contains(t.RecurringPaymentId.Value), "Onbekende vaste post.");
+            Require(t.RecurringOccurrenceDate == null || t.RecurringPaymentId != null, "Een geplande betaaldatum vereist een vaste-postkoppeling.");
             Require(t.ImportBatchId == null || batches.Contains(t.ImportBatchId.Value), "Onbekende of teruggedraaide import.");
             Require(t.PrincipalComponent >= 0 && t.PrincipalComponent <= Math.Abs(t.Amount), "Ongeldige hypotheekaflossing.");
             Require(Money(t.PrincipalComponent) && (t.StatementBalance == null || Money(t.StatementBalance.Value)), "Aflossing en banksaldo hebben maximaal twee decimalen.");
@@ -65,17 +68,38 @@ public static class Validation
                 var match = data.RecurringPayments.Single(r => r.Id == recurringId);
                 Require(match.AccountId == t.AccountId && Math.Sign(match.Amount) == Math.Sign(t.Amount), "Vaste post hoort bij een andere rekening of betaalrichting.");
                 Require(!match.IsMortgage || t.Kind == TransactionKind.Mortgage, "De gekoppelde vaste post is een hypotheekbetaling; kies dat transactietype.");
+                Require(t.RecurringOccurrenceDate == null || RecurringSchedule.Occurrence(match, t.RecurringOccurrenceDate.Value.Year,
+                    t.RecurringOccurrenceDate.Value.Month) == t.RecurringOccurrenceDate, "De gekoppelde betaaldatum valt niet in de planning. Verwijder of corrigeer eerst de koppeling.");
             }
             var affected = data.Accounts.Where(a => a.Id == t.AccountId || a.Id == t.CounterAccountId);
             Require(affected.All(a => t.Date >= a.OpeningDate), "Transactie ligt vóór de openingsdatum van een rekening. Pas eerst de openingsdatum en het beginsaldo aan.");
         }
-        var links = data.Transactions.Where(t => t.RecurringPaymentId != null).Select(t => (t.RecurringPaymentId, t.Date.Year, t.Date.Month)).ToList();
-        Require(links.Distinct().Count() == links.Count, "Per maand kan één transactie aan dezelfde vaste post worden gekoppeld. Laat extra of deelbetalingen ongekoppeld.");
+        var transactions = data.Transactions.ToDictionary(t => t.Id);
+        var confirmedEntries = new HashSet<Guid>();
+        Require(data.TransferMatches.Select(m => (m.DebitTransactionId, m.CreditTransactionId)).Distinct().Count() == data.TransferMatches.Count,
+            "Dubbele transferbeslissing.");
+        foreach (var match in data.TransferMatches)
+        {
+            Require(transactions.ContainsKey(match.DebitTransactionId) && transactions.ContainsKey(match.CreditTransactionId),
+                "Transferbeslissing verwijst naar een ontbrekende boeking.");
+            var debit = transactions[match.DebitTransactionId];
+            var credit = transactions[match.CreditTransactionId];
+            Require(debit.AccountId != credit.AccountId && debit.Amount < 0 && credit.Amount == -debit.Amount &&
+                (!match.IsConfirmed || TransferMatching.IsEligible(debit) && TransferMatching.IsEligible(credit)),
+                "Een transferkoppeling vereist even grote af- en bijboekingen op verschillende rekeningen, zonder vaste-postkoppeling.");
+            if (match.IsConfirmed)
+                Require(confirmedEntries.Add(debit.Id) && confirmedEntries.Add(credit.Id), "Een boeking kan maar aan één bevestigde transfer gekoppeld zijn.");
+        }
+        var links = data.Transactions.Where(t => t.RecurringPaymentId != null).Select(t => (t.RecurringPaymentId,
+            Due: RecurringSchedule.LinkedDate(data.RecurringPayments.Single(r => r.Id == t.RecurringPaymentId), t))).ToList();
+        Require(links.Distinct().Count() == links.Count, "Per geplande betaling kan één transactie worden gekoppeld. Laat extra of deelbetalingen ongekoppeld.");
         foreach (var r in data.RecurringPayments)
         {
             Require(!string.IsNullOrWhiteSpace(r.Name) && accounts.Contains(r.AccountId) && r.Amount != 0 && decimal.Round(r.Amount, 2) == r.Amount,
                 "Ongeldige vaste post.");
             Require(r.DayOfMonth is >= 1 and <= 31 && (r.EndDate == null || r.EndDate >= r.StartDate), "Ongeldige planning.");
+            Require(Enum.IsDefined(r.Frequency) && r.MatchTolerance >= 0 && Money(r.MatchTolerance) && r.MatchWindowDays is >= 0 and <= 31,
+                "Kies een geldige frequentie, niet-negatieve bedragmarge en een datummarge van 0–31 dagen.");
             Require(r.CategoryId == null || categories.Contains(r.CategoryId.Value), "Onbekende categorie bij vaste post.");
             Require(!r.IsMortgage || r.Amount < 0 && data.Mortgage != null, "Een hypotheekpost vereist een hypotheek en een negatief bedrag.");
         }

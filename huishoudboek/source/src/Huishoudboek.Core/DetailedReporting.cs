@@ -54,14 +54,16 @@ public static class DetailedReporting
         var reason = big.Count > 0 ? string.Join(" · ", big.Select(c => $"{c.Name}: {Money(c.Overspent)} boven budget")) : "Geen overschrijding bij categorieën met een ingesteld budget.";
         if (unbudgeted > 0) reason += $" {Money(unbudgeted)} uitgaven zonder ingesteld budget.";
         if (report.Forecast.Available < 0) reason += $" Verwacht tekort uit maandinkomen: {Money(-report.Forecast.Available)}.";
+        var linked = TransferMatching.ConfirmedTransactionIds(data);
         var largest = data.Transactions.Where(t => t.Date.Year == year && t.Date.Month == month && t.Date <= today &&
-            t.Kind != TransactionKind.Transfer && t.Amount < 0 && scope.Contains(t.AccountId) && big.Any(c => c.Id == t.CategoryId)).OrderBy(t => t.Amount).Take(2).ToList();
+            t.Kind != TransactionKind.Transfer && !linked.Contains(t.Id) && t.Amount < 0 && scope.Contains(t.AccountId) && big.Any(c => c.Id == t.CategoryId)).OrderBy(t => t.Amount).Take(2).ToList();
         if (largest.Count > 0) reason += " Grootste betalingen: " + string.Join("; ", largest.Select(t => $"{t.Description} ({Money(-t.Amount)})")) + ".";
         var note = $"Schatting: geboekte bedragen + nog niet gekoppelde vaste posten + {Money(report.Forecast.VariableEstimate)} extra variabele uitgaven op basis van het daggemiddelde. " +
             (report.Forecast.OverdueCount > 0 ? $"{report.Forecast.OverdueCount} vervallen vaste post(en) nog niet gekoppeld; controleer op dubbeltelling. " : "") +
             "Geen automatische prognose van toekomstige spaaroverboekingen. " +
             (report.Forecast.LimitedHistory ? "Weinig gegevens: de prognose is beperkt betrouwbaar. " : "") +
-            (new DateOnly(year, month, 1) > today ? "Toekomstige maand: het verwachte saldo begint bij de saldi van vandaag, zonder tussenliggende maanden. " : "") +
+            "Het verwachte eindsaldo van betaalrekeningen gebruikt de dagelijkse cashprognose met maximaal 90 dagen uitgavenhistorie; dit is een andere schatting dan het maandresultaat. " +
+            (end.DayNumber - today.DayNumber > CashFlow.IncomeSearchDays ? "Verre toekomstige maand: het verwachte saldo begint bij de saldi van vandaag, zonder tussenliggende maanden. " : "") +
             "Onvolledige imports kunnen het beeld vertekenen. Hypotheekbetalingen tellen volledig als maandlast; alleen geregistreerde aflossing verlaagt de schuld.";
         var accounts = data.Accounts.Where(a => scope.Contains(a.Id)).ToList();
         var debt = data.Mortgage != null && (ownerId == null || data.Mortgage.OwnerIds.Contains(ownerId.Value)) ? Finance.MortgageBalance(data, asOf) : 0;

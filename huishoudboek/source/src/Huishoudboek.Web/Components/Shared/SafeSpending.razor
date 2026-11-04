@@ -1,0 +1,77 @@
+@inherits EditPageBase
+@{ var forecast = CashFlow.Project(State.Data, State.Today, State.Scope); var selected = forecast.Accounts.FirstOrDefault(a => a.Account.Id == accountId) ?? forecast.Accounts.FirstOrDefault(); }
+<section class="card" id="bestedingsruimte">
+    <div class="page-heading"><h2>Hoeveel kan ik verantwoord uitgeven?</h2><a class="button" href="vaste-posten">Inkomsten &amp; vaste lasten plannen</a></div>
+    <p class="muted">Vanaf vandaag, @State.Today.ToString("dd-MM-yyyy"), ongeacht het maandfilter. Schatting, geen garantie. Alleen betaalrekeningen; spaargeld wordt niet automatisch overgeboekt.</p>
+    @if (selected == null)
+    {
+        <p>Voeg een betaalrekening met beginsaldo toe om bestedingsruimte te berekenen.</p>
+    }
+    else
+    {
+        <div class="metrics">
+            <div><div class="metric-label">Geschat besteedbaar · per rekening gereserveerd</div><div class="metric-value">@Money(forecast.EstimatedSpendable)</div><small>Som van afzonderlijke bestedingsruimtes tot het volgende inkomen; niet vrij uitwisselbaar.</small></div>
+            <div><div class="metric-label">Bekende betalingen komende 7 dagen</div><div class="metric-value">@Money(forecast.Bills7Days)</div></div>
+            <div><div class="metric-label">Bekende betalingen komende 30 dagen</div><div class="metric-value">@Money(forecast.Bills30Days)</div><small>Inclusief nog niet gekoppelde vervallen lasten; exclusief extra variabele schatting.</small></div>
+        </div>
+        @if (forecast.Accounts.Any(a => a.BufferAtRisk))
+        { <p class="notice warning" role="alert">Op minstens één rekening komt het verwachte saldo onder de buffer. Een positief totaalsaldo of maandresultaat verbergt dit tekort niet; geld op een andere rekening dekt de betaling niet automatisch.</p> }
+        @if (forecast.Accounts.Any(a => a.StaleImports))
+        { <p class="notice warning" role="alert">Imports zijn verouderd of ontbreken op minstens één rekening. Importeer recente bankgegevens voordat u op de bestedingsruimte vertrouwt.</p> }
+        <div class="table-scroll"><table><thead><tr><th>Rekening</th><th class="money">Saldo vandaag</th><th>Volgend inkomen</th><th class="money">Buffer</th><th class="money">Geschat besteedbaar tot inkomen</th><th class="money">Laagste verwachte saldo</th><th>Datum laagste saldo</th></tr></thead><tbody>
+        @foreach (var account in forecast.Accounts)
+        {
+            <tr><td>@account.Account.Name @if (account.StaleImports) { <small class="badge">Import controleren</small> }</td><td class="money">@Money(account.CurrentBalance)</td><td>@(account.NextIncomeDate?.ToString("dd-MM-yyyy") ?? "Onbekend (30 dagen)")</td><td class="money">@Money(account.Account.MinimumCashBuffer)</td><td class="money">@Money(account.EstimatedSpendable)</td><td class="money @(account.BufferAtRisk ? "negative" : "")">@Money(account.LowestBalance)</td><td>@account.LowestDate.ToString("dd-MM-yyyy")</td></tr>
+        }
+        </tbody></table></div>
+        <div class="fields">
+            <label>Rekening voor uw aankoop<select value="@selected.Account.Id" @onchange="e => accountId = Guid.Parse(e.Value!.ToString()!)">@foreach (var account in forecast.Accounts) { <option value="@account.Account.Id">@account.Account.Name</option> }</select></label>
+            <label>Kan ik vandaag dit bedrag uitgeven (€)?<input type="text" inputmode="decimal" @bind="purchase" @bind:event="oninput" /></label>
+        </div>
+        @if (decimal.TryParse(purchase, NumberStyles.AllowDecimalPoint, CultureInfo.GetCultureInfo("nl-NL"), out var amount) && amount > 0 && decimal.Round(amount, 2) == amount)
+        {
+            var fits = selected.CanAfford(amount);
+            var uncertain = selected.HasUncertainty;
+            <p class="notice @(!fits || uncertain ? "warning" : "success")" role="status">
+                @if (!fits) { <strong>@Money(amount) past niet binnen de prognose en buffer van @selected.Account.Name.</strong> }
+                else if (uncertain) { <strong>@Money(amount) lijkt rekenkundig te passen, maar er is onvoldoende zekerheid.</strong> }
+                else { <strong>@Money(amount) past volgens de huidige schatting op @selected.Account.Name.</strong> }
+                Na deze aankoop wordt het laagste geschatte saldo @Money(selected.LowestBalance - amount) op @selected.LowestDate.ToString("dd-MM-yyyy"), bij een buffer van @Money(selected.Account.MinimumCashBuffer).
+                Dit controleert alle dagen tot @selected.Days.Last().Date.ToString("dd-MM-yyyy"), niet alleen het maandultimo.
+            </p>
+        }
+        else { <p class="muted">Vul een positief bedrag in met maximaal twee decimalen en een komma, zonder duizendtallen.</p> }
+        <div class="actions"><button @onclick="() => Draft = EditorDraft.CashBuffer(State, selected.Account)">Buffer instellen · @selected.Account.Name</button></div>
+        <p class="muted">@selected.Account.Name: bankboekingen t/m @(selected.StatementThrough?.ToString("dd-MM-yyyy") ?? "onbekend"), laatste import @(selected.LastImportDate?.ToString("dd-MM-yyyy") ?? "geen"). Verwachte extra dagelijkse uitgaven: @Money(selected.DailyVariableEstimate).</p>
+        @if (selected.Warnings.Count > 0)
+        { <div class="notice warning"><strong>Aandachtspunten voor @selected.Account.Name</strong><ul>@foreach (var warning in selected.Warnings) { <li>@warning</li> }</ul></div> }
+        <details><summary>Komende betalingen · @selected.Account.Name · 30 dagen</summary>
+            <div class="table-scroll"><table><thead><tr><th>Verwachte datum</th><th>Betaling</th><th class="money">Bedrag</th><th>Bron</th></tr></thead><tbody>
+            @foreach (var bill in selected.Events.Where(e => e.Amount < 0 && e.Date <= State.Today.AddDays(30)))
+            { <tr><td>@bill.Date.ToString("dd-MM-yyyy")</td><td>@bill.Name @if (bill.IsOverdue) { <small>Vervallen op @bill.DueDate.ToString("dd-MM-yyyy"); nog niet gekoppeld</small> }</td><td class="money">@Money(-bill.Amount)</td><td>@(bill.TransactionId != null ? "Geregistreerde boeking" : "Vaste-postschatting")</td></tr> }
+            </tbody></table></div>
+        </details>
+        <details><summary>Dagelijkse saldoverwachting · @selected.Account.Name · t/m @selected.Days.Last().Date.ToString("dd-MM-yyyy")</summary>
+            <p class="muted">Bedragen vóór uw eventuele aankoop. Laagste saldo gaat voorzichtig uit van afboekingen vóór ontvangsten op dezelfde dag.</p>
+            <div class="table-scroll"><table><thead><tr><th>Datum</th><th class="money">Beginsaldo</th><th class="money">Ontvangsten</th><th class="money">Bekende betalingen</th><th class="money">Extra dagelijks</th><th class="money">Laagste saldo</th><th class="money">Eindsaldo</th></tr></thead><tbody>
+            @foreach (var day in selected.Days)
+            { <tr><td>@day.Date.ToString("dd-MM-yyyy")</td><td class="money">@Money(day.OpeningBalance)</td><td class="money">@Money(day.Income)</td><td class="money">@Money(day.Payments)</td><td class="money">@Money(day.VariableSpending)</td><td class="money @(day.LowestBalance < selected.Account.MinimumCashBuffer ? "negative" : "")">@Money(day.LowestBalance)</td><td class="money">@Money(day.ClosingBalance)</td></tr> }
+            </tbody></table></div>
+        </details>
+    }
+    <details><summary>Aannames en grenzen van deze schatting</summary>
+        <ul>
+            <li>Begint bij geregistreerde saldi t/m vandaag. Bankimports zijn na @CashFlow.StaleAfterDays dagen verouderd; een recente import van oude boekingen is ook geen actueel saldo.</li>
+            <li>Vaste posten volgen uw datums en frequentie. Eén gekoppelde bankboeking vervangt één geplande betaling, met het echte bedrag en de echte bankdatum. Andere betalingen behouden uw ingestelde schatting; bedragen worden niet automatisch aangepast.</li>
+            <li>De laatste vervallen, niet-gekoppelde uitgave per post wordt morgen gereserveerd. Oudere ontbrekende betalingen worden niet opgeteld. Achterstallig inkomen wordt niet als ontvangen aangenomen. Controleer koppelingen en planning.</li>
+            <li>Extra dagelijkse uitgaven gebruiken het gemiddelde van maximaal @CashFlow.HistoryDays dagen tot de laatste geïmporteerde bankdatum (zonder import: vandaag). Gekoppelde vaste lasten, hypotheek en bevestigde transfers zijn uitgesloten. Geplande variabele betalingen vullen het daggemiddelde in, niet erbovenop.</li>
+            <li>Bestedingsruimte is het laagste saldo tot en met de volgende inkomensdag, min uw buffer, minimaal 0. De aankoopcontrole bekijkt minstens 30 dagen, of langer als het inkomen later komt (maximaal @CashFlow.IncomeSearchDays dagen). Ook op de inkomensdag gaan kosten voorzichtig vóór inkomsten.</li>
+            <li>Gedeelde rekeningen tellen één keer. Geen automatische verplaatsing van spaargeld, beleggingen of geld van andere rekeningen; alleen expliciet geregistreerde toekomstige overboekingen tellen mee. Onverwachte uitgaven, vakanties, rente en gewijzigde bedragen ontbreken tenzij u ze plant.</li>
+        </ul>
+    </details>
+</section>
+<EditDialogs Page="this" />
+@code {
+    private Guid? accountId;
+    private string purchase = "150,00";
+}

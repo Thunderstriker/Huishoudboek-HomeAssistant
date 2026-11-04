@@ -295,8 +295,10 @@ public static class ImportService
     {
         using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
         using var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.GetCultureInfo("nl-NL")) { Delimiter = ";" });
-        foreach (var h in new[] { "Datum", "Rekening", "Omschrijving", "Bedrag", "Categorie", "Type", "Tegenrekening", "Aflossing", "Eigen omschrijving" }) csv.WriteField(h);
+        foreach (var h in new[] { "Datum", "Rekening", "Omschrijving", "Bedrag", "Categorie", "Type", "Tegenrekening", "Aflossing", "Eigen omschrijving", "Transactie-ID", "Transferkoppeling", "Gekoppelde transactie-ID", "Vaste-post-ID", "Vaste post", "Geplande betaaldatum" }) csv.WriteField(h);
         csv.NextRecord();
+        var matches = data.TransferMatches.Where(m => m.IsConfirmed).SelectMany(m => new[] { (Id: m.DebitTransactionId, Match: m), (Id: m.CreditTransactionId, Match: m) })
+            .ToDictionary(p => p.Id, p => p.Match);
         foreach (var t in data.Transactions.OrderBy(t => t.Date))
         {
             // Neutralize formula injection when opening an exported CSV in a spreadsheet.
@@ -308,7 +310,15 @@ public static class ImportService
             csv.WriteField(Safe(data.Categories.FirstOrDefault(c => c.Id == t.CategoryId)?.Name ?? ""));
             csv.WriteField(t.Kind.ToString());
             csv.WriteField(Safe(data.Accounts.FirstOrDefault(a => a.Id == t.CounterAccountId)?.Name ?? ""));
-            csv.WriteField(t.PrincipalComponent); csv.WriteField(Safe(t.UserDescription)); csv.NextRecord();
+            csv.WriteField(t.PrincipalComponent); csv.WriteField(Safe(t.UserDescription));
+            csv.WriteField(t.Id);
+            csv.WriteField(matches.TryGetValue(t.Id, out var match) ? match.Id.ToString() : "");
+            csv.WriteField(match == null ? "" : (match.DebitTransactionId == t.Id ? match.CreditTransactionId : match.DebitTransactionId).ToString());
+            var recurring = data.RecurringPayments.FirstOrDefault(r => r.Id == t.RecurringPaymentId);
+            csv.WriteField(recurring?.Id.ToString() ?? "");
+            csv.WriteField(Safe(recurring?.Name ?? ""));
+            csv.WriteField(recurring == null ? "" : RecurringSchedule.LinkedDate(recurring, t).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+            csv.NextRecord();
         }
     }
 }

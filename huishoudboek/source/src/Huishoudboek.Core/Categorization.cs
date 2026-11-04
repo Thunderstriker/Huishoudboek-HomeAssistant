@@ -9,9 +9,9 @@ public sealed record CategoryDeletionPreview(string Name, decimal MonthlyBudget,
 /// <summary>Category edits with an optional personal description. Never changes bank text, amounts, types or recurring links.</summary>
 public static class Categorization
 {
-    public static (decimal Income, decimal Outflow) ReviewTotals(IEnumerable<Transaction> transactions)
+    public static (decimal Income, decimal Outflow) ReviewTotals(IEnumerable<Transaction> transactions, IReadOnlySet<Guid>? linked = null)
     {
-        var ordinary = transactions.Where(t => t.Kind != TransactionKind.Transfer).ToList();
+        var ordinary = transactions.Where(t => t.Kind != TransactionKind.Transfer && linked?.Contains(t.Id) != true).ToList();
         return (ordinary.Where(t => t.Amount > 0).Sum(t => t.Amount), -ordinary.Where(t => t.Amount < 0).Sum(t => t.Amount));
     }
 
@@ -54,8 +54,9 @@ public static class Categorization
         IReadOnlySet<Guid>? scope = null)
     {
         text = text.Trim();
+        var linked = TransferMatching.ConfirmedTransactionIds(data);
         var matches = text.Length == 0 ? [] : data.Transactions.Where(t => t.Kind != TransactionKind.Transfer &&
-            (scope == null || scope.Contains(t.Id)) && t.Description.Contains(text, StringComparison.OrdinalIgnoreCase)).ToList();
+            !linked.Contains(t.Id) && (scope == null || scope.Contains(t.Id)) && t.Description.Contains(text, StringComparison.OrdinalIgnoreCase)).ToList();
         var exact = data.Rules.Where(r => string.Equals(r.Contains.Trim(), text, StringComparison.OrdinalIgnoreCase)).ToList();
         return new(matches, matches.Count(t => t.CategoryId == null),
             matches.Count(t => Match(data, t.Description) is { } rule && rule.CategoryId != categoryId),
@@ -78,7 +79,8 @@ public static class Categorization
         {
             var text = rememberText.Trim();
             if (text.Length == 0 || categoryId == null) throw new InvalidOperationException("Vul herkenningstekst in en kies een categorie om een regel te onthouden.");
-            if (selected.Any(t => t.Kind == TransactionKind.Transfer))
+            var linked = TransferMatching.ConfirmedTransactionIds(data);
+            if (selected.Any(t => t.Kind == TransactionKind.Transfer || linked.Contains(t.Id)))
                 throw new InvalidOperationException("Tekstregels gelden niet voor interne overboekingen.");
             if (selected.Any(t => !t.Description.Contains(text, StringComparison.OrdinalIgnoreCase)))
                 throw new InvalidOperationException("De herkenningstekst moet in alle geselecteerde omschrijvingen voorkomen.");

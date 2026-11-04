@@ -62,11 +62,15 @@ public static class Finance
         var last = first.AddMonths(1).AddDays(-1);
         var cutoff = today < first ? first.AddDays(-1) : today < last ? today : last;
         bool InScope(Transaction t) => scope == null || scope.Contains(t.AccountId);
+        var matched = data.TransferMatches.Where(m => m.IsConfirmed)
+            .SelectMany(m => new[] { (Id: m.DebitTransactionId, Counter: m.CreditTransactionId), (Id: m.CreditTransactionId, Counter: m.DebitTransactionId) })
+            .ToDictionary(p => p.Id, p => p.Counter);
+        var transactions = data.Transactions.ToDictionary(t => t.Id);
         var actual = data.Transactions.Where(t => t.Date >= first && t.Date <= cutoff).ToList();
-        var ordinary = actual.Where(t => t.Kind != TransactionKind.Transfer && InScope(t)).ToList();
+        var ordinary = actual.Where(t => t.Kind != TransactionKind.Transfer && !matched.ContainsKey(t.Id) && InScope(t)).ToList();
         var income = ordinary.Where(t => t.Amount > 0).Sum(t => t.Amount);
         var outflow = -ordinary.Where(t => t.Amount < 0).Sum(t => t.Amount);
-        var savings = actual.Sum(t => SavingsEffect(data, t, scope));
+        var savings = actual.Sum(t => SavingsEffect(data, t, scope, matched, transactions));
         var principal = ordinary.Where(t => t.Kind == TransactionKind.Mortgage).Sum(t => t.PrincipalComponent);
         var categories = data.Categories.Select(c => new CategoryResult(c.Id, c.Name,
             data.BudgetOverrides.FirstOrDefault(b => b.CategoryId == c.Id && b.Year == year && b.Month == month)?.Amount
@@ -78,10 +82,10 @@ public static class Finance
         if (uncategorized > 0) categories.Add(new(Guid.Empty, "Zonder categorie", 0, uncategorized));
 
         var future = data.Transactions.Where(t => t.Date >= first && t.Date > cutoff && t.Date <= last).ToList();
-        var futureOrdinary = future.Where(t => t.Kind != TransactionKind.Transfer && InScope(t)).ToList();
+        var futureOrdinary = future.Where(t => t.Kind != TransactionKind.Transfer && !matched.ContainsKey(t.Id) && InScope(t)).ToList();
         var plannedIncome = futureOrdinary.Where(t => t.Amount > 0).Sum(t => t.Amount);
         var plannedOutflow = -futureOrdinary.Where(t => t.Amount < 0).Sum(t => t.Amount);
-        var plannedSavings = future.Sum(t => SavingsEffect(data, t, scope));
+        var plannedSavings = future.Sum(t => SavingsEffect(data, t, scope, matched, transactions));
         var overdue = 0;
         if (today <= last)
         {
@@ -90,8 +94,7 @@ public static class Finance
                 var due = Occurrence(recurring, year, month);
                 if (due == null) continue;
                 // Explicit links are authoritative; matching is deliberately conservative.
-                if (data.Transactions.Any(t => t.RecurringPaymentId == recurring.Id &&
-                    t.Date.Year == year && t.Date.Month == month)) continue;
+                if (RecurringSchedule.IsLinked(data, recurring, due.Value)) continue;
                 if (due <= cutoff) overdue++;
                 if (recurring.Amount > 0) plannedIncome += recurring.Amount;
                 else plannedOutflow -= recurring.Amount;
@@ -123,16 +126,38 @@ public static class Finance
         var ids = current.Select(a => a.Id).ToHashSet();
         var balance = current.Sum(a => Balance(data, a, asOf));
         if (today > last) return balance;
+        var days = last.DayNumber - today.DayNumber;
+        if (days == 0) return balance;
+        if (days <= CashFlow.IncomeSearchDays)
+            return CashFlow.Project(data, today, ids, days).Accounts.Sum(a => a.Days.Single(d => d.Date == last).ClosingBalance);
         balance += data.Transactions.Where(t => t.Date >= first && t.Date > today && t.Date <= last)
             .Sum(t => current.Sum(a => AccountEffect(t, a.Id)));
-        balance += data.RecurringPayments.Where(r => ids.Contains(r.AccountId) && Occurrence(r, year, month) != null &&
-            !data.Transactions.Any(t => t.RecurringPaymentId == r.Id && t.Date.Year == year && t.Date.Month == month)).Sum(r => r.Amount);
+        balance += data.RecurringPayments.Where(r => ids.Contains(r.AccountId) && Occurrence(r, year, month) is { } due &&
+            !RecurringSchedule.IsLinked(data, r, due)).Sum(r => r.Amount);
         return balance - Report(data, year, month, today, ids).Forecast.VariableEstimate;
     }
 
     // Net contributions from daily-use accounts into savings/investments, not household expenditure.
     public static decimal SavingsEffect(HouseholdData data, Transaction t, IReadOnlySet<Guid>? scope = null)
     {
+        var matched = data.TransferMatches.Where(m => m.IsConfirmed)
+            .SelectMany(m => new[] { (Id: m.DebitTransactionId, Counter: m.CreditTransactionId), (Id: m.CreditTransactionId, Counter: m.DebitTransactionId) })
+            .ToDictionary(p => p.Id, p => p.Counter);
+        return SavingsEffect(data, t, scope, matched, data.Transactions.ToDictionary(entry => entry.Id));
+    }
+
+    private static decimal SavingsEffect(HouseholdData data, Transaction t, IReadOnlySet<Guid>? scope,
+        IReadOnlyDictionary<Guid, Guid> matched, IReadOnlyDictionary<Guid, Transaction> transactions)
+    {
+        if (matched.TryGetValue(t.Id, out var counterpartId))
+        {
+            var counterpart = transactions[counterpartId];
+            var account = data.Accounts.First(a => a.Id == t.AccountId);
+            var other = data.Accounts.First(a => a.Id == counterpart.AccountId);
+            // Count once on the current account's bank date, even across month boundaries.
+            return account.Kind == AccountKind.Current && other.Kind != AccountKind.Current &&
+                (scope == null || scope.Contains(account.Id) || scope.Contains(other.Id)) ? -t.Amount : 0;
+        }
         if (t.Kind != TransactionKind.Transfer || t.CounterAccountId == null) return 0;
         var from = data.Accounts.First(a => a.Id == t.AccountId);
         var to = data.Accounts.First(a => a.Id == t.CounterAccountId);
@@ -144,13 +169,11 @@ public static class Finance
     }
 
     public static DateOnly? Occurrence(RecurringPayment item, int year, int month)
-    {
-        var date = new DateOnly(year, month, Math.Min(item.DayOfMonth, DateTime.DaysInMonth(year, month)));
-        return date < item.StartDate || item.EndDate is { } end && date > end ? null : date;
-    }
+        => RecurringSchedule.Occurrence(item, year, month);
 
     public static void ApplySuggestions(HouseholdData data, Transaction transaction, bool suggestCategory = true)
     {
+        if (data.TransferMatches.Any(m => m.IsConfirmed && (m.DebitTransactionId == transaction.Id || m.CreditTransactionId == transaction.Id))) return;
         // Import-save rechecks may recognize recurring items, but must preserve a deliberate null category too.
         if (transaction.Kind == TransactionKind.Transfer)
         {
@@ -158,17 +181,15 @@ public static class Finance
             return;
         }
         if (suggestCategory) transaction.CategoryId ??= Categorization.Match(data, transaction.Description)?.CategoryId;
-        var matches = data.RecurringPayments.Where(r => r.AccountId == transaction.AccountId &&
-            Math.Abs(r.Amount - transaction.Amount) <= 0.01m && !string.IsNullOrWhiteSpace(r.MatchText) &&
-            transaction.Description.Contains(r.MatchText, StringComparison.OrdinalIgnoreCase) &&
-            Occurrence(r, transaction.Date.Year, transaction.Date.Month) is { } due &&
-            Math.Abs(due.DayNumber - transaction.Date.DayNumber) <= 5 &&
-            !data.Transactions.Any(t => t.Id != transaction.Id && t.RecurringPaymentId == r.Id &&
-                t.Date.Year == transaction.Date.Year && t.Date.Month == transaction.Date.Month)).ToList();
+        // Keep automatic import recognition strict. Wider amount/date tolerances are review proposals only.
+        var matches = RecurringSchedule.Matches(data, transaction).ToList();
         if (transaction.RecurringPaymentId == null && matches.Count == 1)
         {
-            var match = matches[0];
+            var candidate = matches[0];
+            if (Math.Abs(candidate.Difference) > 0.01m || Math.Abs(candidate.DueDate.DayNumber - transaction.Date.DayNumber) > 5) return;
+            var match = candidate.Payment;
             transaction.RecurringPaymentId = match.Id;
+            transaction.RecurringOccurrenceDate = candidate.DueDate;
             if (suggestCategory) transaction.CategoryId ??= match.CategoryId;
             if (match.IsMortgage && transaction.Amount < 0) transaction.Kind = TransactionKind.Mortgage;
         }
