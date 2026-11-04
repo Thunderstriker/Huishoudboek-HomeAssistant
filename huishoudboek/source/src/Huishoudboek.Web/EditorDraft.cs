@@ -6,7 +6,11 @@ using static Huishoudboek.Web.UiCulture;
 namespace Huishoudboek.Web;
 
 public sealed record FieldOption(string Value, string Label);
-public sealed record EditorSaveProposal(int MatchCount, Action<HouseholdData> SaveOnly, Action<HouseholdData> SaveAndLink);
+public sealed record EditorSaveProposal(int MatchCount, Action<HouseholdData> SaveOnly, Action<HouseholdData> SaveAndLink)
+{
+    public IReadOnlyList<RecurringCandidate> Matches { get; init; } = [];
+    public Action<HouseholdData, IReadOnlySet<Guid>>? SaveSelected { get; init; }
+}
 public sealed class EditorField(string key, string label, string type, string value = "", bool required = true)
 {
     public string Key { get; } = key;
@@ -29,11 +33,13 @@ public sealed class EditorDraft(string title, string revision)
     public List<EditorField> Fields { get; } = [];
     public Action<HouseholdData> Apply { get; private set; } = _ => { };
     private Guid? _recurringPaymentId;
+    private Guid? _seedTransactionId;
     private bool _transaction;
     private bool _category;
     public string Label(EditorField field) => _category && field.Key == "budget" && Text("purpose") == "Savings"
         ? UiCulture.Text("DefaultMonthlyTargetEuro") : field.Label;
-    public bool IsFieldVisible(EditorField field) => _category && field.Key == "budget"
+    public bool IsFieldVisible(EditorField field) => _recurringPaymentId != null && field.Key == "tolerance"
+        ? Text("amountMode") == "Fixed" : _category && field.Key == "budget"
         ? Text("purpose") != "OwnAccountMovement" : !_transaction || field.Key switch
     {
         "counter" => Text("kind") == "Transfer",
@@ -51,15 +57,30 @@ public sealed class EditorDraft(string title, string revision)
         Apply(candidate);
         Validation.Validate(candidate);
         var payment = candidate.RecurringPayments.Single(r => r.Id == paymentId);
-        var matches = RecurringSchedule.BatchCandidates(candidate, paymentId, today);
+        var matches = RecurringSchedule.BatchCandidates(candidate, paymentId, today).ToList();
+        if (_seedTransactionId is { } seedId && candidate.Transactions.Single(t => t.Id == seedId) is { } seed &&
+            !matches.Any(m => m.Transaction.Id == seedId))
+        {
+            var due = RecurringSchedule.Occurrences(payment, seed.Date.AddDays(-payment.MatchWindowDays), seed.Date.AddDays(payment.MatchWindowDays))
+                .OrderBy(d => Math.Abs(d.DayNumber - seed.Date.DayNumber)).Select(d => (DateOnly?)d).FirstOrDefault();
+            if (due != null && seed.AccountId == payment.AccountId && Math.Sign(seed.Amount) == Math.Sign(payment.Amount) &&
+                !RecurringSchedule.IsLinked(candidate, payment, due.Value))
+            {
+                // This is an explicit choice of source entry, not an automatic match. Check it on the isolated preview too.
+                RecurringSchedule.Link(candidate, seed.Id, paymentId, due.Value);
+                matches.RemoveAll(m => m.DueDate == due);
+                matches.Add(new(payment, seed, due.Value));
+            }
+        }
         void SaveOnly(HouseholdData d) => HouseholdEdits.SaveRecurring(d, payment);
-        void SaveAndLink(HouseholdData d)
+        void SaveSelected(HouseholdData d, IReadOnlySet<Guid> selected)
         {
             SaveOnly(d);
-            foreach (var match in matches)
-                RecurringSchedule.Link(d, match.Transaction.Id, paymentId, match.DueDate);
+            RecurringSchedule.LinkBatch(d, matches.Where(m => selected.Contains(m.Transaction.Id))
+                .Select(m => (m.Transaction.Id, paymentId, m.DueDate)));
         }
-        return new(matches.Count, SaveOnly, SaveAndLink);
+        void SaveAndLink(HouseholdData d) => SaveSelected(d, matches.Select(m => m.Transaction.Id).ToHashSet());
+        return new(matches.Count, SaveOnly, SaveAndLink) { Matches = matches, SaveSelected = SaveSelected };
     }
     public string Text(string key) => Fields.Single(f => f.Key == key).Value.Trim();
     public Guid Id(string key) => Guid.TryParse(Text(key), out var id) ? id : throw new InvalidOperationException(UiCulture.Text("InvalidAccountCategory"));
@@ -241,6 +262,8 @@ public sealed class EditorDraft(string title, string revision)
         draft.Field("name", "Name", "text", item.Name); draft.Choice("account", "Account", Accounts(s.Data), item.AccountId.ToString());
         draft.Money("amount", "RecurringAmountEuro", item.Amount); draft.Field("day", "RecurringDay", "number", item.DayOfMonth.ToString(CultureInfo.InvariantCulture));
         draft.Choice("frequency", "Frequency", Enum.GetValues<PaymentFrequency>().Select(f => new FieldOption(f.ToString(), Frequency(f))), item.Frequency.ToString());
+        draft.Choice("amountMode", "RecurringAmountMode", [new("Fixed", UiCulture.Text("FixedPaymentAmount")),
+            new("Variable", UiCulture.Text("VariablePaymentAmount"))], item.AmountMode.ToString());
         draft.Choice("category", "Category", Categories(s.Data), item.CategoryId?.ToString() ?? "");
         draft.DateField("start", "StartDate", item.StartDate); draft.DateField("end", "OptionalEndDate", item.EndDate, false);
         draft.Field("text", "OptionalMatchText", "text", item.MatchText, false); draft.Field("mortgage", "IsMortgagePayment", "checkbox", item.IsMortgage.ToString());
@@ -250,7 +273,41 @@ public sealed class EditorDraft(string title, string revision)
             DayOfMonth = int.TryParse(draft.Text("day"), out var day) ? day : 0, CategoryId = draft.OptionalId("category"), StartDate = draft.Date("start"),
             EndDate = draft.Text("end").Length == 0 ? null : draft.Date("end"), MatchText = draft.Text("text"), IsMortgage = bool.Parse(draft.Text("mortgage")),
             Frequency = Enum.Parse<PaymentFrequency>(draft.Text("frequency")), MatchTolerance = draft.Number("tolerance"),
+            AmountMode = Enum.Parse<PaymentAmountMode>(draft.Text("amountMode")),
             MatchWindowDays = int.TryParse(draft.Text("window"), out var window) ? window : -1 }); return draft;
+    }
+    public static bool CanCreateRecurring(HouseholdData data, Transaction transaction) => transaction.RecurringPaymentId == null &&
+        !TransferMatching.IsInternal(data, transaction) && !TransactionAccounting.HasDetails(data, transaction.Id);
+
+    public static EditorDraft RecurringFromTransaction(WebState s, Transaction transaction)
+    {
+        if (!CanCreateRecurring(s.Data, transaction)) throw new InvalidOperationException(UiCulture.Text("RecurringSeedUnavailable"));
+        var draft = Recurring(s, new RecurringPayment { Name = transaction.UserDescription.Length > 0 ? transaction.UserDescription : transaction.Description,
+            AccountId = transaction.AccountId, Amount = transaction.Amount, DayOfMonth = transaction.Date.Day,
+            StartDate = new(transaction.Date.Year, transaction.Date.Month, 1), CategoryId = transaction.CategoryId,
+            MatchText = transaction.Description, IsMortgage = transaction.Kind == TransactionKind.Mortgage });
+        draft._seedTransactionId = transaction.Id;
+        draft.Note = UiCulture.Text("RecurringFromEntryNote");
+        return draft;
+    }
+
+    public static EditorDraft ImportCoverage(WebState s, ImportBatch batch)
+    {
+        var entries = s.Data.Transactions.Where(t => t.ImportBatchId == batch.Id).ToList();
+        var draft = new EditorDraft(UiCulture.Text("ConfirmStatementCoverage"), s.Revision) { Note = UiCulture.Text("ConfirmStatementCoverageNote") };
+        draft.DateField("from", "FromInclusive", batch.CoverageFrom ?? entries.Select(t => (DateOnly?)t.Date).Min() ?? s.Today);
+        draft.DateField("through", "ThroughInclusive", batch.CoverageThrough ?? entries.Select(t => (DateOnly?)t.Date).Max() ?? s.Today);
+        draft.Apply = d =>
+        {
+            var saved = d.ImportBatches.Single(b => b.Id == batch.Id);
+            var from = draft.Date("from"); var through = draft.Date("through");
+            var rows = d.Transactions.Where(t => t.ImportBatchId == batch.Id).ToList();
+            if (saved.Undone || rows.Count != saved.RowCount || from > through || through > s.Today ||
+                rows.Any(t => t.Date < from || t.Date > through))
+                throw new InvalidOperationException(UiCulture.Text("InvalidStatementCoverage"));
+            saved.CoverageFrom = from; saved.CoverageThrough = through;
+        };
+        return draft;
     }
     public static string Frequency(PaymentFrequency frequency) => frequency switch
     { PaymentFrequency.Monthly => UiCulture.Text("Monthly"), PaymentFrequency.Quarterly => UiCulture.Text("Quarterly"), PaymentFrequency.Yearly => UiCulture.Text("Yearly"), _ => UiCulture.Text("Once") };

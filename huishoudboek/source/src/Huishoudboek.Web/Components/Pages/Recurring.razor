@@ -3,25 +3,51 @@
 @inherits EditPageBase
 <PageTitle>@L["RecurringPayments"] · Huishoudboek</PageTitle>
 <h1>@L["RecurringIncomeBills"]</h1>
+@{ var allCandidates = RecurringSchedule.Candidates(State.Data, State.Today); }
 <div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Recurring(State)">+ @L["RecurringPayment"]</button></div>
 <p class="muted">@L["RecurringPlanningNote"] <a href="#koppelen">@L["MatchBankEntries"]</a> @L["AvoidDuplicateEstimates"]</p>
-<section class="card"><div class="table-scroll"><table><thead><tr><th>@L["Name"]</th><th>@L["Account"]</th><th class="money">@L["AmountPerPayment"]</th><th>@L["FrequencyDay"]</th><th>@L["Category"]</th><th>@L["Period"]</th><th>@L["Recognition"]</th><th></th></tr></thead><tbody>
+<section class="card" id="payment-status"><h2>@L["MonthlyPaymentStatus"] · @(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
+    <p class="muted">@L["RecurringStatusNote"] <a href="beheer">@L["ConfirmExistingStatementPeriods"]</a></p>
+    @foreach (var account in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id)))
+    {
+        var waiting = State.Data.RecurringPayments.Where(r => r.AccountId == account.Id && RecurringSchedule.Occurrence(r, State.Year, State.Month) is { } due &&
+            due >= account.OpeningDate && RecurringSchedule.Status(State.Data, r, due, State.Today, allCandidates) == RecurringPaymentStatus.AwaitingBankData).Count();
+        @if (waiting > 0) { <p class="notice" role="status">@account.Name · @L["LatestImportedBankDate", FirstWeek.ImportedThrough(State.Data, account.Id, State.Today)?.ToString("dd-MM-yyyy") ?? L["Unknown"].Value]<br />@L["RecurringAwaitingSummary", waiting] <a href="importeren">@L["ImportExcelCsv"]</a></p> }
+    }
+    <div class="table-scroll"><table><thead><tr><th>@L["Name"]</th><th>@L["Account"]</th><th>@L["PlannedPaymentDate"]</th><th class="money">@L["Planned"]</th><th class="money">@L["Actual"]</th><th>@L["Status"]</th><th></th></tr></thead><tbody>
+    @foreach (var r in State.Data.RecurringPayments.Where(r => State.Scope.Contains(r.AccountId)))
+    {
+        @if (RecurringSchedule.Occurrence(r, State.Year, State.Month) is { } scheduledDue && scheduledDue >= State.Data.Accounts.Single(a => a.Id == r.AccountId).OpeningDate)
+        {
+            var status = RecurringSchedule.Status(State.Data, r, scheduledDue, State.Today, allCandidates);
+            var linkedEntry = State.Data.Transactions.FirstOrDefault(t => t.RecurringPaymentId == r.Id && RecurringSchedule.LinkedDate(r, t) == scheduledDue);
+            <tr @key="r.Id"><td>@r.Name</td><td>@State.AccountName(r.AccountId)</td><td>@scheduledDue.ToString("dd-MM-yyyy")</td><td class="money">@Money(r.Amount)</td><td class="money">@(linkedEntry != null ? Money(linkedEntry.Amount) : "—") @if (linkedEntry != null) { <small>@linkedEntry.Date.ToString("dd-MM-yyyy")</small> }</td><td><span class="badge">@L[$"RecurringStatus{status}"]</span></td><td><div class="actions">@if (status == RecurringPaymentStatus.NeedsReview) { <a href="#koppelen">@L["ReviewRecurringMatches"]</a> }<button @onclick="() => Draft = EditorDraft.Recurring(State, r)">@L["Edit"]</button></div></td></tr>
+        }
+    }
+    </tbody></table></div>
+</section>
+<section class="card"><details><summary>@L["RecurringDefinitions"]</summary><div class="table-scroll"><table><thead><tr><th>@L["Name"]</th><th>@L["Account"]</th><th class="money">@L["AmountPerPayment"]</th><th>@L["FrequencyDay"]</th><th>@L["Category"]</th><th>@L["Period"]</th><th>@L["Recognition"]</th><th></th></tr></thead><tbody>
 @foreach (var r in State.Data.RecurringPayments.Where(r => State.Scope.Contains(r.AccountId)))
-{ <tr><td>@r.Name @if (r.IsMortgage) { <span class="badge">@L["Mortgage"]</span> }</td><td>@State.AccountName(r.AccountId)</td><td class="money">@Money(r.Amount)</td><td>@EditorDraft.Frequency(r.Frequency) @(r.Frequency == PaymentFrequency.Once ? "" : L["PaymentDay", r.DayOfMonth].Value)</td><td>@State.CategoryName(r.CategoryId)</td><td>@r.StartDate.ToString("dd-MM-yyyy") – @(r.EndDate?.ToString("dd-MM-yyyy") ?? L[r.Frequency == PaymentFrequency.Once ? "Once" : "Ongoing"].Value)</td><td>@r.MatchText<small>± @Money(r.MatchTolerance) / @L["Days", r.MatchWindowDays]</small></td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Recurring(State, r)">@L["Edit"]</button><button @onclick="() => AskDelete(r)">@L["Delete"]</button></div></td></tr> }
-</tbody></table></div></section>
+{ <tr><td>@r.Name @if (r.IsMortgage) { <span class="badge">@L["Mortgage"]</span> }</td><td>@State.AccountName(r.AccountId)</td><td class="money">@Money(r.Amount)</td><td>@EditorDraft.Frequency(r.Frequency) @(r.Frequency == PaymentFrequency.Once ? "" : L["PaymentDay", r.DayOfMonth].Value)</td><td>@State.CategoryName(r.CategoryId)</td><td>@r.StartDate.ToString("dd-MM-yyyy") – @(r.EndDate?.ToString("dd-MM-yyyy") ?? L[r.Frequency == PaymentFrequency.Once ? "Once" : "Ongoing"].Value)</td><td>@r.MatchText<small>@(r.AmountMode == PaymentAmountMode.Variable ? L["VariablePaymentAmount"].Value : $"± {Money(r.MatchTolerance)}") / @L["Days", r.MatchWindowDays]</small></td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Recurring(State, r)">@L["Edit"]</button><button @onclick="() => AskDelete(r)">@L["Delete"]</button></div></td></tr> }
+</tbody></table></div></details></section>
 <section class="card" id="koppelen"><h2>@L["MatchScheduledPayment"]</h2>
     <p class="muted">@L["RecurringMatchNote"]</p>
     <p class="muted">@L["RecurringBatchExistingNote"]</p>
     <div class="filters"><label>@L["Search"]<input type="search" @bind="search" @bind:event="oninput" @bind:after="ResetPage" /></label></div>
-    @{ var candidates = RecurringSchedule.Candidates(State.Data, State.Today).Where(c => State.Scope.Contains(c.Payment.AccountId) && InSearch(c.Payment.Name, c.Transaction)).ToList(); page = Math.Min(page, Math.Max(0, (candidates.Count - 1) / 20)); }
+    @{ var candidates = allCandidates.Where(c => State.Scope.Contains(c.Payment.AccountId) && InSearch(c.Payment.Name, c.Transaction)).ToList(); page = Math.Min(page, Math.Max(0, (candidates.Count - 1) / 20)); }
     <h3>@L["PossibleMatches"] (@candidates.Count)</h3>
+    <div class="actions"><button disabled="@(candidates.Count == 0)" @onclick="SelectClear">@L["SelectClearRecurringMatches"]</button><button class="primary" disabled="@(selected.Count == 0)" @onclick="ConfirmSelected">@L["LinkSelectedRecurring", selected.Count]…</button></div>
+    @if (selected.Count > 0)
+    { <details><summary>@L["SelectedRecurringPreview", selected.Count]</summary><ul>@foreach (var c in candidates.Where(c => selected.Contains((c.Transaction.Id, c.Payment.Id, c.DueDate)))) { <li>@c.Payment.Name · @c.DueDate.ToString("dd-MM-yyyy") → @EntryLabel(c.Transaction)</li> }</ul></details> }
     @foreach (var candidate in candidates.Skip(page * 20).Take(20))
     {
         <div class="card" @key="(candidate.Payment.Id, candidate.Transaction.Id, candidate.DueDate)">
             <strong>@candidate.Payment.Name · @L["Planned"] @candidate.DueDate.ToString("dd-MM-yyyy") · @Money(candidate.Payment.Amount)</strong>
             <p>@EntryLabel(candidate.Transaction)<br />@L["EstimateDifference", Money(candidate.Difference)]</p>
-            @if (candidates.Count(c => c.Transaction.Id == candidate.Transaction.Id || c.Payment.Id == candidate.Payment.Id && c.DueDate == candidate.DueDate) > 1)
+            @if (candidate.RequiresReview) { <p class="muted">@L["RecurringAmountChanged"]</p> }
+            @if (allCandidates.Count(c => c.Transaction.Id == candidate.Transaction.Id || c.Payment.Id == candidate.Payment.Id && c.DueDate == candidate.DueDate) > 1)
             { <p class="notice warning">@L["MultipleRecurringCandidates"]</p> }
+            <label class="check"><input type="checkbox" checked="@selected.Contains((candidate.Transaction.Id, candidate.Payment.Id, candidate.DueDate))" @onchange="e => SelectCandidate(candidate, (bool)e.Value!)" />@L["SelectRecurringMatch"]</label>
             <button class="primary" @onclick="() => ConfirmLink(candidate.Transaction, candidate.Payment, candidate.DueDate)">@L["ConfirmMatch"]…</button>
         </div>
     }
@@ -53,7 +79,23 @@
     private Guid? transactionId, paymentId;
     private DateOnly? dueDate;
     private int page;
-    private void ResetPage() => page = 0;
+    private HashSet<(Guid TransactionId, Guid PaymentId, DateOnly Due)> selected = [];
+    private void ResetPage() { page = 0; selected.Clear(); }
+    private void SelectCandidate(RecurringCandidate c, bool value)
+    {
+        var key = (c.Transaction.Id, c.Payment.Id, c.DueDate);
+        if (!value) { selected.Remove(key); return; }
+        selected.RemoveWhere(k => k.TransactionId == c.Transaction.Id || k.PaymentId == c.Payment.Id && k.Due == c.DueDate);
+        selected.Add(key);
+    }
+    private void SelectClear() => selected = RecurringSchedule.BatchForReview(State.Data, State.Today)
+        .Where(c => State.Scope.Contains(c.Payment.AccountId) && InSearch(c.Payment.Name, c.Transaction))
+        .Select(c => (c.Transaction.Id, c.Payment.Id, c.DueDate)).ToHashSet();
+    private void ConfirmSelected()
+    {
+        var rows = selected.ToList();
+        Ask(L["LinkPlannedPayment"], L["LinkSelectedRecurringQuestion", rows.Count], d => RecurringSchedule.LinkBatch(d, rows), L["ConfirmMatch"]);
+    }
     private void ResetPayment() { paymentId = null; dueDate = null; }
     private void ResetDue()
     {
@@ -62,7 +104,7 @@
             : null;
     }
     protected override void OnStateChanged()
-    { if (lastRevision != State.Revision || SelectedTransaction != null && !State.Scope.Contains(SelectedTransaction.AccountId)) { lastRevision = State.Revision; transactionId = null; ResetPayment(); } }
+    { if (lastRevision != State.Revision || SelectedTransaction != null && !State.Scope.Contains(SelectedTransaction.AccountId)) { lastRevision = State.Revision; transactionId = null; ResetPayment(); selected.Clear(); } selected.RemoveWhere(k => !State.Data.RecurringPayments.Any(r => r.Id == k.PaymentId && State.Scope.Contains(r.AccountId))); }
     private bool InSearch(string name, Transaction t) => string.IsNullOrWhiteSpace(search) || $"{name} {State.AccountName(t.AccountId)} {t.Description} {t.UserDescription}".Contains(search, StringComparison.OrdinalIgnoreCase);
     private IEnumerable<Transaction> AvailableTransactions
     {

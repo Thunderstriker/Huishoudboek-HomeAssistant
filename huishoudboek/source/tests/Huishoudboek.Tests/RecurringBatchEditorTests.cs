@@ -20,12 +20,14 @@ namespace Huishoudboek.Tests;
 public sealed class RecurringBatchEditorTests
 {
     [Theory]
-    [InlineData("nl-NL", true, "3 passende bankboekingen in de historie gevonden", "Opslaan en 3 boekingen koppelen")]
-    [InlineData("nl-NL", false, "3 passende bankboekingen in de historie gevonden", "Opslaan zonder koppelen")]
-    [InlineData("en-GB", true, "3 matching historical bank entries found", "Save and link 3 entries")]
-    [InlineData("en-GB", false, "3 matching historical bank entries found", "Save without linking")]
+    [InlineData("nl-NL", true, "3 bankboekingen in de historie klaar voor controle", "Opslaan en 3 boekingen koppelen", 3)]
+    [InlineData("nl-NL", false, "3 bankboekingen in de historie klaar voor controle", "Opslaan zonder koppelen", 0)]
+    [InlineData("en-GB", true, "3 historical bank entries ready for review", "Save and link 3 entries", 3)]
+    [InlineData("en-GB", false, "3 historical bank entries ready for review", "Save without linking", 0)]
+    [InlineData("nl-NL", true, "3 bankboekingen in de historie klaar voor controle", "Opslaan en 3 boekingen koppelen", 2)]
+    [InlineData("en-GB", true, "3 historical bank entries ready for review", "Save and link 3 entries", 2)]
     public async Task EditorShowsCountBeforeSavingAndSupportsAcceptingOrDecliningInBothLanguages(
-        string culture, bool accept, string question, string button)
+        string culture, bool accept, string question, string button, int linkedCount)
     {
         var previous = CultureInfo.CurrentCulture;
         var previousUi = CultureInfo.CurrentUICulture;
@@ -56,17 +58,32 @@ public sealed class RecurringBatchEditorTests
             var html = await renderer.Dispatcher.InvokeAsync(() => WebUtility.HtmlDecode(root.ToHtmlString()));
             Assert.Contains(question, html);
             Assert.Contains(button, html);
+            Assert.Equal(3, html.Split("type=\"checkbox\"").Length - 1);
+            Assert.Contains("Beheren rek. Excellence P. (coop)", html);
             Assert.Equal(0, backend.SaveCount);
             Assert.Empty(backend.Data.RecurringPayments);
             Assert.False(capture.Closed);
+
+            if (linkedCount == 2)
+            {
+                await renderer.Dispatcher.InvokeAsync(() =>
+                {
+                    typeof(Editor).GetMethod("Select", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(capture.Editor,
+                        [data.Transactions.Last().Id, false]);
+                    typeof(ComponentBase).GetMethod("StateHasChanged", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(capture.Editor, null);
+                });
+                html = await renderer.Dispatcher.InvokeAsync(() => WebUtility.HtmlDecode(root.ToHtmlString()));
+                Assert.Contains(UiCulture.Text("SaveAndLinkRows", 2), html);
+            }
 
             await renderer.Dispatcher.InvokeAsync(() => Invoke(capture.Editor, "Commit", accept));
 
             Assert.Equal(1, backend.SaveCount);
             Assert.True(capture.Closed);
             Assert.Single(backend.Data.RecurringPayments);
-            Assert.All(backend.Data.Transactions, t => Assert.Equal(accept ? plan.Id : (Guid?)null, t.RecurringPaymentId));
-            Assert.Contains(accept ? "3" : culture == "nl-NL" ? "opgeslagen" : "saved", state.Message);
+            Assert.Equal(linkedCount, backend.Data.Transactions.Count(t => t.RecurringPaymentId == plan.Id));
+            if (linkedCount == 2) Assert.Null(backend.Data.Transactions.Last().RecurringPaymentId);
+            Assert.Contains(accept ? linkedCount.ToString(CultureInfo.InvariantCulture) : culture == "nl-NL" ? "opgeslagen" : "saved", state.Message);
             Validation.Validate(backend.Data);
         }
         finally { CultureInfo.CurrentCulture = previous; CultureInfo.CurrentUICulture = previousUi; }

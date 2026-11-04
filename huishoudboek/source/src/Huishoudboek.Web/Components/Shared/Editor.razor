@@ -6,10 +6,16 @@
     {
         <p class="notice" role="status">@L["RecurringBatchQuestion", batch.MatchCount]</p>
         <p class="muted">@L["RecurringBatchNote"]</p>
+        @if (batch.Matches.FirstOrDefault() is { } first)
+        { <p><strong>@first.Payment.Name</strong> · @State.AccountName(first.Payment.AccountId) · @L["Planned"] @WebState.Money(first.Payment.Amount)</p> }
+        <div class="table-scroll"><table><thead><tr><th>@L["Save"]</th><th>@L["PlannedPaymentDate"]</th><th>@L["BankEntry"]</th><th class="money">@L["Actual"]</th></tr></thead><tbody>
+        @foreach (var match in batch.Matches)
+        { <tr @key="match.Transaction.Id"><td><input type="checkbox" aria-label="@L["SelectRecurringMatch"]" checked="@selected.Contains(match.Transaction.Id)" @onchange="e => Select(match.Transaction.Id, (bool)e.Value!)" /></td><td>@match.DueDate.ToString("dd-MM-yyyy")</td><td>@match.Transaction.Date.ToString("dd-MM-yyyy") · @match.Transaction.Description</td><td class="money">@WebState.Money(match.Transaction.Amount)</td></tr> }
+        </tbody></table></div>
         <fieldset class="page-fieldset" disabled="@State.Busy"><div class="actions">
             <button type="button" @onclick="() => proposal = null">@L["Back"]</button>
             <button type="button" @onclick="() => Commit(false)">@L["SaveWithoutLinking"]</button>
-            <button type="button" class="primary" @onclick="() => Commit(true)">@L["SaveAndLinkRows", batch.MatchCount]</button>
+            <button type="button" class="primary" disabled="@(selected.Count == 0)" @onclick="() => Commit(true)">@L["SaveAndLinkRows", selected.Count]</button>
         </div></fieldset>
     }
     else
@@ -48,12 +54,14 @@
     [Parameter, EditorRequired] public EditorDraft Draft { get; set; } = null!;
     [Parameter] public EventCallback Closed { get; set; }
     private EditorSaveProposal? proposal;
+    private HashSet<Guid> selected = [];
+    private void Select(Guid id, bool value) { if (value) selected.Add(id); else selected.Remove(id); }
     private Task Cancel() => State.Busy ? Task.CompletedTask : Closed.InvokeAsync();
     private static void ToggleOwner(EditorField field, Guid id, ChangeEventArgs args) { if ((bool)args.Value!) field.OwnerIds.Add(id); else field.OwnerIds.Remove(id); }
     private async Task Save()
     {
         if (!await State.RunAsync(() =>
-            { proposal = Draft.PrepareSave(State.Data, State.Today); return Task.CompletedTask; }))
+            { proposal = Draft.PrepareSave(State.Data, State.Today); selected = proposal.Matches.Select(m => m.Transaction.Id).ToHashSet(); return Task.CompletedTask; }))
         { Draft.Error = State.Message; return; }
         Draft.Error = "";
         if (proposal is { MatchCount: 0 }) await Commit(false);
@@ -61,8 +69,9 @@
     private async Task Commit(bool link)
     {
         if (proposal is not { } operation) return;
-        if (await State.RunAsync(() => State.SaveAsync(link ? operation.SaveAndLink : operation.SaveOnly, Draft.Revision),
-            link ? L["RecurringRowsLinked", operation.MatchCount] : L["ChangesSaved"])) await Closed.InvokeAsync();
+        Action<HouseholdData> apply = link && operation.SaveSelected is { } save ? d => save(d, selected) : link ? operation.SaveAndLink : operation.SaveOnly;
+        if (await State.RunAsync(() => State.SaveAsync(apply, Draft.Revision),
+            link ? L["RecurringRowsLinked", selected.Count] : L["ChangesSaved"])) await Closed.InvokeAsync();
         else Draft.Error = State.Message;
     }
 }

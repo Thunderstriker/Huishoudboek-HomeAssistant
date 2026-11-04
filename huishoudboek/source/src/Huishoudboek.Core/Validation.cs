@@ -109,7 +109,7 @@ public static class Validation
             Require(!string.IsNullOrWhiteSpace(r.Name) && accounts.Contains(r.AccountId) && r.Amount != 0 && decimal.Round(r.Amount, 2) == r.Amount,
                 "Ongeldige vaste post.");
             Require(r.DayOfMonth is >= 1 and <= 31 && (r.EndDate == null || r.EndDate >= r.StartDate), "Ongeldige planning.");
-            Require(Enum.IsDefined(r.Frequency) && r.MatchTolerance >= 0 && Money(r.MatchTolerance) && r.MatchWindowDays is >= 0 and <= 31,
+            Require(Enum.IsDefined(r.Frequency) && Enum.IsDefined(r.AmountMode) && r.MatchText != null && r.MatchTolerance >= 0 && Money(r.MatchTolerance) && r.MatchWindowDays is >= 0 and <= 31,
                 "Kies een geldige frequentie, niet-negatieve bedragmarge en een datummarge van 0–31 dagen.");
             Require(r.CategoryId == null || categories.Contains(r.CategoryId.Value), "Onbekende categorie bij vaste post.");
             Require(!r.IsMortgage || r.Amount < 0 && data.Mortgage != null, "Een hypotheekpost vereist een hypotheek en een negatief bedrag.");
@@ -122,6 +122,8 @@ public static class Validation
         Require(data.Valuations.All(v => data.Accounts.Any(a => a.Id == v.AccountId && a.Kind == AccountKind.Investment && v.Date >= a.OpeningDate) && v.SecuritiesValue >= 0 && Money(v.SecuritiesValue)), "Ongeldige effectenwaardering.");
         Require(data.Valuations.Select(v => (v.AccountId, v.Date)).Distinct().Count() == data.Valuations.Count, "Per rekening en datum is één waardering toegestaan.");
         Require(data.ImportBatches.All(b => accounts.Contains(b.AccountId) && b.RowCount >= 0), "Ongeldige importgeschiedenis.");
+        Require(data.ImportBatches.All(b => (b.CoverageFrom == null) == (b.CoverageThrough == null) &&
+            (b.CoverageFrom == null || b.CoverageFrom <= b.CoverageThrough)), "Ongeldige afschriftperiode.");
         if (data.Mortgage is { } m)
         {
             Require(m.ReferencePrincipal > 0 && m.MonthlyPayment > 0 && m.AnnualInterestPercent is >= 0 and <= 100 && m.RemainingMonths is > 0 and <= 600,

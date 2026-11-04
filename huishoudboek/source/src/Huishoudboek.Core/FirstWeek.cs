@@ -58,7 +58,7 @@ public static class FirstWeek
         return [
             new("SetupAccounts", "rekeningen", hasAccounts),
             new("SetupOpening", "rekeningen#balance-checks", hasAccounts && accounts.All(a => OpeningConfirmed(data, a))),
-            new("SetupImport", "importeren", hasAccounts && accounts.All(a => data.ImportBatches.Any(b => b.AccountId == a.Id && !b.Undone && b.RowCount > 0))),
+            new("SetupImport", "importeren", hasAccounts && accounts.All(a => data.ImportBatches.Any(b => b.AccountId == a.Id && !b.Undone && (b.RowCount > 0 || b.CoverageThrough != null)))),
             new("SetupBalances", "rekeningen#balance-checks", hasAccounts && accounts.All(a => BalanceChecked(data, a, today))),
             new("SetupCategorize", "categoriseren", hasEntries && UncategorizedCount(data, today) == 0),
             new("SetupPlans", "budgetten", (data.Categories.Any(c => c.MonthlyBudget > 0) || data.BudgetOverrides.Any(b => b.Amount > 0)) && data.RecurringPayments.Count > 0)
@@ -73,8 +73,11 @@ public static class FirstWeek
     public static DateOnly? ImportedThrough(HouseholdData data, Guid accountId, DateOnly today)
     {
         var batches = data.ImportBatches.Where(b => b.AccountId == accountId && !b.Undone).Select(b => b.Id).ToHashSet();
-        return data.Transactions.Where(t => t.AccountId == accountId && t.Date <= today && t.ImportBatchId is { } id && batches.Contains(id))
+        var observed = data.Transactions.Where(t => t.AccountId == accountId && t.Date <= today && t.ImportBatchId is { } id && batches.Contains(id))
             .Select(t => (DateOnly?)t.Date).Max();
+        var confirmed = BankImportCoverage.ConfirmedThrough(data, accountId);
+        if (confirmed > today) confirmed = today;
+        return confirmed > observed || observed == null ? confirmed ?? observed : observed;
     }
 
     public static IReadOnlyList<UpcomingBill> Upcoming(HouseholdData data, DateOnly today, IReadOnlySet<Guid>? scope = null) =>

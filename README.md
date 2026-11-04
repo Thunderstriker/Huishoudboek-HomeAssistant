@@ -24,8 +24,9 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   met het laagste saldo en zijn datum. Stel een minimale cashbuffer in en controleer
   een aankoopbedrag. Verouderde imports en ontbrekende gegevens krijgen waarschuwingen.
 - **Vaste inkomsten en lasten:** plan maand-, kwartaal-, jaar- en eenmalige betalingen.
-  Koppel een echte bankboeking aan één geplande betaling, ook bij afwijkende bedragen
-  of een andere bankmaand. Voorstellen met instelbare herkenningsmarges zijn te bevestigen.
+  Herken vaste of wisselende bedragen, koppel vanuit een bankboeking en controleer
+  voorstellen in één selectie. Een maandlijst onderscheidt herkende betalingen,
+  controlepunten en wachten op bankgegevens; ontbrekende imports zijn geen betalingsachterstand.
 - **Jaaroverzicht:** inkomsten tegenover maandlasten, een uitgavendoughnut en de
   ontwikkeling van netto spaarbijdragen. Exacte bedragen en jaarbudgetten zijn uitklapbaar.
 - **Transacties en budgetten:** categorieën, categorisatieregels, maandafwijkingen,

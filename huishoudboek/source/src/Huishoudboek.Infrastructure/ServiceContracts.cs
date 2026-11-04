@@ -10,7 +10,7 @@ public sealed record PreviewRequest(Guid UploadId, Guid AccountId, DateOnly From
 // CounterAccountId is retained for older clients, but imports reject non-null values.
 public sealed record ImportSelection(int RowNumber, Guid? CategoryId, Guid? CounterAccountId);
 public sealed record AdjustImportRequest(Guid PreviewId, int RowNumber, Guid? CounterAccountId, Guid? CategoryId, bool SetCategory);
-public sealed record CommitImportRequest(Guid PreviewId, ImportSelection[] Rows);
+public sealed record CommitImportRequest(Guid PreviewId, ImportSelection[] Rows, bool ConfirmCompletePeriod = false);
 public sealed record UploadResponse(Guid UploadId, IReadOnlyList<string> Worksheets);
 public sealed record PreviewRow(int RowNumber, DateOnly? Date, string Description, decimal? Amount,
     decimal? StatementBalance, bool IsValid, bool Include, string Note, Guid? CategoryId, Guid? CounterAccountId, string Kind);

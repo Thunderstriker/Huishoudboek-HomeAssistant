@@ -85,7 +85,7 @@ public sealed class RecurringBatchMatchingTests
         var plan = Plan(data);
         data.RecurringPayments.Add(plan);
         var entry = Entry(data);
-        Assert.Contains(Assert.Single(CashFlow.Project(data, Today).Accounts).Events, e => e.IsOverdue);
+        Assert.Contains(Assert.Single(CashFlow.Project(data, Today).Accounts).Events, e => e.IsUncertain);
 
         SaveAndLink(data, plan);
         var saved = JsonSerializer.Serialize(data);

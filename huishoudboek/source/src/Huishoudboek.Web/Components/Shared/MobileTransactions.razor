@@ -23,6 +23,7 @@
         </dl>
         <div class="actions"><button @onclick="() => Edit.InvokeAsync(row)">@L["Edit"]</button>
             @if (row.Kind == TransactionKind.Normal && !TransferMatching.IsInternal(State.Data, row)) { <button @onclick="() => Handle.InvokeAsync(row)">@L["TransactionHandling"]</button> }
+            @if (Recurring.HasDelegate && EditorDraft.CanCreateRecurring(State.Data, row)) { <button @onclick="() => Recurring.InvokeAsync(row)">@L["LinkToRecurringPayment"]</button> }
             <button @onclick="() => Delete.InvokeAsync(row)">@L["Delete"]</button>
         </div>
     </details>
@@ -34,4 +35,5 @@
     [Parameter] public EventCallback<Transaction> Edit { get; set; }
     [Parameter] public EventCallback<Transaction> Handle { get; set; }
     [Parameter] public EventCallback<Transaction> Delete { get; set; }
+    [Parameter] public EventCallback<Transaction> Recurring { get; set; }
 }

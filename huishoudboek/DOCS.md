@@ -123,10 +123,11 @@ banksaldo en acties. Filters, categorieën, paginering en financiële verwerking
 
 Open wekelijks de pagina **Wekelijkse controle**: importeer, bekijk categorieën,
 vaste-postvoorstellen en saldi, en controleer betalingen van vandaag tot over 7 dagen.
-De controle volgt het eigenaarfilter maar niet de gekozen maand. Alleen werkelijke
-geïmporteerde bankboekingen uit de laatste 7 dagen tellen als recent; een oude export
-opnieuw uploaden maakt een rekening dus niet actueel. Rustige rekeningen kunnen een
-waarschuwing houden. De lijst met rekeningen omvat alleen ongekoppelde vaste uitgaven;
+De controle volgt het eigenaarfilter maar niet de gekozen maand. Recente bankboekingen
+of expliciet bevestigde volledige afschriftperioden tellen voor de importactualiteit;
+een oude export opnieuw uploaden maakt een rekening dus niet actueel. Ook rustige
+rekeningen kunnen via een volledig afschrift hun actualiteit bevestigen.
+De lijst met rekeningen omvat alleen ongekoppelde vaste uitgaven;
 zonder ingestelde planning is dit geen bevestiging dat er niets te betalen is.
 
 ## Uw bestaande database importeren
@@ -144,12 +145,12 @@ zonder ingestelde planning is dit geen bevestiging dat er niets te betalen is.
 4. Controleer de waarschuwing en bevestig expliciet met **Database importeren**.
    Annuleren wijzigt niets. Een import vervangt de volledige administratie;
    het is geen samenvoeging van twee huishoudboeken.
-5. De app valideert applicatiemarker, schema (versies 1–8), SQLite-integriteit en
+5. De app valideert applicatiemarker, schema (versies 1–9), SQLite-integriteit en
    financiële verwijzingen. Vervolgens bewaart hij de huidige administratie als
    veiligheidskopie en slaat hij de geïmporteerde administratie atomair op.
    Een onbekende versie of ongeldig bestand wordt geweigerd, niet gereset.
 6. Controleer na afloop rekeningen, transacties en bedragen. Uw bronbestand op
-   Windows blijft ongewijzigd. Bestaande versies 1–7 worden bij import ingelezen
+   Windows blijft ongewijzigd. Bestaande versies 1–8 worden bij import ingelezen
    naar de huidige structuur zonder het bronbestand te migreren.
 
 Alle financiële gegevens blijven behouden: transacties en eigen omschrijvingen,
@@ -191,6 +192,16 @@ ander product en is niet automatisch met deze ingress-only app verbonden.
 - Bestaande opgeslagen transfers worden niet herschreven. Het oude handmatige type
   kan nog beide saldi beïnvloeden; importeer diezelfde beweging niet nogmaals zonder
   eerst op dubbelen te controleren. De financiële velden zijn in de editor beschermd.
+- Bevestig optioneel in het voorbeeld dat het afschrift **alle bankboekingen** voor
+  de gekozen rekening en periode bevat. Dit kan alleen met alle regels geselecteerd
+  en geldig. Dekking loopt nooit voorbij vandaag; een leeg afschrift kan een periode
+  zonder activiteit bevestigen. Een gefilterde of gedeeltelijke export bevestigt u niet.
+- Bij oudere imports is de volledige periode onbekend. Controleer uw bankafschrift
+  en gebruik **Beheer & import → Importgeschiedenis → Afschriftperiode bevestigen**.
+  Importeer geen bestand opnieuw alleen om de periode vast te leggen: dat maakt dubbelen.
+  Aaneengesloten bevestigde perioden tellen samen; gaten en teruggedraaide imports niet.
+  Wijzigen of verwijderen van bankgegevens trekt de periodebevestiging van die import in;
+  categoriseren en vaste-postkoppelingen veranderen de bevestiging niet.
 
 ## Sparen en verplaatsen tussen eigen rekeningen
 
@@ -265,29 +276,34 @@ andere rekening of spaarrekening dekt een rekeninggebonden betaling niet automat
    Kwartaal/jaar volgen de startmaand en ingestelde dag; betalingen vóór de startdatum
    worden overgeslagen. Dag 29–31 wordt in korte maanden ingekort. Eenmalig gebruikt
    de startdatum als betaaldatum. Een planning maakt geen echte bankboeking aan.
-2. Stel herkenningstekst en een passende bedrag-/datummarge in, bijvoorbeeld € 10
-   voor een salaris dat enkele euro's varieert. Bij import worden eenduidige matches
-    automatisch gekoppeld binnen deze ingestelde bedrag- en datummarges, zonder
-    extra limiet van 1 cent of 5 dagen. Eén bankboeking moet bij precies één geplande
-    betaling passen en die betaling mag maar één mogelijke bankboeking hebben.
-    Opslaan controleert ook eerder geïmporteerde bankboekingen en toont hoeveel
-    eenduidige matches binnen uw ingestelde marges zijn gevonden. Kies **Opslaan
-    en … boekingen koppelen** om ze met één bevestiging te koppelen, of **Opslaan
-    zonder koppelen**. Bankgegevens, saldi en bestaande categorieën blijven intact.
-    Voor een al bestaande vaste post: open **Bewerken** en sla opnieuw op.
-    Meerdere mogelijke boekingen/planningen en expliciete splitsingen of
-    vergoedingskoppelingen worden overgeslagen. Overige voorstellen staan
-   in **Bankboekingen koppelen aan een geplande betaling**; controleer en bevestig.
-3. Gebruik **Handmatig koppelen** als de omschrijving of het bedrag niet past.
-   Kies de bankboeking, vaste post en de **geplande** betaaldatum. Die mag in een
-   andere maand vallen dan de bankdatum. Eén bankboeking vervangt één schatting,
-   met het echte bedrag en de echte datum. Bankbedragen, omschrijvingen en saldi
-   blijven intact; het ingestelde bedrag van volgende betalingen verandert niet.
+2. Gebruik vaste leverancier-/werkgevertekst voor herkenning; verwijder veranderende
+   datums en referenties uit de herkenningstekst. Verschillen in spaties, hoofdletters
+   en leestekens worden genegeerd. Exacte omschrijvingen van eerder gekoppelde voorbeelden
+   worden ook herkend; veranderende cijfers worden nooit stilzwijgend weggefilterd.
+   Kies **Vast bedrag** met een passende bedragmarge, of **Wisselend bedrag** voor
+   bijvoorbeeld energierekeningen of variabel salaris. Het bedrag blijft de schatting
+   voor de volgende betaling. Herkenning vereist nog steeds dezelfde rekening,
+   betaalrichting, passende verwerking en een eenduidige geplande betaling.
+3. Eenduidige matches worden bij import automatisch gekoppeld. Afwijkende vaste bedragen
+   en nabije bankdatums buiten de automatische marge blijven voorstellen. Bij opslaan
+   van een vaste post verschijnt een lijst historische matches met datum, bedrag en
+   selectievakjes. Selecteer de juiste boekingen en bevestig samen, of sla zonder koppelen op.
+   Onder **Bankboekingen koppelen aan een geplande betaling** kunt u eenduidige matches
+   selecteren of zelf voorstellen kiezen en de selectie samen bevestigen. Conflicterende
+   voorstellen kunnen niet tegelijk worden geselecteerd. Bestaande koppelingen,
+   splitsingen en vergoedingsverwerking worden niet automatisch overschreven.
+4. Kies bij een transactie **Aan vaste post koppelen** om een bestaande vaste post
+   en geplande betaaldatum te kiezen, of **Vaste post maken van deze boeking** voor
+   een vooraf ingevuld formulier. Pas de begindatum aan als u oudere historie wilt
+   meenemen. **Handmatig koppelen** op Vaste posten blijft ook beschikbaar.
+   De geplande datum mag in een andere maand vallen dan de bankdatum. Eén bankboeking
+   vervangt één schatting, met het echte bedrag en de echte datum. Bankbedragen,
+   omschrijvingen en saldi blijven intact; volgende schattingen veranderen niet.
    Extra of deelbetalingen blijven ongekoppeld. Koppelingen zijn te verwijderen.
-4. Stel via **Buffer instellen** of **Rekeningen → Bewerken** een minimale
+5. Stel via **Buffer instellen** of **Rekeningen → Bewerken** een minimale
    cashbuffer per rekening in. De bestedingsruimte is het laagste verwachte saldo
    tot en met de volgende inkomensdag minus deze buffer, minimaal 0.
-5. Kies de rekening van uw aankoop en voer bijvoorbeeld `150,00` in. De controle
+6. Kies de rekening van uw aankoop en voer bijvoorbeeld `150,00` in. De controle
    kijkt naar alle geprojecteerde dagen: minstens 30, of tot het volgende inkomen
    als dat later valt (zoekhorizon maximaal 366 dagen). De dagelijkse saldotabel
    toont ook het laagste saldo en zijn datum. Kosten gaan voorzichtig vóór ontvangsten
@@ -302,16 +318,27 @@ vullen het gemiddelde per dag in, zonder dubbele laag. Het eindsaldo van de
 betaalrekeningen gebruikt deze dagelijkse schatting; het maandresultaat behoudt zijn
 maandgebonden daggemiddelde en is daarom niet dezelfde prognose.
 
-De laatste vervallen, niet-gekoppelde uitgave per post wordt voor morgen gereserveerd;
-oudere ontbrekende betalingen worden niet opgeteld. Koppel echte betalingen om
-dubbeltelling te voorkomen. Achterstallig inkomen wordt niet als beschikbaar
-aangenomen. Zonder volgende inkomensdatum wordt voor 30 dagen gereserveerd met
-een waarschuwing. Oude databases behouden hun maandgebonden koppelingen.
+De maandlijst op **Vaste posten** onderscheidt **Verwacht**, **Wacht op bankgegevens**,
+**Herkend**, **Te controleren** en **Niet gevonden · controleer betaling**. Geen koppeling
+betekent niet onbetaald: pas na de volledige herkenningsperiode én volledige bevestigde
+bankdekking wordt een betaling zonder match een controlepunt. Een bestaand voorstel
+kan wel direct worden gecontroleerd. Zonder volledige dekking krijgt u één neutrale
+importsamenvatting per rekening, geen achterstandsmelding per betaling.
 
-Imports zijn na 7 dagen verouderd. Ook een recente import met alleen oude bankdatums
-geeft geen zekerheid over het huidige saldo. Ontbrekende imports, beperkte historie,
-een buffer van 0 en niet-gekoppelde vervallen posten krijgen waarschuwingen; een
-aankoop die rekenkundig past krijgt dan geen stellige bevestiging. Onverwachte kosten,
+De laatste onbevestigde uitgave per vaste post blijft als aparte **onzekere reserve**
+in de cashprognose staan. Die telt voorzichtig aan het begin van de prognose mee,
+maar wordt niet als een bekende betaling voor morgen gepresenteerd of in gedateerde
+7/30-dagentotalen opgenomen. Oudere ontbrekende betalingen worden niet opgeteld.
+Koppel echte betalingen om dubbeltelling te voorkomen; werkelijke bedragen en saldi
+bevatten nooit deze reserves. Onbevestigd eerder inkomen is geen beschikbare ontvangst.
+Zonder volgende inkomensdatum wordt voor 30 dagen gereserveerd met een waarschuwing.
+Oude databases behouden hun maandgebonden koppelingen.
+
+Bankgegevens zijn na 7 dagen verouderd. Ook een recente upload met alleen oude bankdatums
+geeft geen zekerheid over het huidige saldo. Bevestigde volledige afschriftperioden
+tellen ook op dagen zonder activiteit. Importactualiteit, beperkte historie, een buffer
+van 0 en echte controlepunten staan gegroepeerd en uitklapbaar op Financiële vooruitblik.
+Een aankoop die rekenkundig past krijgt bij onzekerheid geen stellige bevestiging. Onverwachte kosten,
 gewijzigde facturen en niet-geregistreerde overboekingen ontbreken. Dit blijft een
 schatting, geen bankverbinding of garantie. Maak regelmatig een volledige back-up.
 
@@ -374,11 +401,11 @@ niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
   `/data` is de private, permanente app-opslag van de Supervisor, geen Windows-pad.
 - Normale herstarts en updates behouden `/data`. Een bestaande ontbrekende of
   beschadigde database wordt nooit automatisch vervangen door een lege database.
-- Bij een Home Assistant-update worden ondersteunde schema's 1–7 na validatie
-  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 8. Vooraf wordt
-  een SQLite-bewuste `.voor-versie-8-….db`-veiligheidskopie naast de database gemaakt.
+- Bij een Home Assistant-update worden ondersteunde schema's 1–8 na validatie
+  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 9. Vooraf wordt
+  een SQLite-bewuste `.voor-versie-9-….db`-veiligheidskopie naast de database gemaakt.
   Onbekende schema's worden geweigerd. Teruggaan naar een oude appversie vereist
-  herstel van een passende oude back-up; schema-8-back-ups zijn niet leesbaar in
+  herstel van een passende oude back-up; schema-9-back-ups zijn niet leesbaar in
   oudere apps. De normale Windows-service blijft automatische upgrades weigeren.
 - Alleen een werkelijk nieuwe installatie begint met een lege administratie en
   standaardcategorieën, zonder fictieve bedragen. U kunt ook zelf rekeningen aanmaken.
@@ -414,7 +441,7 @@ niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
 - Database, configuratie en gedownloade databaseback-ups zijn **niet door deze app
   versleuteld**. Beveilig de Windows-host, VM-schijf en back-ups. Zet geen financiële
   bestanden of proxyheaders in gedeelde logs/screenshots.
-- Geldberekeningen blijven decimal, schema is versie 8. Saldi zijn berekend uit
+- Geldberekeningen blijven decimal, schema is versie 9. Saldi zijn berekend uit
   geregistreerde gegevens, geen live bankgegevens. Prognoses blijven schattingen.
 - Geen publieke internet-/Cloudflare-configuratie, automatische discovery of HACS.
   Dit is de volledige app, niet een HACS-integratie.

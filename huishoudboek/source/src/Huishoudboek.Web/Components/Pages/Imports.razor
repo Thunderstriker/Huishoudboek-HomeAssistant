@@ -33,11 +33,13 @@
     <section class="card" id="previewPanel"><h2>@L["UnsavedImportPreview"]</h2><p>@L["PreviewRowsNote", rows.Count, rows.Count(r => r.Include)]</p>
     <div class="table-scroll"><table><thead><tr><th>@L["Save"]</th><th>@L["Row"]</th><th>@L["Date"]</th><th>@L["Description"]</th><th class="money">@L["Amount"]</th><th>@L["Category"]</th><th>@L["Check"]</th></tr></thead><tbody>
     @foreach (var row in rows.Skip(page * 100).Take(100))
-    { <tr @key="row.Number"><td><input type="checkbox" aria-label="@L["SelectImportRow"]" @bind="row.Include" disabled="@(!row.Source.IsValid)" /></td><td>@row.Number</td><td>@row.Source.Date?.ToString("dd-MM-yyyy")</td><td class="description">@row.Source.Description</td><td class="money">@(row.Source.Amount is { } amount ? Money(amount) : "—")</td>
+    { <tr @key="row.Number"><td><input type="checkbox" aria-label="@L["SelectImportRow"]" @bind="row.Include" @bind:after="UnconfirmPartialCoverage" disabled="@(!row.Source.IsValid)" /></td><td>@row.Number</td><td>@row.Source.Date?.ToString("dd-MM-yyyy")</td><td class="description">@row.Source.Description</td><td class="money">@(row.Source.Amount is { } amount ? Money(amount) : "—")</td>
     <td><select aria-label="@L["ImportRowCategory"]" value="@row.Source.CategoryId" @onchange="e => Adjust(row, e)">@foreach (var category in preview.Categories) { <option value="@category.Id">@(category.Id == null ? L["Uncategorized"].Value : State.Data.Categories.FirstOrDefault(c => c.Id == category.Id) is { } stored ? EditorDraft.CategoryLabel(stored) : category.Name)</option> }</select></td>
     <td class="description"><span class="badge">@(State.Data.Categories.FirstOrDefault(c => c.Id == row.Source.CategoryId) is { Purpose: not CategoryPurpose.Normal } selectedCategory ? EditorDraft.PurposeLabel(selectedCategory.Purpose) : row.Source.Kind)</span><br />@row.Source.Note</td></tr> }
     </tbody></table></div><Pager Count="rows.Count" @bind-Page="page" />
-    <button id="commit" class="primary" disabled="@(!rows.Any(r => r.Include))" @onclick="() => commitConfirm = true">@L["SaveSelectedRows"]…</button></section>
+    <label class="check"><input type="checkbox" @bind="confirmCompletePeriod" disabled="@(rows.Any(r => !r.Source.IsValid || !r.Include) || from > State.Today)" />@L["ImportConfirmCompletePeriod", from.ToString("dd-MM-yyyy"), (through < State.Today ? through : State.Today).ToString("dd-MM-yyyy")]</label>
+    <p class="muted">@L["ImportCoverageHelp"]</p>
+    <button id="commit" class="primary" disabled="@(!rows.Any(r => r.Include) && !CanConfirmCoverage)" @onclick="() => commitConfirm = true">@L["SaveSelectedRows"]…</button></section>
 }
 @if (commitConfirm && preview != null)
 { <Confirm Title="@L["CommitImport"]" Text="@L["CommitImportQuestion", rows.Count(r => r.Include), State.AccountName(accountId)]" ActionLabel="@L["SaveImport"]" Cancel="() => commitConfirm = false" Accept="Commit" /> }
@@ -57,7 +59,9 @@
 @code {
     private Guid? uploadId, accountId; private string? fileName; private string worksheet = "", profileChoice = "";
     private IReadOnlyList<string> sheets = [], headers = [];
-    private bool windows1252, settingsOpen = true, commitConfirm;
+    private bool windows1252, settingsOpen = true, commitConfirm, confirmCompletePeriod;
+    private bool CanConfirmCoverage => confirmCompletePeriod && from <= State.Today && rows.All(r => r.Source.IsValid && r.Include);
+    private void UnconfirmPartialCoverage() { if (rows.Any(r => !r.Source.IsValid || !r.Include)) confirmCompletePeriod = false; }
     private DateOnly from, through; private ImportProfile? profile; private PreviewResponse? preview; private CommitImportResponse? result;
     private List<ImportDraftRow> rows = []; private int page, skippedCount;
     private readonly CancellationTokenSource cancellation = new();
@@ -70,7 +74,7 @@
     {
         base.OnInitialized(); from = new DateOnly(State.Year, State.Month, 1); through = from.AddMonths(1).AddDays(-1); accountId = State.Data.Accounts.FirstOrDefault()?.Id;
     }
-    private void Invalidate() { preview = null; rows.Clear(); commitConfirm = false; settingsOpen = true; }
+    private void Invalidate() { preview = null; rows.Clear(); commitConfirm = false; confirmCompletePeriod = false; settingsOpen = true; }
     private async Task Upload(InputFileChangeEventArgs args)
     {
         Invalidate(); uploadId = null; profile = null; profileChoice = ""; headers = []; sheets = []; worksheet = "";
@@ -118,7 +122,7 @@
         await State.RunAsync(async () =>
         {
             var selections = rows.Where(r => r.Include).Select(r => new ImportSelection(r.Number, r.Source.CategoryId, null)).ToArray();
-            result = await Backend.CommitAsync(new(preview.PreviewId, selections), preview.Revision);
+            result = await Backend.CommitAsync(new(preview.PreviewId, selections, CanConfirmCoverage), preview.Revision);
             skippedCount = rows.Count - selections.Length; commitConfirm = false; preview = null; rows.Clear(); uploadId = null;
             State.OwnerId = null; State.ReviewBatchId = result.BatchId; await State.LoadAsync();
         }, L["ImportSaved"]);

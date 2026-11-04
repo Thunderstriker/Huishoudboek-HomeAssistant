@@ -3,6 +3,7 @@ namespace Huishoudboek.Core;
 public enum AccountKind { Current, Savings, Investment }
 public enum TransactionKind { Normal, Transfer, Mortgage }
 public enum PaymentFrequency { Monthly, Quarterly, Yearly, Once }
+public enum PaymentAmountMode { Fixed, Variable }
 public enum AllocationTreatment { Ordinary, Refund, Reimbursement }
 public enum CategoryPurpose { Normal, Savings, OwnAccountMovement }
 
@@ -97,6 +98,7 @@ public sealed record RecurringPayment
     public int DayOfMonth { get; set; } = 1;
     public PaymentFrequency Frequency { get; set; }
     public decimal MatchTolerance { get; set; } = 0.01m;
+    public PaymentAmountMode AmountMode { get; set; }
     public int MatchWindowDays { get; set; } = 5;
     public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     public DateOnly? EndDate { get; set; }
@@ -149,6 +151,8 @@ public sealed record ImportBatch
     public DateTime ImportedAt { get; set; } = DateTime.Now;
     public int RowCount { get; set; }
     public bool Undone { get; set; }
+    public DateOnly? CoverageFrom { get; set; }
+    public DateOnly? CoverageThrough { get; set; }
 }
 
 public sealed record ImportProfile

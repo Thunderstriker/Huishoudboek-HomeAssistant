@@ -408,14 +408,14 @@ public sealed class TransactionAccountingTests
         using (var connection = new SqliteConnection($"Data Source={path};Pooling=False"))
         {
             connection.Open(); using var sql = connection.CreateCommand();
-            sql.CommandText = "ALTER TABLE [Category] DROP COLUMN [Purpose]; DROP TABLE [AccountReview]; DROP TABLE [TransactionAllocation]; DROP TABLE [ReimbursementClaim]; PRAGMA user_version=5;";
+            sql.CommandText = PreviousSchema.RemoveSchema9Columns + "ALTER TABLE [Category] DROP COLUMN [Purpose]; DROP TABLE [AccountReview]; DROP TABLE [TransactionAllocation]; DROP TABLE [ReimbursementClaim]; PRAGMA user_version=5;";
             sql.ExecuteNonQuery();
         }
         var bytes = File.ReadAllBytes(path); var legacy = SqliteHouseholdStore.ReadBackup(path);
         Assert.Equal(bytes, File.ReadAllBytes(path)); Assert.Empty(legacy.TransactionAllocations); Assert.Empty(legacy.ReimbursementClaims);
         var migrated = new SqliteHouseholdStore(path, allowCreate: false, allowUpgrade: true);
         Assert.Equal(JsonSerializer.Serialize(data), JsonSerializer.Serialize(migrated.Load()));
-        var backup = Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-8-*.db"));
+        var backup = Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-9-*.db"));
         Assert.Equal(JsonSerializer.Serialize(data), JsonSerializer.Serialize(SqliteHouseholdStore.ReadBackup(backup)));
     }
 

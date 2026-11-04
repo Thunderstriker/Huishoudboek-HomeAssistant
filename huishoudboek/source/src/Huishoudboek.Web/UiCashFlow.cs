@@ -7,11 +7,8 @@ public static class UiCashFlow
 {
     public static IEnumerable<string> Warnings(HouseholdData data, AccountCashFlow forecast, DateOnly today)
     {
-        foreach (var payment in data.RecurringPayments.Where(p => p.AccountId == forecast.Account.Id))
-            if (RecurringSchedule.LatestDue(payment, today) is { } due && due >= forecast.Account.OpeningDate &&
-                !RecurringSchedule.IsLinked(data, payment, due))
-                yield return UiCulture.Text(payment.Amount < 0 ? "OverduePaymentWarning" : "OverdueIncomeWarning",
-                    payment.Name, due.ToString("dd-MM-yyyy"));
+        if (forecast.PaymentsToReviewCount > 0)
+            yield return UiCulture.Text("RecurringReviewSummary", forecast.PaymentsToReviewCount);
         if (forecast.StaleImports)
             yield return forecast.StatementThrough == null ? UiCulture.Text("NoUsableImportWarning") :
                 UiCulture.Text("OldImportWarning", forecast.StatementThrough.Value.ToString("dd-MM-yyyy"),

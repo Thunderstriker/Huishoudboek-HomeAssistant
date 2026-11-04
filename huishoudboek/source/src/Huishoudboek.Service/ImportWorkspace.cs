@@ -116,7 +116,7 @@ public sealed class ImportWorkspace : IDisposable
             var entry = _uploads.FirstOrDefault(x => x.Value.PreviewId == request.PreviewId && request.PreviewId != Guid.Empty);
             var upload = entry.Value ?? throw new InvalidOperationException("Het importvoorbeeld is verlopen. Verwerk het voorbeeld opnieuw.");
             if (revision != upload.Revision) throw new AdministrationConflictException();
-            if (request.Rows.Length == 0 || request.Rows.Select(r => r.RowNumber).Distinct().Count() != request.Rows.Length)
+            if ((request.Rows.Length == 0 && !request.ConfirmCompletePeriod) || request.Rows.Select(r => r.RowNumber).Distinct().Count() != request.Rows.Length)
                 throw new InvalidOperationException("Selecteer één of meer verschillende geldige regels.");
             if (request.Rows.Any(r => r.CounterAccountId != null))
                 throw new InvalidOperationException("Imports boeken alleen op de gekozen rekening; een tegenrekening koppelen is niet toegestaan.");
@@ -127,6 +127,11 @@ public sealed class ImportWorkspace : IDisposable
                 // Work on a fresh preview, so a failed confirmation never leaves half-applied row overrides behind.
                 var table = ImportService.Read(upload.Path, upload.Request!.Worksheet, upload.Request.Windows1252);
                 var rows = ImportService.Preview(table, upload.Profile!, upload.Request.AccountId, upload.Request.From, upload.Request.Through, data);
+                if (request.ConfirmCompletePeriod && (rows.Any(r => !r.IsValid) || rows.Count != request.Rows.Length))
+                    throw new InvalidOperationException("Een volledige afschriftperiode vereist alle geldige regels, zonder overgeslagen of ongeldige regels.");
+                var coverageThrough = upload.Request.Through < today ? upload.Request.Through : today;
+                if (request.ConfirmCompletePeriod && upload.Request.From > coverageThrough)
+                    throw new InvalidOperationException("Een volledige afschriftperiode kan niet in de toekomst beginnen.");
                 foreach (var selection in request.Rows)
                 {
                     var row = rows.SingleOrDefault(r => r.RowNumber == selection.RowNumber)
@@ -145,7 +150,9 @@ public sealed class ImportWorkspace : IDisposable
                 }
                 Finance.ApplySuggestions(data, selected, suggestCategory: false);
                 data.Transactions.AddRange(selected);
-                data.ImportBatches.Add(new ImportBatch { Id = batchId, AccountId = upload.Request.AccountId, FileName = upload.Name, RowCount = selected.Count });
+                data.ImportBatches.Add(new ImportBatch { Id = batchId, AccountId = upload.Request.AccountId, FileName = upload.Name, RowCount = selected.Count,
+                    CoverageFrom = request.ConfirmCompletePeriod ? upload.Request.From : null,
+                    CoverageThrough = request.ConfirmCompletePeriod ? coverageThrough : null });
                 var index = data.ImportProfiles.FindIndex(p => p.Id == upload.Profile!.Id);
                 if (index >= 0) data.ImportProfiles[index] = upload.Profile!; else data.ImportProfiles.Add(upload.Profile!);
             });

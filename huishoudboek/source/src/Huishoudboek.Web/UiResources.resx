@@ -134,7 +134,7 @@
   <data name="ShortfallAmount" xml:space="preserve"><value>Verwacht tekort uit maandinkomen: {0}.</value></data>
   <data name="LargestPayments" xml:space="preserve"><value>Grootste betalingen: {0}.</value></data>
   <data name="ForecastCalculationNote" xml:space="preserve"><value>Schatting: geboekte bedragen + nog niet gekoppelde vaste posten + {0} extra variabele uitgaven op basis van het daggemiddelde.</value></data>
-  <data name="OverdueForecastNote" xml:space="preserve"><value>{0} vervallen vaste post(en) nog niet gekoppeld; controleer op dubbeltelling.</value></data>
+  <data name="OverdueForecastNote" xml:space="preserve"><value>{0} vaste post(en) te controleren; een ontbrekende koppeling betekent niet dat een rekening onbetaald is.</value></data>
   <data name="NoSavingsForecast" xml:space="preserve"><value>Alleen geregistreerde en geplande spaarbijdragen worden meegenomen; geen automatische extrapolatie.</value></data>
   <data name="LimitedHistoryNote" xml:space="preserve"><value>Weinig gegevens: de prognose is beperkt betrouwbaar.</value></data>
   <data name="CashForecastNote" xml:space="preserve"><value>Het verwachte eindsaldo van betaalrekeningen gebruikt de dagelijkse cashprognose met maximaal 90 dagen uitgavenhistorie; dit is een andere schatting dan het maandresultaat.</value></data>
@@ -253,7 +253,7 @@
   <data name="EstimatedSpendable" xml:space="preserve"><value>Geschat besteedbaar · per rekening gereserveerd</value></data>
   <data name="SpendableSumNote" xml:space="preserve"><value>Som van afzonderlijke bestedingsruimtes tot het volgende inkomen; niet vrij uitwisselbaar.</value></data>
   <data name="BillsNextDays" xml:space="preserve"><value>Bekende betalingen komende {0} dagen</value></data>
-  <data name="BillsEstimateNote" xml:space="preserve"><value>Inclusief nog niet gekoppelde vervallen lasten; exclusief extra variabele schatting.</value></data>
+  <data name="BillsEstimateNote" xml:space="preserve"><value>Alleen gedateerde geplande betalingen. Onzekere reserves staan hieronder apart; extra variabele uitgaven zijn niet inbegrepen.</value></data>
   <data name="BufferRiskWarning" xml:space="preserve"><value>Op minstens één rekening komt het verwachte saldo onder de buffer. Een positief totaalsaldo of maandresultaat verbergt dit tekort niet; geld op een andere rekening dekt de betaling niet automatisch.</value></data>
   <data name="StaleImportsWarning" xml:space="preserve"><value>Imports zijn verouderd of ontbreken op minstens één rekening. Importeer recente bankgegevens voordat u op de bestedingsruimte vertrouwt.</value></data>
   <data name="BalanceToday" xml:space="preserve"><value>Saldo vandaag</value></data>
@@ -277,7 +277,7 @@
   <data name="Unknown" xml:space="preserve"><value>onbekend</value></data>
   <data name="None" xml:space="preserve"><value>geen</value></data>
   <data name="AccountAttention" xml:space="preserve"><value>Aandachtspunten voor {0}</value></data>
-  <data name="UpcomingPayments" xml:space="preserve"><value>Komende betalingen</value></data>
+  <data name="UpcomingPayments" xml:space="preserve"><value>Komende betalingen en onzekere reserves</value></data>
   <data name="Days" xml:space="preserve"><value>{0} dagen</value></data>
   <data name="ExpectedDate" xml:space="preserve"><value>Verwachte datum</value></data>
   <data name="Payment" xml:space="preserve"><value>Betaling</value></data>
@@ -287,7 +287,7 @@
   <data name="RecurringEstimate" xml:space="preserve"><value>Vaste-postschatting</value></data>
   <data name="DailyBalanceForecast" xml:space="preserve"><value>Dagelijkse saldoverwachting</value></data>
   <data name="ThroughDate" xml:space="preserve"><value>t/m {0}</value></data>
-  <data name="DailyBalanceNote" xml:space="preserve"><value>Bedragen vóór uw eventuele aankoop. Laagste saldo gaat voorzichtig uit van afboekingen vóór ontvangsten op dezelfde dag.</value></data>
+  <data name="DailyBalanceNote" xml:space="preserve"><value>Bedragen vóór uw eventuele aankoop. Het laagste saldo rekent voorzichtig met afschrijvingen vóór ontvangsten op dezelfde dag. Onzekere reserves tellen uit voorzorg aan het begin van de prognose mee, niet omdat bekend is dat ze die dag betaald moeten worden.</value></data>
   <data name="OpeningBalance" xml:space="preserve"><value>Beginsaldo</value></data>
   <data name="Receipts" xml:space="preserve"><value>Ontvangsten</value></data>
   <data name="KnownPayments" xml:space="preserve"><value>Bekende betalingen</value></data>
@@ -297,7 +297,7 @@
   <data name="EstimateAssumptions" xml:space="preserve"><value>Aannames en grenzen van deze schatting</value></data>
   <data name="AssumptionImports" xml:space="preserve"><value>Begint bij geregistreerde saldi t/m vandaag. Bankimports zijn na {0} dagen verouderd; een recente import van oude boekingen is ook geen actueel saldo.</value></data>
   <data name="AssumptionRecurring" xml:space="preserve"><value>Vaste posten volgen uw datums en frequentie. Eén gekoppelde bankboeking vervangt één geplande betaling, met het echte bedrag en de echte bankdatum. Andere betalingen behouden uw ingestelde schatting; bedragen worden niet automatisch aangepast.</value></data>
-  <data name="AssumptionOverdue" xml:space="preserve"><value>De laatste vervallen, niet-gekoppelde uitgave per post wordt morgen gereserveerd. Oudere ontbrekende betalingen worden niet opgeteld. Achterstallig inkomen wordt niet als ontvangen aangenomen. Controleer koppelingen en planning.</value></data>
+  <data name="AssumptionOverdue" xml:space="preserve"><value>Alleen de laatste onbevestigde uitgave per vaste post blijft als voorzichtige reserve aan het begin van de prognose staan. Betaaldatum en eventuele betalingsachterstand zijn onbekend. Ontbrekende bankperioden wachten op import, niet op een achterstandsmelding. Oudere ontbrekende betalingen worden niet opgeteld; onbevestigd eerder inkomen is geen beschikbaar geld.</value></data>
   <data name="AssumptionVariable" xml:space="preserve"><value>Extra dagelijkse uitgaven gebruiken het gemiddelde van maximaal {0} dagen tot de laatste geïmporteerde bankdatum (zonder import: vandaag). Gekoppelde vaste lasten, hypotheek en bevestigde transfers zijn uitgesloten. Geplande variabele betalingen vullen het daggemiddelde in, niet erbovenop.</value></data>
   <data name="AssumptionSpendable" xml:space="preserve"><value>Bestedingsruimte is het laagste saldo tot en met de volgende inkomensdag, min uw buffer, minimaal 0. De aankoopcontrole bekijkt minstens 30 dagen, of langer als het inkomen later komt (maximaal {0} dagen). Ook op de inkomensdag gaan kosten voorzichtig vóór inkomsten.</value></data>
   <data name="AssumptionShared" xml:space="preserve"><value>Gedeelde rekeningen tellen één keer. Geen automatische verplaatsing van spaargeld, beleggingen of geld van andere rekeningen; alleen expliciet geregistreerde toekomstige overboekingen tellen mee. Onverwachte uitgaven, vakanties, rente en gewijzigde bedragen ontbreken tenzij u ze plant.</value></data>
@@ -389,10 +389,10 @@
   <data name="OptionalRecurringDueDate" xml:space="preserve"><value>Geplande betaaldatum vaste post (optioneel; leeg = bankmaand)</value></data>
   <data name="TransactionRecurringNote" xml:space="preserve"><value>Koppel bij voorkeur via Vaste posten, vooral als de bankdatum in een andere maand valt. Een afwijkend werkelijk bedrag verandert de schatting van volgende betalingen niet.</value></data>
   <data name="TransactionStatementNote" xml:space="preserve"><value>Banksaldo importrekening {0}: {1}. Geen vervanging van uw beginsaldo.</value></data>
-  <data name="RecurringEditorNote" xml:space="preserve"><value>Een planning verandert uw werkelijke saldo niet. Kwartaal/jaar beginnen in de startmaand; eenmalig gebruikt de startdatum. Dag 29–31 wordt in korte maanden ingekort. Bij import worden eenduidige matches automatisch gekoppeld binnen uw ingestelde bedrag- en datummarges. Onduidelijke matches blijven ter controle. Bij opslaan worden bestaande bankboekingen gecontroleerd binnen dezelfde marges. U kunt alle eenduidige matches na één bevestiging koppelen of opslaan zonder koppelen. Wijziging van een gekoppelde planning kan eerst ontkoppelen vereisen.</value></data>
-  <data name="RecurringBatchQuestion" xml:space="preserve"><value>{0} passende bankboekingen in de historie gevonden. Wilt u deze allemaal koppelen aan deze vaste post?</value></data>
-  <data name="RecurringBatchNote" xml:space="preserve"><value>Alleen eenduidige matches binnen uw ingestelde bedrag- en datummarges worden gekoppeld. Bankbedragen, datums, omschrijvingen, saldi en categorieën blijven ongewijzigd. Bestaande koppelingen, splitsingen en vergoedingskoppelingen worden overgeslagen. Onduidelijke matches blijven beschikbaar voor individuele controle.</value></data>
-  <data name="RecurringBatchExistingNote" xml:space="preserve"><value>Veel historische matches voor één vaste post? Open Bewerken en sla opnieuw op: u krijgt het aantal eenduidige matches en kunt ze met één bevestiging allemaal koppelen.</value></data>
+  <data name="RecurringEditorNote" xml:space="preserve"><value>Een planning wijzigt nooit uw werkelijke saldo. Gebruik vaste leverancier-/werkgevertekst voor herkenning; onschuldige verschillen in leestekens en spaties tellen niet mee. Vaste bedragen gebruiken de bedragmarge; wisselende bedragen gebruiken tekst en betaalmoment. Exacte omschrijvingen van al gekoppelde voorbeelden worden ook herkend. Eenduidige matches worden bij import gekoppeld. Afwijkingen buiten vaste bedrag-/datummarges blijven voorstellen. Bij opslaan krijgt u historische matches met selectievakjes. Kwartaal/jaar beginnen in de startmaand; eenmalig gebruikt de startdatum. Dag 29–31 wordt in korte maanden ingekort. Wijziging van een gekoppelde planning kan eerst ontkoppelen vereisen.</value></data>
+  <data name="RecurringBatchQuestion" xml:space="preserve"><value>{0} bankboekingen in de historie klaar voor controle. Selecteer de betalingen die u wilt koppelen.</value></data>
+  <data name="RecurringBatchNote" xml:space="preserve"><value>Controleer hieronder datums en echte bedragen. Bankgegevens, saldi en bestaande categorieën blijven intact. Vaste bedragen gebruiken de bedragmarge; wisselende bedragen gebruiken herkenningstekst en betaalmoment. Bestaande koppelingen, splitsingen en vergoedingen worden niet automatisch gekoppeld. Conflicten blijven ter controle.</value></data>
+  <data name="RecurringBatchExistingNote" xml:space="preserve"><value>Selecteer eenduidige koppelingen om ze samen te controleren en bevestigen. Afwijkende vaste bedragen worden apart voorgesteld; kies Wisselend bedrag voor rekeningen waarvan het bedrag regelmatig verandert.</value></data>
   <data name="SaveWithoutLinking" xml:space="preserve"><value>Opslaan zonder koppelen</value></data>
   <data name="SaveAndLinkRows" xml:space="preserve"><value>Opslaan en {0} boekingen koppelen</value></data>
   <data name="RecurringRowsLinked" xml:space="preserve"><value>Vaste post opgeslagen en {0} bankboekingen gekoppeld.</value></data>
@@ -700,4 +700,44 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="TransferWorkflowRetired" xml:space="preserve"><value>Transfers koppelen is vervangen door categorieën. Kies ‘Sparen &amp; beleggen’ of ‘Tussen eigen rekeningen’ bij de categorie-instellingen en categoriseer de bankboekingen. Een tweede geïmporteerde zijde is niet nodig om sparen op uw betaalrekening te tonen.</value></data>
   <data name="LegacyManualEntriesNote" xml:space="preserve"><value>Oude handmatige overboekingen blijven herkenbaar in de transactielijst.</value></data>
   <data name="UseCategoryPurposes" xml:space="preserve"><value>Gebruik een spaarcategorie of eigen rekeningbeweging; nieuwe handmatige transfers zijn niet meer beschikbaar.</value></data>
+  <data name="RecurringReviewSummary" xml:space="preserve"><value>{0} geplande betaling(en) te controleren. Bekijk herkenningsvoorstellen en betalingen zonder match bij Vaste posten.</value></data>
+  <data name="RecurringAwaitingSummary" xml:space="preserve"><value>{0} betaling(en) wachten op volledige bankgegevens. Dit zijn geen betalingsachterstanden.</value></data>
+  <data name="RecurringReserveNote" xml:space="preserve"><value>{0} blijft als onzekere planningsreserve staan, niet als bevestigde onbetaalde rekening. Het betaalmoment is onbekend; koppelen verwijdert de bijbehorende schatting.</value></data>
+  <data name="PaymentTimingUnknown" xml:space="preserve"><value>Betaalmoment onbekend</value></data>
+  <data name="RecurringUnconfirmedDate" xml:space="preserve"><value>Oorspronkelijk gepland op {0}; nog niet bevestigd</value></data>
+  <data name="UnconfirmedReserve" xml:space="preserve"><value>Onzekere reserve</value></data>
+  <data name="RecurringAmountMode" xml:space="preserve"><value>Bedragherkenning</value></data>
+  <data name="FixedPaymentAmount" xml:space="preserve"><value>Vast bedrag · gebruik bedragmarge</value></data>
+  <data name="VariablePaymentAmount" xml:space="preserve"><value>Wisselend bedrag · herken op tekst en betaalmoment</value></data>
+  <data name="RecurringSeedUnavailable" xml:space="preserve"><value>Deze boeking heeft al een koppeling of expliciete verwerking. Controleer die eerst.</value></data>
+  <data name="RecurringFromEntryNote" xml:space="preserve"><value>De bankboeking blijft intact. Bewaar alleen de vaste leverancier-/werkgevertekst voor herkenning; verwijder wisselende datums en referenties. Kies een vast of wisselend bedrag. Pas de begindatum aan voor oudere historie. U controleert echte boekingen vóór het koppelen.</value></data>
+  <data name="ConfirmStatementCoverage" xml:space="preserve"><value>Afschriftperiode bevestigen</value></data>
+  <data name="ConfirmStatementCoverageNote" xml:space="preserve"><value>Bevestig alleen als deze import alle bankboekingen voor deze rekening in de gekozen periode bevat, ook dagen zonder activiteit. Controleer eerst het bankafschrift. Dit importeert geen boekingen en wijzigt geen saldi. Ontbrekende of gewijzigde regels vereisen eerst controle van de administratie.</value></data>
+  <data name="InvalidStatementCoverage" xml:space="preserve"><value>Kies een volledige periode tot uiterlijk vandaag met alle regels van deze actieve import. Het oorspronkelijke aantal boekingen moet nog aanwezig zijn.</value></data>
+  <data name="StatementCoverage" xml:space="preserve"><value>Bevestigde afschriftperiode</value></data>
+  <data name="ExistingImportCoverageHelp" xml:space="preserve"><value>Van oudere imports is de afschriftperiode onbekend. Bevestig hier na controle van uw bankafschrift de volledige periode; importeer het bestand niet opnieuw alleen om de periode vast te leggen.</value></data>
+  <data name="ImportConfirmCompletePeriod" xml:space="preserve"><value>Ik bevestig dat dit bestand alle bankboekingen voor deze rekening van {0} tot en met {1} bevat.</value></data>
+  <data name="ImportCoverageHelp" xml:space="preserve"><value>Optioneel: volledige afschriftperioden onderscheiden ontbrekende betalingen van bankgegevens die nog op import wachten. Bevestig alleen een ongefilterd afschrift met alle regels geselecteerd en geldig. Een leeg afschrift kan ook een stille periode bevestigen. Laat dit anders uitgevinkt.</value></data>
+  <data name="MonthlyPaymentStatus" xml:space="preserve"><value>Betalingen deze maand</value></data>
+  <data name="RecurringStatusNote" xml:space="preserve"><value>Geen koppeling betekent niet onbetaald. Een betaling is pas ‘Niet gevonden’ wanneer de volledige herkenningsperiode door bevestigde volledige bankperioden wordt gedekt. Gaten en oudere imports met onbekende dekking wachten op bankgegevens.</value></data>
+  <data name="RecurringDefinitions" xml:space="preserve"><value>Planningen en herkenning beheren</value></data>
+  <data name="RecurringStatusExpected" xml:space="preserve"><value>Verwacht</value></data>
+  <data name="RecurringStatusAwaitingBankData" xml:space="preserve"><value>Wacht op bankgegevens</value></data>
+  <data name="RecurringStatusRecognized" xml:space="preserve"><value>Herkend</value></data>
+  <data name="RecurringStatusNeedsReview" xml:space="preserve"><value>Te controleren</value></data>
+  <data name="RecurringStatusNotFound" xml:space="preserve"><value>Niet gevonden · controleer betaling</value></data>
+  <data name="ReviewRecurringMatches" xml:space="preserve"><value>Koppelingen controleren</value></data>
+  <data name="SelectRecurringMatch" xml:space="preserve"><value>Koppeling selecteren</value></data>
+  <data name="SelectClearRecurringMatches" xml:space="preserve"><value>Eenduidige koppelingen selecteren</value></data>
+  <data name="LinkSelectedRecurring" xml:space="preserve"><value>Selectie koppelen ({0})</value></data>
+  <data name="SelectedRecurringPreview" xml:space="preserve"><value>{0} geselecteerde koppeling(en) controleren</value></data>
+  <data name="LinkSelectedRecurringQuestion" xml:space="preserve"><value>Deze {0} geselecteerde bankboekingen aan hun geplande betalingen koppelen? Bankgegevens en saldi blijven intact.</value></data>
+  <data name="RecurringAmountChanged" xml:space="preserve"><value>Het bedrag of de bankdatum valt buiten de automatische herkenningsmarge. Controleer de wijziging; dit voorstel wordt nooit automatisch gekoppeld. Kies Wisselend bedrag voor regelmatig veranderende bedragen.</value></data>
+  <data name="LinkToRecurringPayment" xml:space="preserve"><value>Aan vaste post koppelen</value></data>
+  <data name="CreateRecurringFromEntry" xml:space="preserve"><value>Vaste post maken van deze boeking</value></data>
+  <data name="ChoosePlannedPayment" xml:space="preserve"><value>Kies geplande betaling</value></data>
+  <data name="RecurringEntryLinkNote" xml:space="preserve"><value>Kies een bestaande vaste post en de geplande betaling, ook bij een afwijkend bedrag of andere bankmaand. Of maak een vaste post van deze boeking. Er wordt geen tweede transactie gemaakt.</value></data>
+  <data name="PaymentsAndReserves" xml:space="preserve"><value>Betalingen / planningsreserves</value></data>
+  <data name="LatestImportedBankDate" xml:space="preserve"><value>Laatste bankgegevens: {0}</value></data>
+  <data name="ConfirmExistingStatementPeriods" xml:space="preserve"><value>Bestaande importperioden bevestigen</value></data>
 </root>

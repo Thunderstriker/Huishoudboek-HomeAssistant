@@ -16,8 +16,6 @@
         </div>
         @if (forecast.Accounts.Any(a => a.BufferAtRisk))
         { <p class="notice warning" role="alert">@L["BufferRiskWarning"]</p> }
-        @if (forecast.Accounts.Any(a => a.StaleImports))
-        { <p class="notice warning" role="alert">@L["StaleImportsWarning"]</p> }
         <div class="table-scroll"><table><thead><tr><th>@L["Account"]</th><th class="money">@L["BalanceToday"]</th><th>@L["NextIncome"]</th><th class="money">@L["Buffer"]</th><th class="money">@L["SpendableUntilIncome"]</th><th class="money">@L["LowestExpectedBalance"]</th><th>@L["LowestBalanceDate"]</th></tr></thead><tbody>
         @foreach (var account in forecast.Accounts)
         {
@@ -41,17 +39,21 @@
         else { <p class="muted">@L["PositiveAmountHint", UiCulture.Culture.NumberFormat.NumberDecimalSeparator]</p> }
         <div class="actions"><button @onclick="() => Draft = EditorDraft.CashBuffer(State, selected.Account)">@L["SetBuffer"] · @selected.Account.Name</button></div>
         <p class="muted">@L["AccountImportNote", selected.Account.Name, selected.StatementThrough?.ToString("dd-MM-yyyy") ?? L["Unknown"].Value, selected.LastImportDate?.ToString("dd-MM-yyyy") ?? L["None"].Value, Money(selected.DailyVariableEstimate)]</p>
+        @if (selected.AwaitingBankDataCount > 0)
+        { <p class="notice" role="status">@L["RecurringAwaitingSummary", selected.AwaitingBankDataCount] <a href="importeren">@L["ImportExcelCsv"]</a></p> }
+        @if (selected.UncertainReserve > 0)
+        { <p class="muted">@L["RecurringReserveNote", Money(selected.UncertainReserve)] <a href="vaste-posten">@L["RecurringPayments"]</a></p> }
         @if (selected.Warnings.Count > 0)
-        { <div class="notice warning"><strong>@L["AccountAttention", selected.Account.Name]</strong><ul>@foreach (var warning in UiCashFlow.Warnings(State.Data, selected, State.Today)) { <li>@warning</li> }</ul></div> }
+        { <details class="notice warning"><summary>@L["AccountAttention", selected.Account.Name] (@selected.Warnings.Count)</summary><ul>@foreach (var warning in UiCashFlow.Warnings(State.Data, selected, State.Today)) { <li>@warning</li> }</ul><a href="vaste-posten">@L["RecurringPayments"]</a></details> }
         <details><summary>@L["UpcomingPayments"] · @selected.Account.Name · @L["Days", 30]</summary>
             <div class="table-scroll"><table><thead><tr><th>@L["ExpectedDate"]</th><th>@L["Payment"]</th><th class="money">@L["Amount"]</th><th>@L["Source"]</th></tr></thead><tbody>
             @foreach (var bill in selected.Events.Where(e => e.Amount < 0 && e.Date <= State.Today.AddDays(30)))
-            { <tr><td>@bill.Date.ToString("dd-MM-yyyy")</td><td>@bill.Name @if (bill.IsOverdue) { <small>@L["OverdueUnmatched", bill.DueDate.ToString("dd-MM-yyyy")]</small> }</td><td class="money">@Money(-bill.Amount)</td><td>@L[bill.TransactionId != null ? "RecordedEntry" : "RecurringEstimate"]</td></tr> }
+            { <tr><td>@(bill.IsUncertain ? L["PaymentTimingUnknown"].Value : bill.Date.ToString("dd-MM-yyyy"))</td><td>@bill.Name @if (bill.IsUncertain) { <small>@L["RecurringUnconfirmedDate", bill.DueDate.ToString("dd-MM-yyyy")]</small> }</td><td class="money">@Money(-bill.Amount)</td><td>@L[bill.IsUncertain ? "UnconfirmedReserve" : bill.TransactionId != null ? "RecordedEntry" : "RecurringEstimate"]</td></tr> }
             </tbody></table></div>
         </details>
         <details><summary>@L["DailyBalanceForecast"] · @selected.Account.Name · @L["ThroughDate", selected.Days.Last().Date.ToString("dd-MM-yyyy")]</summary>
             <p class="muted">@L["DailyBalanceNote"]</p>
-            <div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th class="money">@L["OpeningBalance"]</th><th class="money">@L["Receipts"]</th><th class="money">@L["KnownPayments"]</th><th class="money">@L["ExtraDaily"]</th><th class="money">@L["LowestBalance"]</th><th class="money">@L["ClosingBalance"]</th></tr></thead><tbody>
+            <div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th class="money">@L["OpeningBalance"]</th><th class="money">@L["Receipts"]</th><th class="money">@L["PaymentsAndReserves"]</th><th class="money">@L["ExtraDaily"]</th><th class="money">@L["LowestBalance"]</th><th class="money">@L["ClosingBalance"]</th></tr></thead><tbody>
             @foreach (var day in selected.Days)
             { <tr><td>@day.Date.ToString("dd-MM-yyyy")</td><td class="money">@Money(day.OpeningBalance)</td><td class="money">@Money(day.Income)</td><td class="money">@Money(day.Payments)</td><td class="money">@Money(day.VariableSpending)</td><td class="money @(day.LowestBalance < selected.Account.MinimumCashBuffer ? "negative" : "")">@Money(day.LowestBalance)</td><td class="money">@Money(day.ClosingBalance)</td></tr> }
             </tbody></table></div>

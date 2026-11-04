@@ -1,7 +1,7 @@
 namespace Huishoudboek.Core;
 
 public sealed record CashFlowEvent(Guid AccountId, DateOnly Date, DateOnly DueDate, string Name, decimal Amount,
-    Guid? TransactionId, Guid? RecurringPaymentId, bool IsOverdue = false);
+    Guid? TransactionId, Guid? RecurringPaymentId, bool IsOverdue = false, bool IsUncertain = false);
 public sealed record DailyBalance(DateOnly Date, decimal OpeningBalance, decimal Income, decimal Payments,
     decimal VariableSpending, decimal LowestBalance, decimal ClosingBalance);
 public sealed record AccountCashFlow(Account Account, decimal CurrentBalance, DateOnly? NextIncomeDate,
@@ -10,9 +10,12 @@ public sealed record AccountCashFlow(Account Account, decimal CurrentBalance, Da
     bool StaleImports, bool LimitedHistory, IReadOnlyList<string> Warnings,
     IReadOnlyList<CashFlowEvent> Events, IReadOnlyList<DailyBalance> Days)
 {
-    public decimal BillsUntil(DateOnly date) => -Events.Where(e => e.Amount < 0 && e.Date <= date).Sum(e => e.Amount);
+    public int AwaitingBankDataCount { get; init; }
+    public int PaymentsToReviewCount { get; init; }
+    public decimal UncertainReserve => -Events.Where(e => e.IsUncertain && e.Amount < 0).Sum(e => e.Amount);
+    public decimal BillsUntil(DateOnly date) => -Events.Where(e => e.Amount < 0 && !e.IsUncertain && e.Date <= date).Sum(e => e.Amount);
     public bool BufferAtRisk => LowestBalance < Account.MinimumCashBuffer;
-    public bool HasUncertainty => Warnings.Count > 0;
+    public bool HasUncertainty => Warnings.Count > 0 || AwaitingBankDataCount > 0 || PaymentsToReviewCount > 0;
     public bool CanAfford(decimal amount) => amount > 0 && amount <= EstimatedSpendable && LowestBalance - amount >= Account.MinimumCashBuffer;
 }
 public sealed record CashFlowOverview(DateOnly Today, IReadOnlyList<AccountCashFlow> Accounts)
@@ -34,16 +37,19 @@ public static class CashFlow
     {
         if (minimumDays is < 1 or > IncomeSearchDays) throw new ArgumentOutOfRangeException(nameof(minimumDays));
         var transfers = TransferMatching.ConfirmedTransactionIds(data);
+        var candidates = RecurringSchedule.Candidates(data, today);
         var searchEnd = today.AddDays(IncomeSearchDays);
         var accounts = data.Accounts.Where(a => a.Kind == AccountKind.Current && a.OpeningDate <= today &&
             (scope == null || scope.Contains(a.Id))).ToList();
-        return new(today, accounts.Select(a => ProjectAccount(data, a, today, searchEnd, minimumDays, transfers)).ToList());
+        return new(today, accounts.Select(a => ProjectAccount(data, a, today, searchEnd, minimumDays, transfers, candidates)).ToList());
     }
 
     private static AccountCashFlow ProjectAccount(HouseholdData data, Account account, DateOnly today,
-        DateOnly searchEnd, int minimumDays, IReadOnlySet<Guid> transfers)
+        DateOnly searchEnd, int minimumDays, IReadOnlySet<Guid> transfers, IReadOnlyList<RecurringCandidate> candidates)
     {
         var warnings = new List<string>();
+        var awaitingBankData = 0;
+        var reviewPayments = 0;
         var events = new List<CashFlowEvent>();
         // Classification changes reporting, never cash. Only the ordinary expense part
         // of a bank debit belongs in the everyday-spending estimate.
@@ -60,18 +66,23 @@ public static class CashFlow
         {
             foreach (var due in RecurringSchedule.Occurrences(item, today.AddDays(1), searchEnd))
                 if (!RecurringSchedule.IsLinked(data, item, due)) events.Add(new(account.Id, due, due, item.Name, item.Amount, null, item.Id));
-            // Only the latest missed occurrence is reserved: older unlinked history is not multiplied into fictional debt.
+            // A conservative reserve is not proof of an unpaid bill or a known payment date.
+            // Only the latest unresolved occurrence is reserved, never accumulated historical debt.
             if (RecurringSchedule.LatestDue(item, today) is { } overdue && overdue >= account.OpeningDate &&
                 !RecurringSchedule.IsLinked(data, item, overdue))
             {
+                var status = RecurringSchedule.Status(data, item, overdue, today, candidates);
+                if (status == RecurringPaymentStatus.AwaitingBankData) awaitingBankData++;
+                else reviewPayments++;
                 if (item.Amount < 0)
                 {
-                    events.Add(new(account.Id, today.AddDays(1), overdue, item.Name, item.Amount, null, item.Id, true));
-                    warnings.Add($"{item.Name}: betaling van {overdue:dd-MM-yyyy} niet gekoppeld; gereserveerd voor morgen. Koppel de bankboeking om dubbeltelling te voorkomen.");
+                    // Reserve at the start of the projection internally; presentation must not claim 'due tomorrow'.
+                    events.Add(new(account.Id, today.AddDays(1), overdue, item.Name, item.Amount, null, item.Id,
+                        status == RecurringPaymentStatus.NotFound, true));
                 }
-                else warnings.Add($"{item.Name}: inkomen van {overdue:dd-MM-yyyy} niet gekoppeld. Dit achterstallige inkomen wordt niet als beschikbare ontvangst aangenomen; controleer de import of planning.");
             }
         }
+        if (reviewPayments > 0) warnings.Add($"{reviewPayments} geplande betaling(en) te controleren. Bekijk herkenningsvoorstellen en betalingen zonder match bij Vaste posten.");
 
         // A future linked bank entry replaces the estimate on its real date, even across month boundaries.
         var transactions = data.Transactions.ToDictionary(t => t.Id);
@@ -87,12 +98,12 @@ public static class CashFlow
         events = events.Where(e => e.Date <= end).OrderBy(e => e.Date).ThenBy(e => e.Amount).ToList();
 
         var batches = data.ImportBatches.Where(b => b.AccountId == account.Id && !b.Undone).ToList();
-        var batchIds = batches.Select(b => b.Id).ToHashSet();
-        var statementThrough = data.Transactions.Where(t => t.AccountId == account.Id && t.Date <= today &&
-            t.ImportBatchId is { } id && batchIds.Contains(id)).Select(t => (DateOnly?)t.Date).Max();
+        var statementThrough = FirstWeek.ImportedThrough(data, account.Id, today);
         var lastImport = batches.Select(b => (DateOnly?)DateOnly.FromDateTime(b.ImportedAt)).Max();
-        var stale = statementThrough == null || lastImport == null ||
-            today.DayNumber - statementThrough.Value.DayNumber > StaleAfterDays || today.DayNumber - lastImport.Value.DayNumber > StaleAfterDays;
+        var confirmedThrough = BankImportCoverage.ConfirmedThrough(data, account.Id);
+        var stale = statementThrough == null || today.DayNumber - statementThrough.Value.DayNumber > StaleAfterDays ||
+            (!(confirmedThrough >= statementThrough) &&
+             (lastImport == null || today.DayNumber - lastImport.Value.DayNumber > StaleAfterDays));
         if (stale) warnings.Add(statementThrough == null ? "Geen bruikbare bankimport voor deze rekening: actualiteit van het saldo is onbekend." :
             $"Import verouderd of onvoldoende recent: laatste bankboeking {statementThrough:dd-MM-yyyy}, laatste import {lastImport:dd-MM-yyyy}. Niet-geïmporteerde betalingen ontbreken.");
 
@@ -131,6 +142,7 @@ public static class CashFlow
             balance = trough + income;
         }
         return new(account, current, nextIncome, until, Math.Max(0, spendableFloor - account.MinimumCashBuffer),
-            lowest, lowestDate, dailyVariable, statementThrough, lastImport, stale, limited, warnings, events, days);
+            lowest, lowestDate, dailyVariable, statementThrough, lastImport, stale, limited, warnings, events, days)
+            { AwaitingBankDataCount = awaitingBankData, PaymentsToReviewCount = reviewPayments };
     }
 }

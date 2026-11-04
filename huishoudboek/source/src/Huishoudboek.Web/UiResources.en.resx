@@ -134,7 +134,7 @@
   <data name="ShortfallAmount" xml:space="preserve"><value>Expected shortfall from monthly income: {0}.</value></data>
   <data name="LargestPayments" xml:space="preserve"><value>Largest payments: {0}.</value></data>
   <data name="ForecastCalculationNote" xml:space="preserve"><value>Estimate: recorded amounts + unmatched recurring payments + {0} additional variable spending based on the daily average.</value></data>
-  <data name="OverdueForecastNote" xml:space="preserve"><value>{0} overdue recurring payment(s) not yet matched; check for double counting.</value></data>
+  <data name="OverdueForecastNote" xml:space="preserve"><value>{0} recurring payment(s) need review; a missing match does not prove a bill is unpaid.</value></data>
   <data name="NoSavingsForecast" xml:space="preserve"><value>Only recorded and planned savings contributions are included; no automatic extrapolation.</value></data>
   <data name="LimitedHistoryNote" xml:space="preserve"><value>Limited data: the forecast has limited reliability.</value></data>
   <data name="CashForecastNote" xml:space="preserve"><value>The expected closing balance of current accounts uses the daily cash forecast with up to 90 days of spending history; this is a different estimate from the monthly result.</value></data>
@@ -253,7 +253,7 @@
   <data name="EstimatedSpendable" xml:space="preserve"><value>Estimated spendable · reserved per account</value></data>
   <data name="SpendableSumNote" xml:space="preserve"><value>Sum of separate spending headroom until the next income; not freely interchangeable.</value></data>
   <data name="BillsNextDays" xml:space="preserve"><value>Known payments in the next {0} days</value></data>
-  <data name="BillsEstimateNote" xml:space="preserve"><value>Including overdue unmatched bills; excluding the additional variable estimate.</value></data>
+  <data name="BillsEstimateNote" xml:space="preserve"><value>Dated planned payments only. Uncertain reserves are shown separately below; additional variable spending is excluded.</value></data>
   <data name="BufferRiskWarning" xml:space="preserve"><value>The expected balance falls below the buffer on at least one account. A positive total balance or monthly result does not hide this shortfall; money in another account does not automatically cover the payment.</value></data>
   <data name="StaleImportsWarning" xml:space="preserve"><value>Imports are outdated or missing on at least one account. Import recent bank data before relying on spending headroom.</value></data>
   <data name="BalanceToday" xml:space="preserve"><value>Balance today</value></data>
@@ -277,7 +277,7 @@
   <data name="Unknown" xml:space="preserve"><value>unknown</value></data>
   <data name="None" xml:space="preserve"><value>none</value></data>
   <data name="AccountAttention" xml:space="preserve"><value>Points to check for {0}</value></data>
-  <data name="UpcomingPayments" xml:space="preserve"><value>Upcoming payments</value></data>
+  <data name="UpcomingPayments" xml:space="preserve"><value>Upcoming payments and uncertain reserves</value></data>
   <data name="Days" xml:space="preserve"><value>{0} days</value></data>
   <data name="ExpectedDate" xml:space="preserve"><value>Expected date</value></data>
   <data name="Payment" xml:space="preserve"><value>Payment</value></data>
@@ -287,7 +287,7 @@
   <data name="RecurringEstimate" xml:space="preserve"><value>Recurring payment estimate</value></data>
   <data name="DailyBalanceForecast" xml:space="preserve"><value>Daily balance forecast</value></data>
   <data name="ThroughDate" xml:space="preserve"><value>through {0}</value></data>
-  <data name="DailyBalanceNote" xml:space="preserve"><value>Amounts before any purchase. The lowest balance conservatively assumes debits before receipts on the same day.</value></data>
+  <data name="DailyBalanceNote" xml:space="preserve"><value>Amounts before any purchase. The lowest balance conservatively assumes debits before receipts on the same day. Uncertain reserves are applied at the start of the projection for caution, not because they are known to be payable that day.</value></data>
   <data name="OpeningBalance" xml:space="preserve"><value>Opening balance</value></data>
   <data name="Receipts" xml:space="preserve"><value>Receipts</value></data>
   <data name="KnownPayments" xml:space="preserve"><value>Known payments</value></data>
@@ -297,7 +297,7 @@
   <data name="EstimateAssumptions" xml:space="preserve"><value>Assumptions and limits of this estimate</value></data>
   <data name="AssumptionImports" xml:space="preserve"><value>Starts from recorded balances through today. Bank imports become outdated after {0} days; a recent import of old entries is not an up-to-date balance either.</value></data>
   <data name="AssumptionRecurring" xml:space="preserve"><value>Recurring payments follow your dates and frequency. One matched bank entry replaces one planned payment with the actual amount and bank date. Other payments retain your estimate; amounts are not adjusted automatically.</value></data>
-  <data name="AssumptionOverdue" xml:space="preserve"><value>The latest overdue unmatched expense per recurring payment is reserved tomorrow. Older missing payments are not added up. Overdue income is not assumed received. Check matches and schedules.</value></data>
+  <data name="AssumptionOverdue" xml:space="preserve"><value>Only the latest unconfirmed expense per recurring payment is kept as a conservative reserve at the start of the projection. Its payment date and whether it is unpaid are unknown. Missing bank periods wait for import, not an overdue warning. Older missing payments are not added up; unconfirmed past income is not available cash.</value></data>
   <data name="AssumptionVariable" xml:space="preserve"><value>Additional daily spending uses the average of up to {0} days through the last imported bank date (without an import: today). Matched recurring bills, mortgages and confirmed transfers are excluded. Planned variable payments fill the daily average rather than being added on top.</value></data>
   <data name="AssumptionSpendable" xml:space="preserve"><value>Spending headroom is the lowest balance through the next income day, minus your buffer, with a minimum of 0. The purchase check covers at least 30 days, or longer if income arrives later (up to {0} days). Costs conservatively precede income even on income day.</value></data>
   <data name="AssumptionShared" xml:space="preserve"><value>Shared accounts are counted once. No automatic movement of savings, investments or money from other accounts; only explicitly recorded future transfers count. Unexpected expenses, holidays, interest and changed amounts are excluded unless you plan them.</value></data>
@@ -389,10 +389,10 @@
   <data name="OptionalRecurringDueDate" xml:space="preserve"><value>Planned recurring payment date (optional; empty = bank month)</value></data>
   <data name="TransactionRecurringNote" xml:space="preserve"><value>Prefer matching via Recurring payments, especially when the bank date falls in another month. A different actual amount does not change estimates for future payments.</value></data>
   <data name="TransactionStatementNote" xml:space="preserve"><value>Bank balance of import account {0}: {1}. Does not replace your opening balance.</value></data>
-  <data name="RecurringEditorNote" xml:space="preserve"><value>A schedule does not change your actual balance. Quarterly/yearly schedules start in the start month; one-off payments use the start date. Days 29–31 are shortened in shorter months. Import automatically links unambiguous matches within your configured amount and date margins. Ambiguous matches remain for review. Saving checks existing bank entries within the same margins. You can link all unambiguous matches with one confirmation or save without linking. Changing a matched schedule may require unmatching first.</value></data>
-  <data name="RecurringBatchQuestion" xml:space="preserve"><value>{0} matching historical bank entries found. Would you like to link all of them to this recurring payment?</value></data>
-  <data name="RecurringBatchNote" xml:space="preserve"><value>Only unambiguous matches within your configured amount and date margins are linked. Bank amounts, dates, descriptions, balances and categories remain unchanged. Existing links, splits and reimbursement links are skipped. Ambiguous matches remain available for individual review.</value></data>
-  <data name="RecurringBatchExistingNote" xml:space="preserve"><value>Many historical matches for one recurring payment? Open Edit and save again: you will see the number of unambiguous matches and can link all of them with one confirmation.</value></data>
+  <data name="RecurringEditorNote" xml:space="preserve"><value>A schedule never changes your actual balance. Use stable supplier/employer text for recognition; harmless punctuation and spacing differences are ignored. Fixed amounts use the amount margin; Variable amounts use text and timing. Exact descriptions from already linked examples are also recognized. Clear, unique matches are linked on import. Changes outside fixed amount/date margins remain suggestions. Saving previews historical matches with checkboxes. Quarterly/yearly schedules start in the start month; one-off payments use the start date. Days 29–31 are shortened in shorter months. Changing a linked schedule may require unmatching first.</value></data>
+  <data name="RecurringBatchQuestion" xml:space="preserve"><value>{0} historical bank entries ready for review. Select the payments you want to link.</value></data>
+  <data name="RecurringBatchNote" xml:space="preserve"><value>Review dates and actual amounts below. Bank data, balances and existing categories stay unchanged. Fixed amounts use the amount margin; variable amounts use recognition text and timing. Existing links, splits and reimbursements are not linked automatically. Conflicts stay for review.</value></data>
+  <data name="RecurringBatchExistingNote" xml:space="preserve"><value>Select clear matches to review and confirm them together. Changed fixed amounts are proposed separately; choose Variable amount for bills whose amounts regularly change.</value></data>
   <data name="SaveWithoutLinking" xml:space="preserve"><value>Save without linking</value></data>
   <data name="SaveAndLinkRows" xml:space="preserve"><value>Save and link {0} entries</value></data>
   <data name="RecurringRowsLinked" xml:space="preserve"><value>Recurring payment saved and {0} bank entries linked.</value></data>
@@ -700,4 +700,44 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="TransferWorkflowRetired" xml:space="preserve"><value>Transfer matching has been replaced by categories. Choose ‘Savings &amp; investments’ or ‘Between own accounts’ in category settings and categorize the bank entries. A second imported side is not needed to show savings on your current account.</value></data>
   <data name="LegacyManualEntriesNote" xml:space="preserve"><value>Old manual transfers remain identifiable in the transaction list.</value></data>
   <data name="UseCategoryPurposes" xml:space="preserve"><value>Use a savings or own-account category; new manual transfers are no longer available.</value></data>
+  <data name="RecurringReviewSummary" xml:space="preserve"><value>{0} planned payment(s) need checking. Review recognition suggestions and payments without a match under Recurring income &amp; bills.</value></data>
+  <data name="RecurringAwaitingSummary" xml:space="preserve"><value>{0} payment(s) awaiting complete bank data. These are not overdue-payment errors.</value></data>
+  <data name="RecurringReserveNote" xml:space="preserve"><value>{0} is held as an uncertain planning reserve, not a confirmed unpaid bill. The timing is unknown; matching bank entries removes the corresponding estimate.</value></data>
+  <data name="PaymentTimingUnknown" xml:space="preserve"><value>Timing unknown</value></data>
+  <data name="RecurringUnconfirmedDate" xml:space="preserve"><value>Originally planned for {0}; not yet confirmed</value></data>
+  <data name="UnconfirmedReserve" xml:space="preserve"><value>Uncertain reserve</value></data>
+  <data name="RecurringAmountMode" xml:space="preserve"><value>Amount recognition</value></data>
+  <data name="FixedPaymentAmount" xml:space="preserve"><value>Fixed amount · use amount margin</value></data>
+  <data name="VariablePaymentAmount" xml:space="preserve"><value>Variable amount · recognize by text and timing</value></data>
+  <data name="RecurringSeedUnavailable" xml:space="preserve"><value>This entry already has a link or explicit handling. Review those first.</value></data>
+  <data name="RecurringFromEntryNote" xml:space="preserve"><value>The bank entry stays unchanged. Keep only the stable supplier/employer text in recognition; remove changing dates and references. Choose Fixed or Variable amount. Adjust the start date to include earlier history. You will review actual entries before linking.</value></data>
+  <data name="ConfirmStatementCoverage" xml:space="preserve"><value>Confirm statement period</value></data>
+  <data name="ConfirmStatementCoverageNote" xml:space="preserve"><value>Only confirm if this import contains every bank entry for this account in the chosen period, including days with no activity. Check your bank statement first. This does not import transactions or change balances. Missing or edited rows require checking the records first.</value></data>
+  <data name="InvalidStatementCoverage" xml:space="preserve"><value>Choose a past or current complete period containing all rows of this active import. Its original number of entries must still be present.</value></data>
+  <data name="StatementCoverage" xml:space="preserve"><value>Confirmed statement period</value></data>
+  <data name="ExistingImportCoverageHelp" xml:space="preserve"><value>Older imports have unknown statement coverage. Confirm their complete bank period here after checking your statement; do not reimport the file just to record coverage.</value></data>
+  <data name="ImportConfirmCompletePeriod" xml:space="preserve"><value>I confirm that this file contains every bank entry for this account from {0} through {1}.</value></data>
+  <data name="ImportCoverageHelp" xml:space="preserve"><value>Optional: complete coverage lets the app distinguish missing payments from bank data still awaiting import. Confirm only an unfiltered statement with all rows selected and valid. Empty statements can also confirm quiet periods. Otherwise leave this unchecked.</value></data>
+  <data name="MonthlyPaymentStatus" xml:space="preserve"><value>Payments this month</value></data>
+  <data name="RecurringStatusNote" xml:space="preserve"><value>No link does not mean unpaid. A payment is only ‘Not found’ after its full recognition window is covered by confirmed complete bank periods. Coverage gaps and older imports with unknown coverage wait for bank data.</value></data>
+  <data name="RecurringDefinitions" xml:space="preserve"><value>Manage schedules and recognition</value></data>
+  <data name="RecurringStatusExpected" xml:space="preserve"><value>Expected</value></data>
+  <data name="RecurringStatusAwaitingBankData" xml:space="preserve"><value>Awaiting bank data</value></data>
+  <data name="RecurringStatusRecognized" xml:space="preserve"><value>Recognized</value></data>
+  <data name="RecurringStatusNeedsReview" xml:space="preserve"><value>Needs review</value></data>
+  <data name="RecurringStatusNotFound" xml:space="preserve"><value>Not found · check payment</value></data>
+  <data name="ReviewRecurringMatches" xml:space="preserve"><value>Review matches</value></data>
+  <data name="SelectRecurringMatch" xml:space="preserve"><value>Select match</value></data>
+  <data name="SelectClearRecurringMatches" xml:space="preserve"><value>Select clear matches</value></data>
+  <data name="LinkSelectedRecurring" xml:space="preserve"><value>Link selected ({0})</value></data>
+  <data name="SelectedRecurringPreview" xml:space="preserve"><value>Review {0} selected match(es)</value></data>
+  <data name="LinkSelectedRecurringQuestion" xml:space="preserve"><value>Link these {0} selected bank entries to their planned payments? Actual bank data and balances stay unchanged.</value></data>
+  <data name="RecurringAmountChanged" xml:space="preserve"><value>The amount or bank date is outside this schedule’s automatic recognition margin. Review the change; this suggestion is never linked automatically. For regularly changing amounts, choose Variable amount.</value></data>
+  <data name="LinkToRecurringPayment" xml:space="preserve"><value>Link to fixed cost / income</value></data>
+  <data name="CreateRecurringFromEntry" xml:space="preserve"><value>Create schedule from this entry</value></data>
+  <data name="ChoosePlannedPayment" xml:space="preserve"><value>Choose planned payment</value></data>
+  <data name="RecurringEntryLinkNote" xml:space="preserve"><value>Choose an existing schedule and its planned payment, even if the actual amount or bank month differs. Or create a new schedule from this entry. No second transaction is created.</value></data>
+  <data name="PaymentsAndReserves" xml:space="preserve"><value>Payments / planning reserves</value></data>
+  <data name="LatestImportedBankDate" xml:space="preserve"><value>Latest bank data: {0}</value></data>
+  <data name="ConfirmExistingStatementPeriods" xml:space="preserve"><value>Confirm existing import periods</value></data>
 </root>

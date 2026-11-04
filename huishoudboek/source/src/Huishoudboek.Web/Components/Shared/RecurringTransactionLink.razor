@@ -1,0 +1,41 @@
+@inject WebState State
+<Modal Title="@L["LinkToRecurringPayment"]" Cancel="() => Closed.InvokeAsync()">
+    <p>@Transaction.Date.ToString("dd-MM-yyyy") · @Transaction.Description · @WebState.Money(Transaction.Amount)</p>
+    <p class="muted">@L["RecurringEntryLinkNote"]</p>
+    <fieldset class="page-fieldset" disabled="@State.Busy">
+        <div class="fields">
+            <label>@L["RecurringPayment"]<select @bind="paymentId" @bind:after="ResetDue"><option value="">@L["ChooseRecurringPayment"]</option>@foreach (var payment in Payments) { <option value="@payment.Id">@payment.Name · @WebState.Money(payment.Amount)</option> }</select></label>
+            <label>@L["PlannedPaymentDate"]<select @bind="due"><option value="">@L["ChoosePlannedPayment"]</option>@foreach (var date in Dates) { <option value="@date.ToString("yyyy-MM-dd")">@date.ToString("dd-MM-yyyy")</option> }</select></label>
+        </div>
+        <div class="actions"><button class="primary" disabled="@(paymentId == null || due.Length == 0)" @onclick="Link">@L["ConfirmMatch"]</button><button @onclick="() => Create.InvokeAsync(Transaction)">@L["CreateRecurringFromEntry"]</button></div>
+    </fieldset>
+</Modal>
+@code {
+    [Parameter, EditorRequired] public Transaction Transaction { get; set; } = null!;
+    [Parameter] public EventCallback Closed { get; set; }
+    [Parameter] public EventCallback<Transaction> Create { get; set; }
+    private Guid? paymentId;
+    private string due = "", revision = "";
+    private IEnumerable<RecurringPayment> Payments => State.Data.RecurringPayments.Where(p => p.AccountId == Transaction.AccountId &&
+        Math.Sign(p.Amount) == Math.Sign(Transaction.Amount) &&
+        (Transaction.CategoryId == null ||
+         (State.Data.Categories.FirstOrDefault(c => c.Id == Transaction.CategoryId)?.Purpose ?? CategoryPurpose.Normal) ==
+         (State.Data.Categories.FirstOrDefault(c => c.Id == p.CategoryId)?.Purpose ?? CategoryPurpose.Normal)));
+    private IEnumerable<DateOnly> Dates => Payments.FirstOrDefault(p => p.Id == paymentId) is { } payment
+        ? RecurringSchedule.Occurrences(payment, Transaction.Date.AddYears(-1), Transaction.Date.AddYears(1))
+            .Where(d => !RecurringSchedule.IsLinked(State.Data, payment, d)).OrderBy(d => Math.Abs(d.DayNumber - Transaction.Date.DayNumber)) : [];
+    protected override void OnInitialized()
+    {
+        revision = State.Revision;
+        var proposals = RecurringSchedule.Matches(State.Data, Transaction).ToList();
+        if (proposals.Count == 1) { paymentId = proposals[0].Payment.Id; due = proposals[0].DueDate.ToString("yyyy-MM-dd"); }
+        else if (Payments.Count() == 1) { paymentId = Payments.Single().Id; ResetDue(); }
+    }
+    private void ResetDue() => due = Dates.Select(d => d.ToString("yyyy-MM-dd")).FirstOrDefault() ?? "";
+    private async Task Link()
+    {
+        if (paymentId is not { } id || !DateOnly.TryParseExact(due, "yyyy-MM-dd", out var date)) return;
+        if (await State.RunAsync(() => State.SaveAsync(d => RecurringSchedule.Link(d, Transaction.Id, id, date), revision), L["ChangesSaved"]))
+            await Closed.InvokeAsync();
+    }
+}

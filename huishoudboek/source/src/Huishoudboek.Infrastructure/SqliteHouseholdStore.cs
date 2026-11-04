@@ -13,7 +13,7 @@ namespace Huishoudboek.Infrastructure;
 /// </summary>
 public sealed class SqliteHouseholdStore : IAdministrationStore
 {
-    private const int SchemaVersion = 8;
+    private const int SchemaVersion = 9;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -132,7 +132,10 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             CreateTable(connection, tx, typeof(ReimbursementClaim));
         }
         if (version < 7) CreateTable(connection, tx, typeof(AccountReview));
-        Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [Purpose] INTEGER NOT NULL DEFAULT 0");
+        if (version < 8) Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [Purpose] INTEGER NOT NULL DEFAULT 0");
+        Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [AmountMode] INTEGER NOT NULL DEFAULT 0");
+        Execute(connection, tx, "ALTER TABLE [ImportBatch] ADD COLUMN [CoverageFrom] TEXT NULL");
+        Execute(connection, tx, "ALTER TABLE [ImportBatch] ADD COLUMN [CoverageThrough] TEXT NULL");
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -166,7 +169,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             Categories = Read<Category>(connection, tx, version), BudgetOverrides = Read<BudgetOverride>(connection, tx),
             Transactions = Read<Transaction>(connection, tx, version), RecurringPayments = Read<RecurringPayment>(connection, tx, version),
             Rules = Read<CategorizationRule>(connection, tx), Valuations = Read<InvestmentValuation>(connection, tx),
-            ImportBatches = Read<ImportBatch>(connection, tx), ImportProfiles = Read<ImportProfile>(connection, tx, version),
+            ImportBatches = Read<ImportBatch>(connection, tx, version), ImportProfiles = Read<ImportProfile>(connection, tx, version),
             TransferMatches = version >= 4 ? Read<TransferMatch>(connection, tx) : [],
             TransactionAllocations = version >= 6 ? Read<TransactionAllocation>(connection, tx) : [],
             ReimbursementClaims = version >= 6 ? Read<ReimbursementClaim>(connection, tx) : [],
@@ -238,6 +241,8 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
 
     private static string? PreviousDefault(Type type, string property, int version)
     {
+        if (version < 9 && type == typeof(RecurringPayment) && property == nameof(RecurringPayment.AmountMode)) return "0";
+        if (version < 9 && type == typeof(ImportBatch) && property is nameof(ImportBatch.CoverageFrom) or nameof(ImportBatch.CoverageThrough)) return "NULL";
         if (version < 8 && type == typeof(Category) && property == nameof(Category.Purpose)) return "0";
         if (version == 1 && type == typeof(ImportProfile) && property == nameof(ImportProfile.CounterAccountReferenceColumn) ||
             version < 3 && type == typeof(Transaction) && property == nameof(Transaction.UserDescription)) return "''";

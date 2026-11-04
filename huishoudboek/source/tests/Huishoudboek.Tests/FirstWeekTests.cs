@@ -168,13 +168,13 @@ public sealed class FirstWeekTests
         var legacy = files.Path("schema6.db"); new SqliteHouseholdStore(legacy).Save(data);
         using (var connection = new SqliteConnection($"Data Source={legacy};Pooling=False"))
         {
-            connection.Open(); using var command = connection.CreateCommand(); command.CommandText = "ALTER TABLE [Category] DROP COLUMN [Purpose]; DROP TABLE [AccountReview]; PRAGMA user_version=6"; command.ExecuteNonQuery();
+            connection.Open(); using var command = connection.CreateCommand(); command.CommandText = PreviousSchema.RemoveSchema9Columns + "ALTER TABLE [Category] DROP COLUMN [Purpose]; DROP TABLE [AccountReview]; PRAGMA user_version=6"; command.ExecuteNonQuery();
         }
         var bytes = File.ReadAllBytes(legacy); Assert.Empty(SqliteHouseholdStore.ReadBackup(legacy).AccountReviews); Assert.Equal(bytes, File.ReadAllBytes(legacy));
         var migrated = new SqliteHouseholdStore(legacy, allowCreate: false);
         Assert.Empty(migrated.Load().AccountReviews); Assert.Equal(data.Transactions, migrated.Load().Transactions);
         Assert.Equal(data.Categories, migrated.Load().Categories);
-        Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-8-*.db"));
+        Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-9-*.db"));
     }
 
     [Theory]

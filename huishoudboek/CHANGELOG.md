@@ -11,6 +11,26 @@
 - Nederlandse/Engelse teksten, documentatie en regressietests bijgewerkt voor de
   nieuwe routes, Home Assistant-ingress en blijvende navigatievoorkeuren.
 
+- Vaste posten met een maandlijst: verwacht, wacht op bankgegevens, herkend, te
+  controleren of niet gevonden. Ontbrekende bankimports leveren geen waarschuwing
+  per betaling meer op; de financiële vooruitblik groepeert onzekerheid per rekening.
+- Expliciet volledige afschriftperioden bevestigen bij import, ook zonder activiteit.
+  Oudere imports zijn onder Beheer & import te bevestigen zonder opnieuw te importeren.
+  Gaten, rekeninggrenzen en import-undo blijven gerespecteerd; gewijzigde/verwijderde
+  bankgegevens laten de bijbehorende bevestiging vervallen.
+- Herkenning van vaste of wisselende bedragen, onschuldige tekstformatering en exact
+  eerder gekoppelde omschrijvingen. Afwijkende vaste bedragen en nabije afwijkende
+  bankdatums blijven controlevoorstellen, nooit automatische koppelingen.
+- Vanuit een transactie een vaste post koppelen of maken; historische matches met
+  datums, bedragen en selectievakjes bekijken en samen bevestigen. Dubbelzinnige
+  boekingen, rekeninggrenzen en expliciete verwerking blijven beschermd.
+- Onbevestigde uitgaven blijven een aparte, onzekere planningsreserve, geen als
+  ‘morgen te betalen’ gepresenteerde rekening. Ze staan niet in gedateerde 7/30-dagentotalen.
+  Werkelijke bankboekingen, bedragen, datums en saldi worden niet aangepast.
+- Databaseschema 9 met veiligheidskopie vóór migratie van schema's 1–8. Bestaande
+  vaste posten blijven standaard op vaste bedragen staan; oude importdekking wordt
+  niet geraden. Nieuwe instellingen en afschriftperioden blijven in volledige back-ups bewaard.
+
 ## 0.1.11
 
 - Eenvoudiger sparen zonder transfers koppelen: categorieën tellen als gewone

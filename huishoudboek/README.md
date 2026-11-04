@@ -16,8 +16,9 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
   komende betalingen over 7/30 dagen en dagelijkse saldi per betaalrekening. Met
   minimale cashbuffer, aankoopcontrole, laagste saldo/datum en waarschuwingen bij oude imports.
 - **Vaste posten:** maand-, kwartaal-, jaar- en eenmalige inkomsten/lasten vooraf
-  plannen. Echte bankboekingen vervangen één schatting, ook met een afwijkend bedrag
-  of datum. Herkenningsmarges en handmatig koppelen voorkomen dubbele prognoses.
+  plannen, met vaste of wisselende bedragen. Koppelen of een vaste post maken kan
+  direct vanuit een bankboeking; historische voorstellen zijn samen te controleren.
+  De maandlijst onderscheidt wachten op bankgegevens van betalingen die controle vragen.
 - **Jaaroverzicht:** een inkomsten-en-lastentrend, een uitgavendoughnut en een
   spaarritmegrafiek met maandbijdragen en het totaal sinds januari, geen rekeningsaldo.
   Tabellen met exacte bedragen en jaarbudgetten zijn uitklapbaar.

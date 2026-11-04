@@ -368,7 +368,7 @@ public sealed class CategoryPurposeTests
         using (var connection = new SqliteConnection($"Data Source={files.Path("old.db")};Pooling=False"))
         {
             connection.Open(); using var sql = connection.CreateCommand();
-            sql.CommandText = "ALTER TABLE [Category] DROP COLUMN [Purpose]; PRAGMA user_version=7;"; sql.ExecuteNonQuery();
+            sql.CommandText = PreviousSchema.RemoveSchema9Columns + "ALTER TABLE [Category] DROP COLUMN [Purpose]; PRAGMA user_version=7;"; sql.ExecuteNonQuery();
         }
         var original = File.ReadAllBytes(files.Path("old.db"));
         Assert.Equal(JsonSerializer.Serialize(data), JsonSerializer.Serialize(SqliteHouseholdStore.ReadBackup(files.Path("old.db"))));
@@ -376,7 +376,7 @@ public sealed class CategoryPurposeTests
         Assert.Throws<InvalidDataException>(() => new SqliteHouseholdStore(files.Path("old.db"), allowCreate: false, allowUpgrade: false));
         var migrated = new SqliteHouseholdStore(files.Path("old.db"), allowCreate: false).Load();
         Assert.Equal(JsonSerializer.Serialize(data), JsonSerializer.Serialize(migrated));
-        var backup = Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-8-*.db"));
+        var backup = Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-9-*.db"));
         Assert.Equal(JsonSerializer.Serialize(data), JsonSerializer.Serialize(SqliteHouseholdStore.ReadBackup(backup)));
         Assert.All(migrated.Categories, c => Assert.Equal(CategoryPurpose.Normal, c.Purpose));
         Assert.Equal(700m, Finance.Report(migrated, 2026, 11, MonthEnd).Savings);

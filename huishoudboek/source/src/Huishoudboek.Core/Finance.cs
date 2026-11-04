@@ -102,13 +102,15 @@ public static class Finance
         var overdue = 0;
         if (today <= last)
         {
+            var candidates = RecurringSchedule.Candidates(data, today);
             foreach (var recurring in data.RecurringPayments.Where(r => scope == null || scope.Contains(r.AccountId)))
             {
                 var due = Occurrence(recurring, year, month);
                 if (due == null) continue;
                 // Explicit links are authoritative; matching is deliberately conservative.
                 if (RecurringSchedule.IsLinked(data, recurring, due.Value)) continue;
-                if (due <= cutoff) overdue++;
+                if (due <= cutoff && RecurringSchedule.Status(data, recurring, due.Value, today, candidates) is
+                    RecurringPaymentStatus.NeedsReview or RecurringPaymentStatus.NotFound) overdue++;
                 var purpose = data.Categories.FirstOrDefault(c => c.Id == recurring.CategoryId)?.Purpose ?? CategoryPurpose.Normal;
                 if (purpose == CategoryPurpose.Savings && data.Accounts.Any(a => a.Id == recurring.AccountId && a.Kind == AccountKind.Current))
                     plannedSavings -= recurring.Amount;

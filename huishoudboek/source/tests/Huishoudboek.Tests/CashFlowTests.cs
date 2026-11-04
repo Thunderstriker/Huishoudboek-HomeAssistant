@@ -190,16 +190,18 @@ public sealed class CashFlowTests
     }
 
     [Fact]
-    public void OverdueBillsAreReservedOnceButOverdueIncomeIsNotAssumedToArriveTomorrow()
+    public void UnconfirmedBillsAreReservedOnceWithoutClaimingOverdueAndPastIncomeIsNotAssumedReceived()
     {
         var data = Data();
         var bill = Plan(data, -100, new(2026, 8, 2), PaymentFrequency.Monthly);
         Plan(data, 3000, new(2026, 8, 2), PaymentFrequency.Monthly);
         var account = Assert.Single(CashFlow.Project(data, Today).Accounts);
-        var missed = Assert.Single(account.Events, e => e.IsOverdue);
+        var missed = Assert.Single(account.Events, e => e.IsUncertain);
+        Assert.False(missed.IsOverdue);
+        Assert.Equal(2, account.AwaitingBankDataCount);
         Assert.Equal((Today.AddDays(1), new DateOnly(2026, 11, 2), -100m), (missed.Date, missed.DueDate, missed.Amount));
         Assert.Equal(new DateOnly(2026, 12, 2), account.NextIncomeDate);
-        Assert.Contains(account.Warnings, w => w.Contains("achterstallige"));
+        Assert.DoesNotContain(account.Warnings, w => w.Contains("achterstallige"));
         Assert.Equal(100m, account.Days[0].Payments);
         Assert.Equal(0m, account.Days[0].Income);
         var transaction = Entry(data, -102, Today.AddDays(2));
@@ -468,7 +470,7 @@ public sealed class CashFlowTests
         var credit = debit with { Id = Guid.NewGuid(), AccountId = other.Id, Amount = 100 };
         data.Transactions.Add(credit); TransferMatching.Confirm(data, debit.Id, credit.Id, Today);
         new SqliteHouseholdStore(files.Database).Save(data);
-        Sql(files.Database, "ALTER TABLE [Category] DROP COLUMN [Purpose]; DROP TABLE [AccountReview]; DROP TABLE [TransactionAllocation]; DROP TABLE [ReimbursementClaim]; ALTER TABLE [Account] DROP COLUMN [MinimumCashBuffer]; ALTER TABLE [Transaction] DROP COLUMN [RecurringOccurrenceDate];" +
+        Sql(files.Database, PreviousSchema.RemoveSchema9Columns + "ALTER TABLE [Category] DROP COLUMN [Purpose]; DROP TABLE [AccountReview]; DROP TABLE [TransactionAllocation]; DROP TABLE [ReimbursementClaim]; ALTER TABLE [Account] DROP COLUMN [MinimumCashBuffer]; ALTER TABLE [Transaction] DROP COLUMN [RecurringOccurrenceDate];" +
             "ALTER TABLE [RecurringPayment] DROP COLUMN [Frequency]; ALTER TABLE [RecurringPayment] DROP COLUMN [MatchTolerance];" +
             "ALTER TABLE [RecurringPayment] DROP COLUMN [MatchWindowDays]; PRAGMA user_version=4;");
         var original = File.ReadAllBytes(files.Database);
@@ -481,7 +483,7 @@ public sealed class CashFlowTests
         Assert.Equal(5, read.RecurringPayments[0].MatchWindowDays);
         var store = new SqliteHouseholdStore(files.Database, allowCreate: false, allowUpgrade: true);
         Assert.Equal(JsonSerializer.Serialize(read), JsonSerializer.Serialize(store.Load()));
-        Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-8-*.db"));
+        Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-9-*.db"));
         Assert.Equal(3002m, Finance.Report(store.Load(), 2026, 11, Today).Income);
         Assert.Equal(3002m, Finance.Report(store.Load(), 2026, 11, Today).Forecast.Income);
     }
@@ -497,7 +499,7 @@ public sealed class CashFlowTests
         Entry(data, 3005, today, "Werkgever salaris");
         var spending = WebUtility.HtmlDecode(await Render<SafeSpending>(data));
         Assert.Contains("Hoeveel kan ik verantwoord uitgeven?", spending);
-        Assert.Contains("Imports zijn verouderd", spending);
+        Assert.Contains("Geen bruikbare bankimport", spending);
         Assert.Contains("Dagelijkse saldoverwachting", spending);
         Assert.Contains("Aannames en grenzen", spending);
         Assert.Contains("onvoldoende zekerheid", spending);
