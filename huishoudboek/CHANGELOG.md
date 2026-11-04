@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.11
+
+- Eenvoudiger sparen zonder transfers koppelen: categorieën tellen als gewone
+  inkomsten/uitgaven, sparen/beleggen of bewegingen tussen eigen rekeningen.
+  Spaarbijdragen tellen alleen op de betaalrekening, zonder verplichte tweede import.
+  Terugontvangsten verlagen opzijgezet, niet inkomsten; de spaarzijde telt niet dubbel.
+- Maandoverzicht met overschot vóór sparen, apart opzijgezet en maandresultaat na sparen.
+  Uitgaven boven inkomen, categoriebudgetoverschrijdingen en sparen boven het overschot
+  krijgen verschillende verklaringen. Cashbuffer- en rekeningcontroles blijven actief.
+- Budgetpagina splitst uitgavenbudgetten, spaardoelen en eigen rekeningbewegingen.
+  Een gehaald spaardoel is geen rode budgetoverschrijding. Splitsingen, vaste posten,
+  maand-/jaaroverzichten, CSV en prognoses gebruiken dezelfde categorie-instellingen.
+- Transfermatching en het nieuwe handmatige transfertype uit dagelijks gebruik verwijderd.
+  Oude transfers blijven ongewijzigd als historie, met beschermde financiële velden.
+  Nieuwe bankboekingen wijzigen alleen hun eigen rekening; categoriseren nooit saldi.
+- Databaseschema 8 met veiligheidskopie vóór migratie van schema's 1–7. Bestaande
+  bankboekingen, transferbeslissingen en categorienamen worden niet herschreven.
+  Beide talen en tests uitgebreid voor sparen, opnames, splitsingen, prognoses,
+  eigenaarfilters, jaargrenzen en compatibel back-up/herstel.
+
 ## 0.1.10
 
 - Automatische koppeling van vaste posten bij bankimport respecteert nu de ingestelde

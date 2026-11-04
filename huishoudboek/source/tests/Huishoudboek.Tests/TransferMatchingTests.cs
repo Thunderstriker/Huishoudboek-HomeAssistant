@@ -66,7 +66,7 @@ public sealed class TransferMatchingTests
         Assert.Equal(500m, DetailedReporting.Year(data, 2026, MonthEnd).Savings);
 
         TransferMatching.Remove(data, Assert.Single(data.TransferMatches).Id);
-        Assert.Equal(before, Finance.Report(data, 2026, 11, MonthEnd) with { Categories = before.Categories });
+        Assert.Equal(before, Finance.Report(data, 2026, 11, MonthEnd) with { Categories = before.Categories, SavingsCategories = before.SavingsCategories });
         Assert.Equal(original, JsonSerializer.Serialize(data.Transactions));
     }
 
@@ -353,9 +353,9 @@ public sealed class TransferMatchingTests
         Assert.Equal(originalBytes, File.ReadAllBytes(files.Database));
         Assert.Throws<InvalidDataException>(() => new SqliteHouseholdStore(files.Database, allowCreate: false, allowUpgrade: false));
         var upgraded = new SqliteHouseholdStore(files.Database, allowCreate: false, allowUpgrade: true);
-        Assert.Equal(7L, ReadVersion(files.Database));
+        Assert.Equal(8L, ReadVersion(files.Database));
         Assert.Empty(upgraded.Load().TransferMatches);
-        var safety = Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-7-*.db"));
+        var safety = Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-8-*.db"));
         Assert.Equal((long)version, ReadVersion(safety));
         Assert.Equal(data.Transactions.Select(t => t.Amount), SqliteHouseholdStore.ReadBackup(safety).Transactions.Select(t => t.Amount));
         Confirm(imported);
@@ -372,7 +372,7 @@ public sealed class TransferMatchingTests
         var original = File.ReadAllBytes(files.Database);
         Assert.Throws<InvalidDataException>(() => new SqliteHouseholdStore(files.Database, allowCreate: false, allowUpgrade: true));
         Assert.Equal(original, File.ReadAllBytes(files.Database));
-        Assert.Empty(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-7-*.db"));
+        Assert.Empty(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-8-*.db"));
     }
 
     [Theory]
@@ -390,7 +390,7 @@ public sealed class TransferMatchingTests
     }
 
     [Fact]
-    public async Task WorkspaceRendersOriginalEntriesAndTransactionLabelsReflectConfirmedPairs()
+    public async Task RetiredWorkspaceHasNoMatchingActionsAndPreservesExistingHistory()
     {
         var data = CreateData();
         // Keep this rendering test independent of the host's current month/year.
@@ -399,13 +399,14 @@ public sealed class TransferMatchingTests
         data.Transactions[0].Date = today;
         data.Transactions[1].Date = today;
         var proposedHtml = await RenderAsync<Transfers>(data);
-        Assert.Contains("Transfer bevestigen", proposedHtml);
-        Assert.Contains("Naar BE00 0000 0000 02", proposedHtml);
-        Assert.Contains("Ontvangst", proposedHtml);
-        Assert.Contains("Handmatig twee bestaande boekingen koppelen", proposedHtml);
+        Assert.Contains("Transfers koppelen is vervangen door categorie", System.Net.WebUtility.HtmlDecode(proposedHtml));
+        Assert.Contains("categoriseren", proposedHtml);
+        Assert.DoesNotContain("Transfer bevestigen", proposedHtml);
+        Assert.DoesNotContain("Handmatig twee bestaande boekingen koppelen", proposedHtml);
         TransferMatching.Confirm(data, data.Transactions[0].Id, data.Transactions[1].Id, today);
         var confirmedHtml = await RenderAsync<Transfers>(data);
-        Assert.Contains("Geen mogelijke paren", confirmedHtml);
+        Assert.Contains("Naar BE00 0000 0000 02", confirmedHtml);
+        Assert.Contains("Ontvangst", confirmedHtml);
         Assert.DoesNotContain("Transfer bevestigen", confirmedHtml);
         var transactionsHtml = await RenderAsync<Transactions>(data);
         Assert.Contains("Gekoppelde transfer", transactionsHtml);
@@ -465,13 +466,13 @@ public sealed class TransferMatchingTests
         Assert.Single(coordinator.Read().Data.TransferMatches);
         var replacement = JsonSerializer.Deserialize<HouseholdData>(JsonSerializer.Serialize(saved.Data))!;
         Assert.Single(coordinator.Replace(saved.Revision, replacement).Data.TransferMatches);
-        Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-7-*.db"));
+        Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-8-*.db"));
     }
 
     private static void CreatePreviousDatabase(string path, HouseholdData data, int version)
     {
         new SqliteHouseholdStore(path).Save(data);
-        var sql = "DROP TABLE [AccountReview]; DROP TABLE [TransactionAllocation]; DROP TABLE [ReimbursementClaim]; DROP TABLE [TransferMatch]; ALTER TABLE [Account] DROP COLUMN [MinimumCashBuffer];" +
+        var sql = "ALTER TABLE [Category] DROP COLUMN [Purpose]; DROP TABLE [AccountReview]; DROP TABLE [TransactionAllocation]; DROP TABLE [ReimbursementClaim]; DROP TABLE [TransferMatch]; ALTER TABLE [Account] DROP COLUMN [MinimumCashBuffer];" +
             "ALTER TABLE [Transaction] DROP COLUMN [RecurringOccurrenceDate];" +
             "ALTER TABLE [RecurringPayment] DROP COLUMN [Frequency];" +
             "ALTER TABLE [RecurringPayment] DROP COLUMN [MatchTolerance];" +

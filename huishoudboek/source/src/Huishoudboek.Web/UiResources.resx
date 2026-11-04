@@ -57,7 +57,7 @@
   <data name="Income" xml:space="preserve"><value>Inkomsten</value></data>
   <data name="Outflow" xml:space="preserve"><value>Lasten</value></data>
   <data name="Savings" xml:space="preserve"><value>Opzijgezet</value></data>
-  <data name="Available" xml:space="preserve"><value>Over</value></data>
+  <data name="Available" xml:space="preserve"><value>Na sparen</value></data>
   <data name="Category" xml:space="preserve"><value>Categorie</value></data>
   <data name="Budget" xml:space="preserve"><value>Budget</value></data>
   <data name="Spent" xml:space="preserve"><value>Uitgegeven</value></data>
@@ -91,7 +91,7 @@
   <data name="OutflowHousing" xml:space="preserve"><value>Uitgaven &amp; woonlasten</value></data>
   <data name="IncludesPrincipal" xml:space="preserve"><value>Inclusief hypotheekaflossing</value></data>
   <data name="NetSavingsInvestments" xml:space="preserve"><value>Netto naar sparen &amp; beleggen</value></data>
-  <data name="AvailableThisMonth" xml:space="preserve"><value>Over deze maand</value></data>
+  <data name="AvailableThisMonth" xml:space="preserve"><value>Maandresultaat na sparen</value></data>
   <data name="AvailableNote" xml:space="preserve"><value>Inkomsten − lasten − opzijgezet; geen rekeningsaldo</value></data>
   <data name="ImportedTransfersQuestion" xml:space="preserve"><value>Bankboekingen tussen eigen rekeningen geïmporteerd?</value></data>
   <data name="CheckMatchTransfers" xml:space="preserve"><value>Controleer en koppel transfers</value></data>
@@ -102,14 +102,14 @@
   <data name="MonthEndForecast" xml:space="preserve"><value>Prognose einde maand · schatting</value></data>
   <data name="ExpectedIncome" xml:space="preserve"><value>Verwachte inkomsten</value></data>
   <data name="ExpectedOutflow" xml:space="preserve"><value>Verwachte lasten</value></data>
-  <data name="ExpectedAvailable" xml:space="preserve"><value>Naar verwachting over</value></data>
+  <data name="ExpectedAvailable" xml:space="preserve"><value>Verwacht na sparen</value></data>
   <data name="ProjectedCurrentBalance" xml:space="preserve"><value>Verwacht eindsaldo betaalrekeningen</value></data>
   <data name="CurrentBalance" xml:space="preserve"><value>Saldo betaalrekeningen</value></data>
   <data name="SavingsBuffer" xml:space="preserve"><value>Spaarbuffer</value></data>
   <data name="NetWorthExcludingHome" xml:space="preserve"><value>Nettovermogen excl. woning</value></data>
   <data name="NetWorthNote" xml:space="preserve"><value>Saldi + effecten − hypotheekschuld</value></data>
   <data name="WelcomeAddAccounts" xml:space="preserve"><value>Welkom! Voeg eerst eigenaren en rekeningen toe.</value></data>
-  <data name="SpentMoreThanReceived" xml:space="preserve"><value>Meer uitgegeven en opzijgezet dan ontvangen</value></data>
+  <data name="SpentMoreThanReceived" xml:space="preserve"><value>Meer uitgegeven dan ontvangen</value></data>
   <data name="CategoryOverBudget" xml:space="preserve"><value>Let op: categoriebudget overschreden</value></data>
   <data name="ExpectedShortfall" xml:space="preserve"><value>Let op: verwacht tekort einde maand</value></data>
   <data name="SetBudgetsNote" xml:space="preserve"><value>Stel budgetten in om overschrijdingen te herkennen</value></data>
@@ -121,7 +121,7 @@
   <data name="LargestPayments" xml:space="preserve"><value>Grootste betalingen: {0}.</value></data>
   <data name="ForecastCalculationNote" xml:space="preserve"><value>Schatting: geboekte bedragen + nog niet gekoppelde vaste posten + {0} extra variabele uitgaven op basis van het daggemiddelde.</value></data>
   <data name="OverdueForecastNote" xml:space="preserve"><value>{0} vervallen vaste post(en) nog niet gekoppeld; controleer op dubbeltelling.</value></data>
-  <data name="NoSavingsForecast" xml:space="preserve"><value>Geen automatische prognose van toekomstige spaaroverboekingen.</value></data>
+  <data name="NoSavingsForecast" xml:space="preserve"><value>Alleen geregistreerde en geplande spaarbijdragen worden meegenomen; geen automatische extrapolatie.</value></data>
   <data name="LimitedHistoryNote" xml:space="preserve"><value>Weinig gegevens: de prognose is beperkt betrouwbaar.</value></data>
   <data name="CashForecastNote" xml:space="preserve"><value>Het verwachte eindsaldo van betaalrekeningen gebruikt de dagelijkse cashprognose met maximaal 90 dagen uitgavenhistorie; dit is een andere schatting dan het maandresultaat.</value></data>
   <data name="DistantForecastNote" xml:space="preserve"><value>Verre toekomstige maand: het verwachte saldo begint bij de saldi van vandaag, zonder tussenliggende maanden.</value></data>
@@ -149,7 +149,7 @@
   <data name="CategoryDefaultBudget" xml:space="preserve"><value>Categorie / standaardbudget</value></data>
   <data name="BudgetThisMonth" xml:space="preserve"><value>Budget deze maand</value></data>
   <data name="DefaultBudgetNote" xml:space="preserve"><value>Standaardbudgetten gelden maandelijks. Een afwijkend maandbudget verandert andere maanden niet. Budget 0 = geen limiet. Budgetten blijven voor het hele huishouden bij een eigenaarfilter.</value></data>
-  <data name="AnnualActualNote" xml:space="preserve"><value>Alleen boekingen t/m vandaag. Toekomstige maanden zijn niet getekend. Over = inkomsten min lasten en opzijgezet; geen rekeningsaldo.</value></data>
+  <data name="AnnualActualNote" xml:space="preserve"><value>Alleen boekingen t/m vandaag. Toekomstige maanden zijn niet getekend. Na sparen = inkomsten min uitgaven en opzijgezet; geen rekeningsaldo.</value></data>
   <data name="ViewMonthlyAmounts" xml:space="preserve"><value>Maandbedragen bekijken</value></data>
   <data name="ViewAnnualBudgets" xml:space="preserve"><value>Categorieën en jaarbudgetten bekijken</value></data>
   <data name="AnnualBudgetNote" xml:space="preserve"><value>Jaarbudgetten beslaan 12 maanden, niet alleen de periode tot vandaag. Budgetten zijn huishoudbudgetten, ook met eigenaarfilter. Budget 0 = geen limiet.</value></data>
@@ -164,7 +164,7 @@
   <data name="StatementBalance" xml:space="preserve"><value>Banksaldo importrekening</value></data>
   <data name="Planned" xml:space="preserve"><value>Gepland</value></data>
   <data name="NoTransactions" xml:space="preserve"><value>Geen transacties binnen deze filters.</value></data>
-  <data name="PlannedTransactionsNote" xml:space="preserve"><value>Toekomstige transacties zijn gepland: ze tellen pas op hun datum als werkelijk. Handmatige en bevestigde gekoppelde overboekingen zijn geen inkomsten of uitgaven. Twee bankboekingen koppelen verandert geen saldi.</value></data>
+  <data name="PlannedTransactionsNote" xml:space="preserve"><value>Toekomstige transacties tellen pas op hun datum als werkelijk. De categorie bepaalt of iets een gewone inkomst/uitgave, sparen of een beweging tussen eigen rekeningen is. Categoriseren verandert nooit saldi. Eerder vastgelegde transfers behouden hun oorspronkelijke verwerking.</value></data>
   <data name="ManualTransfer" xml:space="preserve"><value>Handmatige overboeking</value></data>
   <data name="LinkedTransfer" xml:space="preserve"><value>Gekoppelde transfer</value></data>
   <data name="IncomeSingle" xml:space="preserve"><value>Inkomst</value></data>
@@ -191,7 +191,7 @@
   <data name="AutomaticCategorization" xml:space="preserve"><value>Automatische categorisatie</value></data>
   <data name="Rule" xml:space="preserve"><value>Regel</value></data>
   <data name="ApplyExistingTransactions" xml:space="preserve"><value>Toepassen op bestaande transacties</value></data>
-  <data name="RulesOrderNote" xml:space="preserve"><value>Regels worden uitgevoerd in toevoegvolgorde; de eerste passende regel wint. Bestaande categorieën blijven behouden. Transfers vallen buiten tekstregels. Herkenning kan ook vaste posten koppelen.</value></data>
+  <data name="RulesOrderNote" xml:space="preserve"><value>Regels worden uitgevoerd in toevoegvolgorde; de eerste passende regel wint. Bestaande categorieën blijven behouden. Ook spaarcategorieën en eigen rekeningbewegingen kunnen een regel gebruiken. Alleen oude transfers en expliciete splitsingen worden overgeslagen. Herkenning kan ook vaste posten koppelen.</value></data>
   <data name="Order" xml:space="preserve"><value>Volgorde</value></data>
   <data name="DescriptionContains" xml:space="preserve"><value>Omschrijving bevat</value></data>
   <data name="RestoreDatabaseQuestion" xml:space="preserve"><value>Deze database vervangt de hele gedeelde administratie. Het bronbestand blijft ongewijzigd. De huidige gegevens worden eerst als veiligheidskopie bewaard. Niet opgeslagen wijzigingen en importvoorbeelden worden ongeldig. Doorgaan?</value></data>
@@ -210,7 +210,7 @@
   <data name="ActualExpected" xml:space="preserve"><value>Werkelijk en verwacht</value></data>
   <data name="NoMonthlyAmounts" xml:space="preserve"><value>Nog geen bedragen om te tonen in deze maand.</value></data>
   <data name="MonthlyForecastChart" xml:space="preserve"><value>Werkelijke inkomsten, lasten en over vergeleken met de maandprognose. Exacte bedragen staan in de samenvattingen op deze pagina.</value></data>
-  <data name="ForecastChartNote" xml:space="preserve"><value>Prognose = schatting einde maand. Over = inkomsten min lasten en netto opzijgezet; geen rekeningsaldo.</value></data>
+  <data name="ForecastChartNote" xml:space="preserve"><value>Prognose = schatting einde maand. Na sparen = inkomsten min uitgaven en netto opzijgezet; geen rekeningsaldo.</value></data>
   <data name="OtherCategories" xml:space="preserve"><value>Overige categorieën</value></data>
   <data name="Actual" xml:space="preserve"><value>Werkelijk</value></data>
   <data name="Forecast" xml:space="preserve"><value>Prognose</value></data>
@@ -351,13 +351,13 @@
   <data name="BufferEuro" xml:space="preserve"><value>Minimale cashbuffer (€)</value></data>
   <data name="RenameCategory" xml:space="preserve"><value>Categorie hernoemen</value></data>
   <data name="RenameCategoryNote" xml:space="preserve"><value>Alleen de naam verandert, overal in de administratie. Koppelingen en budgetten blijven behouden.</value></data>
-  <data name="CategoryEditorNote" xml:space="preserve"><value>Standaardbudget geldt maandelijks. 0 betekent geen limiet ingesteld.</value></data>
+  <data name="CategoryEditorNote" xml:space="preserve"><value>Kies hoe deze categorie meetelt. Gewoon: inkomsten/uitgaven. Sparen: apart opzijgezet, alleen gemeten op betaalrekeningen. Tussen eigen rekeningen: geen inkomsten/uitgaven. Bedrag = maandbudget of spaardoel; 0 = niet ingesteld. Wijzigen geldt ook voor alle eerdere boekingen in deze categorie; saldi blijven gelijk.</value></data>
   <data name="DefaultMonthlyBudgetEuro" xml:space="preserve"><value>Standaard maandbudget (€)</value></data>
   <data name="MonthlyBudgetTitle" xml:space="preserve"><value>Maandbudget · {0} · {1}</value></data>
-  <data name="MonthlyBudgetEditorNote" xml:space="preserve"><value>Alleen deze maand wordt aangepast. Andere maanden en het standaardbudget blijven gelijk. 0 = geen limiet.</value></data>
+  <data name="MonthlyBudgetEditorNote" xml:space="preserve"><value>Alleen deze maand wordt aangepast. Andere maanden en het standaardbedrag blijven gelijk. Bij sparen is dit een doel, geen uitgavenlimiet. 0 = niet ingesteld.</value></data>
   <data name="BudgetEuro" xml:space="preserve"><value>Budget (€)</value></data>
-  <data name="TransactionEditorNote" xml:space="preserve"><value>Inkomsten positief; uitgaven, hypotheek en overboekingen negatief. Een transfer wordt één keer opgeslagen en werkt beide rekeningen bij. Bij hypotheek: alleen werkelijke aflossing invullen; onbekend = 0. De volledige betaling is een cashlast.</value></data>
-  <data name="TransactionTransferNote" xml:space="preserve"><value>Deze boeking heeft een transferbeslissing. Wijzigen van bedrag, datum, rekening, type of vaste-postkoppeling verwijdert die beslissing. Gebruik Transfers koppelen voor twee geïmporteerde boekingen; omzetting naar een handmatige transfer kan de andere rekening dubbel bijwerken.</value></data>
+  <data name="TransactionEditorNote" xml:space="preserve"><value>Ontvangsten positief; afboekingen negatief. Nieuwe boekingen wijzigen alleen de gekozen rekening. Gebruik een spaarcategorie of eigen rekeningbeweging voor de rapportage, zonder koppeling aan een tweede boeking. Bij hypotheek: alleen werkelijke aflossing invullen; onbekend = 0.</value></data>
+  <data name="TransactionTransferNote" xml:space="preserve"><value>Deze boeking heeft een historische transferbeslissing. Die blijft behouden; de categorie is hier alleen een label.</value></data>
   <data name="TransactionAccount" xml:space="preserve"><value>Rekening (bij overboeking: VAN)</value></data>
   <data name="OriginalDescription" xml:space="preserve"><value>Oorspronkelijke omschrijving</value></data>
   <data name="OwnDescriptionOptional" xml:space="preserve"><value>Eigen omschrijving (optioneel)</value></data>
@@ -497,10 +497,10 @@ Deze boeking vervangt alleen deze geplande betaling. Controleer dat het dezelfde
   <data name="ClearFilters" xml:space="preserve"><value>Filters wissen</value></data>
   <data name="Import" xml:space="preserve"><value>Import</value></data>
   <data name="AllImports" xml:space="preserve"><value>Alle imports</value></data>
-  <data name="IncludeInternalTransfers" xml:space="preserve"><value>Interne overboekingen ook tonen</value></data>
+  <data name="IncludeInternalTransfers" xml:space="preserve"><value>Historische transfers ook tonen (alleen labels)</value></data>
   <data name="CategoryGroups" xml:space="preserve"><value>Categoriegroepen</value></data>
   <data name="DeleteCategory" xml:space="preserve"><value>Categorie verwijderen</value></data>
-  <data name="ReviewTotalsNote" xml:space="preserve"><value>{0} betalingen · inkomsten {1} · uitgaand {2}. Inclusief geplande boekingen, exclusief transfers; geen uitsluitend werkelijke rapporttotalen.</value></data>
+  <data name="ReviewTotalsNote" xml:space="preserve"><value>{0} betalingen · inkomsten {1} · uitgaven {2}. Inclusief geplande boekingen, exclusief sparen en eigen rekeningbewegingen; geen uitsluitend werkelijke rapporttotalen.</value></data>
   <data name="PlannedFuturePayment" xml:space="preserve"><value>Geplande toekomstige betaling</value></data>
   <data name="WalkRemainingNote" xml:space="preserve"><value>{0} resterend in deze ronde. Overslaan verandert niets en de betaling komt in een nieuwe ronde terug.</value></data>
   <data name="WalkCompleteNote" xml:space="preserve"><value>Deze ronde is voltooid. Overgeslagen betalingen zijn niet gewijzigd.</value></data>
@@ -525,7 +525,7 @@ Deze boeking vervangt alleen deze geplande betaling. Controleer dat het dezelfde
   <data name="DeleteCategoryQuestion" xml:space="preserve"><value>Categorie ‘{0}’ verwijderen in de HELE administratie?
 {1} transacties en {2} vaste posten blijven bestaan en worden Zonder categorie.
 {3} regels, {4} maandbudgetten en standaardbudget {5} worden verwijderd.
-Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden. Geen directe undo; maak zo nodig eerst een back-up.</value></data>
+Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden. De verwerking als sparen/eigen rekeningbeweging vervalt ook voor eerdere boekingen; rapporten veranderen. Geen directe undo; maak zo nodig eerst een back-up.</value></data>
   <data name="ImportAccountNote" xml:space="preserve"><value>Elke import boekt alleen op de gekozen rekening, met het bedrag uit het bestand. Andere rekeningen worden niet automatisch gekoppeld of aangepast; importeer voor elke rekening het eigen bestand. Er is geen dubbelfilter: hetzelfde afschrift opnieuw importeren voegt de boekingen opnieuw toe. Controleer valuta, rekening en openingsdatum. Er wordt pas na expliciete bevestiging opgeslagen.</value></data>
   <data name="AfterImportBothAccounts" xml:space="preserve"><value>Na import van beide rekeningen kunt u</value></data>
   <data name="ImportTransferReportingNote" xml:space="preserve"><value>voor rapportage, zonder extra boekingen of saldoaanpassingen.</value></data>
@@ -650,4 +650,40 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="ExpandTransaction" xml:space="preserve"><value>Details en acties uitklappen</value></data>
   <data name="ReadyMadeBankProfiles" xml:space="preserve"><value>Kant-en-klare bankprofielen</value></data>
   <data name="BankProfilesNote" xml:space="preserve"><value>ING (NL), Rabobank en KBC/CBC: profielen voor CSV-exports met kolomkoppen. Argenta en het bestaande banktemplate blijven automatisch herkenbaar. Exportvarianten kunnen afwijken; controleer kolommen, betaalrichting en bedragen altijd in het voorbeeld. Alleen EUR.</value></data>
+  <data name="CountsAs" xml:space="preserve"><value>Telt als</value></data>
+  <data name="NormalPurpose" xml:space="preserve"><value>Gewone inkomsten &amp; uitgaven</value></data>
+  <data name="SavingsPurpose" xml:space="preserve"><value>Sparen &amp; beleggen</value></data>
+  <data name="OwnAccountPurpose" xml:space="preserve"><value>Tussen eigen rekeningen</value></data>
+  <data name="CategorySettings" xml:space="preserve"><value>Categorie instellen</value></data>
+  <data name="CategoryPurposeHelp" xml:space="preserve"><value>Geef spaargeld een categorie die telt als ‘Sparen &amp; beleggen’. Verplaatsingen tussen betaalrekeningen tellen als ‘Tussen eigen rekeningen’. Gebruik dezelfde verwerking voor beide zijden als u beide rekeningen importeert. Twee boekingen koppelen is niet nodig; categoriseren verandert geen saldi.</value></data>
+  <data name="SavingsCountingNote" xml:space="preserve"><value>Netto opzijgezet = afboekingen min terugontvangsten in spaarcategorieën op betaalrekeningen, op de eigen bankdatum. De spaar-/beleggingszijde telt niet nogmaals mee. Een opname verlaagt opzijgezet, niet inkomsten. Dit is geen saldo of rendement. Het eigenaarfilter volgt de betaalrekening.</value></data>
+  <data name="OwnAccountCountingNote" xml:space="preserve"><value>Deze categorieën tellen niet als inkomsten, uitgaven of opzijgezet. Geef beide zijden deze verwerking bij verplaatsingen tussen eigen betaalrekeningen of tussen spaar-/beleggingsrekeningen. De bankbedragen blijven wel meetellen in hun eigen rekeningsaldo.</value></data>
+  <data name="CategoryHistoryNote" xml:space="preserve"><value>‘Telt als’ wijzigen of een categorie verwijderen verandert ook historische rapporten, nooit bankbedragen of saldi.</value></data>
+  <data name="BeforeSavings" xml:space="preserve"><value>Inkomsten min uitgaven</value></data>
+  <data name="BeforeSavingsNote" xml:space="preserve"><value>Maandoverschot vóór sparen</value></data>
+  <data name="SavingsAboveSurplus" xml:space="preserve"><value>Meer opzijgezet dan het maandoverschot</value></data>
+  <data name="SpendingBelowIncome" xml:space="preserve"><value>U gaf {0} minder uit dan u ontving.</value></data>
+  <data name="SpendingAboveIncome" xml:space="preserve"><value>U gaf {0} meer uit dan u ontving.</value></data>
+  <data name="PutAsideSummary" xml:space="preserve"><value>Netto opzijgezet: {0}.</value></data>
+  <data name="WithdrawnSummary" xml:space="preserve"><value>Netto teruggehaald uit sparen/beleggen: {0}.</value></data>
+  <data name="SavingsAboveSurplusAmount" xml:space="preserve"><value>Na sparen is het maandresultaat {0} negatief. Dat is geen extra uitgave; controleer wel uw betaalrekeningsaldo.</value></data>
+  <data name="PutAsideSeparately" xml:space="preserve"><value>Apart opzijgezet</value></data>
+  <data name="NetPutAside" xml:space="preserve"><value>Netto opzijgezet</value></data>
+  <data name="MonthlyTarget" xml:space="preserve"><value>Doel deze maand</value></data>
+  <data name="DefaultTarget" xml:space="preserve"><value>Standaarddoel</value></data>
+  <data name="TargetThisMonth" xml:space="preserve"><value>Doel deze maand</value></data>
+  <data name="SavingsTargetEuro" xml:space="preserve"><value>Spaardoel (€)</value></data>
+  <data name="DefaultMonthlyTargetEuro" xml:space="preserve"><value>Standaard spaardoel per maand (€)</value></data>
+  <data name="SavingsTargetReached" xml:space="preserve"><value>Doel bereikt</value></data>
+  <data name="SavingsStillToTarget" xml:space="preserve"><value>Nog {0} tot doel</value></data>
+  <data name="Progress" xml:space="preserve"><value>Voortgang</value></data>
+  <data name="NoSavingsCategories" xml:space="preserve"><value>Stel een categorie in als sparen om bijdragen apart te tonen.</value></data>
+  <data name="LegacyContributions" xml:space="preserve"><value>Eerder vastgelegde overboekingen</value></data>
+  <data name="LegacyTransfer" xml:space="preserve"><value>Historische overboeking</value></data>
+  <data name="LegacyTransferHistory" xml:space="preserve"><value>Historische overboekingen</value></data>
+  <data name="LegacyTransferNote" xml:space="preserve"><value>Eerder vastgelegde handmatige transfers en bevestigde koppelingen behouden hun oorspronkelijke saldo- en rapportagewerking, inclusief hun oude datum- en eigenaarverwerking. Er worden geen bankboekingen herschreven. Nieuwe betalingen gebruiken categorieën.</value></data>
+  <data name="LegacyTransferEditorNote" xml:space="preserve"><value>Historische overboeking: bankbedrag, datum, rekeningen en koppelingen zijn hier vergrendeld om bestaande saldi en rapporten te beschermen. Omschrijvingen en categorielabel blijven bewerkbaar. Nieuwe boekingen gebruiken categorieën, niet dit oude type.</value></data>
+  <data name="TransferWorkflowRetired" xml:space="preserve"><value>Transfers koppelen is vervangen door categorieën. Kies ‘Sparen &amp; beleggen’ of ‘Tussen eigen rekeningen’ bij de categorie-instellingen en categoriseer de bankboekingen. Een tweede geïmporteerde zijde is niet nodig om sparen op uw betaalrekening te tonen.</value></data>
+  <data name="LegacyManualEntriesNote" xml:space="preserve"><value>Oude handmatige overboekingen blijven herkenbaar in de transactielijst.</value></data>
+  <data name="UseCategoryPurposes" xml:space="preserve"><value>Gebruik een spaarcategorie of eigen rekeningbeweging; nieuwe handmatige transfers zijn niet meer beschikbaar.</value></data>
 </root>

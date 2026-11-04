@@ -49,7 +49,7 @@ public static class Validation
             Require(Money(a.OpeningBalance) && (a.SavingsGoal == null || Money(a.SavingsGoal.Value)), "Rekeningsaldi en doelen hebben maximaal twee decimalen.");
             Require(a.MinimumCashBuffer >= 0 && Money(a.MinimumCashBuffer), "De minimale cashbuffer moet niet-negatief zijn en heeft maximaal twee decimalen.");
         }
-        Require(data.Categories.All(c => !string.IsNullOrWhiteSpace(c.Name) && c.MonthlyBudget >= 0 && Money(c.MonthlyBudget)), "Ongeldige categorie of budget (maximaal twee decimalen).");
+        Require(data.Categories.All(c => !string.IsNullOrWhiteSpace(c.Name) && c.MonthlyBudget >= 0 && Money(c.MonthlyBudget) && Enum.IsDefined(c.Purpose)), "Ongeldige categorie, verwerking of budget (maximaal twee decimalen).");
         foreach (var t in data.Transactions)
         {
             Require(accounts.Contains(t.AccountId) && !string.IsNullOrWhiteSpace(t.Description), "Transactie mist een rekening of omschrijving.");
@@ -64,6 +64,8 @@ public static class Validation
             Require(Money(t.PrincipalComponent) && (t.StatementBalance == null || Money(t.StatementBalance.Value)), "Aflossing en banksaldo hebben maximaal twee decimalen.");
             Require(t.Kind == TransactionKind.Mortgage || t.PrincipalComponent == 0, "Aflossing hoort alleen bij een hypotheekbetaling.");
             Require(t.Kind != TransactionKind.Mortgage || t.Amount < 0 && data.Mortgage != null, "Een hypotheekbetaling vereist een hypotheek en een negatief bedrag.");
+            Require(t.Kind != TransactionKind.Mortgage || t.CategoryId == null || data.Categories.Any(c => c.Id == t.CategoryId && c.Purpose == CategoryPurpose.Normal),
+                "Een hypotheekbetaling hoort bij een gewone uitgavencategorie.");
             if (t.Kind == TransactionKind.Transfer)
             {
                 Require(t.Amount < 0 && t.CounterAccountId != null && accounts.Contains(t.CounterAccountId.Value) && t.CounterAccountId != t.AccountId,
@@ -111,6 +113,8 @@ public static class Validation
                 "Kies een geldige frequentie, niet-negatieve bedragmarge en een datummarge van 0–31 dagen.");
             Require(r.CategoryId == null || categories.Contains(r.CategoryId.Value), "Onbekende categorie bij vaste post.");
             Require(!r.IsMortgage || r.Amount < 0 && data.Mortgage != null, "Een hypotheekpost vereist een hypotheek en een negatief bedrag.");
+            Require(!r.IsMortgage || r.CategoryId == null || data.Categories.Any(c => c.Id == r.CategoryId && c.Purpose == CategoryPurpose.Normal),
+                "Een hypotheekpost hoort bij een gewone uitgavencategorie.");
         }
         Require(data.BudgetOverrides.All(b => categories.Contains(b.CategoryId) && b.Year is >= 1900 and <= 2200 && b.Month is >= 1 and <= 12 && b.Amount >= 0 && Money(b.Amount)), "Ongeldig maandbudget.");
         Require(data.BudgetOverrides.Select(b => (b.CategoryId, b.Year, b.Month)).Distinct().Count() == data.BudgetOverrides.Count, "Dubbel maandbudget.");

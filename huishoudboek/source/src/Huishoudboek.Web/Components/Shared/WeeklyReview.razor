@@ -4,7 +4,6 @@
     var stale = accounts.Count(a => FirstWeek.ImportedThrough(State.Data, a.Id, State.Today) is not { } date || date < State.Today.AddDays(-7));
     var uncheckedBalances = accounts.Count(a => !FirstWeek.BalanceChecked(State.Data, a, State.Today));
     var uncategorized = FirstWeek.UncategorizedCount(State.Data, State.Today, State.Scope);
-    var transfers = TransferMatching.Candidates(State.Data, State.Today).Count(c => State.Scope.Contains(c.Debit.AccountId) || State.Scope.Contains(c.Credit.AccountId));
     var recurring = RecurringSchedule.Candidates(State.Data, State.Today).Select(c => c.Transaction).Where(t => State.Scope.Contains(t.AccountId)).DistinctBy(t => t.Id).Count();
     var bills = FirstWeek.Upcoming(State.Data, State.Today, State.Scope);
 }
@@ -16,7 +15,6 @@
             <li><a href="importeren">@L["WeeklyImport"]</a><span class="badge">@L[stale == 0 ? "WeeklyImportsCurrent" : "WeeklyImportsStale", stale]</span></li>
             <li><strong>@L["WeeklyExceptions"]</strong><div class="actions">
                 <a href="categoriseren">@L["WeeklyUncategorized", uncategorized]</a>
-                <a href="overboekingen">@L["WeeklyTransfers", transfers]</a>
                 <a href="vaste-posten">@L["WeeklyRecurring", recurring]</a>
                 <a href="rekeningen#balance-checks">@L["WeeklyBalances", uncheckedBalances]</a>
             </div></li>

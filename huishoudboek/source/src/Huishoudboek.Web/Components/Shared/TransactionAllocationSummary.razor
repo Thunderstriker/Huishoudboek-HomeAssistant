@@ -4,12 +4,18 @@
     @foreach (var line in TransactionAccounting.Lines(State.Data, new[] { Transaction }))
     {
         <small>@State.CategoryName(line.CategoryId) · @WebState.Money(line.Amount)
+            @if (line.Purpose != CategoryPurpose.Normal) { <span class="badge">@EditorDraft.PurposeLabel(line.Purpose)</span> }
             @if (line.Treatment != AllocationTreatment.Ordinary) { <span class="badge">@L[line.Treatment == AllocationTreatment.Refund ? "Refund" : "Reimbursement"]</span> }
             @if (line.Note.Length > 0) { <span> · @line.Note</span> }
         </small>
     }
 }
-else { @State.CategoryName(Transaction.CategoryId) }
+else
+{
+    @State.CategoryName(Transaction.CategoryId)
+    @if (State.Data.Categories.FirstOrDefault(c => c.Id == Transaction.CategoryId) is { Purpose: not CategoryPurpose.Normal } category)
+    { <span class="badge">@EditorDraft.PurposeLabel(category.Purpose)</span> }
+}
 @code {
     [Parameter, EditorRequired] public Transaction Transaction { get; set; } = null!;
 }

@@ -45,8 +45,12 @@ public static class CashFlow
     {
         var warnings = new List<string>();
         var events = new List<CashFlowEvent>();
+        // Classification changes reporting, never cash. Only the ordinary expense part
+        // of a bank debit belongs in the everyday-spending estimate.
+        var spending = TransactionAccounting.Lines(data, data.Transactions.Where(t => t.Amount < 0))
+            .GroupBy(l => l.Transaction.Id).ToDictionary(g => g.Key, g => Math.Max(0, g.Sum(l => l.Spending)));
         bool Variable(Transaction t) => t.Amount < 0 && t.Kind == TransactionKind.Normal &&
-            t.RecurringPaymentId == null && !transfers.Contains(t.Id);
+            t.RecurringPaymentId == null && !transfers.Contains(t.Id) && spending.GetValueOrDefault(t.Id) > 0;
         foreach (var t in data.Transactions.Where(t => t.Date > today && t.Date <= searchEnd))
         {
             var effect = Finance.AccountEffect(t, account.Id);
@@ -74,7 +78,9 @@ public static class CashFlow
         var incomeIds = TransactionAccounting.Lines(data, data.Transactions.Where(t => t.Date > today && t.Date <= searchEnd))
             .Where(l => l.Income > 0).Select(l => l.Transaction.Id).ToHashSet();
         var nextIncome = events.Where(e => e.Amount > 0 && (e.TransactionId == null ||
-            incomeIds.Contains(e.TransactionId.Value)))
+            incomeIds.Contains(e.TransactionId.Value)) && (e.RecurringPaymentId == null ||
+            data.RecurringPayments.Any(r => r.Id == e.RecurringPaymentId &&
+                (r.CategoryId == null || data.Categories.Any(c => c.Id == r.CategoryId && c.Purpose == CategoryPurpose.Normal)))))
             .Select(e => (DateOnly?)e.Date).Min();
         var until = nextIncome ?? today.AddDays(minimumDays);
         var end = until > today.AddDays(minimumDays) ? until : today.AddDays(minimumDays);
@@ -95,7 +101,7 @@ public static class CashFlow
         if (historyStart < account.OpeningDate) historyStart = account.OpeningDate;
         var history = data.Transactions.Where(t => t.AccountId == account.Id && t.Date >= historyStart && t.Date <= historyEnd && Variable(t)).ToList();
         var observedDays = historyEnd.DayNumber - historyStart.DayNumber + 1;
-        var dailyVariable = observedDays > 0 ? decimal.Round(-history.Sum(t => t.Amount) / observedDays, 2, MidpointRounding.AwayFromZero) : 0;
+        var dailyVariable = observedDays > 0 ? decimal.Round(history.Sum(t => spending[t.Id]) / observedDays, 2, MidpointRounding.AwayFromZero) : 0;
         var limited = observedDays < 14 || history.Count < 3;
         if (limited) warnings.Add("Weinig variabele uitgavenhistorie: het daggemiddelde kan noodzakelijke dagelijkse kosten onderschatten.");
         if (account.MinimumCashBuffer == 0) warnings.Add("Geen minimale cashbuffer ingesteld. Stel via Buffer instellen een reserve in voor onverwachte kosten.");
@@ -114,8 +120,8 @@ public static class CashFlow
             var income = entries.Where(e => e.Amount > 0).Sum(e => e.Amount);
             var payments = -entries.Where(e => e.Amount < 0).Sum(e => e.Amount);
             // Explicit future everyday spending occupies the run-rate, rather than being counted twice.
-            var explicitVariable = -entries.Where(e => e.TransactionId is { } id && transactions[id].AccountId == account.Id && Variable(transactions[id]))
-                .Sum(e => e.Amount);
+            var explicitVariable = entries.Where(e => e.TransactionId is { } id && transactions[id].AccountId == account.Id && Variable(transactions[id]))
+                .Sum(e => spending[e.TransactionId!.Value]);
             var variable = Math.Max(0, dailyVariable - explicitVariable);
             // Conservative within-day ordering: all debits before credits, including on payday.
             var trough = balance - payments - variable;

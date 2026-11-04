@@ -36,9 +36,9 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   kant-en-klare profielen voor ING (NL), Rabobank en KBC/CBC, CSV-export en volledige databaseback-ups met herstel.
 - **Imports per rekening:** alleen de gekozen rekening wordt bijgewerkt, met de
   bedragen uit het bestand. Geen automatische koppeling tussen eigen rekeningen.
-- **Transfers koppelen:** bevestig twee bestaande bankboekingen als één interne
-  geldbeweging, zonder saldi of originele boekingen te wijzigen. Voorstellen en
-  handmatig koppelen, met omkeerbare bevestigingen en afwijzingen.
+- **Sparen zonder transfers koppelen:** kies per categorie gewone inkomsten/uitgaven,
+  sparen/beleggen of tussen eigen rekeningen. Spaarbijdragen staan apart van uitgaven
+  en budgetoverschrijdingen; bestaande transfers blijven als historie behouden.
 - **Bestaande administratie:** importeer een Huishoudboek-database (`.db`) of begin
   met een lege administratie.
 
@@ -77,17 +77,23 @@ doelapparaat. De huidige Microsoft .NET 10-container-images ondersteunen geen
 
 - Werkelijke bedragen bevatten alleen boekingen tot en met vandaag. De huidige
   maand is dus nog onvolledig; toekomstige maanden staan niet in de jaargrafiek.
-- **Over** betekent inkomsten min lasten en netto opzijgezet. Het is geen rekeningsaldo.
+- **Inkomsten min uitgaven** is het maandoverschot vóór sparen. **Maandresultaat na sparen**
+  betekent inkomsten min lasten en netto opzijgezet. Het is geen rekeningsaldo.
 - **Negatief opzijgezet** betekent dat er netto geld uit sparen of beleggen is opgenomen.
 - **Budget 0** betekent geen ingestelde limiet. Jaarbudgetten beslaan alle twaalf
   maanden, ook wanneer het jaar nog niet voorbij is.
 - Budgetten gelden voor het huishouden, ook wanneer u op een eigenaar filtert.
 - Prognoses zijn schattingen op basis van geregistreerde boekingen, vaste posten
   en het waargenomen uitgavenpatroon. Onvolledige imports kunnen het beeld vertekenen.
-- Bevestigde transferparen zijn geen inkomsten of uitgaven. Netto opzijgezet telt
-  eenmaal op de bankdatum van de betaalrekening, ook als de ontvangst in een andere
-  maand valt. Een eigenaarfilter neemt de hele spaarbijdrage mee als minstens één
-  betrokken rekening onder het filter valt, zoals bij handmatige transfers.
+- Zet bij **Budgetten & categorieën → Categorie instellen → Telt als** een categorie
+  op **Sparen & beleggen**. Netto opzijgezet telt alleen op de betaalrekening, op
+  de eigen bankdatum; een ontvangst daar verlaagt opzijgezet. Gebruik dezelfde
+  verwerking op de spaarzijde als u die ook importeert. Geen tweede boeking nodig
+  om de spaarbijdrage te tonen. **Tussen eigen rekeningen** telt nergens als inkomen,
+  uitgave of sparen. Categoriseren verandert nooit saldi.
+- Spaarbijdragen volgen bij een eigenaarfilter de betaalrekening; gedeelde rekeningen
+  tellen eenmaal. Historische handmatige transfers en bevestigde paren behouden hun
+  oorspronkelijke datum- en eigenaarverwerking, zonder herschrijven van bankboekingen.
 
 ## Gegevens en Back-ups
 

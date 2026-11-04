@@ -468,7 +468,7 @@ public sealed class CashFlowTests
         var credit = debit with { Id = Guid.NewGuid(), AccountId = other.Id, Amount = 100 };
         data.Transactions.Add(credit); TransferMatching.Confirm(data, debit.Id, credit.Id, Today);
         new SqliteHouseholdStore(files.Database).Save(data);
-        Sql(files.Database, "DROP TABLE [AccountReview]; DROP TABLE [TransactionAllocation]; DROP TABLE [ReimbursementClaim]; ALTER TABLE [Account] DROP COLUMN [MinimumCashBuffer]; ALTER TABLE [Transaction] DROP COLUMN [RecurringOccurrenceDate];" +
+        Sql(files.Database, "ALTER TABLE [Category] DROP COLUMN [Purpose]; DROP TABLE [AccountReview]; DROP TABLE [TransactionAllocation]; DROP TABLE [ReimbursementClaim]; ALTER TABLE [Account] DROP COLUMN [MinimumCashBuffer]; ALTER TABLE [Transaction] DROP COLUMN [RecurringOccurrenceDate];" +
             "ALTER TABLE [RecurringPayment] DROP COLUMN [Frequency]; ALTER TABLE [RecurringPayment] DROP COLUMN [MatchTolerance];" +
             "ALTER TABLE [RecurringPayment] DROP COLUMN [MatchWindowDays]; PRAGMA user_version=4;");
         var original = File.ReadAllBytes(files.Database);
@@ -481,7 +481,7 @@ public sealed class CashFlowTests
         Assert.Equal(5, read.RecurringPayments[0].MatchWindowDays);
         var store = new SqliteHouseholdStore(files.Database, allowCreate: false, allowUpgrade: true);
         Assert.Equal(JsonSerializer.Serialize(read), JsonSerializer.Serialize(store.Load()));
-        Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-7-*.db"));
+        Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-8-*.db"));
         Assert.Equal(3002m, Finance.Report(store.Load(), 2026, 11, Today).Income);
         Assert.Equal(3002m, Finance.Report(store.Load(), 2026, 11, Today).Forecast.Income);
     }

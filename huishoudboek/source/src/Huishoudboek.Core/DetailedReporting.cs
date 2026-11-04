@@ -13,10 +13,11 @@ public sealed record AnnualOverview(IReadOnlyList<AnnualMonth> Months, IReadOnly
     public decimal Savings => Months.Sum(m => m.Savings);
     public decimal Available => Income - Outflow - Savings;
 }
-public sealed record CategoryBudgetOverview(Guid Id, string Name, decimal DefaultBudget, decimal Budget, decimal Spent)
+public sealed record CategoryBudgetOverview(Guid Id, string Name, decimal DefaultBudget, decimal Budget, decimal Spent,
+    CategoryPurpose Purpose = CategoryPurpose.Normal)
 {
     public decimal Remaining => Budget - Spent;
-    public bool IsOverBudget => Budget > 0 && Spent > Budget;
+    public bool IsOverBudget => Purpose == CategoryPurpose.Normal && Budget > 0 && Spent > Budget;
 }
 public sealed record MortgageProjection(decimal Balance, IReadOnlyList<MortgageRow> Rows)
 {
@@ -31,7 +32,8 @@ public static class DetailedReporting
         var report = Finance.Report(data, year, month, today, scope);
         return data.Categories.Select(c => new CategoryBudgetOverview(c.Id, c.Name, c.MonthlyBudget,
             data.BudgetOverrides.FirstOrDefault(b => b.CategoryId == c.Id && b.Year == year && b.Month == month)?.Amount ?? c.MonthlyBudget,
-            report.Categories.FirstOrDefault(r => r.Id == c.Id)?.Spent ?? 0)).ToList();
+            c.Purpose == CategoryPurpose.Savings ? report.SavingsCategories.FirstOrDefault(r => r.Id == c.Id)?.Saved ?? 0 :
+                report.Categories.FirstOrDefault(r => r.Id == c.Id)?.Spent ?? 0, c.Purpose)).ToList();
     }
     public static MortgageProjection Mortgage(HouseholdData data, DateOnly today)
     {
@@ -49,19 +51,22 @@ public static class DetailedReporting
         var culture = System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
         string Money(decimal v) => v.ToString("C2", culture);
         var status = data.Accounts.Count == 0 ? "Welkom! Voeg eerst eigenaren en rekeningen toe." :
-            report.Available < 0 ? "Meer uitgegeven en opzijgezet dan ontvangen" : big.Count > 0 ? "Let op: categoriebudget overschreden" :
+            report.BeforeSavings < 0 ? "Meer uitgegeven dan ontvangen" : big.Count > 0 ? "Let op: categoriebudget overschreden" :
+            report.SavingsExceedSurplus ? "Meer opzijgezet dan het maandoverschot" :
             report.Forecast.Available < 0 ? "Let op: verwacht tekort einde maand" : report.Budget == 0 ? "Stel budgetten in om overschrijdingen te herkennen" : "Binnen de ingestelde categoriebudgetten";
         var reason = big.Count > 0 ? string.Join(" · ", big.Select(c => $"{c.Name}: {Money(c.Overspent)} boven budget")) : "Geen overschrijding bij categorieën met een ingesteld budget.";
+        reason = $"U gaf {Money(Math.Abs(report.BeforeSavings))} {(report.BeforeSavings >= 0 ? "minder" : "meer")} uit dan u ontving. " +
+            (report.Savings >= 0 ? $"Netto opzijgezet: {Money(report.Savings)}. " : $"Netto teruggehaald uit sparen/beleggen: {Money(-report.Savings)}. ") + reason;
+        if (report.SavingsExceedSurplus) reason += $" Na sparen is het maandresultaat {Money(-report.Available)} negatief; dit is geen extra uitgave.";
         if (unbudgeted > 0) reason += $" {Money(unbudgeted)} uitgaven zonder ingesteld budget.";
         if (report.Forecast.Available < 0) reason += $" Verwacht tekort uit maandinkomen: {Money(-report.Forecast.Available)}.";
-        var linked = TransferMatching.ConfirmedTransactionIds(data);
         var largest = TransactionAccounting.Lines(data, data.Transactions.Where(t => t.Date.Year == year && t.Date.Month == month &&
             t.Date <= today && scope.Contains(t.AccountId))).Where(l => l.Spending > 0 && big.Any(c => c.Id == l.CategoryId))
             .OrderByDescending(l => l.Spending).Take(2).ToList();
         if (largest.Count > 0) reason += " Grootste betalingen: " + string.Join("; ", largest.Select(l => $"{l.Transaction.Description} ({Money(l.Spending)})")) + ".";
         var note = $"Schatting: geboekte bedragen + nog niet gekoppelde vaste posten + {Money(report.Forecast.VariableEstimate)} extra variabele uitgaven op basis van het daggemiddelde. " +
             (report.Forecast.OverdueCount > 0 ? $"{report.Forecast.OverdueCount} vervallen vaste post(en) nog niet gekoppeld; controleer op dubbeltelling. " : "") +
-            "Geen automatische prognose van toekomstige spaaroverboekingen. " +
+            "Alleen geregistreerde en geplande spaarbijdragen worden meegenomen. " +
             (report.Forecast.LimitedHistory ? "Weinig gegevens: de prognose is beperkt betrouwbaar. " : "") +
             "Het verwachte eindsaldo van betaalrekeningen gebruikt de dagelijkse cashprognose met maximaal 90 dagen uitgavenhistorie; dit is een andere schatting dan het maandresultaat. " +
             (end.DayNumber - today.DayNumber > CashFlow.IncomeSearchDays ? "Verre toekomstige maand: het verwachte saldo begint bij de saldi van vandaag, zonder tussenliggende maanden. " : "") +
@@ -79,7 +84,7 @@ public static class DetailedReporting
         var scope = data.Accounts.Where(a => ownerId == null || a.OwnerIds.Contains(ownerId.Value)).Select(a => a.Id).ToHashSet();
         var reports = Enumerable.Range(1, 12).Select(m => Finance.Report(data, year, m, today, scope)).ToList();
         var months = reports.Select((r, i) => new AnnualMonth(i + 1, r.Income, r.Outflow, r.Savings)).ToList();
-        var categories = data.Categories.Select(c => new CategoryResult(c.Id, c.Name,
+        var categories = data.Categories.Where(c => c.Purpose == CategoryPurpose.Normal).Select(c => new CategoryResult(c.Id, c.Name,
             Enumerable.Range(1, 12).Sum(m => data.BudgetOverrides.FirstOrDefault(b => b.CategoryId == c.Id && b.Year == year && b.Month == m)?.Amount ?? c.MonthlyBudget),
             reports.SelectMany(r => r.Categories).Where(r => r.Id == c.Id).Sum(r => r.Spent)))
             .Concat(reports.SelectMany(r => r.Categories).Where(c => c.Id == Guid.Empty).GroupBy(c => c.Id).Select(g => new CategoryResult(Guid.Empty, "Zonder categorie", 0, g.Sum(c => c.Spent))))

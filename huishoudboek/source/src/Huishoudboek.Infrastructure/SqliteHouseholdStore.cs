@@ -13,7 +13,7 @@ namespace Huishoudboek.Infrastructure;
 /// </summary>
 public sealed class SqliteHouseholdStore : IAdministrationStore
 {
-    private const int SchemaVersion = 7;
+    private const int SchemaVersion = 8;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -95,7 +95,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
     {
         using var command = connection.CreateCommand();
         var version = Version(connection);
-        if (version != SchemaVersion && !(allowPrevious && version is 1 or 2 or 3 or 4 or 5 or 6))
+        if (version != SchemaVersion && !(allowPrevious && version is >= 1 and < SchemaVersion))
             throw new InvalidDataException("Deze databaseversie wordt niet ondersteund. Gebruik de bijbehorende appversie.");
         command.CommandText = "SELECT application FROM app_metadata WHERE id=1";
         if (!Equals(command.ExecuteScalar(), "Huishoudboek"))
@@ -131,7 +131,8 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             CreateTable(connection, tx, typeof(TransactionAllocation));
             CreateTable(connection, tx, typeof(ReimbursementClaim));
         }
-        CreateTable(connection, tx, typeof(AccountReview));
+        if (version < 7) CreateTable(connection, tx, typeof(AccountReview));
+        Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [Purpose] INTEGER NOT NULL DEFAULT 0");
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -162,7 +163,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         var data = new HouseholdData
         {
             Owners = Read<Owner>(connection, tx), Accounts = Read<Account>(connection, tx, version),
-            Categories = Read<Category>(connection, tx), BudgetOverrides = Read<BudgetOverride>(connection, tx),
+            Categories = Read<Category>(connection, tx, version), BudgetOverrides = Read<BudgetOverride>(connection, tx),
             Transactions = Read<Transaction>(connection, tx, version), RecurringPayments = Read<RecurringPayment>(connection, tx, version),
             Rules = Read<CategorizationRule>(connection, tx), Valuations = Read<InvestmentValuation>(connection, tx),
             ImportBatches = Read<ImportBatch>(connection, tx), ImportProfiles = Read<ImportProfile>(connection, tx, version),
@@ -237,6 +238,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
 
     private static string? PreviousDefault(Type type, string property, int version)
     {
+        if (version < 8 && type == typeof(Category) && property == nameof(Category.Purpose)) return "0";
         if (version == 1 && type == typeof(ImportProfile) && property == nameof(ImportProfile.CounterAccountReferenceColumn) ||
             version < 3 && type == typeof(Transaction) && property == nameof(Transaction.UserDescription)) return "''";
         if (version >= 5) return null;

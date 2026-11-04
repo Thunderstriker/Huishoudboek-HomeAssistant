@@ -126,12 +126,12 @@ zonder ingestelde planning is dit geen bevestiging dat er niets te betalen is.
 4. Controleer de waarschuwing en bevestig expliciet met **Database importeren**.
    Annuleren wijzigt niets. Een import vervangt de volledige administratie;
    het is geen samenvoeging van twee huishoudboeken.
-5. De app valideert applicatiemarker, schema (versies 1–7), SQLite-integriteit en
+5. De app valideert applicatiemarker, schema (versies 1–8), SQLite-integriteit en
    financiële verwijzingen. Vervolgens bewaart hij de huidige administratie als
    veiligheidskopie en slaat hij de geïmporteerde administratie atomair op.
    Een onbekende versie of ongeldig bestand wordt geweigerd, niet gereset.
 6. Controleer na afloop rekeningen, transacties en bedragen. Uw bronbestand op
-   Windows blijft ongewijzigd. Bestaande versies 1–6 worden bij import ingelezen
+   Windows blijft ongewijzigd. Bestaande versies 1–7 worden bij import ingelezen
    naar de huidige structuur zonder het bronbestand te migreren.
 
 Alle financiële gegevens blijven behouden: transacties en eigen omschrijvingen,
@@ -160,63 +160,78 @@ ander product en is niet automatisch met deze ingress-only app verbonden.
 - Importeer voor zicht-/betaal-, spaar- en beleggingsrekeningen ieder het eigen
   bestand, of voer de eigen transacties handmatig in. Ook beide zijden van een
   betaling tussen eigen rekeningen worden zo afzonderlijk geregistreerd.
-- Zonder bevestigde transferkoppeling zijn deze boekingen gewone inkomsten of
-  uitgaven in de overzichten. Een categorie is alleen een label en koppelt geen
-  rekeningen. Gebruik **Transfers koppelen** om twee bestaande bankboekingen voor
-  rapportage te koppelen. Handmatig aangemaakte interne overboekingen werken wel
-  beide rekeningen bij; combineer die niet met twee afzonderlijke statementboekingen.
+- De categorie bepaalt de verwerking: gewone inkomsten/uitgaven, sparen/beleggen
+  of tussen eigen rekeningen. Categoriseren verandert alleen rapporten, nooit saldi.
+  Gebruik dezelfde verwerking voor beide zijden als u beide rekeningen importeert.
+  Twee bankboekingen koppelen is niet meer nodig. Ongecategoriseerde boekingen blijven
+  gewone inkomsten/uitgaven totdat u ze categoriseert.
 - Alle geldige regels binnen de gekozen periode zijn standaard geselecteerd, ook
   identieke betalingen en regels die overeenkomen met bestaande boekingen. Er is
   geen automatische dubbelcontrole. Hetzelfde afschrift opnieuw importeren voegt
   alle geselecteerde boekingen opnieuw toe. Handmatig uitvinken blijft mogelijk;
   ongeldige regels kunnen niet worden opgeslagen.
-- De update wijzigt bestaande opgeslagen overboekingen niet. Maak eerst een
-  databaseback-up. Corrigeer een oude automatisch gekoppelde import via
-  **Transacties → Bewerken**: kies de oorspronkelijke importrekening, het type
-  **Inkomst / uitgave** en het bedrag met het teken uit het bankbestand.
-  Bijvoorbeeld een ontvangst van € 27.234,13 op de zichtrekening blijft daar
-  **+€ 27.234,13**, zonder spaarrekeningkoppeling. Controleer daarna beide saldi
-  en eventuele dubbelen. U kunt ook de betreffende import terugdraaien en opnieuw
-  importeren; daarmee verwijdert u ook eventuele handmatige wijzigingen aan die import.
+- Bestaande opgeslagen transfers worden niet herschreven. Het oude handmatige type
+  kan nog beide saldi beïnvloeden; importeer diezelfde beweging niet nogmaals zonder
+  eerst op dubbelen te controleren. De financiële velden zijn in de editor beschermd.
 
-## Transfers tussen eigen rekeningen koppelen
+## Sparen en verplaatsen tussen eigen rekeningen
 
-1. Importeer het eigen afschrift van iedere betrokken rekening. Open daarna
-   **Transfers koppelen**, ook bereikbaar vanuit Transacties en na een import.
-2. Controleer mogelijke paren: even grote tegengestelde bedragen op verschillende
-   eigen rekeningen, tot en met vandaag en maximaal vijf dagen datumverschil.
-   Een rekeningnummer in de opgeslagen bankomschrijving ondersteunt het voorstel;
-   gelijke bedragen en nabijgelegen datums alleen bewijzen geen transfer.
-   Bij meerdere kandidaten kiest de app niet automatisch.
-3. Controleer rekening, originele datum, omschrijving en bedrag van beide zijden.
-   Kies **Transfer bevestigen…** en bevestig de getoonde rapportagewijziging.
-   Beide bankboekingen blijven apart opgeslagen en werken uitsluitend hun eigen
-   rekening bij. Er wordt geen extra ontvangst, saldoaanpassing of boeking aangemaakt.
-4. Bevestigde paren tellen niet als inkomen, uitgaven, categoriebestedingen of
-   variabele uitgavenprognose. Betaalrekening → sparen/beleggen telt als positief
-   opzijgezet; de omgekeerde richting als negatief. Tussen twee betaalrekeningen
-   of twee spaar-/beleggingsrekeningen is de netto spaarbijdrage nul.
-5. Netto opzijgezet telt één keer op de originele bankdatum van de **betaalrekening**,
-   ook bij maand- of jaargrenzen. Beide bankdatums blijven intact. Zoals bij
-   handmatige transfers telt de volledige bijdrage mee als minstens één rekening
-   onder het eigenaarfilter valt. De werkruimte toont de andere zijde ter controle;
-   een eigenaarfilter is geen toegangsbeperking.
-6. Een onjuist voorstel kunt u als **Geen transfer** afwijzen; alleen dat specifieke
-   paar wordt verborgen. Bij **Bevestigde koppelingen** of **Geen transfer** kunt u
-   de beslissing weer verwijderen. Ontkoppelen wijzigt geen saldi; de boekingen
-   tellen weer als gewone inkomsten/uitgaven.
-7. Voor een groter datumverschil gebruikt u **Handmatig twee bestaande boekingen
-   koppelen**. Zonder tweede zijde blijft de bestaande rapportage ongewijzigd:
-   importeer eerst de andere rekening. Vaste-postkoppelingen, hypotheekboekingen,
-   bestaande handmatige transfers en reeds bevestigde boekingen zijn uitgesloten.
+1. Open **Budgetten & categorieën → Categorie instellen → Telt als**. Kies:
+   - **Gewone inkomsten & uitgaven:** salaris, rente, boodschappen, enzovoort.
+   - **Sparen & beleggen:** bijdragen apart opzijgezet, niet als uitgaven.
+   - **Tussen eigen rekeningen:** geen inkomsten, uitgaven of spaarbijdrage.
+2. Categoriseer bijvoorbeeld een afboeking van € 500 op uw betaalrekening als sparen.
+   De maand toont € 500 opzijgezet; u hoeft de spaarrekening niet te importeren of
+   een tegenboeking te zoeken. Het saldo van die andere rekening wordt niet verzonnen:
+   importeer het eigen afschrift als u ook dat saldo wilt bijhouden.
+3. Als u beide zijden importeert, geef beide dezelfde verwerking. De ontvangst op
+   sparen/beleggen telt niet nogmaals. Een terugontvangst van € 100 op de betaalrekening
+   verlaagt netto opzijgezet naar € 400; dit is geen inkomen. Echte rente of kosten op
+   een spaarrekening tellen wel als gewone inkomsten/uitgaven met een gewone categorie.
+4. Verplaatsingen tussen betaalrekeningen of tussen spaar-/beleggingsrekeningen krijgen
+   **Tussen eigen rekeningen**. Regels kunnen deze categorieën net als andere categorieën
+   toewijzen. Er wordt niet geraden op basis van alleen gelijke bedragen of nabije datums.
+5. Nieuwe handmatige boekingen werken uitsluitend de gekozen rekening bij. Voer bij
+   handmatig bijhouden van twee rekeningen beide bankbewegingen apart in.
 
-Wijziging van bedrag, datum, rekening, type of vaste-postkoppeling verwijdert
-betrokken transferbeslissingen. Categorieën en eigen omschrijvingen wijzigen alleen
-labels. Verwijderen van een bankboeking of terugdraaien van een import verwijdert
-de betrokken beslissing, niet de andere bankboeking. Controleer die overgebleven
-zijde vervolgens opnieuw. Zet een gekoppelde bankboeking niet zomaar om naar het
-oude handmatige transfertype: dat type werkt beide rekeningen bij en kan een al
-geïmporteerde ontvangst dubbel tellen.
+Netto opzijgezet wordt gemeten op de eigen bankdatum van de **betaalrekening**, ook
+over maand- of jaargrenzen. Het eigenaarfilter volgt die rekening; een gedeelde
+rekening telt eenmaal. Sparen is een bijdrage, geen vermogensgroei of rendement.
+Geld dat u op een betaalrekening laat staan is maandoverschot, niet automatisch opzijgezet.
+
+Het maandoverzicht toont inkomsten, uitgaven, inkomsten min uitgaven, apart opzijgezet
+en het maandresultaat na sparen. Bij € 3.000 inkomsten, € 2.600 uitgaven en € 600 sparen
+staat er € 400 overschot vóór sparen en −€ 200 na sparen. Dat is geen € 200 extra uitgave.
+Uitgaven boven inkomen, overschreden categoriebudgetten en sparen boven het overschot
+worden afzonderlijk uitgelegd. De cashbuffercontrole blijft altijd per betaalrekening.
+
+Spaarcategorieën hebben optionele maanddoelen in plaats van uitgavenlimieten. Boven
+het spaardoel is **Doel bereikt**, geen rode overschrijding. Vaste spaarbijdragen en
+toekomstige bankboekingen tellen in de prognose als sparen; ze reserveren wel cash en
+tellen niet in het gemiddelde voor dagelijkse uitgaven of als volgende inkomensdag.
+Ook splitsingen gebruiken de verwerking van iedere deelcategorie.
+
+Wijzigen van **Telt als** of verwijderen van een categorie verandert ook historische
+rapporten, niet bankbedragen of saldi. Namen zoals ‘Sparen’ hebben geen verborgen werking.
+Bestaande categorienamen worden bij de update daarom niet automatisch anders verwerkt.
+Categorieën met hypotheekbetalingen of retour-/vergoedingskoppelingen kunnen niet zomaar
+naar sparen/eigen rekeningbeweging worden omgezet; die horen bij gewone uitgaven.
+
+### Bestaande transferhistorie
+
+De oude koppelwerkruimte, voorstellen, afwijzingen en verplichte controles na import
+zijn uit het dagelijkse gebruik verwijderd. De oude URL toont alleen uitleg en
+bevestigde historie; bereikbaar via de categoriepagina als er oude transfers zijn.
+De update bewaart oude handmatige transfers en transferbeslissingen ongewijzigd om
+saldi en historische rapporten te beschermen. Hun categorielabel verandert de oude
+verwerking niet. De oorspronkelijke datum- en eigenaarregels blijven gelden: de
+spaarbijdrage telt volledig wanneer minstens één betrokken rekening in het filter valt.
+
+Bankbedrag, datum, rekeningen en koppelingen van deze oude transfers zijn in de editor
+vergrendeld. Omschrijvingen en labels blijven bewerkbaar. Verwijderen of import-undo
+kan nog wel de oude saldo-/rapportagewerking verwijderen; de bevestiging waarschuwt
+daarvoor. Bij een gekoppeld paar blijft de andere bankboeking bestaan: controleer en
+categoriseer die overgebleven zijde. Maak altijd eerst een volledige back-up.
 
 ## Bestedingsruimte en vaste inkomsten/lasten
 
@@ -263,7 +278,7 @@ De komende betalingen over 7/30 dagen omvatten vaste-postschattingen en geregist
 toekomstige afboekingen, inclusief expliciete overboekingen. Extra variabele uitgaven
 worden apart geschat met maximaal 90 dagen historie tot de laatste geïmporteerde
 bankdatum (zonder import: vandaag). Gekoppelde vaste lasten, hypotheekbetalingen
-en bevestigde transfers vallen buiten dat gemiddelde. Geplande variabele boekingen
+en sparen/eigen rekeningbewegingen (ook historische transfers) vallen buiten dat gemiddelde. Geplande variabele boekingen
 vullen het gemiddelde per dag in, zonder dubbele laag. Het eindsaldo van de
 betaalrekeningen gebruikt deze dagelijkse schatting; het maandresultaat behoudt zijn
 maandgebonden daggemiddelde en is daarom niet dezelfde prognose.
@@ -328,7 +343,9 @@ Retouren/vergoedingen zijn geen volgende reguliere inkomensdatum.
 
 CSV-export bevat één rij per bankboeking. De JSON-kolommen **Splitsingen (JSON)** en
 **Vergoedingsverwachtingen (JSON)** bewaren bedragen, verwerking, toelichtingen en
-koppelingen zonder het bankbedrag te herhalen. Bankimport herstelt deze metagegevens
+koppelingen zonder het bankbedrag te herhalen. **Categorie telt als** en
+**Categorie-instellingen (JSON)** bewaren ook de verwerking van de hoofd- en deelcategorieën.
+Bankimport herstelt deze metagegevens
 niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
 
 ## Opslag, back-ups en updates
@@ -338,11 +355,11 @@ niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
   `/data` is de private, permanente app-opslag van de Supervisor, geen Windows-pad.
 - Normale herstarts en updates behouden `/data`. Een bestaande ontbrekende of
   beschadigde database wordt nooit automatisch vervangen door een lege database.
-- Bij een Home Assistant-update worden ondersteunde schema's 1–6 na validatie
-  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 7. Vooraf wordt
-  een SQLite-bewuste `.voor-versie-7-….db`-veiligheidskopie naast de database gemaakt.
+- Bij een Home Assistant-update worden ondersteunde schema's 1–7 na validatie
+  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 8. Vooraf wordt
+  een SQLite-bewuste `.voor-versie-8-….db`-veiligheidskopie naast de database gemaakt.
   Onbekende schema's worden geweigerd. Teruggaan naar een oude appversie vereist
-  herstel van een passende oude back-up; schema-7-back-ups zijn niet leesbaar in
+  herstel van een passende oude back-up; schema-8-back-ups zijn niet leesbaar in
   oudere apps. De normale Windows-service blijft automatische upgrades weigeren.
 - Alleen een werkelijk nieuwe installatie begint met een lege administratie en
   standaardcategorieën, zonder fictieve bedragen. U kunt ook zelf rekeningen aanmaken.
@@ -378,7 +395,7 @@ niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
 - Database, configuratie en gedownloade databaseback-ups zijn **niet door deze app
   versleuteld**. Beveilig de Windows-host, VM-schijf en back-ups. Zet geen financiële
   bestanden of proxyheaders in gedeelde logs/screenshots.
-- Geldberekeningen blijven decimal, schema is versie 6. Saldi zijn berekend uit
+- Geldberekeningen blijven decimal, schema is versie 8. Saldi zijn berekend uit
   geregistreerde gegevens, geen live bankgegevens. Prognoses blijven schattingen.
 - Geen publieke internet-/Cloudflare-configuratie, automatische discovery of HACS.
   Dit is de volledige app, niet een HACS-integratie.

@@ -13,15 +13,17 @@
 <div class="metrics">
     <div class="card"><div class="metric-label">@L["Income"]</div><div class="metric-value positive">@Money(report.Income)</div><small>@L["ActuallyReceived"]</small></div>
     <div class="card"><div class="metric-label">@L["OutflowHousing"]</div><div class="metric-value">@Money(report.Outflow)</div><small>@L["IncludesPrincipal"]</small></div>
+    <div class="card"><div class="metric-label">@L["BeforeSavings"]</div><div class="metric-value @(report.BeforeSavings < 0 ? "negative" : "positive")">@Money(report.BeforeSavings)</div><small>@L["BeforeSavingsNote"]</small></div>
     <div class="card"><div class="metric-label">@L["Savings"]</div><div class="metric-value">@Money(report.Savings)</div><small>@L["NetSavingsInvestments"]</small></div>
     <div class="card"><div class="metric-label">@L["AvailableThisMonth"]</div><div class="metric-value @(report.Available < 0 ? "negative" : "positive")">@Money(report.Available)</div><small>@L["AvailableNote"]</small></div>
 </div>
 <MonthlyCharts Report="report" />
-<p class="muted">@L["ImportedTransfersQuestion"] <a href="overboekingen">@L["CheckMatchTransfers"]</a> @L["TransfersReportingNote"]</p>
+<p class="muted">@L["CategoryPurposeHelp"] <a href="budgetten">@L["CategorySettings"]</a></p>
 <section class="card"><h2>@L["CategoryBudgets"]</h2><div class="table-scroll"><table><thead><tr><th>@L["Category"]</th><th class="money">@L["Budget"]</th><th class="money">@L["Spent"]</th><th class="money">@L["Remaining"]</th><th>@L["Usage"]</th></tr></thead><tbody>
     @foreach (var category in report.Categories)
     { <tr><td>@State.CategoryName(category.Id)</td><td class="money">@(category.Budget == 0 ? L["NoLimit"].Value : Money(category.Budget))</td><td class="money">@Money(category.Spent)</td><td class="money @(category.IsOverBudget ? "negative" : "")">@(category.Budget == 0 ? "—" : Money(category.Remaining))</td><td><progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@L["CategoryUsage", category.Name]"></progress></td></tr> }
 </tbody></table></div><p class="muted">@L["HouseholdBudgetNote"]</p></section>
+<SavingsOverview Report="report" />
 <section class="card"><h2>@L["MonthEndForecast"]</h2><div class="metrics">
     <div><div class="metric-label">@L["ExpectedIncome"]</div><div class="metric-value">@Money(report.Forecast.Income)</div></div>
     <div><div class="metric-label">@L["ExpectedOutflow"]</div><div class="metric-value">@Money(report.Forecast.Outflow)</div></div>
@@ -42,15 +44,21 @@
 </div>
 @code {
     private string StatusKey(MonthlyReport report) => State.Data.Accounts.Count == 0 ? "WelcomeAddAccounts" :
-        report.Available < 0 ? "SpentMoreThanReceived" : report.Categories.Any(c => c.IsOverBudget) ? "CategoryOverBudget" :
+        report.BeforeSavings < 0 ? "SpentMoreThanReceived" : report.Categories.Any(c => c.IsOverBudget) ? "CategoryOverBudget" :
+        report.SavingsExceedSurplus ? "SavingsAboveSurplus" :
         report.Forecast.Available < 0 ? "ExpectedShortfall" : report.Budget == 0 ? "SetBudgetsNote" : "WithinBudgets";
 
     private string Explanation(MonthlyReport report)
     {
         var big = report.Categories.Where(c => c.IsOverBudget).Take(3).ToList();
-        var parts = new List<string> { big.Count > 0
+        var parts = new List<string> {
+            L[report.BeforeSavings >= 0 ? "SpendingBelowIncome" : "SpendingAboveIncome", Money(Math.Abs(report.BeforeSavings))],
+            L[report.Savings >= 0 ? "PutAsideSummary" : "WithdrawnSummary", Money(Math.Abs(report.Savings))]
+        };
+        if (report.SavingsExceedSurplus) parts.Add(L["SavingsAboveSurplusAmount", Money(-report.Available)]);
+        parts.Add(big.Count > 0
             ? string.Join(" · ", big.Select(c => L["OverBudgetAmount", c.Name, Money(c.Overspent)].Value))
-            : L["NoBudgetOverrun"].Value };
+            : L["NoBudgetOverrun"].Value);
         var unbudgeted = report.Categories.Where(c => c.Budget == 0 && c.Spent > 0).Sum(c => c.Spent);
         if (unbudgeted > 0) parts.Add(L["UnbudgetedAmount", Money(unbudgeted)]);
         if (report.Forecast.Available < 0) parts.Add(L["ShortfallAmount", Money(-report.Forecast.Available)]);

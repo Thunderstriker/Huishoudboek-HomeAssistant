@@ -57,7 +57,7 @@ public sealed class LanguageSwitchTests
             ("/budgetten", "Budgets & categories"), ("/transacties", "No transactions within these filters."),
             ("/beheer", "Your records"), ("/hypotheek", "Mortgage · annuity, fixed rate"),
             ("/vaste-posten", "Recurring income & bills"), ("/categoriseren", "Step by step"),
-            ("/overboekingen", "Possible transfers"), ("/importeren", "Import settings") })
+            ("/overboekingen", "Historical transfers"), ("/importeren", "Import settings") })
         {
             var page = await GetPage(client, pathBase + path);
             Assert.Contains(expected, page);

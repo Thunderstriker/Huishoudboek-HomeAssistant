@@ -1,0 +1,23 @@
+<section class="card" id="savings-overview">
+    <h2>@L["PutAsideSeparately"]</h2>
+    <p class="muted">@L["SavingsCountingNote"]</p>
+    @if (Report.SavingsCategories.Count == 0)
+    {
+        <p>@L["NoSavingsCategories"] <a href="budgetten">@L["CategorySettings"]</a></p>
+    }
+    else
+    {
+        <div class="table-scroll"><table><thead><tr><th>@L["Category"]</th><th class="money">@L["MonthlyTarget"]</th><th class="money">@L["NetPutAside"]</th><th>@L["Progress"]</th></tr></thead><tbody>
+        @foreach (var row in Report.SavingsCategories)
+        {
+            <tr><td>@(row.Id == Guid.Empty ? L["LegacyContributions"].Value : row.Name)</td><td class="money">@(row.Target == 0 ? "—" : WebState.Money(row.Target))</td><td class="money">@WebState.Money(row.Saved)</td><td>
+                @if (row.Target > 0)
+                { <span class="badge @(row.Saved >= row.Target ? "positive" : "")">@L[row.Saved >= row.Target ? "SavingsTargetReached" : "SavingsStillToTarget", WebState.Money(Math.Max(0, row.Target - row.Saved))]</span> }
+            </td></tr>
+        }
+        </tbody><tfoot><tr><th>@L["Total"]</th><td></td><th class="money">@WebState.Money(Report.Savings)</th><td></td></tr></tfoot></table></div>
+    }
+</section>
+@code {
+    [Parameter, EditorRequired] public MonthlyReport Report { get; set; } = null!;
+}

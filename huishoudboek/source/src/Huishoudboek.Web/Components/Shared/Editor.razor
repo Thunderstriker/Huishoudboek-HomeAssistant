@@ -30,7 +30,7 @@
                     { <label class="check"><input id="@field.Key" type="checkbox" checked="@bool.Parse(field.Value)" @onchange="e => field.Value = ((bool)e.Value!).ToString()" />@field.Label</label> }
                     else
                     {
-                        <label>@field.Label
+                        <label>@Draft.Label(field)
                             @if (field.Type == "select")
                             { <select id="@field.Key" @bind="field.Value" disabled="@field.ReadOnly">@foreach (var option in Draft.Options(field)) { <option value="@option.Value">@option.Label</option> }</select> }
                             else

@@ -14,15 +14,20 @@ public sealed record Forecast(decimal Income, decimal Outflow, decimal Savings,
     public decimal Available => Income - Outflow - Savings;
 }
 
+public sealed record SavingsResult(Guid Id, string Name, decimal Target, decimal Saved);
+
 public sealed record MonthlyReport(decimal Income, decimal Outflow, decimal Savings,
     decimal PrincipalRepaid, IReadOnlyList<CategoryResult> Categories, Forecast Forecast)
 {
+    public IReadOnlyList<SavingsResult> SavingsCategories { get; init; } = [];
+    public decimal BeforeSavings => Income - Outflow;
     public decimal Available => Income - Outflow - Savings;
     public decimal ConsumptionExpense => Outflow - PrincipalRepaid;
     public decimal Budget => Categories.Sum(c => c.Budget);
     public decimal Overspent => Categories.Sum(c => c.Overspent);
-    public bool IsOverspending => Available < 0 || Overspent > 0;
-    public bool NeedsAttention => IsOverspending || Forecast.Available < 0;
+    public bool IsOverspending => BeforeSavings < 0 || Overspent > 0;
+    public bool SavingsExceedSurplus => Savings > 0 && Available < 0;
+    public bool NeedsAttention => IsOverspending || SavingsExceedSurplus || Forecast.Available < 0;
 }
 
 public sealed record MortgageRow(int Number, DateOnly Date, decimal Payment, decimal Interest,
@@ -71,9 +76,10 @@ public static class Finance
         var lines = TransactionAccounting.Lines(data, ordinary).ToList();
         var income = lines.Sum(l => l.Income);
         var outflow = lines.Sum(l => l.Spending);
-        var savings = actual.Sum(t => SavingsEffect(data, t, scope, matched, transactions));
+        var legacySavings = actual.Sum(t => LegacySavingsEffect(data, t, scope, matched, transactions));
+        var savings = lines.Sum(l => l.Savings) + legacySavings;
         var principal = ordinary.Where(t => t.Kind == TransactionKind.Mortgage).Sum(t => t.PrincipalComponent);
-        var categories = data.Categories.Select(c => new CategoryResult(c.Id, c.Name,
+        var categories = data.Categories.Where(c => c.Purpose == CategoryPurpose.Normal).Select(c => new CategoryResult(c.Id, c.Name,
             data.BudgetOverrides.FirstOrDefault(b => b.CategoryId == c.Id && b.Year == year && b.Month == month)?.Amount
                 ?? c.MonthlyBudget,
             lines.Where(l => l.CategoryId == c.Id).Sum(l => l.Spending)))
@@ -81,13 +87,18 @@ public static class Finance
             .ThenByDescending(c => c.Spent).ToList();
         var uncategorized = lines.Where(l => l.CategoryId == null).Sum(l => l.Spending);
         if (uncategorized != 0) categories.Add(new(Guid.Empty, "Zonder categorie", 0, uncategorized));
+        var savingsCategories = data.Categories.Where(c => c.Purpose == CategoryPurpose.Savings)
+            .Select(c => new SavingsResult(c.Id, c.Name,
+                data.BudgetOverrides.FirstOrDefault(b => b.CategoryId == c.Id && b.Year == year && b.Month == month)?.Amount ?? c.MonthlyBudget,
+                lines.Where(l => l.CategoryId == c.Id).Sum(l => l.Savings))).ToList();
+        if (legacySavings != 0) savingsCategories.Add(new(Guid.Empty, "Eerder vastgelegde overboekingen", 0, legacySavings));
 
         var future = data.Transactions.Where(t => t.Date >= first && t.Date > cutoff && t.Date <= last).ToList();
         var futureOrdinary = future.Where(t => t.Kind != TransactionKind.Transfer && !matched.ContainsKey(t.Id) && InScope(t)).ToList();
         var futureLines = TransactionAccounting.Lines(data, futureOrdinary).ToList();
         var plannedIncome = futureLines.Sum(l => l.Income);
         var plannedOutflow = futureLines.Sum(l => l.Spending);
-        var plannedSavings = future.Sum(t => SavingsEffect(data, t, scope, matched, transactions));
+        var plannedSavings = futureLines.Sum(l => l.Savings) + future.Sum(t => LegacySavingsEffect(data, t, scope, matched, transactions));
         var overdue = 0;
         if (today <= last)
         {
@@ -98,8 +109,14 @@ public static class Finance
                 // Explicit links are authoritative; matching is deliberately conservative.
                 if (RecurringSchedule.IsLinked(data, recurring, due.Value)) continue;
                 if (due <= cutoff) overdue++;
-                if (recurring.Amount > 0) plannedIncome += recurring.Amount;
-                else plannedOutflow -= recurring.Amount;
+                var purpose = data.Categories.FirstOrDefault(c => c.Id == recurring.CategoryId)?.Purpose ?? CategoryPurpose.Normal;
+                if (purpose == CategoryPurpose.Savings && data.Accounts.Any(a => a.Id == recurring.AccountId && a.Kind == AccountKind.Current))
+                    plannedSavings -= recurring.Amount;
+                else if (purpose == CategoryPurpose.Normal)
+                {
+                    if (recurring.Amount > 0) plannedIncome += recurring.Amount;
+                    else plannedOutflow -= recurring.Amount;
+                }
             }
         }
 
@@ -110,12 +127,12 @@ public static class Finance
         var estimate = elapsed > 0 && remainingDays > 0
             ? decimal.Round(observedVariable / elapsed * remainingDays, 2) : 0;
         // Future variable entries occupy part of the run-rate estimate, not an extra layer on top.
-        var explicitVariable = -futureOrdinary.Where(t => t.Amount < 0 && t.Kind != TransactionKind.Mortgage &&
-            t.RecurringPaymentId == null).Sum(t => t.Amount);
+        var explicitVariable = futureLines.Where(l => l.Amount < 0 && l.Transaction.Kind != TransactionKind.Mortgage &&
+            l.Transaction.RecurringPaymentId == null).Sum(l => l.Spending);
         estimate = Math.Max(0, estimate - explicitVariable);
         var forecast = new Forecast(income + plannedIncome, outflow + plannedOutflow + estimate,
             savings + plannedSavings, estimate, overdue, elapsed < 7 || actual.Count < 3);
-        return new(income, outflow, savings, principal, categories, forecast);
+        return new(income, outflow, savings, principal, categories, forecast) { SavingsCategories = savingsCategories };
     }
 
     public static decimal ProjectedCurrentBalance(HouseholdData data, int year, int month, DateOnly today,
@@ -145,10 +162,11 @@ public static class Finance
         var matched = data.TransferMatches.Where(m => m.IsConfirmed)
             .SelectMany(m => new[] { (Id: m.DebitTransactionId, Counter: m.CreditTransactionId), (Id: m.CreditTransactionId, Counter: m.DebitTransactionId) })
             .ToDictionary(p => p.Id, p => p.Counter);
-        return SavingsEffect(data, t, scope, matched, data.Transactions.ToDictionary(entry => entry.Id));
+        return LegacySavingsEffect(data, t, scope, matched, data.Transactions.ToDictionary(entry => entry.Id)) +
+            (scope == null || scope.Contains(t.AccountId) ? TransactionAccounting.Lines(data, new[] { t }).Sum(l => l.Savings) : 0);
     }
 
-    private static decimal SavingsEffect(HouseholdData data, Transaction t, IReadOnlySet<Guid>? scope,
+    private static decimal LegacySavingsEffect(HouseholdData data, Transaction t, IReadOnlySet<Guid>? scope,
         IReadOnlyDictionary<Guid, Guid> matched, IReadOnlyDictionary<Guid, Transaction> transactions)
     {
         if (matched.TryGetValue(t.Id, out var counterpartId))

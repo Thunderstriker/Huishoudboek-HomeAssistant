@@ -4,6 +4,7 @@ public enum AccountKind { Current, Savings, Investment }
 public enum TransactionKind { Normal, Transfer, Mortgage }
 public enum PaymentFrequency { Monthly, Quarterly, Yearly, Once }
 public enum AllocationTreatment { Ordinary, Refund, Reimbursement }
+public enum CategoryPurpose { Normal, Savings, OwnAccountMovement }
 
 public sealed record Owner
 {
@@ -29,6 +30,7 @@ public sealed record Category
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = "";
     public decimal MonthlyBudget { get; set; }
+    public CategoryPurpose Purpose { get; set; }
 }
 
 public sealed record BudgetOverride
@@ -193,7 +195,10 @@ public sealed class HouseholdData
         Categories = new[] { "Huishouden", "Wonen & hypotheek", "Voeding", "Verjaardagen & cadeaus",
             "Vrije tijd", "Verzekeringen", "Auto & vervoer", "Medische kosten", "Energie & water",
             "Abonnementen", "Kleding", "Overig", "Salaris", "Dividend & rente" }
-            .Select(name => new Category { Name = name }).ToList()
+            .Select(name => new Category { Name = name }).Concat(new[] {
+                new Category { Name = "Sparen & beleggen", Purpose = CategoryPurpose.Savings },
+                new Category { Name = "Tussen eigen rekeningen", Purpose = CategoryPurpose.OwnAccountMovement }
+            }).ToList()
     };
 }
 

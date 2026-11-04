@@ -1,10 +1,12 @@
 namespace Huishoudboek.Core;
 
 public sealed record AccountingLine(Transaction Transaction, Guid? AllocationId, decimal Amount,
-    Guid? CategoryId, AllocationTreatment Treatment, string Note)
+    Guid? CategoryId, AllocationTreatment Treatment, string Note,
+    CategoryPurpose Purpose = CategoryPurpose.Normal, bool IsCurrentAccount = false)
 {
-    public decimal Income => Treatment == AllocationTreatment.Ordinary && Amount > 0 ? Amount : 0;
-    public decimal Spending => Amount < 0 || Treatment != AllocationTreatment.Ordinary ? -Amount : 0;
+    public decimal Income => Purpose == CategoryPurpose.Normal && Treatment == AllocationTreatment.Ordinary && Amount > 0 ? Amount : 0;
+    public decimal Spending => Purpose == CategoryPurpose.Normal && (Amount < 0 || Treatment != AllocationTreatment.Ordinary) ? -Amount : 0;
+    public decimal Savings => Purpose == CategoryPurpose.Savings && IsCurrentAccount ? -Amount : 0;
 }
 
 /// <summary>One interpretation of bank entries for every budget/report, never for account balances.</summary>
@@ -12,6 +14,11 @@ public static class TransactionAccounting
 {
     public static IEnumerable<AccountingLine> Lines(HouseholdData data, IEnumerable<Transaction> transactions)
     {
+        var purposes = data.Categories.ToDictionary(c => c.Id, c => c.Purpose);
+        var current = data.Accounts.Where(a => a.Kind == AccountKind.Current).Select(a => a.Id).ToHashSet();
+        AccountingLine Line(Transaction t, Guid? allocationId, decimal amount, Guid? category,
+            AllocationTreatment treatment, string note) => new(t, allocationId, amount, category, treatment, note,
+                category is { } id ? purposes.GetValueOrDefault(id) : CategoryPurpose.Normal, current.Contains(t.AccountId));
         var allocations = data.TransactionAllocations.ToLookup(a => a.TransactionId);
         Dictionary<Guid, Transaction>? entries = null;
         var splits = data.TransactionAllocations.ToDictionary(a => a.Id);
@@ -22,7 +29,7 @@ public static class TransactionAccounting
             if (t.Kind == TransactionKind.Transfer || internalIds.Contains(t.Id)) continue;
             if (!allocations[t.Id].Any())
             {
-                yield return new(t, null, t.Amount, t.CategoryId, AllocationTreatment.Ordinary, "");
+                yield return Line(t, null, t.Amount, t.CategoryId, AllocationTreatment.Ordinary, "");
                 continue;
             }
             foreach (var a in allocations[t.Id])
@@ -38,7 +45,7 @@ public static class TransactionAccounting
                     ? splitId is { } originalSplitId ? splits[originalSplitId].CategoryId :
                         (entries ??= data.Transactions.ToDictionary(entry => entry.Id))[originalId].CategoryId
                     : a.CategoryId;
-                yield return new(t, a.Id, a.Amount, category, a.Treatment, a.Note);
+                yield return Line(t, a.Id, a.Amount, category, a.Treatment, a.Note);
             }
         }
     }
@@ -122,6 +129,7 @@ public static class TransactionAccounting
         var byTransaction = data.TransactionAllocations.ToLookup(a => a.TransactionId);
         var claims = data.ReimbursementClaims.ToDictionary(c => c.Id);
         var categories = data.Categories.Select(c => c.Id).ToHashSet();
+        bool NormalCategory(Guid? id) => id == null || data.Categories.Any(c => c.Id == id && c.Purpose == CategoryPurpose.Normal);
         var internalIds = TransferMatching.ConfirmedTransactionIds(data);
         var recoveries = new Dictionary<(Guid, Guid?), decimal>();
         var refunds = new Dictionary<(Guid, Guid?), decimal>();
@@ -133,10 +141,11 @@ public static class TransactionAccounting
             if (allocationId is { } id)
             {
                 Require(allocations.TryGetValue(id, out var a) && a.TransactionId == transactionId && a.Amount < 0 &&
-                    a.Treatment == AllocationTreatment.Ordinary, "Kies een bestaande uitgavensplitsing van deze aankoop.");
+                    a.Treatment == AllocationTreatment.Ordinary && NormalCategory(a.CategoryId), "Kies een bestaande gewone uitgavensplitsing van deze aankoop.");
                 return -a!.Amount;
             }
             Require(!byTransaction[transactionId].Any(), "Kies de oorspronkelijke splitsing, niet de hele gesplitste aankoop.");
+            Require(NormalCategory(t!.CategoryId), "Retouren en vergoedingen horen bij gewone uitgaven, niet bij sparen of eigen rekeningbewegingen.");
             return -t!.Amount;
         }
 
@@ -157,6 +166,8 @@ public static class TransactionAccounting
             Require(a.Treatment != AllocationTreatment.Ordinary ||
                 a.OriginalTransactionId == null && a.ReimbursementClaimId == null, "Gewone inkomsten/uitgaven hebben geen retourkoppeling.");
             Require(a.Treatment == AllocationTreatment.Ordinary || a.Amount > 0, "Retouren en vergoedingen moeten positieve ontvangsten zijn.");
+            Require(a.Treatment == AllocationTreatment.Ordinary || NormalCategory(a.CategoryId),
+                "Gebruik een gewone uitgavencategorie voor een retour of vergoeding.");
             Guid? source = a.OriginalTransactionId;
             var split = a.OriginalAllocationId;
             if (a.ReimbursementClaimId is { } claimId)

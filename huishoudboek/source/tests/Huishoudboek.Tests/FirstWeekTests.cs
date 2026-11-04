@@ -168,13 +168,13 @@ public sealed class FirstWeekTests
         var legacy = files.Path("schema6.db"); new SqliteHouseholdStore(legacy).Save(data);
         using (var connection = new SqliteConnection($"Data Source={legacy};Pooling=False"))
         {
-            connection.Open(); using var command = connection.CreateCommand(); command.CommandText = "DROP TABLE [AccountReview]; PRAGMA user_version=6"; command.ExecuteNonQuery();
+            connection.Open(); using var command = connection.CreateCommand(); command.CommandText = "ALTER TABLE [Category] DROP COLUMN [Purpose]; DROP TABLE [AccountReview]; PRAGMA user_version=6"; command.ExecuteNonQuery();
         }
         var bytes = File.ReadAllBytes(legacy); Assert.Empty(SqliteHouseholdStore.ReadBackup(legacy).AccountReviews); Assert.Equal(bytes, File.ReadAllBytes(legacy));
         var migrated = new SqliteHouseholdStore(legacy, allowCreate: false);
         Assert.Empty(migrated.Load().AccountReviews); Assert.Equal(data.Transactions, migrated.Load().Transactions);
         Assert.Equal(data.Categories, migrated.Load().Categories);
-        Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-7-*.db"));
+        Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-8-*.db"));
     }
 
     [Theory]
@@ -202,9 +202,8 @@ public sealed class FirstWeekTests
         string[] Visible() => draft.Fields.Where(draft.IsFieldVisible).Select(f => f.Key).ToArray();
         Assert.DoesNotContain("counter", Visible()); Assert.DoesNotContain("principal", Visible()); Assert.DoesNotContain("occurrence", Visible());
         Assert.DoesNotContain(draft.Options(draft.Fields.Single(f => f.Key == "category")), o => o.Value == "default");
+        Assert.DoesNotContain(draft.Fields.Single(f => f.Key == "kind").Options, o => o.Value == "Transfer");
         draft.Fields.Single(f => f.Key == "recurring").Value = Guid.NewGuid().ToString(); Assert.Contains("occurrence", Visible());
-        draft.Fields.Single(f => f.Key == "kind").Value = "Transfer";
-        Assert.Contains("counter", Visible()); Assert.DoesNotContain("principal", Visible()); Assert.DoesNotContain("recurring", Visible()); Assert.DoesNotContain("occurrence", Visible());
         draft.Fields.Single(f => f.Key == "kind").Value = "Mortgage";
         Assert.Contains("principal", Visible()); Assert.DoesNotContain("counter", Visible()); Assert.Contains("recurring", Visible());
     }
@@ -222,7 +221,7 @@ public sealed class FirstWeekTests
         await using var renderer = new HtmlRenderer(provider, provider.GetRequiredService<ILoggerFactory>());
         async Task<string> Render<T>() where T : IComponent => await renderer.Dispatcher.InvokeAsync(async () => (await renderer.RenderComponentAsync<T>()).ToHtmlString());
         var checklist = WebUtility.HtmlDecode(await Render<FirstUseChecklist>()); Assert.Contains(checklistTitle, checklist); Assert.Contains("rekeningen#balance-checks", checklist);
-        var weekly = WebUtility.HtmlDecode(await Render<WeeklyReview>()); Assert.Contains(weeklyTitle, weekly); Assert.Contains("importeren", weekly); Assert.Contains("overboekingen", weekly);
+        var weekly = WebUtility.HtmlDecode(await Render<WeeklyReview>()); Assert.Contains(weeklyTitle, weekly); Assert.Contains("importeren", weekly); Assert.DoesNotContain("overboekingen", weekly);
         var html = await Render<Transactions>();
         Assert.Contains("mobile-transactions", html); Assert.Contains("desktop-transactions", html); Assert.Contains("<details class=\"transaction-item\"", html);
         Assert.Contains(detailsLabel, WebUtility.HtmlDecode(html)); Assert.Contains("Coffee", html); Assert.Contains("&lt;script&gt;bank text&lt;/script&gt;", html); Assert.DoesNotContain("<script>bank text", html);

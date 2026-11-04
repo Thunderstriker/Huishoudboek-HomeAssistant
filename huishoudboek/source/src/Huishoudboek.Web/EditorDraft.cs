@@ -30,7 +30,11 @@ public sealed class EditorDraft(string title, string revision)
     public Action<HouseholdData> Apply { get; private set; } = _ => { };
     private Guid? _recurringPaymentId;
     private bool _transaction;
-    public bool IsFieldVisible(EditorField field) => !_transaction || field.Key switch
+    private bool _category;
+    public string Label(EditorField field) => _category && field.Key == "budget" && Text("purpose") == "Savings"
+        ? UiCulture.Text("DefaultMonthlyTargetEuro") : field.Label;
+    public bool IsFieldVisible(EditorField field) => _category && field.Key == "budget"
+        ? Text("purpose") != "OwnAccountMovement" : !_transaction || field.Key switch
     {
         "counter" => Text("kind") == "Transfer",
         "principal" => Text("kind") == "Mortgage",
@@ -38,8 +42,7 @@ public sealed class EditorDraft(string title, string revision)
         "occurrence" => Text("kind") != "Transfer" && Text("recurring").Length > 0,
         _ => true
     };
-    public IEnumerable<FieldOption> Options(EditorField field) => _transaction && field.Key == "category" && Text("kind") != "Transfer"
-        ? field.Options.Where(o => o.Value != "default") : field.Options;
+    public IEnumerable<FieldOption> Options(EditorField field) => field.Options;
     public EditorSaveProposal PrepareSave(HouseholdData data, DateOnly today)
     {
         if (_recurringPaymentId is not { } paymentId) return new(0, Apply, Apply);
@@ -81,7 +84,16 @@ public sealed class EditorDraft(string title, string revision)
     private void Choice(string key, string label, IEnumerable<FieldOption> options, string value)
     { var field = Field(key, label, "select", value, false); field.Options = options.ToList(); }
     private static IEnumerable<FieldOption> Accounts(HouseholdData d) => d.Accounts.Select(a => new FieldOption(a.Id.ToString(), a.Name));
-    private static IEnumerable<FieldOption> Categories(HouseholdData d) => new[] { new FieldOption("", UiCulture.Text("Uncategorized")) }.Concat(d.Categories.Select(c => new FieldOption(c.Id.ToString(), c.Name)));
+    private static IEnumerable<FieldOption> Categories(HouseholdData d) => new[] { new FieldOption("", UiCulture.Text("Uncategorized")) }
+        .Concat(d.Categories.Select(c => new FieldOption(c.Id.ToString(), CategoryLabel(c))));
+    public static string CategoryLabel(Category category) => category.Purpose == CategoryPurpose.Normal
+        ? category.Name : $"{category.Name} · {PurposeLabel(category.Purpose)}";
+    public static string PurposeLabel(CategoryPurpose purpose) => UiCulture.Text(purpose switch
+    {
+        CategoryPurpose.Savings => "SavingsPurpose",
+        CategoryPurpose.OwnAccountMovement => "OwnAccountPurpose",
+        _ => "NormalPurpose"
+    });
 
     public static EditorDraft Owner(WebState s, Owner? original = null)
     {
@@ -154,15 +166,21 @@ public sealed class EditorDraft(string title, string revision)
         var draft = new EditorDraft(UiCulture.Text(renameOnly ? "RenameCategory" : "CategoryDefaultBudget"), s.Revision)
         { Note = UiCulture.Text(renameOnly ? "RenameCategoryNote" : "CategoryEditorNote") };
         draft.Field("name", "Name", "text", item.Name);
-        if (!renameOnly) draft.Money("budget", "DefaultMonthlyBudgetEuro", item.MonthlyBudget);
+        if (!renameOnly)
+        {
+            draft._category = true;
+            draft.Choice("purpose", "CountsAs", Enum.GetValues<CategoryPurpose>().Select(p => new FieldOption(p.ToString(), PurposeLabel(p))), item.Purpose.ToString());
+            draft.Money("budget", "DefaultMonthlyBudgetEuro", item.MonthlyBudget);
+        }
         draft.Apply = d => { if (renameOnly) Categorization.RenameCategory(d, item.Id, draft.Text("name"));
-            else HouseholdEdits.SaveCategory(d, item with { Name = draft.Text("name"), MonthlyBudget = draft.Number("budget") }); }; return draft;
+            else HouseholdEdits.SaveCategory(d, item with { Name = draft.Text("name"), MonthlyBudget = draft.Number("budget"),
+                Purpose = Enum.Parse<CategoryPurpose>(draft.Text("purpose")) }); }; return draft;
     }
     public static EditorDraft Budget(WebState s, Category item)
     {
         var year = s.Year; var month = s.Month;
         var draft = new EditorDraft(UiCulture.Text("MonthlyBudgetTitle", item.Name, $"{month:D2}-{year}"), s.Revision) { Note = UiCulture.Text("MonthlyBudgetEditorNote") };
-        draft.Money("budget", "BudgetEuro", s.Data.BudgetOverrides.FirstOrDefault(b => b.CategoryId == item.Id && b.Year == year && b.Month == month)?.Amount ?? item.MonthlyBudget);
+        draft.Money("budget", item.Purpose == CategoryPurpose.Savings ? "SavingsTargetEuro" : "BudgetEuro", s.Data.BudgetOverrides.FirstOrDefault(b => b.CategoryId == item.Id && b.Year == year && b.Month == month)?.Amount ?? item.MonthlyBudget);
         draft.Apply = d => HouseholdEdits.SetBudget(d, item.Id, year, month, draft.Number("budget")); return draft;
     }
     public static EditorDraft Transaction(WebState s, Transaction? original = null, bool mortgage = false)
@@ -174,16 +192,21 @@ public sealed class EditorDraft(string title, string revision)
         draft.DateField("date", "Date", item.Date); draft.Choice("account", "TransactionAccount", Accounts(s.Data), item.AccountId.ToString());
         draft.Field("description", "OriginalDescription", "text", item.Description);
         draft.Field("userDescription", "OwnDescriptionOptional", "text", item.UserDescription, false); draft.Money("amount", "AmountEuro", item.Amount);
-        draft.Choice("kind", "Type", [new("Normal", UiCulture.Text("IncomeExpense")), new("Transfer", UiCulture.Text("InternalTransfer")), new("Mortgage", UiCulture.Text("MortgagePrincipal"))], item.Kind.ToString());
-        var categoryOptions = new[] { new FieldOption("default", UiCulture.Text("AutomaticTransferCategory")) }.Concat(Categories(s.Data));
-        var automatic = item.Kind == TransactionKind.Transfer && (original == null || item.CategoryId != null &&
-            string.Equals(s.Data.Categories.FirstOrDefault(c => c.Id == item.CategoryId)?.Name.Trim(), TransferCategories.DefaultName(s.Data, item), StringComparison.OrdinalIgnoreCase));
-        draft.Choice("category", "TransactionCategory", categoryOptions, automatic ? "default" : item.CategoryId?.ToString() ?? "");
+        draft.Choice("kind", "Type", item.Kind == TransactionKind.Transfer
+            ? [new("Transfer", UiCulture.Text("LegacyTransfer"))]
+            : [new("Normal", UiCulture.Text("IncomeExpense")), new("Mortgage", UiCulture.Text("MortgagePrincipal"))], item.Kind.ToString());
+        draft.Choice("category", "TransactionCategory", Categories(s.Data), item.CategoryId?.ToString() ?? "");
         draft.Choice("counter", "CounterAccount", new[] { new FieldOption("", UiCulture.Text("NotApplicable")) }.Concat(Accounts(s.Data)), item.CounterAccountId?.ToString() ?? "");
         draft.Money("principal", "ActualPrincipalEuro", item.PrincipalComponent);
         draft.Choice("recurring", "RecurringLink", new[] { new FieldOption("", UiCulture.Text("NoLink")) }.Concat(s.Data.RecurringPayments.Select(r => new FieldOption(r.Id.ToString(), r.Name))), item.RecurringPaymentId?.ToString() ?? "");
         draft.DateField("occurrence", "OptionalRecurringDueDate", item.RecurringOccurrenceDate, false);
         draft.Note += " " + UiCulture.Text("TransactionRecurringNote");
+        if (TransferMatching.IsInternal(s.Data, item))
+        {
+            draft.Note += " " + UiCulture.Text("LegacyTransferEditorNote");
+            foreach (var field in draft.Fields.Where(f => f.Key is "date" or "account" or "amount" or "kind" or "counter" or "recurring" or "occurrence" or "principal"))
+                field.ReadOnly = true;
+        }
         if (TransactionAccounting.HasDetails(s.Data, item.Id))
         {
             draft.Note += " " + UiCulture.Text("TransactionHandlingNote");
@@ -196,14 +219,19 @@ public sealed class EditorDraft(string title, string revision)
             var source = s.Data.ImportBatches.FirstOrDefault(b => b.Id == item.ImportBatchId)?.AccountId ?? item.AccountId;
             draft.Note += " " + UiCulture.Text("TransactionStatementNote", s.AccountName(source), WebState.Money(balance));
         }
-        draft.Apply = d => HouseholdEdits.SaveTransaction(d, item with { Date = draft.Date("date"), AccountId = draft.Id("account"), Description = draft.Text("description"),
+        draft.Apply = d =>
+        {
+            if (draft.Text("kind") == "Transfer" && item.Kind != TransactionKind.Transfer)
+                throw new InvalidOperationException(UiCulture.Text("UseCategoryPurposes"));
+            HouseholdEdits.SaveTransaction(d, item with { Date = draft.Date("date"), AccountId = draft.Id("account"), Description = draft.Text("description"),
             UserDescription = draft.Text("userDescription"), Amount = draft.Number("amount"), Kind = Enum.Parse<TransactionKind>(draft.Text("kind")),
-            CategoryId = draft.Text("category") == "default" ? null : draft.OptionalId("category"),
+            CategoryId = draft.OptionalId("category"),
             CounterAccountId = draft.Text("kind") == "Transfer" ? draft.OptionalId("counter") : null,
             PrincipalComponent = draft.Text("kind") == "Mortgage" ? draft.Number("principal") : 0,
             RecurringPaymentId = draft.Text("kind") == "Transfer" ? null : draft.OptionalId("recurring"),
             RecurringOccurrenceDate = draft.Text("kind") == "Transfer" || draft.OptionalId("recurring") == null || draft.Text("occurrence").Length == 0
-                ? null : draft.Date("occurrence") }, draft.Text("category") == "default"); return draft;
+                ? null : draft.Date("occurrence") });
+        }; return draft;
     }
     public static EditorDraft Recurring(WebState s, RecurringPayment? original = null)
     {

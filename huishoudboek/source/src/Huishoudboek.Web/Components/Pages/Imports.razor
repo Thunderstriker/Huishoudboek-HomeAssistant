@@ -6,7 +6,7 @@
 <PageTitle>@L["Import"] · Huishoudboek</PageTitle>
 <h1>@L["ImportExcelCsv"]</h1>
 <p class="notice">@L["ImportAccountNote"]</p>
-<p class="muted">@L["AfterImportBothAccounts"] <a href="overboekingen">@L["MatchTransfers"]</a> @L["ImportTransferReportingNote"]</p>
+<p class="muted">@L["CategoryPurposeHelp"] <a href="budgetten">@L["BudgetsCategories"]</a></p>
 <section class="card">
     <label>@L["ImportFileHint"]<InputFile id="importFile" OnChange="Upload" accept=".xls,.xlsx,.csv" /></label>
     <div class="fields"><label>@L["ImportAccount"]<select id="importAccount" @bind="accountId" @bind:after="Invalidate"><option value="">@L["ChooseAccount"]</option>@foreach (var a in State.Data.Accounts) { <option value="@a.Id">@a.Name</option> }</select></label>
@@ -34,8 +34,8 @@
     <div class="table-scroll"><table><thead><tr><th>@L["Save"]</th><th>@L["Row"]</th><th>@L["Date"]</th><th>@L["Description"]</th><th class="money">@L["Amount"]</th><th>@L["Category"]</th><th>@L["Check"]</th></tr></thead><tbody>
     @foreach (var row in rows.Skip(page * 100).Take(100))
     { <tr @key="row.Number"><td><input type="checkbox" aria-label="@L["SelectImportRow"]" @bind="row.Include" disabled="@(!row.Source.IsValid)" /></td><td>@row.Number</td><td>@row.Source.Date?.ToString("dd-MM-yyyy")</td><td class="description">@row.Source.Description</td><td class="money">@(row.Source.Amount is { } amount ? Money(amount) : "—")</td>
-    <td><select aria-label="@L["ImportRowCategory"]" value="@row.Source.CategoryId" @onchange="e => Adjust(row, e)">@foreach (var category in preview.Categories) { <option value="@category.Id">@(category.Id == null ? L["Uncategorized"].Value : category.Name)</option> }</select></td>
-    <td class="description"><span class="badge">@row.Source.Kind</span><br />@row.Source.Note</td></tr> }
+    <td><select aria-label="@L["ImportRowCategory"]" value="@row.Source.CategoryId" @onchange="e => Adjust(row, e)">@foreach (var category in preview.Categories) { <option value="@category.Id">@(category.Id == null ? L["Uncategorized"].Value : State.Data.Categories.FirstOrDefault(c => c.Id == category.Id) is { } stored ? EditorDraft.CategoryLabel(stored) : category.Name)</option> }</select></td>
+    <td class="description"><span class="badge">@(State.Data.Categories.FirstOrDefault(c => c.Id == row.Source.CategoryId) is { Purpose: not CategoryPurpose.Normal } selectedCategory ? EditorDraft.PurposeLabel(selectedCategory.Purpose) : row.Source.Kind)</span><br />@row.Source.Note</td></tr> }
     </tbody></table></div><Pager Count="rows.Count" @bind-Page="page" />
     <button id="commit" class="primary" disabled="@(!rows.Any(r => r.Include))" @onclick="() => commitConfirm = true">@L["SaveSelectedRows"]…</button></section>
 }
@@ -52,7 +52,6 @@
         <p class="muted">@L["BalanceCheckNote"]</p>
         <p>@L["InvalidFutureRows", saved.Balance.InvalidRowCount, saved.Balance.FutureRowCount]</p>
         <button class="primary" autofocus @onclick="OpenReview">@L["ContinueCheckCategories"]</button>
-        <a class="button" href="overboekingen">@L["CheckOwnTransfers"]</a>
     </Modal>
 }
 @code {

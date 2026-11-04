@@ -33,7 +33,7 @@ public static class Reporting
             throw new InvalidOperationException("Kies een geldige maand tussen 1900 en 2200.");
         var report = Finance.Report(data, year, month, today);
         var end = new DateOnly(year, month, 1).AddMonths(1).AddDays(-1);
-        var categories = data.Categories.Select(c => report.Categories.FirstOrDefault(r => r.Id == c.Id)
+        var categories = data.Categories.Where(c => c.Purpose == CategoryPurpose.Normal).Select(c => report.Categories.FirstOrDefault(r => r.Id == c.Id)
             ?? new CategoryResult(c.Id, c.Name,
                 data.BudgetOverrides.FirstOrDefault(b => b.CategoryId == c.Id && b.Year == year && b.Month == month)?.Amount ?? c.MonthlyBudget, 0))
             .Concat(report.Categories.Where(c => c.Id == Guid.Empty)).ToList();

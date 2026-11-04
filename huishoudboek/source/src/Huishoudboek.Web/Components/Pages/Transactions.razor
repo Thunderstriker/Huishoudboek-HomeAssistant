@@ -3,7 +3,7 @@
 @inherits EditPageBase
 <PageTitle>@L["Transactions"] · Huishoudboek</PageTitle>
 <h1>@L["Transactions"]</h1>
-<div class="actions"><button class="primary" disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State)">+ @L["AddExpense"]</button><button disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State, true)">+ @L["AddIncome"]</button><button disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.Transaction(State)">@L["AdvancedTransaction"]</button><a class="button" href="importeren">@L["ImportExcelCsv"]</a><a class="button" href="overboekingen">@L["MatchTransfers"]</a></div>
+<div class="actions"><button class="primary" disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State)">+ @L["AddExpense"]</button><button disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State, true)">+ @L["AddIncome"]</button><button disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.Transaction(State)">@L["AdvancedTransaction"]</button><a class="button" href="importeren">@L["ImportExcelCsv"]</a></div>
 <div class="filters"><label>@L["Search"]<input type="search" @bind="search" @bind:event="oninput" @bind:after="Reset" placeholder="@L["TransactionSearchHint"]" /></label>
 <label>@L["Account"]<select @bind="accountId" @bind:after="Reset"><option value="">@L["AllAccounts"]</option>@foreach (var a in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@a.Id">@a.Name</option> }</select></label>
 <label class="check"><input type="checkbox" @bind="allDates" @bind:after="Reset" />@L["AllDates"]</label></div>
@@ -50,7 +50,9 @@
         }
     }
     private string TransactionType(Transaction t) => TransferMatching.IsInternal(State.Data, t) ?
-        L[t.Kind == TransactionKind.Transfer ? "ManualTransfer" : "LinkedTransfer"] : L[State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id) ? "AllocatedTransaction" : t.Kind == TransactionKind.Mortgage ? "Mortgage" : t.Amount > 0 ? "IncomeSingle" : "Expense"];
+        L[t.Kind == TransactionKind.Transfer ? "ManualTransfer" : "LinkedTransfer"] : State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id) ? L["AllocatedTransaction"] :
+        State.Data.Categories.FirstOrDefault(c => c.Id == t.CategoryId) is { Purpose: not CategoryPurpose.Normal } category ? EditorDraft.PurposeLabel(category.Purpose) :
+        L[t.Kind == TransactionKind.Mortgage ? "Mortgage" : t.Amount > 0 ? "IncomeSingle" : "Expense"];
     private void AskDelete(Transaction row) => Ask(L["DeleteTransaction"], L[row.Kind == TransactionKind.Transfer ?
         "DeleteManualTransferQuestion" : "DeleteTransactionQuestion"], d => HouseholdEdits.DeleteTransaction(d, row.Id), L["Delete"]);
 }

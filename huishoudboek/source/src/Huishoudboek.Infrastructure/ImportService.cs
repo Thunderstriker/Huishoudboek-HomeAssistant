@@ -286,10 +286,11 @@ public static class ImportService
     {
         using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
         using var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.GetCultureInfo("nl-NL")) { Delimiter = ";" });
-        foreach (var h in new[] { "Datum", "Rekening", "Omschrijving", "Bedrag", "Categorie", "Type", "Tegenrekening", "Aflossing", "Eigen omschrijving", "Transactie-ID", "Transferkoppeling", "Gekoppelde transactie-ID", "Vaste-post-ID", "Vaste post", "Geplande betaaldatum", "Splitsingen (JSON)", "Vergoedingsverwachtingen (JSON)" }) csv.WriteField(h);
+        foreach (var h in new[] { "Datum", "Rekening", "Omschrijving", "Bedrag", "Categorie", "Type", "Tegenrekening", "Aflossing", "Eigen omschrijving", "Transactie-ID", "Transferkoppeling", "Gekoppelde transactie-ID", "Vaste-post-ID", "Vaste post", "Geplande betaaldatum", "Splitsingen (JSON)", "Vergoedingsverwachtingen (JSON)", "Categorie telt als", "Categorie-instellingen (JSON)" }) csv.WriteField(h);
         csv.NextRecord();
         var matches = data.TransferMatches.Where(m => m.IsConfirmed).SelectMany(m => new[] { (Id: m.DebitTransactionId, Match: m), (Id: m.CreditTransactionId, Match: m) })
             .ToDictionary(p => p.Id, p => p.Match);
+        var lines = TransactionAccounting.Lines(data, data.Transactions).ToLookup(l => l.Transaction.Id);
         foreach (var t in data.Transactions.OrderBy(t => t.Date))
         {
             // Neutralize formula injection when opening an exported CSV in a spreadsheet.
@@ -311,6 +312,10 @@ public static class ImportService
             csv.WriteField(recurring == null ? "" : RecurringSchedule.LinkedDate(recurring, t).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
             csv.WriteField(System.Text.Json.JsonSerializer.Serialize(data.TransactionAllocations.Where(a => a.TransactionId == t.Id)));
             csv.WriteField(System.Text.Json.JsonSerializer.Serialize(data.ReimbursementClaims.Where(c => c.ExpenseTransactionId == t.Id)));
+            csv.WriteField(data.Categories.FirstOrDefault(c => c.Id == t.CategoryId)?.Purpose.ToString() ?? "Normal");
+            var categoryIds = data.TransactionAllocations.Where(a => a.TransactionId == t.Id).Select(a => a.CategoryId)
+                .Append(t.CategoryId).Concat(lines[t.Id].Select(l => l.CategoryId)).ToHashSet();
+            csv.WriteField(System.Text.Json.JsonSerializer.Serialize(data.Categories.Where(c => categoryIds.Contains(c.Id))));
             csv.NextRecord();
         }
     }

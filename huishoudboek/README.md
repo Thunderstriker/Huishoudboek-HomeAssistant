@@ -25,15 +25,20 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
   CSV-export en volledige databaseback-ups met herstel.
 - Elke bankimport werkt alleen de gekozen rekening bij, met de bedragen uit het
   bestand. Gebruik voor elke rekening het eigen bestand; geen automatische koppelingen.
-- **Transfers koppelen:** bekijk en bevestig twee bestaande bankboekingen als één
-  interne geldbeweging. Saldi en originele boekingen blijven intact; alleen de
-  rapportage verandert. Bevestigingen en afwijzingen zijn omkeerbaar.
+- **Sparen zonder koppelen:** categorieën tellen als gewone inkomsten/uitgaven,
+  sparen/beleggen of tussen eigen rekeningen. Spaargeld staat apart van uitgaven,
+  met optionele maanddoelen; boven een spaardoel is geen budgetoverschrijding.
+  De betaalrekening bepaalt de spaarbijdrage, zonder verplichte tweede bankboeking.
 - **Splitsingen, retouren en vergoedingen:** verdeel één bankboeking over meerdere
   categorieën en verwerk terugbetalingen als lagere uitgaven, nooit als inkomsten.
   Houd werkgeversvergoedingen en gedeelde aankopen bij, met deelbetalingen en
   openstaande bedragen. Bankboekingen en saldi blijven intact.
 
-**Over** is inkomsten min lasten en netto opzijgezet, geen rekeningsaldo.
+**Inkomsten min uitgaven** is het overschot vóór sparen. **Maandresultaat na sparen**
+is inkomsten min lasten en netto opzijgezet, geen rekeningsaldo.
+Gebruik **Budgetten & categorieën → Categorie instellen → Telt als** om sparen apart
+te tonen. Categoriseren verandert nooit saldi. Eerder vastgelegde transfers behouden
+hun oorspronkelijke werking en blijven als historie bewaard.
 Prognoses zijn schattingen; werkelijke bedragen bevatten alleen boekingen tot
 en met vandaag. Budget 0 betekent geen limiet. Jaarbudgetten beslaan twaalf maanden.
 

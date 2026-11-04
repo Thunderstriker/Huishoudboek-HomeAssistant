@@ -3,12 +3,45 @@
 @inherits EditPageBase
 <PageTitle>@L["Budgets"] · Huishoudboek</PageTitle>
 <h1>@L["BudgetsCategories"]</h1>
+<p class="notice">@L["CategoryPurposeHelp"]</p>
 <div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Category(State)">+ @L["Category"]</button></div>
 @{ var budgets = DetailedReporting.Budgets(State.Data, State.Year, State.Month, State.Today, State.Scope); }
-<section class="card"><h2>@(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
-<div class="table-scroll"><table><thead><tr><th>@L["Category"]</th><th class="money">@L["Default"]</th><th class="money">@L["ThisMonth"]</th><th class="money">@L["Spent"]</th><th class="money">@L["Remaining"]</th><th>@L["Actions"]</th></tr></thead><tbody>
-@foreach (var row in budgets)
-{ var c = State.Data.Categories.Single(c => c.Id == row.Id);
-<tr><td>@row.Name @if (row.IsOverBudget) { <span class="badge negative">@L["Exceeded"]</span> }</td><td class="money">@Money(row.DefaultBudget)</td><td class="money">@Money(row.Budget)</td><td class="money">@Money(row.Spent)</td><td class="money">@(row.Budget == 0 ? L["NoLimit"].Value : Money(row.Remaining))</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, c)">@L["CategoryDefaultBudget"]</button><button @onclick="() => Draft = EditorDraft.Budget(State, c)">@L["BudgetThisMonth"]</button></div></td></tr> }
-</tbody></table></div><p class="muted">@L["DefaultBudgetNote"]</p></section>
+<h2>@(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
+@foreach (var purpose in Enum.GetValues<CategoryPurpose>())
+{
+    var saving = purpose == CategoryPurpose.Savings;
+    var movement = purpose == CategoryPurpose.OwnAccountMovement;
+    <section class="card"><h2>@EditorDraft.PurposeLabel(purpose)</h2>
+    @if (saving) { <p class="muted">@L["SavingsCountingNote"]</p> }
+    @if (movement) { <p class="muted">@L["OwnAccountCountingNote"]</p> }
+    <div class="table-scroll"><table><thead><tr><th>@L["Category"]</th>
+    @if (!movement)
+    { <th class="money">@L[saving ? "DefaultTarget" : "Default"]</th><th class="money">@L[saving ? "MonthlyTarget" : "ThisMonth"]</th><th class="money">@L[saving ? "NetPutAside" : "Spent"]</th><th class="money">@L[saving ? "Progress" : "Remaining"]</th> }
+    <th>@L["Actions"]</th></tr></thead><tbody>
+    @foreach (var row in budgets.Where(b => b.Purpose == purpose))
+    {
+        var c = State.Data.Categories.Single(c => c.Id == row.Id);
+        <tr><td>@row.Name @if (row.IsOverBudget) { <span class="badge negative">@L["Exceeded"]</span> }</td>
+        @if (!movement)
+        {
+            <td class="money">@Money(row.DefaultBudget)</td><td class="money">@Money(row.Budget)</td><td class="money">@Money(row.Spent)</td>
+            <td class="money">
+                @if (saving)
+                {
+                    @if (row.Budget == 0) { <span>—</span> }
+                    else if (row.Spent >= row.Budget) { <span class="badge positive">@L["SavingsTargetReached"]</span> }
+                    else { @L["SavingsStillToTarget", Money(row.Remaining)] }
+                }
+                else { @(row.Budget == 0 ? L["NoLimit"].Value : Money(row.Remaining)) }
+            </td>
+        }
+        <td><div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, c)">@L["CategorySettings"]</button>
+        @if (!movement) { <button @onclick="() => Draft = EditorDraft.Budget(State, c)">@L[saving ? "TargetThisMonth" : "BudgetThisMonth"]</button> }
+        </div></td></tr>
+    }
+    </tbody></table></div></section>
+}
+<p class="muted">@L["DefaultBudgetNote"] @L["CategoryHistoryNote"]</p>
+@if (State.Data.TransferMatches.Count > 0 || State.Data.Transactions.Any(t => t.Kind == TransactionKind.Transfer))
+{ <p class="muted">@L["LegacyTransferNote"] <a href="overboekingen">@L["LegacyTransferHistory"]</a></p> }
 <EditDialogs Page="this" />

@@ -57,7 +57,7 @@
   <data name="Income" xml:space="preserve"><value>Income</value></data>
   <data name="Outflow" xml:space="preserve"><value>Outgoings</value></data>
   <data name="Savings" xml:space="preserve"><value>Set aside</value></data>
-  <data name="Available" xml:space="preserve"><value>Left over</value></data>
+  <data name="Available" xml:space="preserve"><value>After savings</value></data>
   <data name="Category" xml:space="preserve"><value>Category</value></data>
   <data name="Budget" xml:space="preserve"><value>Budget</value></data>
   <data name="Spent" xml:space="preserve"><value>Spent</value></data>
@@ -91,7 +91,7 @@
   <data name="OutflowHousing" xml:space="preserve"><value>Spending &amp; housing costs</value></data>
   <data name="IncludesPrincipal" xml:space="preserve"><value>Including mortgage principal repayments</value></data>
   <data name="NetSavingsInvestments" xml:space="preserve"><value>Net savings &amp; investments</value></data>
-  <data name="AvailableThisMonth" xml:space="preserve"><value>Left over this month</value></data>
+  <data name="AvailableThisMonth" xml:space="preserve"><value>Month result after savings</value></data>
   <data name="AvailableNote" xml:space="preserve"><value>Income − outgoings − set aside; not an account balance</value></data>
   <data name="ImportedTransfersQuestion" xml:space="preserve"><value>Imported bank entries between your own accounts?</value></data>
   <data name="CheckMatchTransfers" xml:space="preserve"><value>Check and match transfers</value></data>
@@ -102,14 +102,14 @@
   <data name="MonthEndForecast" xml:space="preserve"><value>Month-end forecast · estimate</value></data>
   <data name="ExpectedIncome" xml:space="preserve"><value>Expected income</value></data>
   <data name="ExpectedOutflow" xml:space="preserve"><value>Expected outgoings</value></data>
-  <data name="ExpectedAvailable" xml:space="preserve"><value>Expected left over</value></data>
+  <data name="ExpectedAvailable" xml:space="preserve"><value>Expected after savings</value></data>
   <data name="ProjectedCurrentBalance" xml:space="preserve"><value>Expected closing balance of current accounts</value></data>
   <data name="CurrentBalance" xml:space="preserve"><value>Current account balances</value></data>
   <data name="SavingsBuffer" xml:space="preserve"><value>Savings buffer</value></data>
   <data name="NetWorthExcludingHome" xml:space="preserve"><value>Net worth excluding home</value></data>
   <data name="NetWorthNote" xml:space="preserve"><value>Balances + securities − mortgage debt</value></data>
   <data name="WelcomeAddAccounts" xml:space="preserve"><value>Welcome! Add owners and accounts first.</value></data>
-  <data name="SpentMoreThanReceived" xml:space="preserve"><value>Spent and set aside more than received</value></data>
+  <data name="SpentMoreThanReceived" xml:space="preserve"><value>Spent more than received</value></data>
   <data name="CategoryOverBudget" xml:space="preserve"><value>Attention: category budget exceeded</value></data>
   <data name="ExpectedShortfall" xml:space="preserve"><value>Attention: expected month-end shortfall</value></data>
   <data name="SetBudgetsNote" xml:space="preserve"><value>Set budgets to identify overspending</value></data>
@@ -121,7 +121,7 @@
   <data name="LargestPayments" xml:space="preserve"><value>Largest payments: {0}.</value></data>
   <data name="ForecastCalculationNote" xml:space="preserve"><value>Estimate: recorded amounts + unmatched recurring payments + {0} additional variable spending based on the daily average.</value></data>
   <data name="OverdueForecastNote" xml:space="preserve"><value>{0} overdue recurring payment(s) not yet matched; check for double counting.</value></data>
-  <data name="NoSavingsForecast" xml:space="preserve"><value>No automatic forecast of future savings transfers.</value></data>
+  <data name="NoSavingsForecast" xml:space="preserve"><value>Only recorded and planned savings contributions are included; no automatic extrapolation.</value></data>
   <data name="LimitedHistoryNote" xml:space="preserve"><value>Limited data: the forecast has limited reliability.</value></data>
   <data name="CashForecastNote" xml:space="preserve"><value>The expected closing balance of current accounts uses the daily cash forecast with up to 90 days of spending history; this is a different estimate from the monthly result.</value></data>
   <data name="DistantForecastNote" xml:space="preserve"><value>Distant future month: the expected balance starts from today's balances, without intervening months.</value></data>
@@ -149,7 +149,7 @@
   <data name="CategoryDefaultBudget" xml:space="preserve"><value>Category / default budget</value></data>
   <data name="BudgetThisMonth" xml:space="preserve"><value>Budget this month</value></data>
   <data name="DefaultBudgetNote" xml:space="preserve"><value>Default budgets apply monthly. A different monthly budget does not change other months. Budget 0 = no limit. Budgets apply to the whole household with an owner filter.</value></data>
-  <data name="AnnualActualNote" xml:space="preserve"><value>Only entries through today. Future months are not plotted. Left over = income minus outgoings and set aside; not an account balance.</value></data>
+  <data name="AnnualActualNote" xml:space="preserve"><value>Only entries through today. Future months are not plotted. After savings = income minus spending and set aside; not an account balance.</value></data>
   <data name="ViewMonthlyAmounts" xml:space="preserve"><value>View monthly amounts</value></data>
   <data name="ViewAnnualBudgets" xml:space="preserve"><value>View categories and annual budgets</value></data>
   <data name="AnnualBudgetNote" xml:space="preserve"><value>Annual budgets cover 12 months, not just the period through today. Budgets apply to the household, even with an owner filter. Budget 0 = no limit.</value></data>
@@ -164,7 +164,7 @@
   <data name="StatementBalance" xml:space="preserve"><value>Import account bank balance</value></data>
   <data name="Planned" xml:space="preserve"><value>Planned</value></data>
   <data name="NoTransactions" xml:space="preserve"><value>No transactions within these filters.</value></data>
-  <data name="PlannedTransactionsNote" xml:space="preserve"><value>Future transactions are planned: they count as actual only on their date. Manual and confirmed matched transfers are not income or spending. Matching two bank entries does not change balances.</value></data>
+  <data name="PlannedTransactionsNote" xml:space="preserve"><value>Future entries count as actual only on their date. Categories determine ordinary income/spending, savings or movements between your own accounts. Categorizing never changes balances. Previously recorded transfers retain their original treatment.</value></data>
   <data name="ManualTransfer" xml:space="preserve"><value>Manual transfer</value></data>
   <data name="LinkedTransfer" xml:space="preserve"><value>Matched transfer</value></data>
   <data name="IncomeSingle" xml:space="preserve"><value>Income</value></data>
@@ -191,7 +191,7 @@
   <data name="AutomaticCategorization" xml:space="preserve"><value>Automatic categorization</value></data>
   <data name="Rule" xml:space="preserve"><value>Rule</value></data>
   <data name="ApplyExistingTransactions" xml:space="preserve"><value>Apply to existing transactions</value></data>
-  <data name="RulesOrderNote" xml:space="preserve"><value>Rules run in the order added; the first matching rule wins. Existing categories are preserved. Transfers are excluded from text rules. Recognition can also match recurring payments.</value></data>
+  <data name="RulesOrderNote" xml:space="preserve"><value>Rules run in the order added; the first matching rule wins. Existing categories are preserved. Savings and own-account categories can use rules too. Only legacy transfers and explicit splits are skipped. Recognition can also match recurring payments.</value></data>
   <data name="Order" xml:space="preserve"><value>Order</value></data>
   <data name="DescriptionContains" xml:space="preserve"><value>Description contains</value></data>
   <data name="RestoreDatabaseQuestion" xml:space="preserve"><value>This database replaces all shared records. The source file remains unchanged. A safety copy of the current data is saved first. Unsaved changes and import previews become invalid. Continue?</value></data>
@@ -210,7 +210,7 @@
   <data name="ActualExpected" xml:space="preserve"><value>Actual and expected</value></data>
   <data name="NoMonthlyAmounts" xml:space="preserve"><value>No amounts to show this month yet.</value></data>
   <data name="MonthlyForecastChart" xml:space="preserve"><value>Actual income, outgoings and left over compared with the monthly forecast. Exact amounts are in the summaries on this page.</value></data>
-  <data name="ForecastChartNote" xml:space="preserve"><value>Forecast = month-end estimate. Left over = income minus outgoings and net savings; not an account balance.</value></data>
+  <data name="ForecastChartNote" xml:space="preserve"><value>Forecast = month-end estimate. After savings = income minus spending and net set aside; not an account balance.</value></data>
   <data name="OtherCategories" xml:space="preserve"><value>Other categories</value></data>
   <data name="Actual" xml:space="preserve"><value>Actual</value></data>
   <data name="Forecast" xml:space="preserve"><value>Forecast</value></data>
@@ -351,13 +351,13 @@
   <data name="BufferEuro" xml:space="preserve"><value>Minimum cash buffer (€)</value></data>
   <data name="RenameCategory" xml:space="preserve"><value>Rename category</value></data>
   <data name="RenameCategoryNote" xml:space="preserve"><value>Only the name changes, throughout your records. Matches and budgets are preserved.</value></data>
-  <data name="CategoryEditorNote" xml:space="preserve"><value>The default budget applies monthly. 0 means no limit set.</value></data>
+  <data name="CategoryEditorNote" xml:space="preserve"><value>Choose how this category counts. Normal: income/spending. Savings: set aside separately, measured on current accounts only. Between own accounts: neither income nor spending. Amount = monthly budget or savings target; 0 = not set. Changes also affect all earlier entries in this category; balances stay unchanged.</value></data>
   <data name="DefaultMonthlyBudgetEuro" xml:space="preserve"><value>Default monthly budget (€)</value></data>
   <data name="MonthlyBudgetTitle" xml:space="preserve"><value>Monthly budget · {0} · {1}</value></data>
-  <data name="MonthlyBudgetEditorNote" xml:space="preserve"><value>Only this month is changed. Other months and the default budget stay the same. 0 = no limit.</value></data>
+  <data name="MonthlyBudgetEditorNote" xml:space="preserve"><value>Only this month changes. Other months and the default amount stay the same. For savings this is a target, not a spending limit. 0 = not set.</value></data>
   <data name="BudgetEuro" xml:space="preserve"><value>Budget (€)</value></data>
-  <data name="TransactionEditorNote" xml:space="preserve"><value>Income is positive; expenses, mortgages and transfers are negative. A transfer is saved once and updates both accounts. For mortgages: enter only actual principal repayments; unknown = 0. The full payment is a cash outgoing.</value></data>
-  <data name="TransactionTransferNote" xml:space="preserve"><value>This entry has a transfer decision. Changing the amount, date, account, type or recurring match removes that decision. Use Match transfers for two imported entries; converting to a manual transfer may update the other account twice.</value></data>
+  <data name="TransactionEditorNote" xml:space="preserve"><value>Receipts are positive; debits are negative. New entries affect only the selected account. Use a savings or own-account category for reporting, without linking a second entry. For mortgages: enter only actual principal repayments; unknown = 0.</value></data>
+  <data name="TransactionTransferNote" xml:space="preserve"><value>This entry has a historical transfer decision. It is preserved; the category is only a label here.</value></data>
   <data name="TransactionAccount" xml:space="preserve"><value>Account (for transfers: FROM)</value></data>
   <data name="OriginalDescription" xml:space="preserve"><value>Original description</value></data>
   <data name="OwnDescriptionOptional" xml:space="preserve"><value>Custom description (optional)</value></data>
@@ -497,10 +497,10 @@ This entry replaces only this planned payment. Check that it is the same payment
   <data name="ClearFilters" xml:space="preserve"><value>Clear filters</value></data>
   <data name="Import" xml:space="preserve"><value>Import</value></data>
   <data name="AllImports" xml:space="preserve"><value>All imports</value></data>
-  <data name="IncludeInternalTransfers" xml:space="preserve"><value>Also show internal transfers</value></data>
+  <data name="IncludeInternalTransfers" xml:space="preserve"><value>Also show historical transfers (labels only)</value></data>
   <data name="CategoryGroups" xml:space="preserve"><value>Category groups</value></data>
   <data name="DeleteCategory" xml:space="preserve"><value>Delete category</value></data>
-  <data name="ReviewTotalsNote" xml:space="preserve"><value>{0} payments · income {1} · outgoing {2}. Includes planned entries, excludes transfers; not strictly actual report totals.</value></data>
+  <data name="ReviewTotalsNote" xml:space="preserve"><value>{0} payments · income {1} · spending {2}. Includes planned entries, excludes savings and own-account movements; not strictly actual report totals.</value></data>
   <data name="PlannedFuturePayment" xml:space="preserve"><value>Planned future payment</value></data>
   <data name="WalkRemainingNote" xml:space="preserve"><value>{0} remaining in this round. Skipping changes nothing; the payment returns in a new round.</value></data>
   <data name="WalkCompleteNote" xml:space="preserve"><value>This round is complete. Skipped payments have not changed.</value></data>
@@ -525,7 +525,7 @@ This entry replaces only this planned payment. Check that it is the same payment
   <data name="DeleteCategoryQuestion" xml:space="preserve"><value>Delete category ‘{0}’ across ALL records?
 {1} transactions and {2} recurring payments remain and become Uncategorized.
 {3} rules, {4} monthly budgets and default budget {5} are removed.
-Amounts, bank text, balances, principal repayments and import history are preserved. No immediate undo; make a backup first if needed.</value></data>
+Amounts, bank text, balances, principal repayments and import history are preserved. Savings/own-account treatment also ends for earlier entries; reports change. No immediate undo; make a backup first if needed.</value></data>
   <data name="ImportAccountNote" xml:space="preserve"><value>Each import records entries only on the selected account, using the amount from the file. Other accounts are not automatically matched or adjusted; import each account's own file. No duplicate filtering is applied: importing the same statement again adds its transactions again. Check currency, account and opening date. Nothing is saved until explicit confirmation.</value></data>
   <data name="AfterImportBothAccounts" xml:space="preserve"><value>After importing both accounts, you can</value></data>
   <data name="ImportTransferReportingNote" xml:space="preserve"><value>for reporting, without extra entries or balance adjustments.</value></data>
@@ -650,4 +650,40 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="ExpandTransaction" xml:space="preserve"><value>Expand details and actions</value></data>
   <data name="ReadyMadeBankProfiles" xml:space="preserve"><value>Ready-made bank profiles</value></data>
   <data name="BankProfilesNote" xml:space="preserve"><value>ING (NL), Rabobank and KBC/CBC: profiles for CSV exports with column headers. Argenta and the existing bank template remain automatically recognized. Export variants may differ; always check columns, payment direction and amounts in the preview. EUR only.</value></data>
+  <data name="CountsAs" xml:space="preserve"><value>Counts as</value></data>
+  <data name="NormalPurpose" xml:space="preserve"><value>Normal income &amp; spending</value></data>
+  <data name="SavingsPurpose" xml:space="preserve"><value>Savings &amp; investments</value></data>
+  <data name="OwnAccountPurpose" xml:space="preserve"><value>Between own accounts</value></data>
+  <data name="CategorySettings" xml:space="preserve"><value>Category settings</value></data>
+  <data name="CategoryPurposeHelp" xml:space="preserve"><value>Give savings a category that counts as ‘Savings &amp; investments’. Movements between current accounts count as ‘Between own accounts’. Use the same treatment on both sides if you import both accounts. No need to match two entries; categorizing never changes balances.</value></data>
+  <data name="SavingsCountingNote" xml:space="preserve"><value>Net set aside = debits minus receipts in savings categories on current accounts, on their own bank date. The savings/investment side is not counted again. A withdrawal reduces contributions, not income. This is not a balance or investment return. The owner filter follows the current account.</value></data>
+  <data name="OwnAccountCountingNote" xml:space="preserve"><value>These categories count as neither income, spending nor savings. Use this treatment on both sides of movements between your current accounts or between savings/investment accounts. Bank amounts still affect their own account balances.</value></data>
+  <data name="CategoryHistoryNote" xml:space="preserve"><value>Changing ‘Counts as’ or deleting a category also changes historical reports, never bank amounts or balances.</value></data>
+  <data name="BeforeSavings" xml:space="preserve"><value>Income minus spending</value></data>
+  <data name="BeforeSavingsNote" xml:space="preserve"><value>Monthly surplus before savings</value></data>
+  <data name="SavingsAboveSurplus" xml:space="preserve"><value>Set aside more than the monthly surplus</value></data>
+  <data name="SpendingBelowIncome" xml:space="preserve"><value>You spent {0} less than you received.</value></data>
+  <data name="SpendingAboveIncome" xml:space="preserve"><value>You spent {0} more than you received.</value></data>
+  <data name="PutAsideSummary" xml:space="preserve"><value>Net set aside: {0}.</value></data>
+  <data name="WithdrawnSummary" xml:space="preserve"><value>Net withdrawn from savings/investments: {0}.</value></data>
+  <data name="SavingsAboveSurplusAmount" xml:space="preserve"><value>After savings the month result is {0} negative. That is not additional spending; do check your current-account balance.</value></data>
+  <data name="PutAsideSeparately" xml:space="preserve"><value>Set aside separately</value></data>
+  <data name="NetPutAside" xml:space="preserve"><value>Net set aside</value></data>
+  <data name="MonthlyTarget" xml:space="preserve"><value>This month’s target</value></data>
+  <data name="DefaultTarget" xml:space="preserve"><value>Default target</value></data>
+  <data name="TargetThisMonth" xml:space="preserve"><value>This month’s target</value></data>
+  <data name="SavingsTargetEuro" xml:space="preserve"><value>Savings target (€)</value></data>
+  <data name="DefaultMonthlyTargetEuro" xml:space="preserve"><value>Default monthly savings target (€)</value></data>
+  <data name="SavingsTargetReached" xml:space="preserve"><value>Target reached</value></data>
+  <data name="SavingsStillToTarget" xml:space="preserve"><value>{0} still to target</value></data>
+  <data name="Progress" xml:space="preserve"><value>Progress</value></data>
+  <data name="NoSavingsCategories" xml:space="preserve"><value>Set a category to savings to show contributions separately.</value></data>
+  <data name="LegacyContributions" xml:space="preserve"><value>Previously recorded transfers</value></data>
+  <data name="LegacyTransfer" xml:space="preserve"><value>Historical transfer</value></data>
+  <data name="LegacyTransferHistory" xml:space="preserve"><value>Historical transfers</value></data>
+  <data name="LegacyTransferNote" xml:space="preserve"><value>Previously recorded manual transfers and confirmed matches retain their original balance and reporting effects, including their old date and owner treatment. No bank entries are rewritten. New payments use categories.</value></data>
+  <data name="LegacyTransferEditorNote" xml:space="preserve"><value>Historical transfer: bank amount, date, accounts and links are locked here to protect existing balances and reports. Descriptions and category labels remain editable. New entries use categories, not this old type.</value></data>
+  <data name="TransferWorkflowRetired" xml:space="preserve"><value>Transfer matching has been replaced by categories. Choose ‘Savings &amp; investments’ or ‘Between own accounts’ in category settings and categorize the bank entries. A second imported side is not needed to show savings on your current account.</value></data>
+  <data name="LegacyManualEntriesNote" xml:space="preserve"><value>Old manual transfers remain identifiable in the transaction list.</value></data>
+  <data name="UseCategoryPurposes" xml:space="preserve"><value>Use a savings or own-account category; new manual transfers are no longer available.</value></data>
 </root>

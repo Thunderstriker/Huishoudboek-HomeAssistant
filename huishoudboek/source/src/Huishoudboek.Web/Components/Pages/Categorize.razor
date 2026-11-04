@@ -3,7 +3,7 @@
 @inherits EditPageBase
 <PageTitle>@L["Categorize"] · Huishoudboek</PageTitle>
 <h1>@L["Categorize"] · @L["AllDates"]</h1>
-<p class="muted">@L["CategorizeScopeNote"] <a href="overboekingen">@L["MatchTransfers"]</a></p>
+<p class="muted">@L["CategoryPurposeHelp"] <a href="budgetten">@L["BudgetsCategories"]</a></p>
 <div class="actions">
     <button class="@(mode == "groups" ? "primary" : "")" @onclick='() => SetMode("groups")'>@L["ByCategory"]</button>
     <button class="@(mode == "inbox" ? "primary" : "")" @onclick='() => SetMode("inbox")'>@L["Uncategorized"]</button>
@@ -26,7 +26,7 @@
     <section class="card" style="@(mode != "groups" ? "grid-column:1/-1" : null)">
         <div class="page-heading"><h2>@(mode == "walk" ? L["StepByStep"].Value : mode == "inbox" ? L["Uncategorized"].Value : State.CategoryName(groupCategory))</h2>
         @if (mode == "groups" && groupCategory is { } categoryId && State.Data.Categories.FirstOrDefault(c => c.Id == categoryId) is { } category)
-        { <div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, category, true)">@L["RenameCategory"]</button><button @onclick="() => DeleteCategory(category)">@L["DeleteCategory"]</button></div> }
+        { <div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, category)">@L["CategorySettings"]</button><button @onclick="() => DeleteCategory(category)">@L["DeleteCategory"]</button></div> }
         </div>
         @if (mode != "walk") { <p class="muted">@L["ReviewTotalsNote", rows.Count, Money(totals.Income), Money(totals.Outflow)]</p> }
         @if (mode == "walk")
@@ -60,7 +60,7 @@
         @if (mode != "walk" || Current != null)
         {
             <form @onsubmit="Assign" @onsubmit:preventDefault>
-                <div class="fields"><label>@L["Category"]<select id="assignCategory" @bind="assignCategory"><option value="">@L["Uncategorized"]</option>@foreach (var c in State.Data.Categories) { <option value="@c.Id">@c.Name</option> }</select></label>
+                <div class="fields"><label>@L["Category"]<select id="assignCategory" @bind="assignCategory"><option value="">@L["Uncategorized"]</option>@foreach (var c in State.Data.Categories) { <option value="@c.Id">@EditorDraft.CategoryLabel(c)</option> }</select></label>
                 @if (mode == "walk" || selected.Count == 1) { <label>@L["OwnDescriptionOptional"]<input id="ownDescription" @bind="ownDescription" maxlength="2000" /></label> }</div>
                 <label class="check"><input id="rememberRule" type="checkbox" @bind="remember" />@L["RememberImports"]</label>
                 @if (remember)

@@ -61,6 +61,7 @@ public static class RecurringSchedule
         IReadOnlySet<(Guid PaymentId, DateOnly Due)>? linked)
     {
         foreach (var item in data.RecurringPayments.Where(r => r.AccountId == transaction.AccountId &&
+            CompatiblePurpose(data, transaction, r) &&
             Math.Sign(r.Amount) == Math.Sign(transaction.Amount) && Math.Abs(r.Amount - transaction.Amount) <= r.MatchTolerance &&
             !string.IsNullOrWhiteSpace(r.MatchText) && transaction.Description.Contains(r.MatchText, StringComparison.OrdinalIgnoreCase)))
         {
@@ -68,6 +69,11 @@ public static class RecurringSchedule
                 if (!(linked?.Contains((item.Id, due)) ?? IsLinked(data, item, due))) yield return new(item, transaction, due);
         }
     }
+
+    private static bool CompatiblePurpose(HouseholdData data, Transaction transaction, RecurringPayment payment) =>
+        transaction.CategoryId == null ||
+        (data.Categories.FirstOrDefault(c => c.Id == transaction.CategoryId)?.Purpose ?? CategoryPurpose.Normal) ==
+        (data.Categories.FirstOrDefault(c => c.Id == payment.CategoryId)?.Purpose ?? CategoryPurpose.Normal);
 
     public static IReadOnlyList<RecurringCandidate> BatchCandidates(HouseholdData data, Guid paymentId, DateOnly through)
     {
@@ -100,12 +106,17 @@ public static class RecurringSchedule
         var transaction = data.Transactions.Single(t => t.Id == transactionId);
         var item = data.RecurringPayments.Single(r => r.Id == paymentId);
         if (transaction.Kind == TransactionKind.Transfer || TransferMatching.ConfirmedTransactionIds(data).Contains(transactionId) ||
-            transaction.RecurringPaymentId != null || transaction.AccountId != item.AccountId || Math.Sign(transaction.Amount) != Math.Sign(item.Amount))
+            transaction.RecurringPaymentId != null || transaction.AccountId != item.AccountId || Math.Sign(transaction.Amount) != Math.Sign(item.Amount) ||
+            !CompatiblePurpose(data, transaction, item))
             throw new InvalidOperationException("Deze boeking kan niet aan deze vaste post worden gekoppeld. Verwijder eerst een bestaande koppeling.");
         if (Occurrence(item, due.Year, due.Month) != due || IsLinked(data, item, due))
             throw new InvalidOperationException("Deze geplande betaling bestaat niet of is al gekoppeld.");
         HouseholdEdits.SaveTransaction(data, transaction with { RecurringPaymentId = item.Id, RecurringOccurrenceDate = due,
-            Kind = item.IsMortgage ? TransactionKind.Mortgage : transaction.Kind });
+            Kind = item.IsMortgage ? TransactionKind.Mortgage : transaction.Kind,
+            // Ordinary historical links preserve even an empty category. A savings/
+            // own-account plan must carry its explicit reporting purpose onto the receipt.
+            CategoryId = transaction.CategoryId ?? (data.Categories.Any(c => c.Id == item.CategoryId && c.Purpose != CategoryPurpose.Normal)
+                ? item.CategoryId : null) });
     }
 
     public static void Unlink(HouseholdData data, Guid transactionId)
