@@ -375,7 +375,14 @@
   <data name="OptionalRecurringDueDate" xml:space="preserve"><value>Geplande betaaldatum vaste post (optioneel; leeg = bankmaand)</value></data>
   <data name="TransactionRecurringNote" xml:space="preserve"><value>Koppel bij voorkeur via Vaste posten, vooral als de bankdatum in een andere maand valt. Een afwijkend werkelijk bedrag verandert de schatting van volgende betalingen niet.</value></data>
   <data name="TransactionStatementNote" xml:space="preserve"><value>Banksaldo importrekening {0}: {1}. Geen vervanging van uw beginsaldo.</value></data>
-  <data name="RecurringEditorNote" xml:space="preserve"><value>Een planning verandert uw werkelijke saldo niet. Kwartaal/jaar beginnen in de startmaand; eenmalig gebruikt de startdatum. Dag 29–31 wordt in korte maanden ingekort. Een koppeling vervangt één schatting door het echte bankbedrag. Ruimere herkenningsmarges leveren controlevoorstellen; automatisch koppelen blijft beperkt tot ± 1 cent en 5 dagen. Wijziging van een gekoppelde planning kan eerst ontkoppelen vereisen.</value></data>
+  <data name="RecurringEditorNote" xml:space="preserve"><value>Een planning verandert uw werkelijke saldo niet. Kwartaal/jaar beginnen in de startmaand; eenmalig gebruikt de startdatum. Dag 29–31 wordt in korte maanden ingekort. Bij opslaan worden bestaande bankboekingen gecontroleerd binnen uw herkenningsmarges. U kunt alle eenduidige matches na één bevestiging koppelen of opslaan zonder koppelen. Automatische herkenning bij import blijft beperkt tot ± 1 cent en 5 dagen. Wijziging van een gekoppelde planning kan eerst ontkoppelen vereisen.</value></data>
+  <data name="RecurringBatchQuestion" xml:space="preserve"><value>{0} passende bankboekingen in de historie gevonden. Wilt u deze allemaal koppelen aan deze vaste post?</value></data>
+  <data name="RecurringBatchNote" xml:space="preserve"><value>Alleen eenduidige matches binnen uw ingestelde bedrag- en datummarges worden gekoppeld. Bankbedragen, datums, omschrijvingen, saldi en categorieën blijven ongewijzigd. Bestaande koppelingen, splitsingen en vergoedingskoppelingen worden overgeslagen. Onduidelijke matches blijven beschikbaar voor individuele controle.</value></data>
+  <data name="RecurringBatchExistingNote" xml:space="preserve"><value>Veel historische matches voor één vaste post? Open Bewerken en sla opnieuw op: u krijgt het aantal eenduidige matches en kunt ze met één bevestiging allemaal koppelen.</value></data>
+  <data name="SaveWithoutLinking" xml:space="preserve"><value>Opslaan zonder koppelen</value></data>
+  <data name="SaveAndLinkRows" xml:space="preserve"><value>Opslaan en {0} boekingen koppelen</value></data>
+  <data name="RecurringRowsLinked" xml:space="preserve"><value>Vaste post opgeslagen en {0} bankboekingen gekoppeld.</value></data>
+  <data name="Back" xml:space="preserve"><value>Terug</value></data>
   <data name="RecurringAmountEuro" xml:space="preserve"><value>Bedrag per betaling (€), negatief voor uitgave</value></data>
   <data name="RecurringDay" xml:space="preserve"><value>Dag (1–31; niet voor eenmalig)</value></data>
   <data name="Frequency" xml:space="preserve"><value>Frequentie</value></data>
@@ -594,4 +601,53 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="NoBufferWarning" xml:space="preserve"><value>Geen minimale cashbuffer ingesteld. Stel via Buffer instellen een reserve in voor onverwachte kosten.</value></data>
   <data name="NoNextIncomeWarning" xml:space="preserve"><value>Geen volgende inkomensdatum bekend binnen {0} dagen; bestedingsruimte berekend voor {1} dagen, niet tot een bekende betaaldag.</value></data>
   <data name="AllocationTotalRequired" xml:space="preserve"><value>Voeg minstens één splitsing toe en verdeel het bankbedrag volledig (nog te verdelen = € 0), of schakel de verdeling uit.</value></data>
+  <data name="FirstWeekTitle" xml:space="preserve"><value>Uw eerste week</value></data>
+  <data name="SetupProgress" xml:space="preserve"><value>{0} van {1} stappen klaar</value></data>
+  <data name="FirstWeekNote" xml:space="preserve"><value>Volg deze volgorde voor een betrouwbare start. De voortgang geldt voor het hele huishouden en wordt opnieuw gecontroleerd bij wijzigingen.</value></data>
+  <data name="SetupDone" xml:space="preserve"><value>Klaar</value></data>
+  <data name="SetupTodo" xml:space="preserve"><value>Nog te doen</value></data>
+  <data name="SetupAccounts" xml:space="preserve"><value>Maak eigenaren en rekeningen aan</value></data>
+  <data name="SetupOpening" xml:space="preserve"><value>Stel beginsaldi vast en bevestig ze</value></data>
+  <data name="SetupImport" xml:space="preserve"><value>Importeer bankafschriften per rekening</value></data>
+  <data name="SetupBalances" xml:space="preserve"><value>Vergelijk de saldi met uw bank</value></data>
+  <data name="SetupCategorize" xml:space="preserve"><value>Categoriseer werkelijke boekingen</value></data>
+  <data name="SetupPlans" xml:space="preserve"><value>Stel budgetten en vaste posten in</value></data>
+  <data name="NewUserStartNote" xml:space="preserve"><value>Nieuw hier? Begin met een eigenaar en uw eerste rekening. Een bestaande database is niet nodig.</value></data>
+  <data name="WeeklyReviewTitle" xml:space="preserve"><value>Wekelijkse controle</value></data>
+  <data name="WeeklyReviewSummary" xml:space="preserve"><value>Importeren → uitzonderingen oplossen → komende rekeningen</value></data>
+  <data name="WeeklyImport" xml:space="preserve"><value>Importeer uw laatste bankboekingen</value></data>
+  <data name="WeeklyImportsCurrent" xml:space="preserve"><value>Recente boekingen voor alle rekeningen</value></data>
+  <data name="WeeklyImportsStale" xml:space="preserve"><value>{0} rekeningen zonder recente importboekingen</value></data>
+  <data name="WeeklyExceptions" xml:space="preserve"><value>Los uitzonderingen op</value></data>
+  <data name="WeeklyUncategorized" xml:space="preserve"><value>Zonder categorie: {0}</value></data>
+  <data name="WeeklyTransfers" xml:space="preserve"><value>Transferparen ter controle: {0}</value></data>
+  <data name="WeeklyRecurring" xml:space="preserve"><value>Boekingen met vaste-postvoorstellen: {0}</value></data>
+  <data name="WeeklyBalances" xml:space="preserve"><value>Nog te controleren saldi: {0}</value></data>
+  <data name="WeeklyBills" xml:space="preserve"><value>Bekijk betalingen van vandaag tot over 7 dagen</value></data>
+  <data name="WeeklyNoBills" xml:space="preserve"><value>Geen ongekoppelde betalingen gepland in de komende 7 dagen.</value></data>
+  <data name="WeeklyNoPlan" xml:space="preserve"><value>Nog geen vaste uitgaven ingesteld. Voeg uw rekeningen toe aan Vaste posten; dit is geen bevestiging dat er niets te betalen is.</value></data>
+  <data name="WeeklyCoverageNote" xml:space="preserve"><value>Deze controle volgt het eigenaarfilter, niet de gekozen maand. Een import is recent bij bankboekingen in de laatste 7 dagen; een rustige rekening kan dus een waarschuwing geven. Voorstellen worden nooit automatisch bevestigd.</value></data>
+  <data name="CreateOwnerFirst" xml:space="preserve"><value>Maak eerst een eigenaar aan en voeg daarna uw eerste rekening toe.</value></data>
+  <data name="OpeningAndBalanceChecks" xml:space="preserve"><value>Beginsaldi en saldocontrole</value></data>
+  <data name="OpeningConfirmationNote" xml:space="preserve"><value>Het beginsaldo is het saldo vóór de eerste boeking op de openingsdatum, niet het saldo van vandaag. Ook € 0 kan correct zijn. Bevestig na vergelijking met uw bank; controleer daarna het saldo inclusief geïmporteerde boekingen.</value></data>
+  <data name="LastBalanceCheck" xml:space="preserve"><value>Laatst gecontroleerd t/m {0}.</value></data>
+  <data name="EditOpeningBalance" xml:space="preserve"><value>Beginsaldo wijzigen</value></data>
+  <data name="ConfirmOpeningBalance" xml:space="preserve"><value>Beginsaldo bevestigen</value></data>
+  <data name="ConfirmOpeningQuestion" xml:space="preserve"><value>Klopt het beginsaldo van {0} vóór de boekingen op {1}: {2}? Bevestigen verandert geen bedragen.</value></data>
+  <data name="CheckBankBalance" xml:space="preserve"><value>Met banksaldo vergelijken</value></data>
+  <data name="BankBalanceCheckTitle" xml:space="preserve"><value>Banksaldo controleren · {0}</value></data>
+  <data name="BankBalanceCheckNote" xml:space="preserve"><value>Vul zelf het banksaldo aan het einde van de gekozen dag in. De controle wordt alleen opgeslagen als beide saldi gelijk zijn. Bij verschillen: controleer beginsaldo, periode en ontbrekende of dubbele boekingen. Er wordt nooit een correctieboeking gemaakt.</value></data>
+  <data name="BalanceCheckDate" xml:space="preserve"><value>Controledatum (einde van de dag)</value></data>
+  <data name="BankBalanceEuro" xml:space="preserve"><value>Banksaldo (€)</value></data>
+  <data name="BalanceCheckDateError" xml:space="preserve"><value>Kies een controledatum tussen de openingsdatum en vandaag.</value></data>
+  <data name="BalanceCheckDifference" xml:space="preserve"><value>Het berekende saldo min het banksaldo is {0}. Controleer beginsaldo en ontbrekende of dubbele boekingen. De controle is niet opgeslagen; geen bedragen zijn gewijzigd.</value></data>
+  <data name="AddExpense" xml:space="preserve"><value>Uitgave toevoegen</value></data>
+  <data name="AddIncome" xml:space="preserve"><value>Inkomst toevoegen</value></data>
+  <data name="AdvancedTransaction" xml:space="preserve"><value>Uitgebreide boeking</value></data>
+  <data name="SimpleEntryNote" xml:space="preserve"><value>Voer een positief bedrag in; de gekozen uitgave of inkomst bepaalt het teken. Voor transfers, hypotheekbetalingen en vaste-postkoppelingen gebruikt u de uitgebreide boeking. Importeert u later dezelfde boeking, controleer dan het importvoorbeeld op dubbelen.</value></data>
+  <data name="PositiveAmountEuro" xml:space="preserve"><value>Bedrag (€), positief</value></data>
+  <data name="PositiveEntryAmountError" xml:space="preserve"><value>Voer een bedrag groter dan nul in.</value></data>
+  <data name="ExpandTransaction" xml:space="preserve"><value>Details en acties uitklappen</value></data>
+  <data name="ReadyMadeBankProfiles" xml:space="preserve"><value>Kant-en-klare bankprofielen</value></data>
+  <data name="BankProfilesNote" xml:space="preserve"><value>ING (NL), Rabobank en KBC/CBC: profielen voor CSV-exports met kolomkoppen. Argenta en het bestaande banktemplate blijven automatisch herkenbaar. Exportvarianten kunnen afwijken; controleer kolommen, betaalrichting en bedragen altijd in het voorbeeld. Alleen EUR.</value></data>
 </root>

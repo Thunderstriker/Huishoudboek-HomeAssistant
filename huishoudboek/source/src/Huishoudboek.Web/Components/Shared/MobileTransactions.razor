@@ -1,0 +1,37 @@
+@inject WebState State
+<div class="mobile-transactions">
+@foreach (var row in Transactions)
+{
+    <details class="transaction-item" @key="row.Id">
+        <summary>
+            <span class="transaction-heading"><span class="transaction-description">@(row.UserDescription.Length > 0 ? row.UserDescription : row.Description)</span><strong class="@(row.Amount < 0 ? "negative" : "positive")">@Money(row.Amount)</strong></span>
+            <span class="transaction-meta">@row.Date.ToString("dd-MM-yyyy") · @State.AccountName(row.AccountId) @if (row.Date > State.Today) { <span class="badge">@L["Planned"]</span> }</span>
+            <span class="transaction-meta"><TransactionAllocationSummary Transaction="row" /></span>
+            <span class="muted">@L["ExpandTransaction"]</span>
+        </summary>
+        <dl class="transaction-details">
+            <dt>@L["OriginalDescription"]</dt><dd>@row.Description</dd>
+            <dt>@L["Type"]</dt><dd>@TypeLabel(row)</dd>
+            @if (row.CounterAccountId is { } counter) { <dt>@L["CounterAccount"]</dt><dd>@State.AccountName(counter)</dd> }
+            @if (row.Kind == TransactionKind.Mortgage) { <dt>@L["Principal"]</dt><dd>@Money(row.PrincipalComponent)</dd> }
+            @if (row.RecurringPaymentId is { } recurring)
+            {
+                <dt>@L["RecurringPayment"]</dt><dd>@State.Data.RecurringPayments.FirstOrDefault(r => r.Id == recurring)?.Name
+                @if (row.RecurringOccurrenceDate is { } due) { <small> · @due.ToString("dd-MM-yyyy")</small> }</dd>
+            }
+            @if (row.StatementBalance is { } balance) { <dt>@L["StatementBalance"]</dt><dd>@Money(balance)</dd> }
+        </dl>
+        <div class="actions"><button @onclick="() => Edit.InvokeAsync(row)">@L["Edit"]</button>
+            @if (row.Kind == TransactionKind.Normal && !TransferMatching.IsInternal(State.Data, row)) { <button @onclick="() => Handle.InvokeAsync(row)">@L["TransactionHandling"]</button> }
+            <button @onclick="() => Delete.InvokeAsync(row)">@L["Delete"]</button>
+        </div>
+    </details>
+}
+</div>
+@code {
+    [Parameter, EditorRequired] public IEnumerable<Transaction> Transactions { get; set; } = [];
+    [Parameter, EditorRequired] public Func<Transaction, string> TypeLabel { get; set; } = null!;
+    [Parameter] public EventCallback<Transaction> Edit { get; set; }
+    [Parameter] public EventCallback<Transaction> Handle { get; set; }
+    [Parameter] public EventCallback<Transaction> Delete { get; set; }
+}

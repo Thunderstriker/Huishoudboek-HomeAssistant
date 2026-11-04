@@ -55,14 +55,39 @@ public static class RecurringSchedule
     }
 
     public static IEnumerable<RecurringCandidate> Matches(HouseholdData data, Transaction transaction)
+        => Matches(data, transaction, null);
+
+    private static IEnumerable<RecurringCandidate> Matches(HouseholdData data, Transaction transaction,
+        IReadOnlySet<(Guid PaymentId, DateOnly Due)>? linked)
     {
         foreach (var item in data.RecurringPayments.Where(r => r.AccountId == transaction.AccountId &&
             Math.Sign(r.Amount) == Math.Sign(transaction.Amount) && Math.Abs(r.Amount - transaction.Amount) <= r.MatchTolerance &&
             !string.IsNullOrWhiteSpace(r.MatchText) && transaction.Description.Contains(r.MatchText, StringComparison.OrdinalIgnoreCase)))
         {
             foreach (var due in Occurrences(item, transaction.Date.AddDays(-item.MatchWindowDays), transaction.Date.AddDays(item.MatchWindowDays)))
-                if (!IsLinked(data, item, due)) yield return new(item, transaction, due);
+                if (!(linked?.Contains((item.Id, due)) ?? IsLinked(data, item, due))) yield return new(item, transaction, due);
         }
+    }
+
+    public static IReadOnlyList<RecurringCandidate> BatchCandidates(HouseholdData data, Guid paymentId, DateOnly through)
+    {
+        var payment = data.RecurringPayments.Single(r => r.Id == paymentId);
+        if (string.IsNullOrWhiteSpace(payment.MatchText)) return [];
+        var transfers = TransferMatching.ConfirmedTransactionIds(data);
+        var payments = data.RecurringPayments.ToDictionary(r => r.Id);
+        var linked = data.Transactions.Where(t => t.RecurringPaymentId != null)
+            .Select(t => (t.RecurringPaymentId!.Value, LinkedDate(payments[t.RecurringPaymentId.Value], t))).ToHashSet();
+        // Snapshot both sides before linking: never choose an arbitrary entry for an occurrence,
+        // or a plan for an entry. The user confirms the batch within their configured margins.
+        var candidates = data.Transactions.Where(t => t.AccountId == payment.AccountId &&
+                t.Date <= through && t.Kind != TransactionKind.Transfer && t.RecurringPaymentId == null && !transfers.Contains(t.Id))
+            .SelectMany(t => Matches(data, t, linked)).ToList();
+        var byTransaction = candidates.ToLookup(c => c.Transaction.Id);
+        var byOccurrence = candidates.ToLookup(c => (c.Payment.Id, c.DueDate));
+        return candidates.Where(c => c.Payment.Id == paymentId &&
+            byTransaction[c.Transaction.Id].Count() == 1 && byOccurrence[(c.Payment.Id, c.DueDate)].Count() == 1 &&
+            !TransactionAccounting.HasDetails(data, c.Transaction.Id))
+            .OrderBy(c => c.Transaction.Date).ToList();
     }
 
     public static void Link(HouseholdData data, Guid transactionId, Guid paymentId, DateOnly due)

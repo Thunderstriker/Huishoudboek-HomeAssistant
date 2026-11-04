@@ -233,6 +233,7 @@ public static class ImportService
 
     public static ImportProfile SuggestProfile(IReadOnlyList<string> headers)
     {
+        if (BankImportProfiles.Detect(headers) is { } bank) return bank;
         string Find(params string[] candidates) => candidates.Select(c => headers.FirstOrDefault(h => h.Equals(c, StringComparison.OrdinalIgnoreCase)))
             .FirstOrDefault(h => h != null) ?? "";
         var known = headers.Contains("Rekening opdrachtgever") && headers.Contains("Saldo na verrichting");

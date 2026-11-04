@@ -375,7 +375,14 @@
   <data name="OptionalRecurringDueDate" xml:space="preserve"><value>Planned recurring payment date (optional; empty = bank month)</value></data>
   <data name="TransactionRecurringNote" xml:space="preserve"><value>Prefer matching via Recurring payments, especially when the bank date falls in another month. A different actual amount does not change estimates for future payments.</value></data>
   <data name="TransactionStatementNote" xml:space="preserve"><value>Bank balance of import account {0}: {1}. Does not replace your opening balance.</value></data>
-  <data name="RecurringEditorNote" xml:space="preserve"><value>A schedule does not change your actual balance. Quarterly/yearly schedules start in the start month; one-off payments use the start date. Days 29–31 are shortened in shorter months. A match replaces one estimate with the actual bank amount. Wider recognition margins produce suggestions for review; automatic matching remains limited to ± 1 cent and 5 days. Changing a matched schedule may require unmatching first.</value></data>
+  <data name="RecurringEditorNote" xml:space="preserve"><value>A schedule does not change your actual balance. Quarterly/yearly schedules start in the start month; one-off payments use the start date. Days 29–31 are shortened in shorter months. Saving checks existing bank entries within your recognition margins. You can link all unambiguous matches with one confirmation or save without linking. Automatic recognition during import remains limited to ± 1 cent and 5 days. Changing a matched schedule may require unmatching first.</value></data>
+  <data name="RecurringBatchQuestion" xml:space="preserve"><value>{0} matching historical bank entries found. Would you like to link all of them to this recurring payment?</value></data>
+  <data name="RecurringBatchNote" xml:space="preserve"><value>Only unambiguous matches within your configured amount and date margins are linked. Bank amounts, dates, descriptions, balances and categories remain unchanged. Existing links, splits and reimbursement links are skipped. Ambiguous matches remain available for individual review.</value></data>
+  <data name="RecurringBatchExistingNote" xml:space="preserve"><value>Many historical matches for one recurring payment? Open Edit and save again: you will see the number of unambiguous matches and can link all of them with one confirmation.</value></data>
+  <data name="SaveWithoutLinking" xml:space="preserve"><value>Save without linking</value></data>
+  <data name="SaveAndLinkRows" xml:space="preserve"><value>Save and link {0} entries</value></data>
+  <data name="RecurringRowsLinked" xml:space="preserve"><value>Recurring payment saved and {0} bank entries linked.</value></data>
+  <data name="Back" xml:space="preserve"><value>Back</value></data>
   <data name="RecurringAmountEuro" xml:space="preserve"><value>Amount per payment (€), negative for expenses</value></data>
   <data name="RecurringDay" xml:space="preserve"><value>Day (1–31; not for one-off payments)</value></data>
   <data name="Frequency" xml:space="preserve"><value>Frequency</value></data>
@@ -594,4 +601,53 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="NoBufferWarning" xml:space="preserve"><value>No minimum cash buffer set. Use Set buffer to reserve money for unexpected costs.</value></data>
   <data name="NoNextIncomeWarning" xml:space="preserve"><value>No next income date known within {0} days; spending headroom calculated for {1} days, not until a known payday.</value></data>
   <data name="AllocationTotalRequired" xml:space="preserve"><value>Add at least one allocation and distribute the full bank amount (remaining = € 0), or disable allocation.</value></data>
+  <data name="FirstWeekTitle" xml:space="preserve"><value>Your first week</value></data>
+  <data name="SetupProgress" xml:space="preserve"><value>{0} of {1} steps complete</value></data>
+  <data name="FirstWeekNote" xml:space="preserve"><value>Follow this order for a reliable start. Progress covers the whole household and is rechecked when data changes.</value></data>
+  <data name="SetupDone" xml:space="preserve"><value>Done</value></data>
+  <data name="SetupTodo" xml:space="preserve"><value>To do</value></data>
+  <data name="SetupAccounts" xml:space="preserve"><value>Create owners and accounts</value></data>
+  <data name="SetupOpening" xml:space="preserve"><value>Establish and confirm opening balances</value></data>
+  <data name="SetupImport" xml:space="preserve"><value>Import statements for each account</value></data>
+  <data name="SetupBalances" xml:space="preserve"><value>Compare balances with your bank</value></data>
+  <data name="SetupCategorize" xml:space="preserve"><value>Categorize actual transactions</value></data>
+  <data name="SetupPlans" xml:space="preserve"><value>Set budgets and recurring payments</value></data>
+  <data name="NewUserStartNote" xml:space="preserve"><value>New here? Start with an owner and your first account. You do not need an existing database.</value></data>
+  <data name="WeeklyReviewTitle" xml:space="preserve"><value>Weekly review</value></data>
+  <data name="WeeklyReviewSummary" xml:space="preserve"><value>Import → resolve exceptions → upcoming bills</value></data>
+  <data name="WeeklyImport" xml:space="preserve"><value>Import your latest bank entries</value></data>
+  <data name="WeeklyImportsCurrent" xml:space="preserve"><value>Recent entries for all accounts</value></data>
+  <data name="WeeklyImportsStale" xml:space="preserve"><value>{0} accounts without recent imported entries</value></data>
+  <data name="WeeklyExceptions" xml:space="preserve"><value>Resolve exceptions</value></data>
+  <data name="WeeklyUncategorized" xml:space="preserve"><value>Uncategorized: {0}</value></data>
+  <data name="WeeklyTransfers" xml:space="preserve"><value>Transfer pairs to review: {0}</value></data>
+  <data name="WeeklyRecurring" xml:space="preserve"><value>Entries with recurring suggestions: {0}</value></data>
+  <data name="WeeklyBalances" xml:space="preserve"><value>Balances still to check: {0}</value></data>
+  <data name="WeeklyBills" xml:space="preserve"><value>Review payments from today through the next 7 days</value></data>
+  <data name="WeeklyNoBills" xml:space="preserve"><value>No unlinked payments planned in the next 7 days.</value></data>
+  <data name="WeeklyNoPlan" xml:space="preserve"><value>No recurring expenses set up yet. Add your bills to Recurring payments; this does not confirm that nothing is due.</value></data>
+  <data name="WeeklyCoverageNote" xml:space="preserve"><value>This review follows the owner filter, not the selected month. An import is recent when it contains bank entries from the last 7 days; a quiet account may therefore show a warning. Suggestions are never confirmed automatically.</value></data>
+  <data name="CreateOwnerFirst" xml:space="preserve"><value>Create an owner first, then add your first account.</value></data>
+  <data name="OpeningAndBalanceChecks" xml:space="preserve"><value>Opening balances and balance checks</value></data>
+  <data name="OpeningConfirmationNote" xml:space="preserve"><value>The opening balance is the balance before the first entry on the opening date, not today's balance. € 0 can be correct too. Confirm it after comparing with your bank; then check the balance including imported entries.</value></data>
+  <data name="LastBalanceCheck" xml:space="preserve"><value>Last checked through {0}.</value></data>
+  <data name="EditOpeningBalance" xml:space="preserve"><value>Edit opening balance</value></data>
+  <data name="ConfirmOpeningBalance" xml:space="preserve"><value>Confirm opening balance</value></data>
+  <data name="ConfirmOpeningQuestion" xml:space="preserve"><value>Is the opening balance for {0}, before entries on {1}, correct: {2}? Confirming does not change any amounts.</value></data>
+  <data name="CheckBankBalance" xml:space="preserve"><value>Compare with bank balance</value></data>
+  <data name="BankBalanceCheckTitle" xml:space="preserve"><value>Check bank balance · {0}</value></data>
+  <data name="BankBalanceCheckNote" xml:space="preserve"><value>Enter the bank balance at the end of the selected day yourself. The check is saved only if both balances match. For differences, check the opening balance, period and missing or duplicate entries. No adjustment transaction is ever created.</value></data>
+  <data name="BalanceCheckDate" xml:space="preserve"><value>Check date (end of day)</value></data>
+  <data name="BankBalanceEuro" xml:space="preserve"><value>Bank balance (€)</value></data>
+  <data name="BalanceCheckDateError" xml:space="preserve"><value>Choose a check date between the opening date and today.</value></data>
+  <data name="BalanceCheckDifference" xml:space="preserve"><value>The calculated balance minus the bank balance is {0}. Check the opening balance and missing or duplicate entries. The check was not saved; no amounts were changed.</value></data>
+  <data name="AddExpense" xml:space="preserve"><value>Add expense</value></data>
+  <data name="AddIncome" xml:space="preserve"><value>Add income</value></data>
+  <data name="AdvancedTransaction" xml:space="preserve"><value>Advanced entry</value></data>
+  <data name="SimpleEntryNote" xml:space="preserve"><value>Enter a positive amount; the selected expense or income determines its sign. Use Advanced entry for transfers, mortgage payments and recurring links. If you later import the same entry, check the preview for duplicates.</value></data>
+  <data name="PositiveAmountEuro" xml:space="preserve"><value>Amount (€), positive</value></data>
+  <data name="PositiveEntryAmountError" xml:space="preserve"><value>Enter an amount greater than zero.</value></data>
+  <data name="ExpandTransaction" xml:space="preserve"><value>Expand details and actions</value></data>
+  <data name="ReadyMadeBankProfiles" xml:space="preserve"><value>Ready-made bank profiles</value></data>
+  <data name="BankProfilesNote" xml:space="preserve"><value>ING (NL), Rabobank and KBC/CBC: profiles for CSV exports with column headers. Argenta and the existing bank template remain automatically recognized. Export variants may differ; always check columns, payment direction and amounts in the preview. EUR only.</value></data>
 </root>

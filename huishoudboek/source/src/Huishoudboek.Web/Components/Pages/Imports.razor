@@ -13,17 +13,18 @@
     <label>@L["FromInclusive"]<InputDate id="from" @bind-Value="from" @bind-Value:after="Invalidate" /></label><label>@L["ThroughInclusive"]<InputDate id="through" @bind-Value="through" @bind-Value:after="Invalidate" /></label></div>
     <details open="@settingsOpen"><summary>@L["ImportSettings"]</summary>
         <div class="fields"><label>@L["Worksheet"]<select @bind="worksheet" @bind:after="Invalidate"><option value="">@(sheets.Count == 0 ? "CSV" : L["FirstWorksheet"].Value)</option>@foreach (var sheet in sheets) { <option value="@sheet">@sheet</option> }</select></label>
-        <label>@L["SavedProfile"]<select @bind="profileId" @bind:after="UseProfile"><option value="">@L["AutoDetect"]</option>@foreach (var p in State.Data.ImportProfiles) { <option value="@p.Id">@p.Name</option> }</select></label>
+        <label>@L["SavedProfile"]<select @bind="profileChoice" @bind:after="UseProfile"><option value="">@L["AutoDetect"]</option><optgroup label="@L["ReadyMadeBankProfiles"]">@foreach (var p in BankImportProfiles.All) { <option value="@($"bank:{p.Id}")">@p.Name</option> }</optgroup><optgroup label="@L["SavedProfile"]">@foreach (var p in State.Data.ImportProfiles) { <option value="@p.Id">@p.Name</option> }</optgroup></select></label>
         <label class="check"><input type="checkbox" @bind="windows1252" @bind:after="Invalidate" />@L["Windows1252Hint"]</label></div>
         @if (profile != null)
         {
             <div class="fields"><label>@L["ProfileName"]<input @bind="profile.Name" @bind:after="Invalidate" /></label><label>@L["NumberCulture"]<select @bind="profile.CultureName" @bind:after="Invalidate"><option value="nl-NL">@L["DutchNumberFormat"]</option><option value="nl-BE">@L["BelgianDutch"]</option><option value="en-US">@L["EnglishNumberFormat"]</option><option value="de-DE">@L["GermanNumberFormat"]</option></select></label><label>@L["OptionalDateFormat"]<input @bind="profile.DateFormat" @bind:after="Invalidate" placeholder="dd/MM/yyyy" /></label>
             @foreach (var column in Columns)
-            { <label>@L[column.Label]<select value="@ProfileValue(column.Key)" @onchange="e => MapColumn(column.Key, e.Value?.ToString() ?? string.Empty)"><option value="">@L["DoNotUse"]</option>@foreach (var header in headers) { <option value="@header">@header</option> }</select></label> }
+            { <label>@L[column.Label]<select value="@ProfileValue(column.Key)" @onchange="e => MapColumn(column.Key, e.Value?.ToString() ?? string.Empty)"><option value="">@L["DoNotUse"]</option>@if (ProfileValue(column.Key) is { Length: > 0 } mapped && !headers.Contains(mapped)) { <option value="@mapped">@mapped</option> }@foreach (var header in headers) { <option value="@header">@header</option> }</select></label> }
             </div>
         }
         else { <p class="muted">@L["PreviewColumnNote"]</p> }
     </details>
+    <p class="muted">@L["BankProfilesNote"]</p>
     <div class="actions"><button id="preview" class="primary" disabled="@(uploadId == null || accountId == null)" @onclick="Preview">@L["ProcessPreview"]</button></div>
     <p class="muted">@(fileName ?? L["NoFileSelected"].Value) · @L["UploadExpiryNote"]</p>
 </section>
@@ -55,7 +56,7 @@
     </Modal>
 }
 @code {
-    private Guid? uploadId, accountId, profileId; private string? fileName; private string worksheet = "";
+    private Guid? uploadId, accountId; private string? fileName; private string worksheet = "", profileChoice = "";
     private IReadOnlyList<string> sheets = [], headers = [];
     private bool windows1252, settingsOpen = true, commitConfirm;
     private DateOnly from, through; private ImportProfile? profile; private PreviewResponse? preview; private CommitImportResponse? result;
@@ -73,7 +74,7 @@
     private void Invalidate() { preview = null; rows.Clear(); commitConfirm = false; settingsOpen = true; }
     private async Task Upload(InputFileChangeEventArgs args)
     {
-        Invalidate(); uploadId = null; profile = null; profileId = null; headers = []; sheets = []; worksheet = "";
+        Invalidate(); uploadId = null; profile = null; profileChoice = ""; headers = []; sheets = []; worksheet = "";
         await State.RunAsync(async () =>
         {
             var file = args.File; fileName = file.Name;
@@ -82,7 +83,13 @@
             var response = await Backend.UploadAsync(stream, file.Name, cancellation.Token); uploadId = response.UploadId; sheets = response.Worksheets;
         }, L["FileReadyForPreview"]);
     }
-    private void UseProfile() { profile = State.Data.ImportProfiles.FirstOrDefault(p => p.Id == profileId) is { } p ? p with { } : null; Invalidate(); }
+    private void UseProfile()
+    {
+        var bank = profileChoice.StartsWith("bank:", StringComparison.Ordinal);
+        var id = Guid.TryParse(bank ? profileChoice[5..] : profileChoice, out var parsed) ? parsed : (Guid?)null;
+        profile = (bank ? BankImportProfiles.All : State.Data.ImportProfiles).FirstOrDefault(p => p.Id == id) is { } selected ? selected with { } : null;
+        Invalidate();
+    }
     private string ProfileValue(string key) => (string?)typeof(ImportProfile).GetProperty(key)!.GetValue(profile) ?? "";
     private void MapColumn(string key, string value) { typeof(ImportProfile).GetProperty(key)!.SetValue(profile, value); Invalidate(); }
     private async Task Preview()

@@ -67,6 +67,49 @@ nieuwe app; bewerk niet beide kopieën verder.
 Deze lokale distributie voegt geen openbare repository toe en publiceert niets
 naar GitHub of een containerregister. Alleen amd64 is in deze versie opgenomen.
 
+## Nieuw beginnen: uw eerste week
+
+Een bestaande database is niet nodig. Open het maandoverzicht en volg **Uw eerste week**:
+
+1. Maak bij **Rekeningen** eerst een eigenaar aan en daarna uw rekeningen met IBAN.
+2. Kies een openingsdatum en het saldo **vóór** de eerste boeking op die datum.
+   Importeer geen oudere boekingen zonder eerst de openingsdatum en het saldo aan te passen.
+   Vergelijk met uw bank en kies **Beginsaldo bevestigen**; ook € 0 kan correct zijn.
+3. Importeer afschriften per rekening en controleer het voorbeeld vóór opslaan.
+4. Open **Rekeningen → Beginsaldi en saldocontrole**. Voer de controledatum en het
+   banksaldo aan het einde van die dag zelf in. Alleen gelijke saldi worden bevestigd;
+   een verschil moet worden onderzocht, niet met een automatische correctie weggeboekt.
+5. Categoriseer boekingen en splitsingen; sla herkenningsregels op voor volgende imports.
+6. Stel minstens één budget en een vaste post in (bijvoorbeeld salaris of huur).
+
+De checklist geldt voor het hele huishouden, ook als een eigenaarfilter actief is.
+Hij blijft uitklapbaar in het maandoverzicht. Afgeronde stappen worden berekend uit de
+gegevens; alle rekeningen moeten een import en saldocontrole hebben voor die stappen
+klaar zijn. Een administratie die alleen handmatige boekingen gebruikt kan de importstap
+open laten. Beginsaldobevestigingen en saldocontroles blijven in volledige back-ups bewaard.
+Een gewijzigd beginsaldo heropent de bevestiging. Cashwijzigingen en nieuwe werkelijke
+boekingen na de controledatum heropenen de saldocontrole; alleen categorisatie doet dat niet.
+
+### Licht dagelijks gebruik en wekelijkse controle
+
+Bij **Transacties** bieden **Uitgave toevoegen** en **Inkomst toevoegen** een kort formulier.
+Voer een positief bedrag in; de knop bepaalt het teken. **Uitgebreide boeking** blijft
+beschikbaar voor transfers, hypotheekbetalingen en vaste-postkoppelingen. De editor
+verbergt tegenrekening/aflossing wanneer die niet van toepassing zijn. Importeert u later
+dezelfde handmatige boeking, controleer dan het voorbeeld op dubbelen.
+
+Op schermen tot 700 px vervangt een compacte lijst de transactietabel. Tik op een boeking
+voor de oorspronkelijke banktekst, eventuele hypotheek-/transfer-/vaste-postgegevens,
+banksaldo en acties. Filters, categorieën, paginering en financiële verwerking blijven gelijk.
+
+Open wekelijks **Wekelijkse controle** in het maandoverzicht: importeer, bekijk categorieën,
+transfer-/vaste-postvoorstellen en saldi, en controleer betalingen van vandaag tot over 7 dagen.
+De controle volgt het eigenaarfilter maar niet de gekozen maand. Alleen werkelijke
+geïmporteerde bankboekingen uit de laatste 7 dagen tellen als recent; een oude export
+opnieuw uploaden maakt een rekening dus niet actueel. Rustige rekeningen kunnen een
+waarschuwing houden. De lijst met rekeningen omvat alleen ongekoppelde vaste uitgaven;
+zonder ingestelde planning is dit geen bevestiging dat er niets te betalen is.
+
 ## Uw bestaande database importeren
 
 1. Gebruik bij voorkeur **Back-up maken** in de bestaande Windows-app/website.
@@ -82,12 +125,12 @@ naar GitHub of een containerregister. Alleen amd64 is in deze versie opgenomen.
 4. Controleer de waarschuwing en bevestig expliciet met **Database importeren**.
    Annuleren wijzigt niets. Een import vervangt de volledige administratie;
    het is geen samenvoeging van twee huishoudboeken.
-5. De app valideert applicatiemarker, schema (versies 1–5), SQLite-integriteit en
+5. De app valideert applicatiemarker, schema (versies 1–7), SQLite-integriteit en
    financiële verwijzingen. Vervolgens bewaart hij de huidige administratie als
    veiligheidskopie en slaat hij de geïmporteerde administratie atomair op.
    Een onbekende versie of ongeldig bestand wordt geweigerd, niet gereset.
 6. Controleer na afloop rekeningen, transacties en bedragen. Uw bronbestand op
-   Windows blijft ongewijzigd. Bestaande versies 1–4 worden bij import ingelezen
+   Windows blijft ongewijzigd. Bestaande versies 1–6 worden bij import ingelezen
    naar de huidige structuur zonder het bronbestand te migreren.
 
 Alle financiële gegevens blijven behouden: transacties en eigen omschrijvingen,
@@ -104,6 +147,12 @@ ander product en is niet automatisch met deze ingress-only app verbonden.
 
 ## Excel/CSV importeren per rekening
 
+- ING (NL CSV), Rabobank (NL CSV) en KBC/CBC (BE CSV) zijn beschikbaar als kant-en-klare
+  profielen en worden bij bekende kolomkoppen automatisch herkend. Argenta en het
+  bestaande banktemplate blijven ondersteund. Profielen zijn voor exports **met kolomkoppen**;
+  exportvarianten kunnen verschillen. Controleer mappings en betaalrichting in het voorbeeld.
+  ING gebruikt `yyyyMMdd` en Af/Bij; Rabobank en KBC gebruiken een bedrag met teken.
+  Alleen EUR wordt ondersteund. Bij een rekeningkolom moet het IBAN met de gekozen rekening overeenkomen.
 - Een bankimport boekt uitsluitend op de gekozen **Importrekening**. Bedragen
   blijven positief of negatief zoals in het bestand; er wordt geen boeking op een
   andere rekening aangemaakt en geen tegenrekening automatisch gekoppeld.
@@ -180,7 +229,14 @@ andere rekening of spaarrekening dekt een rekeninggebonden betaling niet automat
    de startdatum als betaaldatum. Een planning maakt geen echte bankboeking aan.
 2. Stel herkenningstekst en een passende bedrag-/datummarge in, bijvoorbeeld € 10
    voor een salaris dat enkele euro's varieert. Automatische herkenning blijft strikt
-   (± 1 cent en maximaal 5 dagen, één kandidaat). Ruimere marges leveren voorstellen
+    (binnen uw ingestelde marges, maximaal ± 1 cent en 5 dagen, één kandidaat).
+    Opslaan controleert ook eerder geïmporteerde bankboekingen en toont hoeveel
+    eenduidige matches binnen uw ingestelde marges zijn gevonden. Kies **Opslaan
+    en … boekingen koppelen** om ze met één bevestiging te koppelen, of **Opslaan
+    zonder koppelen**. Bankgegevens, saldi en bestaande categorieën blijven intact.
+    Voor een al bestaande vaste post: open **Bewerken** en sla opnieuw op.
+    Meerdere mogelijke boekingen/planningen en expliciete splitsingen of
+    vergoedingskoppelingen worden overgeslagen. Overige voorstellen staan
    in **Bankboekingen koppelen aan een geplande betaling**; controleer en bevestig.
 3. Gebruik **Handmatig koppelen** als de omschrijving of het bedrag niet past.
    Kies de bankboeking, vaste post en de **geplande** betaaldatum. Die mag in een
@@ -276,11 +332,11 @@ niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
   `/data` is de private, permanente app-opslag van de Supervisor, geen Windows-pad.
 - Normale herstarts en updates behouden `/data`. Een bestaande ontbrekende of
   beschadigde database wordt nooit automatisch vervangen door een lege database.
-- Bij een Home Assistant-update worden ondersteunde schema's 1–5 na validatie
-  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 6. Vooraf wordt
-  een SQLite-bewuste `.voor-versie-6-….db`-veiligheidskopie naast de database gemaakt.
+- Bij een Home Assistant-update worden ondersteunde schema's 1–6 na validatie
+  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 7. Vooraf wordt
+  een SQLite-bewuste `.voor-versie-7-….db`-veiligheidskopie naast de database gemaakt.
   Onbekende schema's worden geweigerd. Teruggaan naar een oude appversie vereist
-  herstel van een passende oude back-up; schema-6-back-ups zijn niet leesbaar in
+  herstel van een passende oude back-up; schema-7-back-ups zijn niet leesbaar in
   oudere apps. De normale Windows-service blijft automatische upgrades weigeren.
 - Alleen een werkelijk nieuwe installatie begint met een lege administratie en
   standaardcategorieën, zonder fictieve bedragen. U kunt ook zelf rekeningen aanmaken.

@@ -3,14 +3,31 @@
 @inherits EditPageBase
 <PageTitle>@L["Accounts"] · Huishoudboek</PageTitle>
 <h1>@L["AccountsOwners"]</h1>
-<section class="card"><div class="page-heading"><h2>@L["Accounts"]</h2><button class="primary" @onclick="() => Draft = EditorDraft.Account(State)">+ @L["Account"]</button></div>
+@if (State.Data.Owners.Count == 0) { <p class="notice">@L["CreateOwnerFirst"] <a href="rekeningen#owners">@L["Owners"]</a></p> }
+<section class="card"><div class="page-heading"><h2>@L["Accounts"]</h2><button class="primary" disabled="@(State.Data.Owners.Count == 0)" @onclick="() => Draft = EditorDraft.Account(State)">+ @L["Account"]</button></div>
 <p class="muted">@L["OpeningBalanceNote", State.AsOf.ToString("dd-MM-yyyy")]</p>
 <div class="table-scroll"><table><thead><tr><th>@L["Name"]</th><th>@L["Type"]</th><th>@L["Owners"]</th><th class="money">@L["CashBalance"]</th><th class="money">@L["Securities"]</th><th class="money">@L["Total"]</th><th>@L["SavingsGoal"]</th><th>@L["Valuation"]</th><th></th></tr></thead><tbody>
 @foreach (var summary in Reporting.Accounts(State.Data, State.AsOf).Accounts.Where(a => State.Scope.Contains(a.Id)))
 { var a = State.Data.Accounts.Single(a => a.Id == summary.Id);
 <tr><td>@a.Name</td><td>@Kind(a.Kind)</td><td>@string.Join(", ", State.Data.Owners.Where(o => a.OwnerIds.Contains(o.Id)).Select(o => o.Name))</td><td class="money">@Money(summary.Cash)</td><td class="money">@Money(summary.Securities)</td><td class="money">@Money(summary.Total)</td><td>@(a.SavingsGoal is { } goal ? L["GoalProgress", (summary.Cash / goal).ToString("P0", UiCulture.Culture), Money(goal)].Value : "—")</td><td>@(summary.ValuationDate?.ToString("dd-MM-yyyy") ?? L["NoValuation"].Value)</td><td><button @onclick="() => Draft = EditorDraft.Account(State, a)">@L["Edit"]</button></td></tr> }
 </tbody></table></div></section>
-<section class="card"><div class="page-heading"><h2>@L["Owners"]</h2><button @onclick="() => Draft = EditorDraft.Owner(State)">+ @L["Owner"]</button></div>
+<section class="card" id="balance-checks"><h2>@L["OpeningAndBalanceChecks"]</h2><p class="muted">@L["OpeningConfirmationNote"]</p>
+@foreach (var account in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id)))
+{
+    var opening = FirstWeek.OpeningConfirmed(State.Data, account); var checkedBalance = FirstWeek.BalanceChecked(State.Data, account, State.Today);
+    var review = State.Data.AccountReviews.FirstOrDefault(r => r.AccountId == account.Id);
+    <div class="account-check" @key="account.Id"><h3>@account.Name</h3>
+        <p>@L["OpeningDate"]: @account.OpeningDate.ToString("dd-MM-yyyy") · @L["OpeningBalanceEuro"]: @Money(account.OpeningBalance) <span class="badge">@L[opening ? "SetupDone" : "SetupTodo"]</span></p>
+        <p>@L["CashBalance"] (@State.Today.ToString("dd-MM-yyyy")): <strong>@Money(Finance.Balance(State.Data, account, State.Today))</strong> <span class="badge">@L[checkedBalance ? "SetupDone" : "SetupTodo"]</span>
+        @if (review?.CheckedThrough is { } date) { <small>@L["LastBalanceCheck", date.ToString("dd-MM-yyyy")]</small> }</p>
+        <div class="actions"><button @onclick="() => Draft = EditorDraft.Account(State, account)">@L["EditOpeningBalance"]</button>
+            @if (!opening) { <button @onclick="() => ConfirmOpening(account)">@L["ConfirmOpeningBalance"]</button> }
+            <button @onclick="() => Draft = EditorDraft.BalanceCheck(State, account)">@L["CheckBankBalance"]</button>
+        </div>
+    </div>
+}
+</section>
+<section class="card" id="owners"><div class="page-heading"><h2>@L["Owners"]</h2><button @onclick="() => Draft = EditorDraft.Owner(State)">+ @L["Owner"]</button></div>
 <div class="table-scroll"><table><thead><tr><th>@L["Name"]</th><th></th></tr></thead><tbody>@foreach (var o in State.Data.Owners) { <tr><td>@o.Name</td><td><button @onclick="() => Draft = EditorDraft.Owner(State, o)">@L["EditName"]</button></td></tr> }</tbody></table></div>
 <p class="muted">@L["SharedAccountsNote"]</p></section>
 <section class="card"><div class="page-heading"><h2>@L["SecuritiesValuations"]</h2><button @onclick="() => Draft = EditorDraft.Valuation(State)">+ @L["Valuation"]</button></div>
@@ -20,4 +37,7 @@
 { <tr><td>@v.Date.ToString("dd-MM-yyyy")</td><td>@State.AccountName(v.AccountId)</td><td class="money">@Money(v.SecuritiesValue)</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Valuation(State, v)">@L["Edit"]</button><button @onclick="() => AskDelete(v)">@L["Delete"]</button></div></td></tr> }
 </tbody></table></div></section>
 <EditDialogs Page="this" />
-@code { private void AskDelete(InvestmentValuation item) => Ask(L["DeleteValuation"], L["DeleteValuationQuestion"], d => d.Valuations.RemoveAll(v => v.Id == item.Id), L["Delete"]); }
+@code {
+    private void ConfirmOpening(Account account) => Ask(L["ConfirmOpeningBalance"], L["ConfirmOpeningQuestion", account.Name, account.OpeningDate.ToString("dd-MM-yyyy"), Money(account.OpeningBalance)], d => FirstWeek.ConfirmOpening(d, account.Id), L["ConfirmOpeningBalance"]);
+    private void AskDelete(InvestmentValuation item) => Ask(L["DeleteValuation"], L["DeleteValuationQuestion"], d => d.Valuations.RemoveAll(v => v.Id == item.Id), L["Delete"]);
+}

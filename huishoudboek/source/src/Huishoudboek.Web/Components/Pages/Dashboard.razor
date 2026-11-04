@@ -1,18 +1,11 @@
 @page "/"
 @attribute [Authorize]
 @inherits PageBase
-@inject WebHostSettings HostSettings
 <PageTitle>@L["MonthlyOverview"] · Huishoudboek</PageTitle>
 @{ var overview = DetailedReporting.Dashboard(State.Data, State.Year, State.Month, State.Today, State.OwnerId); var report = overview.Report; }
 <h1>@L["MonthlyOverview"] · @(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h1>
-@if (HostSettings.HomeAssistant && State.Data.Accounts.Count == 0)
-{
-    <section class="card" id="first-use"><h2>@L["WelcomeHomeAssistant"]</h2>
-        <p>@L["ExistingAdministrationNote"]</p>
-        <div class="actions"><a class="button primary" href="beheer#database">@L["ImportDatabase"]</a><a class="button" href="rekeningen">@L["StartEmpty"]</a></div>
-        <p class="muted">@L["DatabaseCopyNote"]</p>
-    </section>
-}
+<FirstUseChecklist />
+<WeeklyReview />
 <section class="notice @(report.NeedsAttention ? "warning" : "success")">
     <h2>@L[StatusKey(report)]</h2><p>@Explanation(report)</p><small>@L["ActualBalancesNote", overview.AsOf.ToString("dd-MM-yyyy")]</small>
 </section>

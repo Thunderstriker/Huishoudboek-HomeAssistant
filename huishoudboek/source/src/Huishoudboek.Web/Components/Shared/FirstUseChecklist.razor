@@ -1,0 +1,24 @@
+@inherits PageBase
+@{ var steps = FirstWeek.Checklist(State.Data, State.Today); var complete = steps.Count(s => s.Complete); }
+<section class="card" id="first-use">
+    <details open="@(complete < steps.Count)">
+        <summary><strong>@L["FirstWeekTitle"]</strong> · @L["SetupProgress", complete, steps.Count]</summary>
+        <p class="muted">@L["FirstWeekNote"]</p>
+        <ol class="workflow-list">
+            @foreach (var step in steps)
+            {
+                <li class="@(step.Complete ? "complete" : "")">
+                    <span class="badge">@L[step.Complete ? "SetupDone" : "SetupTodo"]</span>
+                    <a href="@step.Link">@L[step.Key]</a>
+                    @if (step.Key == "SetupPlans") { <a href="vaste-posten">@L["RecurringPayments"]</a> }
+                </li>
+            }
+        </ol>
+        @if (State.Data.Accounts.Count == 0)
+        {
+            <p>@L["NewUserStartNote"]</p>
+            <div class="actions"><a class="button primary" href="rekeningen">@L["StartEmpty"]</a><a class="button" href="beheer#database">@L["ImportDatabase"]</a></div>
+            <p class="muted">@L["ExistingAdministrationNote"] @L["DatabaseCopyNote"]</p>
+        }
+    </details>
+</section>

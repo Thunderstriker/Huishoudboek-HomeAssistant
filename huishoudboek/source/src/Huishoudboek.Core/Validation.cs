@@ -28,11 +28,17 @@ public static class Validation
         Unique(data.ImportBatches.Select(x => x.Id), "imports");
         Unique(data.ImportProfiles.Select(x => x.Id), "importprofielen");
         Unique(data.Rules.Select(x => x.Id), "regels");
+        Unique(data.AccountReviews.Select(x => x.Id), "rekeningcontroles");
         var owners = data.Owners.Select(o => o.Id).ToHashSet();
         var accounts = data.Accounts.Select(a => a.Id).ToHashSet();
         var categories = data.Categories.Select(c => c.Id).ToHashSet();
         var recurring = data.RecurringPayments.Select(r => r.Id).ToHashSet();
         var batches = data.ImportBatches.Where(b => !b.Undone).Select(b => b.Id).ToHashSet();
+        Require(data.AccountReviews.Select(r => r.AccountId).Distinct().Count() == data.AccountReviews.Count &&
+            data.AccountReviews.All(r => accounts.Contains(r.AccountId) && r.CashFingerprint != null &&
+                (r.OpeningDate == null) == (r.OpeningBalance == null) && (r.CheckedThrough == null) == (r.BankBalance == null) &&
+                (r.OpeningBalance == null || Money(r.OpeningBalance.Value)) && (r.BankBalance == null || Money(r.BankBalance.Value))),
+            "Ongeldige rekeningcontrole.");
         Require(data.Owners.All(o => !string.IsNullOrWhiteSpace(o.Name)), "Geef iedere eigenaar een naam.");
         foreach (var a in data.Accounts)
         {

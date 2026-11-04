@@ -1,0 +1,31 @@
+@inherits PageBase
+@{
+    var accounts = State.Data.Accounts.Where(a => State.Scope.Contains(a.Id)).ToList();
+    var stale = accounts.Count(a => FirstWeek.ImportedThrough(State.Data, a.Id, State.Today) is not { } date || date < State.Today.AddDays(-7));
+    var uncheckedBalances = accounts.Count(a => !FirstWeek.BalanceChecked(State.Data, a, State.Today));
+    var uncategorized = FirstWeek.UncategorizedCount(State.Data, State.Today, State.Scope);
+    var transfers = TransferMatching.Candidates(State.Data, State.Today).Count(c => State.Scope.Contains(c.Debit.AccountId) || State.Scope.Contains(c.Credit.AccountId));
+    var recurring = RecurringSchedule.Candidates(State.Data, State.Today).Select(c => c.Transaction).Where(t => State.Scope.Contains(t.AccountId)).DistinctBy(t => t.Id).Count();
+    var bills = FirstWeek.Upcoming(State.Data, State.Today, State.Scope);
+}
+@if (accounts.Count > 0)
+{
+    <section class="card" id="weekly-review"><details>
+        <summary><strong>@L["WeeklyReviewTitle"]</strong> · @L["WeeklyReviewSummary"]</summary>
+        <ol class="workflow-list">
+            <li><a href="importeren">@L["WeeklyImport"]</a><span class="badge">@L[stale == 0 ? "WeeklyImportsCurrent" : "WeeklyImportsStale", stale]</span></li>
+            <li><strong>@L["WeeklyExceptions"]</strong><div class="actions">
+                <a href="categoriseren">@L["WeeklyUncategorized", uncategorized]</a>
+                <a href="overboekingen">@L["WeeklyTransfers", transfers]</a>
+                <a href="vaste-posten">@L["WeeklyRecurring", recurring]</a>
+                <a href="rekeningen#balance-checks">@L["WeeklyBalances", uncheckedBalances]</a>
+            </div></li>
+            <li><a href="vaste-posten">@L["WeeklyBills"]</a><span class="badge">@bills.Count</span>
+                @if (bills.Count == 0) { <p class="muted">@L[State.Data.RecurringPayments.Any(r => State.Scope.Contains(r.AccountId) && r.Amount < 0) ? "WeeklyNoBills" : "WeeklyNoPlan"]</p> }
+                @foreach (var bill in bills)
+                { <div class="weekly-bill"><span>@bill.DueDate.ToString("dd-MM-yyyy") · @bill.Payment.Name<small> · @State.AccountName(bill.Payment.AccountId)</small></span><strong>@Money(-bill.Payment.Amount)</strong></div> }
+            </li>
+        </ol>
+        <p class="muted">@L["WeeklyCoverageNote"]</p>
+    </details></section>
+}

@@ -11,6 +11,7 @@
 </tbody></table></div></section>
 <section class="card" id="koppelen"><h2>@L["MatchScheduledPayment"]</h2>
     <p class="muted">@L["RecurringMatchNote"]</p>
+    <p class="muted">@L["RecurringBatchExistingNote"]</p>
     <div class="filters"><label>@L["Search"]<input type="search" @bind="search" @bind:event="oninput" @bind:after="ResetPage" /></label></div>
     @{ var candidates = RecurringSchedule.Candidates(State.Data, State.Today).Where(c => State.Scope.Contains(c.Payment.AccountId) && InSearch(c.Payment.Name, c.Transaction)).ToList(); page = Math.Min(page, Math.Max(0, (candidates.Count - 1) / 20)); }
     <h3>@L["PossibleMatches"] (@candidates.Count)</h3>

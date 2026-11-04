@@ -8,6 +8,11 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
 
 ## Functies
 
+- **Eerste week en wekelijkse controle:** een checklist voor rekeningen, beginsaldi,
+  imports, banksaldocontrole, categorisatie en budgetten/vaste posten. Daarna een compacte
+  review voor recente imports, uitzonderingen en betalingen over 7 dagen.
+- **Licht mobiel gebruik:** snelle uitgave-/inkomsteninvoer en een telefoonvriendelijke
+  transactielijst met uitklapbare bankgegevens en acties; desktop behoudt de tabel.
 - **Maandoverzicht:** inkomsten, lasten, netto opzijgezet en het bedrag dat overblijft,
   met een compacte doughnutgrafiek per categorie en een budgettabel met overschrijdingen.
 - **Maandprognose:** vergelijk werkelijke inkomsten, lasten en het resterende bedrag
@@ -28,7 +33,7 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   voor werkgeverskosten of gedeelde aankopen. Oorspronkelijke bankboekingen blijven intact.
 - **Rekeningen en vermogen:** betaal- en spaarrekeningen, beleggen, eigenaren en hypotheek.
 - **Import en export:** Excel/CSV-import, automatische herkenning van Argenta-exports,
-  CSV-export en volledige databaseback-ups met herstel.
+  kant-en-klare profielen voor ING (NL), Rabobank en KBC/CBC, CSV-export en volledige databaseback-ups met herstel.
 - **Imports per rekening:** alleen de gekozen rekening wordt bijgewerkt, met de
   bedragen uit het bestand. Geen automatische koppeling tussen eigen rekeningen.
 - **Transfers koppelen:** bevestig twee bestaande bankboekingen als één interne

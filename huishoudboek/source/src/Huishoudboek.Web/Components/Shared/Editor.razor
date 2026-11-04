@@ -2,10 +2,22 @@
 <Modal Title="@Draft.Title" Cancel="Cancel">
     <p class="muted">@Draft.Note</p>
     @if (Draft.Error.Length > 0) { <p class="notice error" role="alert">@Draft.Error</p> }
+    @if (proposal is { MatchCount: > 0 } batch)
+    {
+        <p class="notice" role="status">@L["RecurringBatchQuestion", batch.MatchCount]</p>
+        <p class="muted">@L["RecurringBatchNote"]</p>
+        <fieldset class="page-fieldset" disabled="@State.Busy"><div class="actions">
+            <button type="button" @onclick="() => proposal = null">@L["Back"]</button>
+            <button type="button" @onclick="() => Commit(false)">@L["SaveWithoutLinking"]</button>
+            <button type="button" class="primary" @onclick="() => Commit(true)">@L["SaveAndLinkRows", batch.MatchCount]</button>
+        </div></fieldset>
+    }
+    else
+    {
     <form @onsubmit="Save" @onsubmit:preventDefault>
         <fieldset class="page-fieldset" disabled="@State.Busy">
             <div class="fields">
-                @foreach (var field in Draft.Fields)
+                @foreach (var field in Draft.Fields.Where(Draft.IsFieldVisible))
                 {
                     @if (field.Type == "owners")
                     {
@@ -20,7 +32,7 @@
                     {
                         <label>@field.Label
                             @if (field.Type == "select")
-                            { <select id="@field.Key" @bind="field.Value" disabled="@field.ReadOnly">@foreach (var option in field.Options) { <option value="@option.Value">@option.Label</option> }</select> }
+                            { <select id="@field.Key" @bind="field.Value" disabled="@field.ReadOnly">@foreach (var option in Draft.Options(field)) { <option value="@option.Value">@option.Label</option> }</select> }
                             else
                             { <input id="@field.Key" type="@(field.Type == "money" ? "text" : field.Type)" inputmode="@(field.Type == "money" ? "decimal" : null)" value="@field.Value" @onchange="e => field.Value = e.Value?.ToString() ?? string.Empty" required="@field.Required" disabled="@field.ReadOnly" maxlength="2000" /> }
                         </label>
@@ -30,15 +42,27 @@
             <div class="actions"><button type="button" @onclick="Cancel">@L["Cancel"]</button><button type="submit" class="primary">@L["Save"]</button></div>
         </fieldset>
     </form>
+    }
 </Modal>
 @code {
     [Parameter, EditorRequired] public EditorDraft Draft { get; set; } = null!;
     [Parameter] public EventCallback Closed { get; set; }
+    private EditorSaveProposal? proposal;
     private Task Cancel() => State.Busy ? Task.CompletedTask : Closed.InvokeAsync();
     private static void ToggleOwner(EditorField field, Guid id, ChangeEventArgs args) { if ((bool)args.Value!) field.OwnerIds.Add(id); else field.OwnerIds.Remove(id); }
     private async Task Save()
     {
-        if (await State.RunAsync(() => State.SaveAsync(Draft.Apply, Draft.Revision), L["ChangesSaved"])) await Closed.InvokeAsync();
+        if (!await State.RunAsync(() =>
+            { proposal = Draft.PrepareSave(State.Data, State.Today); return Task.CompletedTask; }))
+        { Draft.Error = State.Message; return; }
+        Draft.Error = "";
+        if (proposal is { MatchCount: 0 }) await Commit(false);
+    }
+    private async Task Commit(bool link)
+    {
+        if (proposal is not { } operation) return;
+        if (await State.RunAsync(() => State.SaveAsync(link ? operation.SaveAndLink : operation.SaveOnly, Draft.Revision),
+            link ? L["RecurringRowsLinked", operation.MatchCount] : L["ChangesSaved"])) await Closed.InvokeAsync();
         else Draft.Error = State.Message;
     }
 }

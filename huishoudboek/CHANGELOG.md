@@ -2,6 +2,25 @@
 
 ## 0.1.9
 
+- Eerste-weekchecklist: eigenaren en rekeningen → beginsaldi → afschriften importeren
+  → banksaldi controleren → categoriseren → budgetten en vaste posten. Nieuwe gebruikers
+  starten zonder database-import; voortgang volgt echte gegevens en expliciete saldocontroles.
+- Snelle uitgave-/inkomsteninvoer met een positief bedrag en alleen de noodzakelijke velden.
+  De uitgebreide editor toont tegenrekening en aflossing alleen bij het bijbehorende type.
+- Telefoonvriendelijke transactielijst met datum, rekening, categorie en bedrag;
+  banktekst, koppelingen en bewerken/verwerken/verwijderen zijn uitklapbaar. Desktop behoudt de tabel.
+- Kant-en-klare CSV-profielen en automatische herkenning voor ING (NL), Rabobank en
+  KBC/CBC, naast Argenta en het bestaande banktemplate. Profielen blijven aanpasbaar;
+  importvoorbeeld, EUR- en rekeningcontrole blijven verplicht.
+- Compacte wekelijkse controle voor recente imports, categorisatie-/koppelvoorstellen,
+  ongecontroleerde saldi en ongekoppelde rekeningen over 7 dagen, ook over maandgrenzen.
+- Expliciete beginsaldo- en banksaldocontroles worden in back-ups bewaard. Wijzigingen
+  aan cashgegevens of nieuwe werkelijke boekingen heropenen de saldocontrole; geen automatische correctieboekingen.
+- Bij toevoegen of opslaan van een vaste post verschijnt het aantal eenduidige
+  historische matches binnen de ingestelde marges. Eén bevestiging koppelt ze
+  allemaal; opslaan zonder koppelen blijft mogelijk. Dubbelzinnige matches blijven
+  ter controle; bankgegevens, saldi, categorieën, bestaande koppelingen en expliciete
+  transactieverwerking blijven intact. De planning en batch worden samen opgeslagen.
 - Compacte taalkeuze `NL - EN` onder Beheer & import in de zijbalk, zonder keuzelijst
   of aparte bevestigingsknop. De zijbalk blijft staan tijdens het scrollen van de pagina.
 - Pagina's, formulieren, bevestigingen, grafieken en bestedingsruimte gebruiken de
@@ -21,7 +40,7 @@
   Negatieve uitgavencategorieën blijven zichtbaar; de cirkelgrafiek licht het verschil toe.
 - Afhankelijke koppelingen beschermen tegen onbedoeld wijzigen/verwijderen en import-undo.
   Categorisatieregels en transferkoppelingen overschrijven geen expliciete splitsingen.
-- Databaseschema 6, met veilige migratie van schema's 1–5 en een veiligheidskopie vooraf.
+- Databaseschema 7, met veilige migratie van schema's 1–6 en een veiligheidskopie vooraf.
   Volledige back-ups bewaren alle gegevens; CSV blijft één rij per bankboeking en
   bevat splitsingen en vergoedingsverwachtingen als JSON-kolommen.
 - Tests voor splitsingen, retouren, deelbetalingen, maandgrenzen, cashveiligheid,

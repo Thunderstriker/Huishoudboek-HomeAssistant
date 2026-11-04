@@ -97,6 +97,7 @@ public sealed class ImportWorkspace : IDisposable
             if (!snapshot.Data.Accounts.Any(a => a.Id == request.AccountId)) throw new InvalidOperationException("Kies een bestaande importrekening.");
             var table = ImportService.Read(upload.Path, request.Worksheet, request.Windows1252);
             var profile = request.Profile ?? ImportService.SuggestProfile(table.Headers);
+            if (BankImportProfiles.All.Any(p => p == profile)) profile = BankImportProfiles.MatchHeaders(profile, table.Headers);
             var rows = ImportService.Preview(table, profile, request.AccountId, request.From, request.Through, snapshot.Data);
             upload.Request = request; upload.Profile = profile; upload.Rows = rows;
             upload.Revision = snapshot.Revision; upload.PreviewId = Guid.NewGuid();
