@@ -3,69 +3,45 @@
 @inherits PageBase
 <PageTitle>@L["MonthlyOverview"] · Huishoudboek</PageTitle>
 @{ var overview = DetailedReporting.Dashboard(State.Data, State.Year, State.Month, State.Today, State.OwnerId); var report = overview.Report; }
-<h1>@L["MonthlyOverview"] · @(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h1>
-<FirstUseChecklist />
-<WeeklyReview />
-<section class="notice @(report.NeedsAttention ? "warning" : "success")">
-    <h2>@L[StatusKey(report)]</h2><p>@Explanation(report)</p><small>@L["ActualBalancesNote", overview.AsOf.ToString("dd-MM-yyyy")]</small>
-</section>
-<SafeSpending />
-<div class="metrics">
+<div class="page-heading">
+    <h1>@L["MonthlyOverview"] · @(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h1>
+    @if (State.Data.Accounts.Count == 0) { <a class="button primary" href="instellen">@L["GetStarted"]</a> }
+</div>
+<div class="metrics" id="monthly-figures">
     <div class="card"><div class="metric-label">@L["Income"]</div><div class="metric-value positive">@Money(report.Income)</div><small>@L["ActuallyReceived"]</small></div>
     <div class="card"><div class="metric-label">@L["OutflowHousing"]</div><div class="metric-value">@Money(report.Outflow)</div><small>@L["IncludesPrincipal"]</small></div>
-    <div class="card"><div class="metric-label">@L["BeforeSavings"]</div><div class="metric-value @(report.BeforeSavings < 0 ? "negative" : "positive")">@Money(report.BeforeSavings)</div><small>@L["BeforeSavingsNote"]</small></div>
+    <div class="card"><div class="metric-label">@L["BeforeSavings"]</div><div class="metric-value @(report.BeforeSavings < 0 ? "negative" : "positive")">@Money(report.BeforeSavings)</div><small>@L["BeforeSavingsNote"]</small>
+        @if (report.BeforeSavings < 0) { <a class="badge negative metric-attention" href="vooruitblik#maandstatus">@L["SpendingAboveIncomeBadge"]</a> }
+    </div>
     <div class="card"><div class="metric-label">@L["Savings"]</div><div class="metric-value">@Money(report.Savings)</div><small>@L["NetSavingsInvestments"]</small></div>
-    <div class="card"><div class="metric-label">@L["AvailableThisMonth"]</div><div class="metric-value @(report.Available < 0 ? "negative" : "positive")">@Money(report.Available)</div><small>@L["AvailableNote"]</small></div>
+    <div class="card"><div class="metric-label">@L["AvailableThisMonth"]</div><div class="metric-value @(report.Available < 0 ? "negative" : "positive")">@Money(report.Available)</div><small>@L["AvailableNote"]</small>
+        @if (report.SavingsExceedSurplus) { <a class="badge negative metric-attention" href="vooruitblik#maandstatus">@L["SavingsAboveSurplusBadge"]</a> }
+    </div>
 </div>
+<p class="muted">@L["ActualBalancesNote", overview.AsOf.ToString("dd-MM-yyyy")] <a href="vooruitblik">@L["FinancialOutlook"]</a></p>
 <MonthlyCharts Report="report" />
-<p class="muted">@L["CategoryPurposeHelp"] <a href="budgetten">@L["CategorySettings"]</a></p>
 <section class="card"><h2>@L["CategoryBudgets"]</h2><div class="table-scroll"><table><thead><tr><th>@L["Category"]</th><th class="money">@L["Budget"]</th><th class="money">@L["Spent"]</th><th class="money">@L["Remaining"]</th><th>@L["Usage"]</th></tr></thead><tbody>
     @foreach (var category in report.Categories)
-    { <tr><td>@State.CategoryName(category.Id)</td><td class="money">@(category.Budget == 0 ? L["NoLimit"].Value : Money(category.Budget))</td><td class="money">@Money(category.Spent)</td><td class="money @(category.IsOverBudget ? "negative" : "")">@(category.Budget == 0 ? "—" : Money(category.Remaining))</td><td><progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@L["CategoryUsage", category.Name]"></progress></td></tr> }
-</tbody></table></div><p class="muted">@L["HouseholdBudgetNote"]</p></section>
+    { <tr><td>@State.CategoryName(category.Id) @if (category.IsOverBudget) { <a class="badge negative" href="vooruitblik#maandstatus">@L["OverBudgetBadge"]</a> }</td><td class="money">@(category.Budget == 0 ? L["NoLimit"].Value : Money(category.Budget))</td><td class="money">@Money(category.Spent)</td><td class="money @(category.IsOverBudget ? "negative" : "")">@(category.Budget == 0 ? "—" : Money(category.Remaining))</td><td><progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@L["CategoryUsage", category.Name]"></progress></td></tr> }
+</tbody></table></div><details><summary>@L["BudgetDetails"]</summary><p class="muted">@L["HouseholdBudgetNote"]</p><p class="muted">@L["CategoryPurposeHelp"] <a href="budgetten">@L["CategorySettings"]</a></p></details></section>
 <SavingsOverview Report="report" />
 <section class="card"><h2>@L["MonthEndForecast"]</h2><div class="metrics">
     <div><div class="metric-label">@L["ExpectedIncome"]</div><div class="metric-value">@Money(report.Forecast.Income)</div></div>
     <div><div class="metric-label">@L["ExpectedOutflow"]</div><div class="metric-value">@Money(report.Forecast.Outflow)</div></div>
-    <div><div class="metric-label">@L["ExpectedAvailable"]</div><div class="metric-value @(report.Forecast.Available < 0 ? "negative" : "positive")">@Money(report.Forecast.Available)</div></div>
+    <div><div class="metric-label">@L["ExpectedAvailable"]</div><div class="metric-value @(report.Forecast.Available < 0 ? "negative" : "positive")">@Money(report.Forecast.Available)</div>
+        @if (report.Forecast.Available < 0) { <a class="badge negative metric-attention" href="vooruitblik#maandstatus">@L["ForecastShortfallBadge"]</a> }
+    </div>
     <div><div class="metric-label">@L["ProjectedCurrentBalance"]</div><div class="metric-value">@Money(overview.ProjectedCurrentCash)</div></div>
 </div>
-<p class="muted">@L["ForecastCalculationNote", Money(report.Forecast.VariableEstimate)]
+<details><summary>@L["CalculationDetails"]</summary><p class="muted">@L["ForecastCalculationNote", Money(report.Forecast.VariableEstimate)]
     @if (report.Forecast.OverdueCount > 0) { @L["OverdueForecastNote", report.Forecast.OverdueCount] }
     @L["NoSavingsForecast"]
     @if (report.Forecast.LimitedHistory) { @L["LimitedHistoryNote"] }
     @L["CashForecastNote"]
     @if (new DateOnly(State.Year, State.Month, 1).AddMonths(1).AddDays(-1).DayNumber - State.Today.DayNumber > CashFlow.IncomeSearchDays) { @L["DistantForecastNote"] }
-    @L["IncompleteImportsNote"]</p></section>
+    @L["IncompleteImportsNote"]</p></details></section>
 <div class="metrics">
     <div class="card"><div class="metric-label">@L["CurrentBalance"]</div><div class="metric-value">@Money(overview.CurrentCash)</div></div>
     <div class="card"><div class="metric-label">@L["SavingsBuffer"]</div><div class="metric-value">@Money(overview.SavingsBalance)</div></div>
     <div class="card"><div class="metric-label">@L["NetWorthExcludingHome"]</div><div class="metric-value">@Money(overview.NetWorth)</div><small>@L["NetWorthNote"]</small></div>
 </div>
-@code {
-    private string StatusKey(MonthlyReport report) => State.Data.Accounts.Count == 0 ? "WelcomeAddAccounts" :
-        report.BeforeSavings < 0 ? "SpentMoreThanReceived" : report.Categories.Any(c => c.IsOverBudget) ? "CategoryOverBudget" :
-        report.SavingsExceedSurplus ? "SavingsAboveSurplus" :
-        report.Forecast.Available < 0 ? "ExpectedShortfall" : report.Budget == 0 ? "SetBudgetsNote" : "WithinBudgets";
-
-    private string Explanation(MonthlyReport report)
-    {
-        var big = report.Categories.Where(c => c.IsOverBudget).Take(3).ToList();
-        var parts = new List<string> {
-            L[report.BeforeSavings >= 0 ? "SpendingBelowIncome" : "SpendingAboveIncome", Money(Math.Abs(report.BeforeSavings))],
-            L[report.Savings >= 0 ? "PutAsideSummary" : "WithdrawnSummary", Money(Math.Abs(report.Savings))]
-        };
-        if (report.SavingsExceedSurplus) parts.Add(L["SavingsAboveSurplusAmount", Money(-report.Available)]);
-        parts.Add(big.Count > 0
-            ? string.Join(" · ", big.Select(c => L["OverBudgetAmount", c.Name, Money(c.Overspent)].Value))
-            : L["NoBudgetOverrun"].Value);
-        var unbudgeted = report.Categories.Where(c => c.Budget == 0 && c.Spent > 0).Sum(c => c.Spent);
-        if (unbudgeted > 0) parts.Add(L["UnbudgetedAmount", Money(unbudgeted)]);
-        if (report.Forecast.Available < 0) parts.Add(L["ShortfallAmount", Money(-report.Forecast.Available)]);
-        var largest = TransactionAccounting.Lines(State.Data, State.Data.Transactions.Where(t => t.Date.Year == State.Year &&
-            t.Date.Month == State.Month && t.Date <= State.Today && State.Scope.Contains(t.AccountId)))
-            .Where(l => l.Spending > 0 && big.Any(c => c.Id == l.CategoryId)).OrderByDescending(l => l.Spending).Take(2).ToList();
-        if (largest.Count > 0) parts.Add(L["LargestPayments", string.Join("; ", largest.Select(l => $"{l.Transaction.Description} ({Money(l.Spending)})"))]);
-        return string.Join(" ", parts);
-    }
-}

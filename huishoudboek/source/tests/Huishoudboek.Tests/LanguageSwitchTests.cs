@@ -53,7 +53,9 @@ public sealed class LanguageSwitchTests
         Assert.Contains("Income and spending", english);
         Assert.DoesNotContain("Jaaroverzicht", english);
         foreach (var (path, expected) in new[] {
-            ("/", "How much can I safely spend?"), ("/rekeningen", "Accounts & owners"),
+            ("/", "Monthly overview"), ("/rekeningen", "Accounts & owners"),
+            ("/vooruitblik", "How much can I safely spend?"), ("/instellen", "Your first week"),
+            ("/weekcontrole", "Hide weekly review from navigation"),
             ("/budgetten", "Budgets & categories"), ("/transacties", "No transactions within these filters."),
             ("/beheer", "Your records"), ("/hypotheek", "Mortgage · annuity, fixed rate"),
             ("/vaste-posten", "Recurring income & bills"), ("/categoriseren", "Step by step"),
@@ -69,6 +71,14 @@ public sealed class LanguageSwitchTests
         Assert.Contains("<html lang=\"nl\"", switchedBack);
         Assert.Contains("Jaaroverzicht", switchedBack);
         Assert.DoesNotContain("Annual overview", switchedBack);
+        foreach (var (path, expected) in new[] {
+            ("/vooruitblik", "Hoeveel kan ik verantwoord uitgeven?"), ("/instellen", "Uw eerste week"),
+            ("/weekcontrole", "Wekelijkse controle verbergen in de navigatie") })
+        {
+            var page = await GetPage(client, pathBase + path);
+            Assert.Contains(expected, page);
+            Assert.Contains("<html lang=\"nl\"", page);
+        }
 
         var invalid = await Switch(client, pathBase, switchedBack, "fr");
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
@@ -139,6 +149,7 @@ public sealed class LanguageSwitchTests
         builder.Services.AddSingleton(new WebHostSettings(true));
         builder.Services.AddSingleton<IWebAdministration, EmptyAdministration>();
         builder.Services.AddScoped<WebState>();
+        builder.Services.AddScoped<UiPreferences>();
         var app = builder.Build();
         if (pathBase.Length > 0) app.UsePathBase(pathBase);
         app.UseRouting();

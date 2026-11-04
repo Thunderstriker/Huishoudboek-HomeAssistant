@@ -13,6 +13,10 @@
 @if (HostSettings.HomeAssistant) { <p>@L["HomeAssistantStorageNote"]</p> }
 <p class="notice warning">@L["DatabaseRestoreWarning"]</p>
 <label>@L["DatabaseFile"]<InputFile id="restoreFile" OnChange="SelectBackup" accept=".db" /></label><button disabled="@(restoreFile == null)" @onclick="() => restoreConfirm = true">@L["ImportDatabase"]…</button></details></section>
+<section class="card"><h2>@L["SetupAndNavigation"]</h2>
+    <div class="actions"><a class="button" href="instellen">@L["SetupTitle"]</a><a class="button" href="weekcontrole">@L["WeeklyReviewTitle"]</a></div>
+    <WeeklyReviewVisibility />
+</section>
 <section class="card"><h2>@L["ImportHistory"]</h2><div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th>@L["File"]</th><th>@L["Account"]</th><th>@L["Rows"]</th><th>@L["Status"]</th><th></th></tr></thead><tbody>
 @foreach (var b in State.Data.ImportBatches.OrderByDescending(b => b.ImportedAt))
 { <tr><td>@b.ImportedAt.ToString("dd-MM-yyyy HH:mm")</td><td>@b.FileName</td><td>@State.AccountName(b.AccountId)</td><td>@b.RowCount</td><td>@L[b.Undone ? "Undone" : "Processed"]</td><td>@if (!b.Undone) { <button @onclick="() => Undo(b)">@L["UndoEntireImport"]</button> }</td></tr> }

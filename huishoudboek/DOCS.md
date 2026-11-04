@@ -67,9 +67,27 @@ nieuwe app; bewerk niet beide kopieën verder.
 Deze lokale distributie voegt geen openbare repository toe en publiceert niets
 naar GitHub of een containerregister. Alleen amd64 is in deze versie opgenomen.
 
+## Rustig maandoverzicht en aparte werkpagina's
+
+De startpagina **Maandoverzicht** begint direct met de maandcijfers, gevolgd door
+grafieken, categoriebudgetten, sparen, prognoses en saldi. Langere berekeningen en
+categorie-uitleg staan achter **Berekeningsdetails** of **Budgetdetails & categorie-instellingen**.
+Kleine waarschuwingen bij de bedragen verwijzen naar de volledige maanduitleg op
+**Financiële vooruitblik**. Daar staat ook de bestedingsplanner met aankoopcontrole,
+komende betalingen, buffers en dagelijkse saldoverwachtingen.
+
+**Instellen** staat onder **Beheer & import → Instellen & navigatie**. **Wekelijkse
+controle** heeft een eigen pagina in de navigatie. Kies op die pagina of onder
+**Beheer & import → Instellen & navigatie** voor **Wekelijkse controle verbergen in de
+navigatie** om de menulink te verbergen; vink dit daar weer uit om hem te herstellen.
+De voorkeur wordt alleen in deze browser voor deze app bewaard, niet in de financiële
+database of back-ups. Bij geblokkeerde browseropslag geldt hij alleen voor deze sessie.
+De pagina blijft via Beheer & import bereikbaar en financiële controles veranderen niet.
+
 ## Nieuw beginnen: uw eerste week
 
-Een bestaande database is niet nodig. Open het maandoverzicht en volg **Uw eerste week**:
+Een bestaande database is niet nodig. Kies op het lege maandoverzicht **Aan de slag**,
+of open **Beheer & import → Instellen**, en volg **Uw eerste week**:
 
 1. Maak bij **Rekeningen** eerst een eigenaar aan en daarna uw rekeningen met IBAN.
 2. Kies een openingsdatum en het saldo **vóór** de eerste boeking op die datum.
@@ -83,7 +101,7 @@ Een bestaande database is niet nodig. Open het maandoverzicht en volg **Uw eerst
 6. Stel minstens één budget en een vaste post in (bijvoorbeeld salaris of huur).
 
 De checklist geldt voor het hele huishouden, ook als een eigenaarfilter actief is.
-Hij blijft uitklapbaar in het maandoverzicht. Afgeronde stappen worden berekend uit de
+Hij blijft uitklapbaar op de pagina Instellen. Afgeronde stappen worden berekend uit de
 gegevens; alle rekeningen moeten een import en saldocontrole hebben voor die stappen
 klaar zijn. Een administratie die alleen handmatige boekingen gebruikt kan de importstap
 open laten. Beginsaldobevestigingen en saldocontroles blijven in volledige back-ups bewaard.
@@ -103,8 +121,8 @@ Op schermen tot 700 px vervangt een compacte lijst de transactietabel. Tik op ee
 voor de oorspronkelijke banktekst, eventuele hypotheek-/transfer-/vaste-postgegevens,
 banksaldo en acties. Filters, categorieën, paginering en financiële verwerking blijven gelijk.
 
-Open wekelijks **Wekelijkse controle** in het maandoverzicht: importeer, bekijk categorieën,
-transfer-/vaste-postvoorstellen en saldi, en controleer betalingen van vandaag tot over 7 dagen.
+Open wekelijks de pagina **Wekelijkse controle**: importeer, bekijk categorieën,
+vaste-postvoorstellen en saldi, en controleer betalingen van vandaag tot over 7 dagen.
 De controle volgt het eigenaarfilter maar niet de gekozen maand. Alleen werkelijke
 geïmporteerde bankboekingen uit de laatste 7 dagen tellen als recent; een oude export
 opnieuw uploaden maakt een rekening dus niet actueel. Rustige rekeningen kunnen een
@@ -119,8 +137,8 @@ zonder ingestelde planning is dit geen bevestiging dat er niets te betalen is.
    voordat u kopieert. Kopieer nooit alleen een actieve `.db`: recente wijzigingen
    kunnen nog in SQLite-WAL-bestanden staan. De app kan ontbrekende WAL-gegevens
    niet achteraf herkennen of terughalen.
-2. Open in de Home Assistant-app **Bestaande database importeren** op het
-   welkomstscherm, of **Beheer & import → Bestaande database importeren / back-up herstellen**.
+2. Open in de Home Assistant-app **Instellen → Bestaande database importeren**,
+   of **Beheer & import → Bestaande database importeren / back-up herstellen**.
 3. Selecteer uw `.db`-bestand (maximaal **64 MB**) en kies
    **Bestaande database importeren…**. Selecteren alleen slaat niets op.
 4. Controleer de waarschuwing en bevestig expliciet met **Database importeren**.
@@ -203,7 +221,8 @@ Het maandoverzicht toont inkomsten, uitgaven, inkomsten min uitgaven, apart opzi
 en het maandresultaat na sparen. Bij € 3.000 inkomsten, € 2.600 uitgaven en € 600 sparen
 staat er € 400 overschot vóór sparen en −€ 200 na sparen. Dat is geen € 200 extra uitgave.
 Uitgaven boven inkomen, overschreden categoriebudgetten en sparen boven het overschot
-worden afzonderlijk uitgelegd. De cashbuffercontrole blijft altijd per betaalrekening.
+worden afzonderlijk uitgelegd op **Financiële vooruitblik**, met compacte verwijzingen
+bij de maandcijfers. De cashbuffercontrole blijft altijd per betaalrekening.
 
 Spaarcategorieën hebben optionele maanddoelen in plaats van uitgavenlimieten. Boven
 het spaardoel is **Doel bereikt**, geen rode overschrijding. Vaste spaarbijdragen en
@@ -235,7 +254,7 @@ categoriseer die overgebleven zijde. Maak altijd eerst een volledige back-up.
 
 ## Bestedingsruimte en vaste inkomsten/lasten
 
-Op **Maandoverzicht → Hoeveel kan ik verantwoord uitgeven?** staat een schatting
+Op **Financiële vooruitblik → Hoeveel kan ik verantwoord uitgeven?** staat een schatting
 vanaf vandaag, onafhankelijk van het geselecteerde maandfilter. De berekening
 blijft per betaalrekening: gedeelde rekeningen tellen eenmaal, maar geld op een
 andere rekening of spaarrekening dekt een rekeninggebonden betaling niet automatisch.

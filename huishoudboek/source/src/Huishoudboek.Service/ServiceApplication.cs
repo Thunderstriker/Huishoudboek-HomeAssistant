@@ -45,6 +45,7 @@ public static class ServiceApplication
         WebsiteLanguage.Register(builder.Services);
         builder.Services.AddScoped<IWebAdministration, WebAdministration>();
         builder.Services.AddScoped<WebState>();
+        builder.Services.AddScoped<UiPreferences>();
         builder.Services.AddSingleton(_ => new AdministrationCoordinator(options.DataDirectory, initialize, claim, allowUpgrade: homeAssistant.Enabled));
         builder.Services.AddSingleton(sp => new ImportWorkspace(sp.GetRequiredService<AdministrationCoordinator>().DirectoryPath));
         var app = builder.Build();

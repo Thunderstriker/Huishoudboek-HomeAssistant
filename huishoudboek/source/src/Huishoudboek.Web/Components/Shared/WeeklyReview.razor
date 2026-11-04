@@ -9,7 +9,7 @@
 }
 @if (accounts.Count > 0)
 {
-    <section class="card" id="weekly-review"><details>
+    <section class="card" id="weekly-review"><details open>
         <summary><strong>@L["WeeklyReviewTitle"]</strong> · @L["WeeklyReviewSummary"]</summary>
         <ol class="workflow-list">
             <li><a href="importeren">@L["WeeklyImport"]</a><span class="badge">@L[stale == 0 ? "WeeklyImportsCurrent" : "WeeklyImportsStale", stale]</span></li>

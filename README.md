@@ -8,16 +8,18 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
 
 ## Functies
 
-- **Eerste week en wekelijkse controle:** een checklist voor rekeningen, beginsaldi,
+- **Instellen en wekelijkse controle:** aparte pagina's met een checklist voor rekeningen, beginsaldi,
   imports, banksaldocontrole, categorisatie en budgetten/vaste posten. Daarna een compacte
-  review voor recente imports, uitzonderingen en betalingen over 7 dagen.
+  review voor recente imports, uitzonderingen en betalingen over 7 dagen. Instellen staat
+  onder Beheer & import; de wekelijkse controle kunt u in deze browser verbergen en herstellen.
 - **Licht mobiel gebruik:** snelle uitgave-/inkomsteninvoer en een telefoonvriendelijke
   transactielijst met uitklapbare bankgegevens en acties; desktop behoudt de tabel.
 - **Maandoverzicht:** inkomsten, lasten, netto opzijgezet en het bedrag dat overblijft,
-  met een compacte doughnutgrafiek per categorie en een budgettabel met overschrijdingen.
+  direct bovenaan, met een compacte doughnutgrafiek per categorie en een budgettabel
+  met overschrijdingen. Geen startchecklist of bestedingsplanner boven de cijfers.
 - **Maandprognose:** vergelijk werkelijke inkomsten, lasten en het resterende bedrag
   met de schatting voor het einde van de maand.
-- **Verantwoord besteden:** geschatte bestedingsruimte tot het volgende inkomen,
+- **Financiële vooruitblik:** maanduitleg en geschatte bestedingsruimte tot het volgende inkomen,
   bekende betalingen over 7/30 dagen en dagelijkse saldi per betaalrekening,
   met het laagste saldo en zijn datum. Stel een minimale cashbuffer in en controleer
   een aankoopbedrag. Verouderde imports en ontbrekende gegevens krijgen waarschuwingen.

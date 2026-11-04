@@ -26,6 +26,20 @@
   <data name="FooterNote" xml:space="preserve"><value>Shared household records · amounts from recorded data ·</value></data>
   <data name="BackupAdministration" xml:space="preserve"><value>Backup &amp; administration</value></data>
   <data name="MonthlyOverview" xml:space="preserve"><value>Monthly overview</value></data>
+  <data name="FinancialOutlook" xml:space="preserve"><value>Financial outlook</value></data>
+  <data name="SetupTitle" xml:space="preserve"><value>Setup</value></data>
+  <data name="GetStarted" xml:space="preserve"><value>Get started</value></data>
+  <data name="SetupAndNavigation" xml:space="preserve"><value>Setup &amp; navigation</value></data>
+  <data name="NavigationPreferences" xml:space="preserve"><value>Navigation preferences</value></data>
+  <data name="HideWeeklyReview" xml:space="preserve"><value>Hide weekly review from navigation</value></data>
+  <data name="NavigationPreferenceNote" xml:space="preserve"><value>Remembered in this browser for this app. Restore it under Administration &amp; import → Setup &amp; navigation. Your financial data is unchanged.</value></data>
+  <data name="NavigationPreferenceSessionOnly" xml:space="preserve"><value>Browser storage is unavailable; this preference lasts only for this session. Restore it under Administration &amp; import → Setup &amp; navigation.</value></data>
+  <data name="SpendingAboveIncomeBadge" xml:space="preserve"><value>Spending above income</value></data>
+  <data name="SavingsAboveSurplusBadge" xml:space="preserve"><value>Savings above surplus</value></data>
+  <data name="OverBudgetBadge" xml:space="preserve"><value>Over budget</value></data>
+  <data name="ForecastShortfallBadge" xml:space="preserve"><value>Expected shortfall</value></data>
+  <data name="BudgetDetails" xml:space="preserve"><value>Budget details &amp; category settings</value></data>
+  <data name="CalculationDetails" xml:space="preserve"><value>Calculation details</value></data>
   <data name="AnnualOverview" xml:space="preserve"><value>Annual overview</value></data>
   <data name="Transactions" xml:space="preserve"><value>Transactions</value></data>
   <data name="Categorize" xml:space="preserve"><value>Categorize</value></data>

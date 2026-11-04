@@ -1,0 +1,19 @@
+@implements IDisposable
+@inject UiPreferences Preferences
+<div class="navigation-preference">
+    <label class="check"><input type="checkbox" checked="@Preferences.HideWeeklyReview" disabled="@(!Preferences.Loaded || saving)" @onchange="Toggle" />@L["HideWeeklyReview"]</label>
+    <p class="muted" role="status">@L[Preferences.CanPersist ? "NavigationPreferenceNote" : "NavigationPreferenceSessionOnly"]</p>
+</div>
+
+@code {
+    private bool saving;
+    protected override void OnInitialized() => Preferences.Changed += Changed;
+    private void Changed() => _ = InvokeAsync(StateHasChanged);
+    private async Task Toggle(ChangeEventArgs args)
+    {
+        saving = true;
+        try { await Preferences.SetWeeklyReviewHiddenAsync(args.Value is true); }
+        finally { saving = false; }
+    }
+    public void Dispose() => Preferences.Changed -= Changed;
+}

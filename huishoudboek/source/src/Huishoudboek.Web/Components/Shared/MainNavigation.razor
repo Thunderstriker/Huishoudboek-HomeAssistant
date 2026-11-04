@@ -1,0 +1,20 @@
+@implements IDisposable
+@inject UiPreferences Preferences
+<nav aria-label="@L["MainNavigation"]">
+    @foreach (var entry in Navigation)
+    {
+        if (entry.Path == "/weekcontrole" && (!Preferences.Loaded || Preferences.HideWeeklyReview)) { continue; }
+        <NavLink href="@entry.Path.TrimStart('/')" Match="@(entry.Path == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)"><span aria-hidden="true">@entry.Symbol</span>@L[entry.Label]</NavLink>
+    }
+</nav>
+
+@code {
+    private static readonly (string Path, string Symbol, string Label)[] Navigation = [
+        ("/", "◷", "MonthlyOverview"), ("/vooruitblik", "◈", "FinancialOutlook"), ("/jaar", "▥", "AnnualOverview"),
+        ("/weekcontrole", "☑", "WeeklyReviewTitle"), ("/transacties", "⇄", "Transactions"),
+        ("/categoriseren", "✓", "Categorize"), ("/rekeningen", "▣", "Accounts"), ("/budgetten", "◉", "Budgets"),
+        ("/vaste-posten", "↻", "RecurringPayments"), ("/hypotheek", "⌂", "Mortgage"), ("/beheer", "⚙", "AdministrationImport")];
+    protected override void OnInitialized() => Preferences.Changed += Changed;
+    private void Changed() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Preferences.Changed -= Changed;
+}

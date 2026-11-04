@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject WebState State
+@inject UiPreferences Preferences
 @inject IJSRuntime JS
 @inject WebHostSettings HostSettings
 @inject NavigationManager NavigationManager
@@ -9,12 +10,7 @@
 <div class="app-shell">
     <aside class="sidebar">
         <div class="brand">huishoudboek<small>@L["Tagline"]</small></div>
-        <nav aria-label="@L["MainNavigation"]">
-            @foreach (var entry in Navigation)
-            {
-                <NavLink href="@entry.Path.TrimStart('/')" Match="@(entry.Path == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)"><span aria-hidden="true">@entry.Symbol</span>@L[entry.Label]</NavLink>
-            }
-        </nav>
+        <MainNavigation />
         <form method="post" action="website/language" data-enhance="false" class="language-switch" aria-label="@L["Language"]" title="@L["LanguageReloadWarning"]">
             <AntiforgeryToken />
             <input type="hidden" name="returnPath" value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
@@ -47,10 +43,6 @@
 </div>
 
 @code {
-    private static readonly (string Path, string Symbol, string Label)[] Navigation = [
-        ("/", "◷", "MonthlyOverview"), ("/jaar", "▥", "AnnualOverview"), ("/transacties", "⇄", "Transactions"),
-        ("/categoriseren", "✓", "Categorize"), ("/rekeningen", "▣", "Accounts"), ("/budgetten", "◉", "Budgets"),
-        ("/vaste-posten", "↻", "RecurringPayments"), ("/hypotheek", "⌂", "Mortgage"), ("/beheer", "⚙", "AdministrationImport")];
     protected override async Task OnInitializedAsync()
     {
         State.Changed += Changed;
@@ -60,7 +52,12 @@
     private bool ready;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!ready && State.Loaded) { ready = true; await JS.InvokeVoidAsync("huishoudboek.markReady"); }
+        if (!ready && State.Loaded)
+        {
+            ready = true;
+            await Preferences.LoadAsync();
+            await JS.InvokeVoidAsync("huishoudboek.markReady");
+        }
     }
     private async Task Reload() => await State.RunAsync(State.LoadAsync, L["RecordsRefreshed"]);
     private void Shift(int step)

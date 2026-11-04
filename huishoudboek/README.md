@@ -7,9 +7,12 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
 ## Inzicht in Uw Financiën
 
 - **Maandoverzicht:** compacte doughnutgrafiek met de grootste uitgavencategorieën
-  en percentages, plus werkelijke bedragen tegenover de maandprognose.
+  en percentages, plus werkelijke bedragen tegenover de maandprognose. De maandcijfers
+  staan direct bovenaan, zonder startchecklist of bestedingsplanner erboven.
   Budgetten en overschrijdingen staan in de bijbehorende tabel.
-- **Hoeveel kan ik verantwoord uitgeven?** Bestedingsruimte tot het volgende inkomen,
+- **Instellen en wekelijkse controle:** aparte pagina's; Instellen staat onder Beheer & import.
+  De wekelijkse controle is per browser te verbergen en daar ook weer te herstellen.
+- **Financiële vooruitblik:** maanduitleg en bestedingsruimte tot het volgende inkomen,
   komende betalingen over 7/30 dagen en dagelijkse saldi per betaalrekening. Met
   minimale cashbuffer, aankoopcontrole, laagste saldo/datum en waarschuwingen bij oude imports.
 - **Vaste posten:** maand-, kwartaal-, jaar- en eenmalige inkomsten/lasten vooraf

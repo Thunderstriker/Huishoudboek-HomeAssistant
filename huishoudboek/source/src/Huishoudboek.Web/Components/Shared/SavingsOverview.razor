@@ -1,6 +1,5 @@
 <section class="card" id="savings-overview">
     <h2>@L["PutAsideSeparately"]</h2>
-    <p class="muted">@L["SavingsCountingNote"]</p>
     @if (Report.SavingsCategories.Count == 0)
     {
         <p>@L["NoSavingsCategories"] <a href="budgetten">@L["CategorySettings"]</a></p>
@@ -17,6 +16,7 @@
         }
         </tbody><tfoot><tr><th>@L["Total"]</th><td></td><th class="money">@WebState.Money(Report.Savings)</th><td></td></tr></tfoot></table></div>
     }
+    <details><summary>@L["CalculationDetails"]</summary><p class="muted">@L["SavingsCountingNote"]</p></details>
 </section>
 @code {
     [Parameter, EditorRequired] public MonthlyReport Report { get; set; } = null!;

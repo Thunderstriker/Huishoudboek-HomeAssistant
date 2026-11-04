@@ -1,0 +1,40 @@
+@page "/vooruitblik"
+@attribute [Authorize]
+@inherits PageBase
+<PageTitle>@L["FinancialOutlook"] · Huishoudboek</PageTitle>
+@{ var overview = DetailedReporting.Dashboard(State.Data, State.Year, State.Month, State.Today, State.OwnerId); var report = overview.Report; }
+<h1>@L["FinancialOutlook"]</h1>
+<section class="notice @(report.NeedsAttention ? "warning" : "success")" id="maandstatus">
+    <h2>@L[StatusKey(report)] · @(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
+    <p>@Explanation(report)</p>
+    <small>@L["ActualBalancesNote", overview.AsOf.ToString("dd-MM-yyyy")]</small>
+</section>
+<SafeSpending />
+
+@code {
+    private string StatusKey(MonthlyReport report) => State.Data.Accounts.Count == 0 ? "WelcomeAddAccounts" :
+        report.BeforeSavings < 0 ? "SpentMoreThanReceived" : report.Categories.Any(c => c.IsOverBudget) ? "CategoryOverBudget" :
+        report.SavingsExceedSurplus ? "SavingsAboveSurplus" :
+        report.Forecast.Available < 0 ? "ExpectedShortfall" : report.Budget == 0 ? "SetBudgetsNote" : "WithinBudgets";
+
+    private string Explanation(MonthlyReport report)
+    {
+        var big = report.Categories.Where(c => c.IsOverBudget).Take(3).ToList();
+        var parts = new List<string> {
+            L[report.BeforeSavings >= 0 ? "SpendingBelowIncome" : "SpendingAboveIncome", Money(Math.Abs(report.BeforeSavings))],
+            L[report.Savings >= 0 ? "PutAsideSummary" : "WithdrawnSummary", Money(Math.Abs(report.Savings))]
+        };
+        if (report.SavingsExceedSurplus) parts.Add(L["SavingsAboveSurplusAmount", Money(-report.Available)]);
+        parts.Add(big.Count > 0
+            ? string.Join(" · ", big.Select(c => L["OverBudgetAmount", c.Name, Money(c.Overspent)].Value))
+            : L["NoBudgetOverrun"].Value);
+        var unbudgeted = report.Categories.Where(c => c.Budget == 0 && c.Spent > 0).Sum(c => c.Spent);
+        if (unbudgeted > 0) parts.Add(L["UnbudgetedAmount", Money(unbudgeted)]);
+        if (report.Forecast.Available < 0) parts.Add(L["ShortfallAmount", Money(-report.Forecast.Available)]);
+        var largest = TransactionAccounting.Lines(State.Data, State.Data.Transactions.Where(t => t.Date.Year == State.Year &&
+            t.Date.Month == State.Month && t.Date <= State.Today && State.Scope.Contains(t.AccountId)))
+            .Where(l => l.Spending > 0 && big.Any(c => c.Id == l.CategoryId)).OrderByDescending(l => l.Spending).Take(2).ToList();
+        if (largest.Count > 0) parts.Add(L["LargestPayments", string.Join("; ", largest.Select(l => $"{l.Transaction.Description} ({Money(l.Spending)})"))]);
+        return string.Join(" ", parts);
+    }
+}

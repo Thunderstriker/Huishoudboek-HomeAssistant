@@ -1,0 +1,17 @@
+@page "/weekcontrole"
+@attribute [Authorize]
+@inherits PageBase
+<PageTitle>@L["WeeklyReviewTitle"] · Huishoudboek</PageTitle>
+<h1>@L["WeeklyReviewTitle"]</h1>
+@if (State.Data.Accounts.Count == 0)
+{
+    <p><a class="button primary" href="instellen">@L["GetStarted"]</a></p>
+}
+else
+{
+    <WeeklyReview />
+}
+<section class="card">
+    <h2>@L["NavigationPreferences"]</h2>
+    <WeeklyReviewVisibility />
+</section>

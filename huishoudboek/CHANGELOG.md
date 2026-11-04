@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.12
+
+- Rustiger maandoverzicht: maandcijfers direct bovenaan, zonder eerste-weekchecklist,
+  wekelijkse controle, uitgebreide maanduitleg of bestedingsplanner erboven.
+  Berekeningsdetails zijn uitklapbaar; compacte waarschuwingen verwijzen naar de uitleg.
+- Aparte pagina's voor Financiële vooruitblik, Instellen en Wekelijkse controle.
+  Instellen staat onder Beheer & import. De wekelijkse menulink is per browser te
+  verbergen en daar te herstellen, zonder financiële gegevens of controles te wijzigen.
+- Nederlandse/Engelse teksten, documentatie en regressietests bijgewerkt voor de
+  nieuwe routes, Home Assistant-ingress en blijvende navigatievoorkeuren.
+
 ## 0.1.11
 
 - Eenvoudiger sparen zonder transfers koppelen: categorieën tellen als gewone

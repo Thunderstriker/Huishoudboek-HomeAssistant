@@ -26,6 +26,20 @@
   <data name="FooterNote" xml:space="preserve"><value>Gedeelde administratie · bedragen uit geregistreerde gegevens ·</value></data>
   <data name="BackupAdministration" xml:space="preserve"><value>Back-up &amp; beheer</value></data>
   <data name="MonthlyOverview" xml:space="preserve"><value>Maandoverzicht</value></data>
+  <data name="FinancialOutlook" xml:space="preserve"><value>Financiële vooruitblik</value></data>
+  <data name="SetupTitle" xml:space="preserve"><value>Instellen</value></data>
+  <data name="GetStarted" xml:space="preserve"><value>Aan de slag</value></data>
+  <data name="SetupAndNavigation" xml:space="preserve"><value>Instellen &amp; navigatie</value></data>
+  <data name="NavigationPreferences" xml:space="preserve"><value>Navigatievoorkeuren</value></data>
+  <data name="HideWeeklyReview" xml:space="preserve"><value>Wekelijkse controle verbergen in de navigatie</value></data>
+  <data name="NavigationPreferenceNote" xml:space="preserve"><value>Onthouden in deze browser voor deze app. Herstel dit via Beheer &amp; import → Instellen &amp; navigatie. Uw financiële gegevens veranderen niet.</value></data>
+  <data name="NavigationPreferenceSessionOnly" xml:space="preserve"><value>Browseropslag is niet beschikbaar; deze voorkeur geldt alleen voor deze sessie. Herstel dit via Beheer &amp; import → Instellen &amp; navigatie.</value></data>
+  <data name="SpendingAboveIncomeBadge" xml:space="preserve"><value>Uitgaven boven inkomen</value></data>
+  <data name="SavingsAboveSurplusBadge" xml:space="preserve"><value>Sparen boven overschot</value></data>
+  <data name="OverBudgetBadge" xml:space="preserve"><value>Boven budget</value></data>
+  <data name="ForecastShortfallBadge" xml:space="preserve"><value>Verwacht tekort</value></data>
+  <data name="BudgetDetails" xml:space="preserve"><value>Budgetdetails &amp; categorie-instellingen</value></data>
+  <data name="CalculationDetails" xml:space="preserve"><value>Berekeningsdetails</value></data>
   <data name="AnnualOverview" xml:space="preserve"><value>Jaaroverzicht</value></data>
   <data name="Transactions" xml:space="preserve"><value>Transacties</value></data>
   <data name="Categorize" xml:space="preserve"><value>Categoriseren</value></data>

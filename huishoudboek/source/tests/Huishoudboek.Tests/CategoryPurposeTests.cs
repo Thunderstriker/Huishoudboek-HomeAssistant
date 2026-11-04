@@ -434,7 +434,11 @@ public sealed class CategoryPurposeTests
         async Task<string> Render<T>() where T : IComponent => WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(async () =>
             (await renderer.RenderComponentAsync<T>()).ToHtmlString()));
         var dashboard = await Render<Dashboard>();
-        Assert.Contains(heading, dashboard); Assert.Contains(explanation, dashboard); Assert.Contains(reached, dashboard);
+        Assert.Contains(UiCulture.Text("SavingsAboveSurplusBadge"), dashboard); Assert.Contains(reached, dashboard);
+        Assert.DoesNotContain(explanation, dashboard);
+        var outlook = await Render<Outlook>();
+        Assert.Contains(heading, outlook); Assert.Contains(explanation, outlook);
+        Assert.DoesNotContain(UiCulture.Text("SpentMoreThanReceived"), outlook);
         Assert.Contains(WebState.Money(400), dashboard); Assert.Contains(WebState.Money(600), dashboard); Assert.Contains(WebState.Money(-200), dashboard);
         Assert.DoesNotContain(UiCulture.Text("SpentMoreThanReceived"), dashboard); Assert.DoesNotContain("href=\"overboekingen\"", dashboard);
         Assert.Contains("id=\"savings-overview\"", dashboard);
