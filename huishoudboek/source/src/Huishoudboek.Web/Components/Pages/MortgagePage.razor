@@ -1,23 +1,26 @@
 @page "/hypotheek"
 @attribute [Authorize]
 @inherits EditPageBase
-<PageTitle>Hypotheek · Huishoudboek</PageTitle>
-<h1>Hypotheek · annuïtair, vaste rente</h1>
-<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Mortgage(State)">Hypotheek instellen / bewerken</button><button @onclick="() => Draft = EditorDraft.Transaction(State, mortgage: true)">Betaling registreren</button></div>
+<PageTitle>@L["Mortgage"] · Huishoudboek</PageTitle>
+<h1>@L["MortgageTitle"]</h1>
+<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Mortgage(State)">@L["EditMortgage"]</button><button @onclick="() => Draft = EditorDraft.Transaction(State, mortgage: true)">@L["RecordPayment"]</button></div>
 @if (State.Data.Mortgage is { } mortgage)
 {
     var projection = DetailedReporting.Mortgage(State.Data, State.Today); var rows = projection.Rows;
     <h2>@mortgage.Name</h2><div class="metrics">
-        <div class="card"><div class="metric-label">Werkelijke schuld vandaag</div><div class="metric-value">@Money(projection.Balance)</div></div>
-        <div class="card"><div class="metric-label">Maandelijkse annuïteit</div><div class="metric-value">@Money(mortgage.MonthlyPayment)</div></div>
-        <div class="card"><div class="metric-label">Vaste jaarrente</div><div class="metric-value">@mortgage.AnnualInterestPercent.ToString("N3", CultureInfo.GetCultureInfo("nl-NL")) %</div></div>
-        <div class="card"><div class="metric-label">Geschatte resterende rente</div><div class="metric-value">@Money(projection.TotalInterest)</div></div>
+        <div class="card"><div class="metric-label">@L["DebtToday"]</div><div class="metric-value">@Money(projection.Balance)</div></div>
+        <div class="card"><div class="metric-label">@L["MonthlyAnnuity"]</div><div class="metric-value">@Money(mortgage.MonthlyPayment)</div></div>
+        <div class="card"><div class="metric-label">@L["FixedAnnualRate"]</div><div class="metric-value">@mortgage.AnnualInterestPercent.ToString("N3", UiCulture.Culture) %</div></div>
+        <div class="card"><div class="metric-label">@L["EstimatedRemainingInterest"]</div><div class="metric-value">@Money(projection.TotalInterest)</div></div>
     </div>
-    <p class="notice warning">Schuld op @mortgage.ReferenceDate.ToString("dd-MM-yyyy"): @Money(mortgage.ReferencePrincipal). Werkelijke schuld wordt alleen verlaagd met geregistreerde aflossingen. Schema is een SCHATTING: maandelijkse betalingen op maandeinde vanaf volgende maand, zonder bankkosten, dagrente, belastingen of boetes. @(mortgage.FixedRateUntil is { } fixedUntil ? $"Rente vast t/m {fixedUntil:dd-MM-yyyy}; daarna dezelfde rente aangenomen." : "Einde rentevaste periode onbekend; constante rente aangenomen.") @(rows.LastOrDefault()?.Remaining > 0 ? "Let op: er blijft een restschuld over." : "") Woningwaarde is niet opgenomen. Registreer de hypotheek ook als vaste post voor de cashprognose.</p>
-    <section class="card"><h2>Verwacht aflossingsschema</h2><div class="table-scroll"><table><thead><tr><th>#</th><th>Verwachte datum</th><th class="money">Betaling</th><th class="money">Rente</th><th class="money">Aflossing</th><th class="money">Restschuld</th><th>Aanname na rentevaste periode</th></tr></thead><tbody>
-    @foreach (var row in rows.Skip(page * 100).Take(100)) { <tr><td>@row.Number</td><td>@row.Date.ToString("dd-MM-yyyy")</td><td class="money">@Money(row.Payment)</td><td class="money">@Money(row.Interest)</td><td class="money">@Money(row.Principal)</td><td class="money">@Money(row.Remaining)</td><td>@(row.AssumesUnchangedRate ? "Ja: ongewijzigde rente" : "—")</td></tr> }
+    <p class="notice warning">@L["MortgageEstimateNote", mortgage.ReferenceDate.ToString("dd-MM-yyyy"), Money(mortgage.ReferencePrincipal)]
+        @(mortgage.FixedRateUntil is { } fixedUntil ? L["RateFixedUntil", fixedUntil.ToString("dd-MM-yyyy")].Value : L["RateEndUnknown"].Value)
+        @if (rows.LastOrDefault()?.Remaining > 0) { @L["RemainingDebtWarning"] }
+        @L["MortgageCashNote"]</p>
+    <section class="card"><h2>@L["RepaymentSchedule"]</h2><div class="table-scroll"><table><thead><tr><th>#</th><th>@L["ExpectedDate"]</th><th class="money">@L["Payment"]</th><th class="money">@L["Interest"]</th><th class="money">@L["Principal"]</th><th class="money">@L["RemainingDebt"]</th><th>@L["AfterFixedRateAssumption"]</th></tr></thead><tbody>
+    @foreach (var row in rows.Skip(page * 100).Take(100)) { <tr><td>@row.Number</td><td>@row.Date.ToString("dd-MM-yyyy")</td><td class="money">@Money(row.Payment)</td><td class="money">@Money(row.Interest)</td><td class="money">@Money(row.Principal)</td><td class="money">@Money(row.Remaining)</td><td>@(row.AssumesUnchangedRate ? L["UnchangedRate"].Value : "—")</td></tr> }
     </tbody></table></div><Pager Count="rows.Count" @bind-Page="page" /></section>
 }
-else { <section class="card"><p>Nog geen hypotheek ingesteld. Voeg eerst eigenaren toe en neem de schuld en werkelijke aflossingen over van uw kredietgever.</p></section> }
+else { <section class="card"><p>@L["NoMortgageNote"]</p></section> }
 <EditDialogs Page="this" />
 @code { private int page; }

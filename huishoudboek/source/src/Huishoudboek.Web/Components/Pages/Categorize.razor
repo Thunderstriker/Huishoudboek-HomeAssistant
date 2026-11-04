@@ -1,80 +1,80 @@
 @page "/categoriseren"
 @attribute [Authorize]
 @inherits EditPageBase
-<PageTitle>Categoriseren · Huishoudboek</PageTitle>
-<h1>Categoriseren · alle datums</h1>
-<p class="muted">Deze werkruimte geldt voor alle datums, inclusief herkenbaar geplande boekingen. Het eigenaarfilter geldt wel. Categorieën van handmatige en gekoppelde transfers zijn alleen labels, geen inkomsten of uitgaven. <a href="overboekingen">Transfers koppelen</a></p>
+<PageTitle>@L["Categorize"] · Huishoudboek</PageTitle>
+<h1>@L["Categorize"] · @L["AllDates"]</h1>
+<p class="muted">@L["CategorizeScopeNote"] <a href="overboekingen">@L["MatchTransfers"]</a></p>
 <div class="actions">
-    <button class="@(mode == "groups" ? "primary" : "")" @onclick='() => SetMode("groups")'>Per categorie</button>
-    <button class="@(mode == "inbox" ? "primary" : "")" @onclick='() => SetMode("inbox")'>Zonder categorie</button>
-    <button class="@(mode == "walk" ? "primary" : "")" @onclick="StartWalk">Stap voor stap</button>
-    <button @onclick="LatestImport">Laatste import</button><button @onclick="ClearFilters">Filters wissen</button>
+    <button class="@(mode == "groups" ? "primary" : "")" @onclick='() => SetMode("groups")'>@L["ByCategory"]</button>
+    <button class="@(mode == "inbox" ? "primary" : "")" @onclick='() => SetMode("inbox")'>@L["Uncategorized"]</button>
+    <button class="@(mode == "walk" ? "primary" : "")" @onclick="StartWalk">@L["StepByStep"]</button>
+    <button @onclick="LatestImport">@L["LatestImport"]</button><button @onclick="ClearFilters">@L["ClearFilters"]</button>
 </div>
-<div class="filters"><label>Rekening<select @bind="accountId" @bind:after="FilterChanged"><option value="">Alle rekeningen</option>@foreach (var a in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@a.Id">@a.Name</option> }</select></label>
-<label>Import<select @bind="batchId" @bind:after="FilterChanged"><option value="">Alle imports</option>@foreach (var batch in State.Data.ImportBatches.Where(b => !b.Undone).OrderByDescending(b => b.ImportedAt)) { <option value="@batch.Id">@batch.FileName · @batch.ImportedAt.ToString("dd-MM-yyyy HH:mm")</option> }</select></label>
-<label>Omschrijving zoeken<input type="search" @bind="search" @bind:event="oninput" @bind:after="FilterChanged" /></label>
-<label class="check"><input type="checkbox" @bind="includeTransfers" @bind:after="FilterChanged" />Interne overboekingen ook tonen</label></div>
+<div class="filters"><label>@L["Account"]<select @bind="accountId" @bind:after="FilterChanged"><option value="">@L["AllAccounts"]</option>@foreach (var a in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@a.Id">@a.Name</option> }</select></label>
+<label>@L["Import"]<select @bind="batchId" @bind:after="FilterChanged"><option value="">@L["AllImports"]</option>@foreach (var batch in State.Data.ImportBatches.Where(b => !b.Undone).OrderByDescending(b => b.ImportedAt)) { <option value="@batch.Id">@batch.FileName · @batch.ImportedAt.ToString("dd-MM-yyyy HH:mm")</option> }</select></label>
+<label>@L["SearchDescription"]<input type="search" @bind="search" @bind:event="oninput" @bind:after="FilterChanged" /></label>
+<label class="check"><input type="checkbox" @bind="includeTransfers" @bind:after="FilterChanged" />@L["IncludeInternalTransfers"]</label></div>
 @{ var rows = VisibleRows.ToList(); page = Math.Min(page, Math.Max(0, (rows.Count - 1) / 100)); var totals = Categorization.ReviewTotals(State.Data, rows); }
 <div class="category-layout">
     @if (mode == "groups")
     {
-        <aside class="card category-list" aria-label="Categoriegroepen">
+        <aside class="card category-list" aria-label="@L["CategoryGroups"]">
             @foreach (var group in Groups)
             { <button class="@(group.Id == groupCategory ? "active" : "") @(group.Count == 0 ? "muted" : "")" @onclick="() => SelectGroup(group.Id)"><span>@group.Name</span><span class="badge">@group.Count</span></button> }
         </aside>
     }
     <section class="card" style="@(mode != "groups" ? "grid-column:1/-1" : null)">
-        <div class="page-heading"><h2>@(mode == "walk" ? "Stap voor stap" : mode == "inbox" ? "Zonder categorie" : State.CategoryName(groupCategory))</h2>
+        <div class="page-heading"><h2>@(mode == "walk" ? L["StepByStep"].Value : mode == "inbox" ? L["Uncategorized"].Value : State.CategoryName(groupCategory))</h2>
         @if (mode == "groups" && groupCategory is { } categoryId && State.Data.Categories.FirstOrDefault(c => c.Id == categoryId) is { } category)
-        { <div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, category, true)">Categorie hernoemen</button><button @onclick="() => DeleteCategory(category)">Categorie verwijderen</button></div> }
+        { <div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, category, true)">@L["RenameCategory"]</button><button @onclick="() => DeleteCategory(category)">@L["DeleteCategory"]</button></div> }
         </div>
-        @if (mode != "walk") { <p class="muted">@rows.Count betalingen · inkomsten @Money(totals.Income) · uitgaand @Money(totals.Outflow). Inclusief geplande boekingen, exclusief transfers; geen uitsluitend werkelijke rapporttotalen.</p> }
+        @if (mode != "walk") { <p class="muted">@L["ReviewTotalsNote", rows.Count, Money(totals.Income), Money(totals.Outflow)]</p> }
         @if (mode == "walk")
         {
             @if (Current is { } current)
             {
                 <h3>@current.Date.ToString("dd-MM-yyyy") · @State.AccountName(current.AccountId) · @Money(current.Amount)</h3><p class="description">@current.Description</p>
-                @if (current.Date > State.Today) { <p class="badge">Geplande toekomstige betaling</p> }
-                <p class="muted">@WalkRows.Count() resterend in deze ronde. Overslaan verandert niets en de betaling komt in een nieuwe ronde terug.</p>
+                @if (current.Date > State.Today) { <p class="badge">@L["PlannedFuturePayment"]</p> }
+                <p class="muted">@L["WalkRemainingNote", WalkRows.Count()]</p>
             }
-            else { <p class="empty">Deze ronde is voltooid. Overgeslagen betalingen zijn niet gewijzigd.</p><button @onclick="StartWalk">Nieuwe ronde starten</button> }
+            else { <p class="empty">@L["WalkCompleteNote"]</p><button @onclick="StartWalk">@L["StartNewRound"]</button> }
         }
         else
         {
-            <div class="table-scroll"><table id="category-transactions"><thead><tr><th>Kies</th><th>Datum</th><th>Rekening</th><th>Bankomschrijving / eigen omschrijving</th><th class="money">Bedrag</th><th>Categorie / type</th></tr></thead><tbody>
+            <div class="table-scroll"><table id="category-transactions"><thead><tr><th>@L["Select"]</th><th>@L["Date"]</th><th>@L["Account"]</th><th>@L["BankOwnDescription"]</th><th class="money">@L["Amount"]</th><th>@L["CategoryType"]</th></tr></thead><tbody>
             @foreach (var t in rows.Skip(page * 100).Take(100))
             {
                 <tr @key="t.Id">
-                    <td><input type="checkbox" aria-label="Selecteer betaling" checked="@selected.Contains(t.Id)" disabled="@State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id)" @onchange="e => Select(t, (bool)e.Value!)" /></td>
-                    <td>@t.Date.ToString("dd-MM-yyyy") @if (t.Date > State.Today) { <span class="badge">Gepland</span> }</td>
+                    <td><input type="checkbox" aria-label="@L["SelectPayment"]" checked="@selected.Contains(t.Id)" disabled="@State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id)" @onchange="e => Select(t, (bool)e.Value!)" /></td>
+                    <td>@t.Date.ToString("dd-MM-yyyy") @if (t.Date > State.Today) { <span class="badge">@L["Planned"]</span> }</td>
                     <td>@State.AccountName(t.AccountId) @if (t.Kind == TransactionKind.Transfer) { <span>→ @State.AccountName(t.CounterAccountId)</span> }</td>
                     <td class="description">@if (t.UserDescription.Length > 0) { <strong>@t.UserDescription</strong><small>@t.Description</small> } else { @t.Description }</td>
                     <td class="money">@Money(t.Amount)</td>
-                    <td><TransactionAllocationSummary Transaction="t" /> @if (State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id)) { <a href="transacties">@L["TransactionHandling"]</a> } @if (TransferMatching.IsInternal(State.Data, t)) { <span class="badge">@(t.Kind == TransactionKind.Transfer ? "Interne overboeking" : "Gekoppelde transfer")</span> }</td>
+                    <td><TransactionAllocationSummary Transaction="t" /> @if (State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id)) { <a href="transacties">@L["TransactionHandling"]</a> } @if (TransferMatching.IsInternal(State.Data, t)) { <span class="badge">@L[t.Kind == TransactionKind.Transfer ? "InternalTransfer" : "LinkedTransfer"]</span> }</td>
                 </tr>
             }
             </tbody></table></div>
-            @if (rows.Count == 0) { <p class="empty">Geen betalingen in deze groep en filters.</p> }
+            @if (rows.Count == 0) { <p class="empty">@L["NoGroupPayments"]</p> }
             <Pager Count="rows.Count" @bind-Page="page" />
         }
         @if (mode != "walk" || Current != null)
         {
             <form @onsubmit="Assign" @onsubmit:preventDefault>
-                <div class="fields"><label>Categorie<select id="assignCategory" @bind="assignCategory"><option value="">Zonder categorie</option>@foreach (var c in State.Data.Categories) { <option value="@c.Id">@c.Name</option> }</select></label>
-                @if (mode == "walk" || selected.Count == 1) { <label>Eigen omschrijving (optioneel)<input id="ownDescription" @bind="ownDescription" maxlength="2000" /></label> }</div>
-                <label class="check"><input id="rememberRule" type="checkbox" @bind="remember" />Onthouden voor volgende imports</label>
+                <div class="fields"><label>@L["Category"]<select id="assignCategory" @bind="assignCategory"><option value="">@L["Uncategorized"]</option>@foreach (var c in State.Data.Categories) { <option value="@c.Id">@c.Name</option> }</select></label>
+                @if (mode == "walk" || selected.Count == 1) { <label>@L["OwnDescriptionOptional"]<input id="ownDescription" @bind="ownDescription" maxlength="2000" /></label> }</div>
+                <label class="check"><input id="rememberRule" type="checkbox" @bind="remember" />@L["RememberImports"]</label>
                 @if (remember)
                 {
-                    <label>Omschrijving bevat<input id="rememberText" @bind="rememberText" @bind:event="oninput" maxlength="500" required /></label>
+                    <label>@L["DescriptionContains"]<input id="rememberText" @bind="rememberText" @bind:event="oninput" maxlength="500" required /></label>
                     var preview = Categorization.Preview(State.Data, rememberText, assignCategory, FilteredRows.Select(t => t.Id).ToHashSet());
-                    <p class="muted">@preview.Matches.Count overeenkomsten, @preview.UncategorizedCount zonder categorie. @(preview.ReusesRule ? "Bestaande regel wordt hergebruikt." : "Regel geldt bij volgende imports voor het hele huishouden.")</p>
+                    <p class="muted">@L["RulePreviewCount", preview.Matches.Count, preview.UncategorizedCount] @L[preview.ReusesRule ? "ReusesRule" : "HouseholdRule"]</p>
                     @foreach (var sample in preview.Matches.Take(3)) { <small class="description">@sample.Description · @Money(sample.Amount)</small><br /> }
-                    @if (preview.ConflictingExactRule) { <p class="notice error">Deze exacte tekst heeft al een andere categorie. Bewerk de bestaande regel via Beheer &amp; import.</p> }
-                    @if (preview.EarlierConflictCount > 0) { <p class="notice warning">Overlap met andere regels: @preview.EarlierConflictCount betalingen. De eerste passende regel blijft winnen.</p> }
-                    <label class="check"><input type="checkbox" @bind="applyMatches" />Ook passende ongecategoriseerde betalingen binnen eigenaar/rekening/import/zoekfilters aanpassen</label>
+                    @if (preview.ConflictingExactRule) { <p class="notice error">@L["ConflictingRuleWarning"]</p> }
+                    @if (preview.EarlierConflictCount > 0) { <p class="notice warning">@L["OverlappingRulesWarning", preview.EarlierConflictCount]</p> }
+                    <label class="check"><input type="checkbox" @bind="applyMatches" />@L["ApplyFilteredMatches"]</label>
                 }
-                <div class="actions"><button class="primary" type="submit" disabled="@(mode == "walk" ? assignCategory == null : selected.Count == 0)">@(mode == "walk" ? "Opslaan & volgende" : $"Categorie opslaan ({selected.Count})")</button>
-                    @if (mode == "walk") { <button type="button" @onclick="Skip">Overslaan</button><button type="button" @onclick='() => SetMode("inbox")'>Rondgang sluiten</button> }
+                <div class="actions"><button class="primary" type="submit" disabled="@(mode == "walk" ? assignCategory == null : selected.Count == 0)">@(mode == "walk" ? L["SaveNext"].Value : L["SaveCategoryCount", selected.Count].Value)</button>
+                    @if (mode == "walk") { <button type="button" @onclick="Skip">@L["Skip"]</button><button type="button" @onclick='() => SetMode("inbox")'>@L["CloseWalk"]</button> }
                 </div>
             </form>
         }
@@ -111,7 +111,7 @@
         }
     }
     private Transaction? Current => WalkRows.FirstOrDefault();
-    private IEnumerable<(Guid? Id, string Name, int Count)> Groups => new[] { ((Guid?)null, "Zonder categorie", FilteredRows.Count(t => Categorization.HasCategory(State.Data, t, null))) }
+    private IEnumerable<(Guid? Id, string Name, int Count)> Groups => new[] { ((Guid?)null, L["Uncategorized"].Value, FilteredRows.Count(t => Categorization.HasCategory(State.Data, t, null))) }
         .Concat(State.Data.Categories.Select(c => ((Guid?)c.Id, c.Name, FilteredRows.Count(t => Categorization.HasCategory(State.Data, t, c.Id)))).OrderByDescending(c => c.Item3 > 0).ThenBy(c => c.Name));
     protected override void OnParametersSet()
     {
@@ -150,14 +150,14 @@
         var revision = assignmentRevision ?? State.Revision;
         if (await State.RunAsync(() =>
         {
-            if (mode == "walk" && category == null) throw new InvalidOperationException("Kies eerst een categorie of kies Overslaan.");
+            if (mode == "walk" && category == null) throw new InvalidOperationException(L["ChooseCategoryOrSkip"]);
             return State.SaveAsync(d => Categorization.Assign(d, ids, category, text, matches, description), revision);
-        }, "Categorie opgeslagen."))
+        }, L["CategorySaved"]))
         { ResetDraft(); if (mode == "walk") PrefillWalk(); }
     }
     private void DeleteCategory(Category category)
     {
         var p = Categorization.PreviewCategoryDeletion(State.Data, category.Id);
-        Ask("Categorie verwijderen", $"Categorie ‘{p.Name}’ verwijderen in de HELE administratie?\n{p.TransactionCount} transacties en {p.RecurringPaymentCount} vaste posten blijven bestaan en worden Zonder categorie.\n{p.RuleCount} regels, {p.BudgetOverrideCount} maandbudgetten en standaardbudget {Money(p.MonthlyBudget)} worden verwijderd.\nBedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden. Geen directe undo; maak zo nodig eerst een back-up.", d => Categorization.DeleteCategory(d, category.Id), "Categorie verwijderen");
+        Ask(L["DeleteCategory"], L["DeleteCategoryQuestion", p.Name, p.TransactionCount, p.RecurringPaymentCount, p.RuleCount, p.BudgetOverrideCount, Money(p.MonthlyBudget)], d => Categorization.DeleteCategory(d, category.Id), L["DeleteCategory"]);
     }
 }

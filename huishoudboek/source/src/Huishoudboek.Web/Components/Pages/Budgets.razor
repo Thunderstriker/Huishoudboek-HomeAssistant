@@ -1,14 +1,14 @@
 @page "/budgetten"
 @attribute [Authorize]
 @inherits EditPageBase
-<PageTitle>Budgetten · Huishoudboek</PageTitle>
-<h1>Budgetten &amp; categorieën</h1>
-<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Category(State)">+ Categorie</button></div>
+<PageTitle>@L["Budgets"] · Huishoudboek</PageTitle>
+<h1>@L["BudgetsCategories"]</h1>
+<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Category(State)">+ @L["Category"]</button></div>
 @{ var budgets = DetailedReporting.Budgets(State.Data, State.Year, State.Month, State.Today, State.Scope); }
-<section class="card"><h2>@(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", CultureInfo.GetCultureInfo("nl-NL")))</h2>
-<div class="table-scroll"><table><thead><tr><th>Categorie</th><th class="money">Standaard</th><th class="money">Deze maand</th><th class="money">Uitgegeven</th><th class="money">Resterend</th><th>Acties</th></tr></thead><tbody>
+<section class="card"><h2>@(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
+<div class="table-scroll"><table><thead><tr><th>@L["Category"]</th><th class="money">@L["Default"]</th><th class="money">@L["ThisMonth"]</th><th class="money">@L["Spent"]</th><th class="money">@L["Remaining"]</th><th>@L["Actions"]</th></tr></thead><tbody>
 @foreach (var row in budgets)
 { var c = State.Data.Categories.Single(c => c.Id == row.Id);
-<tr><td>@row.Name @if (row.IsOverBudget) { <span class="badge negative">Overschreden</span> }</td><td class="money">@Money(row.DefaultBudget)</td><td class="money">@Money(row.Budget)</td><td class="money">@Money(row.Spent)</td><td class="money">@(row.Budget == 0 ? "Geen limiet" : Money(row.Remaining))</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, c)">Categorie / standaardbudget</button><button @onclick="() => Draft = EditorDraft.Budget(State, c)">Budget deze maand</button></div></td></tr> }
-</tbody></table></div><p class="muted">Standaardbudgetten gelden maandelijks. Een afwijkend maandbudget verandert andere maanden niet. Budget 0 = geen limiet. Budgetten blijven voor het hele huishouden bij een eigenaarfilter.</p></section>
+<tr><td>@row.Name @if (row.IsOverBudget) { <span class="badge negative">@L["Exceeded"]</span> }</td><td class="money">@Money(row.DefaultBudget)</td><td class="money">@Money(row.Budget)</td><td class="money">@Money(row.Spent)</td><td class="money">@(row.Budget == 0 ? L["NoLimit"].Value : Money(row.Remaining))</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, c)">@L["CategoryDefaultBudget"]</button><button @onclick="() => Draft = EditorDraft.Budget(State, c)">@L["BudgetThisMonth"]</button></div></td></tr> }
+</tbody></table></div><p class="muted">@L["DefaultBudgetNote"]</p></section>
 <EditDialogs Page="this" />

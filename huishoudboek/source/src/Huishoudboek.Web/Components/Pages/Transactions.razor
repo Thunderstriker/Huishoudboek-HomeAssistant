@@ -1,18 +1,18 @@
 @page "/transacties"
 @attribute [Authorize]
 @inherits EditPageBase
-<PageTitle>Transacties · Huishoudboek</PageTitle>
-<h1>Transacties</h1>
-<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Transaction(State)">+ Transactie</button><a class="button" href="importeren">Excel / CSV importeren</a><a class="button" href="overboekingen">Transfers koppelen</a></div>
-<div class="filters"><label>Zoeken<input type="search" @bind="search" @bind:event="oninput" @bind:after="Reset" placeholder="Omschrijving, categorie of rekening" /></label>
-<label>Rekening<select @bind="accountId" @bind:after="Reset"><option value="">Alle rekeningen</option>@foreach (var a in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@a.Id">@a.Name</option> }</select></label>
-<label class="check"><input type="checkbox" @bind="allDates" @bind:after="Reset" />Alle datums</label></div>
+<PageTitle>@L["Transactions"] · Huishoudboek</PageTitle>
+<h1>@L["Transactions"]</h1>
+<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Transaction(State)">+ @L["Transaction"]</button><a class="button" href="importeren">@L["ImportExcelCsv"]</a><a class="button" href="overboekingen">@L["MatchTransfers"]</a></div>
+<div class="filters"><label>@L["Search"]<input type="search" @bind="search" @bind:event="oninput" @bind:after="Reset" placeholder="@L["TransactionSearchHint"]" /></label>
+<label>@L["Account"]<select @bind="accountId" @bind:after="Reset"><option value="">@L["AllAccounts"]</option>@foreach (var a in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@a.Id">@a.Name</option> }</select></label>
+<label class="check"><input type="checkbox" @bind="allDates" @bind:after="Reset" />@L["AllDates"]</label></div>
 @{ var rows = Rows.ToList(); page = Math.Min(page, Math.Max(0, (rows.Count - 1) / 100)); }
-<section class="card"><div class="table-scroll"><table id="transactions"><thead><tr><th>Datum</th><th>Rekening</th><th>Omschrijving</th><th class="money">Bedrag</th><th>Categorie / type</th><th class="money">Aflossing</th><th>Vaste post</th><th class="money">Banksaldo importrekening</th><th>Acties</th></tr></thead><tbody>
+<section class="card"><div class="table-scroll"><table id="transactions"><thead><tr><th>@L["Date"]</th><th>@L["Account"]</th><th>@L["Description"]</th><th class="money">@L["Amount"]</th><th>@L["CategoryType"]</th><th class="money">@L["Principal"]</th><th>@L["RecurringPayment"]</th><th class="money">@L["StatementBalance"]</th><th>@L["Actions"]</th></tr></thead><tbody>
 @foreach (var row in rows.Skip(page * 100).Take(100))
-{ <tr @key="row.Id"><td>@row.Date.ToString("dd-MM-yyyy") @if (row.Date > State.Today) { <span class="badge">Gepland</span> }</td><td>@State.AccountName(row.AccountId) @if (row.Kind == TransactionKind.Transfer) { <span>→ @State.AccountName(row.CounterAccountId)</span> }</td><td class="description">@if (row.UserDescription.Length > 0) { <strong>@row.UserDescription</strong><small>@row.Description</small> } else { @row.Description }</td><td class="money">@Money(row.Amount)</td><td><TransactionAllocationSummary Transaction="row" /><small class="badge">@TransactionType(row)</small></td><td class="money">@Money(row.PrincipalComponent)</td><td>@(State.Data.RecurringPayments.FirstOrDefault(r => r.Id == row.RecurringPaymentId)?.Name ?? "—")</td><td class="money">@(row.StatementBalance is { } balance ? Money(balance) : "—")</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Transaction(State, row)">Bewerken</button>@if (row.Kind == TransactionKind.Normal && !TransferMatching.IsInternal(State.Data, row)) { <button @onclick="() => OpenDetails(row)">@L["TransactionHandling"]</button> }<button @onclick="() => AskDelete(row)">Verwijderen</button></div></td></tr> }
-</tbody></table></div>@if (rows.Count == 0) { <p class="empty">Geen transacties binnen deze filters.</p> }<Pager Count="rows.Count" @bind-Page="page" /></section>
-<p class="muted">Toekomstige transacties zijn gepland: ze tellen pas op hun datum als werkelijk. Handmatige en bevestigde gekoppelde overboekingen zijn geen inkomsten of uitgaven. Twee bankboekingen koppelen verandert geen saldi.</p>
+{ <tr @key="row.Id"><td>@row.Date.ToString("dd-MM-yyyy") @if (row.Date > State.Today) { <span class="badge">@L["Planned"]</span> }</td><td>@State.AccountName(row.AccountId) @if (row.Kind == TransactionKind.Transfer) { <span>→ @State.AccountName(row.CounterAccountId)</span> }</td><td class="description">@if (row.UserDescription.Length > 0) { <strong>@row.UserDescription</strong><small>@row.Description</small> } else { @row.Description }</td><td class="money">@Money(row.Amount)</td><td><TransactionAllocationSummary Transaction="row" /><small class="badge">@TransactionType(row)</small></td><td class="money">@Money(row.PrincipalComponent)</td><td>@(State.Data.RecurringPayments.FirstOrDefault(r => r.Id == row.RecurringPaymentId)?.Name ?? "—")</td><td class="money">@(row.StatementBalance is { } balance ? Money(balance) : "—")</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Transaction(State, row)">@L["Edit"]</button>@if (row.Kind == TransactionKind.Normal && !TransferMatching.IsInternal(State.Data, row)) { <button @onclick="() => OpenDetails(row)">@L["TransactionHandling"]</button> }<button @onclick="() => AskDelete(row)">@L["Delete"]</button></div></td></tr> }
+</tbody></table></div>@if (rows.Count == 0) { <p class="empty">@L["NoTransactions"]</p> }<Pager Count="rows.Count" @bind-Page="page" /></section>
+<p class="muted">@L["PlannedTransactionsNote"]</p>
 <p class="muted">@L["ExpenseUntilPaidNote"]</p>
 @{ var claims = State.Data.ReimbursementClaims.Where(c => State.Data.Transactions.Any(t => t.Id == c.ExpenseTransactionId && State.Scope.Contains(t.AccountId) && t.Date <= State.Today)).ToList(); }
 @if (claims.Count > 0)
@@ -50,8 +50,7 @@
         }
     }
     private string TransactionType(Transaction t) => TransferMatching.IsInternal(State.Data, t) ?
-        (t.Kind == TransactionKind.Transfer ? "Handmatige overboeking" : "Gekoppelde transfer") : State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id) ? L["AllocatedTransaction"].Value : t.Kind == TransactionKind.Mortgage ? "Hypotheek" : t.Amount > 0 ? "Inkomst" : "Uitgave";
-    private void AskDelete(Transaction row) => Ask("Transactie verwijderen", row.Kind == TransactionKind.Transfer ?
-        "Deze handmatige overboeking verwijderen? De saldo-effecten verdwijnen uit beide rekeningen." :
-        "Deze boeking verwijderen? Een eventuele transferbeslissing wordt verwijderd; de andere bankboeking blijft bestaan en telt weer als gewone inkomst/uitgave.", d => HouseholdEdits.DeleteTransaction(d, row.Id), "Verwijderen");
+        L[t.Kind == TransactionKind.Transfer ? "ManualTransfer" : "LinkedTransfer"] : L[State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id) ? "AllocatedTransaction" : t.Kind == TransactionKind.Mortgage ? "Mortgage" : t.Amount > 0 ? "IncomeSingle" : "Expense"];
+    private void AskDelete(Transaction row) => Ask(L["DeleteTransaction"], L[row.Kind == TransactionKind.Transfer ?
+        "DeleteManualTransferQuestion" : "DeleteTransactionQuestion"], d => HouseholdEdits.DeleteTransaction(d, row.Id), L["Delete"]);
 }

@@ -3,69 +3,69 @@
 @inherits PageBase
 @inject IWebAdministration Backend
 @inject NavigationManager Navigation
-<PageTitle>Importeren · Huishoudboek</PageTitle>
-<h1>Excel / CSV importeren</h1>
-<p class="notice">Elke import boekt alleen op de gekozen rekening, met het bedrag uit het bestand. Andere rekeningen worden niet automatisch gekoppeld of aangepast; importeer voor elke rekening het eigen bestand. Controleer dubbelen, valuta, rekening en openingsdatum. Er wordt pas na expliciete bevestiging opgeslagen.</p>
-<p class="muted">Na import van beide rekeningen kunt u <a href="overboekingen">transfers koppelen</a> voor rapportage, zonder extra boekingen of saldoaanpassingen.</p>
+<PageTitle>@L["Import"] · Huishoudboek</PageTitle>
+<h1>@L["ImportExcelCsv"]</h1>
+<p class="notice">@L["ImportAccountNote"]</p>
+<p class="muted">@L["AfterImportBothAccounts"] <a href="overboekingen">@L["MatchTransfers"]</a> @L["ImportTransferReportingNote"]</p>
 <section class="card">
-    <label>Bestand (.xls, .xlsx of .csv; maximaal 50 MB en 100.000 niet-lege regels)<InputFile id="importFile" OnChange="Upload" accept=".xls,.xlsx,.csv" /></label>
-    <div class="fields"><label>Importrekening<select id="importAccount" @bind="accountId" @bind:after="Invalidate"><option value="">Kies rekening</option>@foreach (var a in State.Data.Accounts) { <option value="@a.Id">@a.Name</option> }</select></label>
-    <label>Vanaf (inclusief)<InputDate id="from" @bind-Value="from" @bind-Value:after="Invalidate" /></label><label>Tot en met (inclusief)<InputDate id="through" @bind-Value="through" @bind-Value:after="Invalidate" /></label></div>
-    <details open="@settingsOpen"><summary>Importinstellingen</summary>
-        <div class="fields"><label>Werkblad<select @bind="worksheet" @bind:after="Invalidate"><option value="">@(sheets.Count == 0 ? "CSV" : "Eerste werkblad")</option>@foreach (var sheet in sheets) { <option value="@sheet">@sheet</option> }</select></label>
-        <label>Opgeslagen profiel<select @bind="profileId" @bind:after="UseProfile"><option value="">Automatisch herkennen</option>@foreach (var p in State.Data.ImportProfiles) { <option value="@p.Id">@p.Name</option> }</select></label>
-        <label class="check"><input type="checkbox" @bind="windows1252" @bind:after="Invalidate" />CSV in Windows-1252 (standaard UTF-8)</label></div>
+    <label>@L["ImportFileHint"]<InputFile id="importFile" OnChange="Upload" accept=".xls,.xlsx,.csv" /></label>
+    <div class="fields"><label>@L["ImportAccount"]<select id="importAccount" @bind="accountId" @bind:after="Invalidate"><option value="">@L["ChooseAccount"]</option>@foreach (var a in State.Data.Accounts) { <option value="@a.Id">@a.Name</option> }</select></label>
+    <label>@L["FromInclusive"]<InputDate id="from" @bind-Value="from" @bind-Value:after="Invalidate" /></label><label>@L["ThroughInclusive"]<InputDate id="through" @bind-Value="through" @bind-Value:after="Invalidate" /></label></div>
+    <details open="@settingsOpen"><summary>@L["ImportSettings"]</summary>
+        <div class="fields"><label>@L["Worksheet"]<select @bind="worksheet" @bind:after="Invalidate"><option value="">@(sheets.Count == 0 ? "CSV" : L["FirstWorksheet"].Value)</option>@foreach (var sheet in sheets) { <option value="@sheet">@sheet</option> }</select></label>
+        <label>@L["SavedProfile"]<select @bind="profileId" @bind:after="UseProfile"><option value="">@L["AutoDetect"]</option>@foreach (var p in State.Data.ImportProfiles) { <option value="@p.Id">@p.Name</option> }</select></label>
+        <label class="check"><input type="checkbox" @bind="windows1252" @bind:after="Invalidate" />@L["Windows1252Hint"]</label></div>
         @if (profile != null)
         {
-            <div class="fields"><label>Profielnaam<input @bind="profile.Name" @bind:after="Invalidate" /></label><label>Getalnotatie / cultuur<select @bind="profile.CultureName" @bind:after="Invalidate"><option value="nl-NL">Nederlands: 1.234,56</option><option value="nl-BE">Nederlands (België)</option><option value="en-US">Engels (VS): 1,234.56</option><option value="de-DE">Duits: 1.234,56</option></select></label><label>Exact datumformaat (optioneel)<input @bind="profile.DateFormat" @bind:after="Invalidate" placeholder="dd/MM/yyyy" /></label>
+            <div class="fields"><label>@L["ProfileName"]<input @bind="profile.Name" @bind:after="Invalidate" /></label><label>@L["NumberCulture"]<select @bind="profile.CultureName" @bind:after="Invalidate"><option value="nl-NL">@L["DutchNumberFormat"]</option><option value="nl-BE">@L["BelgianDutch"]</option><option value="en-US">@L["EnglishNumberFormat"]</option><option value="de-DE">@L["GermanNumberFormat"]</option></select></label><label>@L["OptionalDateFormat"]<input @bind="profile.DateFormat" @bind:after="Invalidate" placeholder="dd/MM/yyyy" /></label>
             @foreach (var column in Columns)
-            { <label>@column.Label<select value="@ProfileValue(column.Key)" @onchange="e => MapColumn(column.Key, e.Value?.ToString() ?? string.Empty)"><option value="">Niet gebruiken</option>@foreach (var header in headers) { <option value="@header">@header</option> }</select></label> }
+            { <label>@L[column.Label]<select value="@ProfileValue(column.Key)" @onchange="e => MapColumn(column.Key, e.Value?.ToString() ?? string.Empty)"><option value="">@L["DoNotUse"]</option>@foreach (var header in headers) { <option value="@header">@header</option> }</select></label> }
             </div>
         }
-        else { <p class="muted">Kies Voorbeeld verwerken voor automatische kolomherkenning. Daarna kunt u kolommen en cultuur aanpassen en opnieuw verwerken.</p> }
+        else { <p class="muted">@L["PreviewColumnNote"]</p> }
     </details>
-    <div class="actions"><button id="preview" class="primary" disabled="@(uploadId == null || accountId == null)" @onclick="Preview">Voorbeeld verwerken</button></div>
-    <p class="muted">@fileName · wijzigingen in instellingen maken het oude voorbeeld ongeldig. Verlaten uploads vervallen na 20 minuten; maximaal vier open uploads voor het huishouden.</p>
+    <div class="actions"><button id="preview" class="primary" disabled="@(uploadId == null || accountId == null)" @onclick="Preview">@L["ProcessPreview"]</button></div>
+    <p class="muted">@(fileName ?? L["NoFileSelected"].Value) · @L["UploadExpiryNote"]</p>
 </section>
 @if (preview != null)
 {
-    <section class="card" id="previewPanel"><h2>Importvoorbeeld · nog niet opgeslagen</h2><p>@rows.Count regels · @rows.Count(r => r.Include) geselecteerd. Waarschijnlijke dubbelen zijn niet voorgeselecteerd maar blijven expliciet selecteerbaar. Ongeldige regels kunnen niet worden opgeslagen.</p>
-    <div class="table-scroll"><table><thead><tr><th>Opslaan</th><th>Regel</th><th>Datum</th><th>Omschrijving</th><th class="money">Bedrag</th><th>Categorie</th><th>Controle</th></tr></thead><tbody>
+    <section class="card" id="previewPanel"><h2>@L["UnsavedImportPreview"]</h2><p>@L["PreviewRowsNote", rows.Count, rows.Count(r => r.Include)]</p>
+    <div class="table-scroll"><table><thead><tr><th>@L["Save"]</th><th>@L["Row"]</th><th>@L["Date"]</th><th>@L["Description"]</th><th class="money">@L["Amount"]</th><th>@L["Category"]</th><th>@L["Check"]</th></tr></thead><tbody>
     @foreach (var row in rows.Skip(page * 100).Take(100))
-    { <tr @key="row.Number"><td><input type="checkbox" aria-label="Importregel selecteren" @bind="row.Include" disabled="@(!row.Source.IsValid)" /></td><td>@row.Number</td><td>@row.Source.Date?.ToString("dd-MM-yyyy")</td><td class="description">@row.Source.Description</td><td class="money">@(row.Source.Amount is { } amount ? Money(amount) : "—")</td>
-    <td><select aria-label="Categorie importregel" value="@row.Source.CategoryId" @onchange="e => Adjust(row, e)">@foreach (var category in preview.Categories) { <option value="@category.Id">@category.Name</option> }</select></td>
+    { <tr @key="row.Number"><td><input type="checkbox" aria-label="@L["SelectImportRow"]" @bind="row.Include" disabled="@(!row.Source.IsValid)" /></td><td>@row.Number</td><td>@row.Source.Date?.ToString("dd-MM-yyyy")</td><td class="description">@row.Source.Description</td><td class="money">@(row.Source.Amount is { } amount ? Money(amount) : "—")</td>
+    <td><select aria-label="@L["ImportRowCategory"]" value="@row.Source.CategoryId" @onchange="e => Adjust(row, e)">@foreach (var category in preview.Categories) { <option value="@category.Id">@(category.Id == null ? L["Uncategorized"].Value : category.Name)</option> }</select></td>
     <td class="description"><span class="badge">@row.Source.Kind</span><br />@row.Source.Note</td></tr> }
     </tbody></table></div><Pager Count="rows.Count" @bind-Page="page" />
-    <button id="commit" class="primary" disabled="@(!rows.Any(r => r.Include))" @onclick="() => commitConfirm = true">Geselecteerde regels definitief opslaan…</button></section>
+    <button id="commit" class="primary" disabled="@(!rows.Any(r => r.Include))" @onclick="() => commitConfirm = true">@L["SaveSelectedRows"]…</button></section>
 }
 @if (commitConfirm && preview != null)
-{ <Confirm Title="Import definitief opslaan" Text="@($"{rows.Count(r => r.Include)} geselecteerde regels opslaan op {State.AccountName(accountId)}? Andere rekeningen blijven ongewijzigd. Controleer categorieën en expliciet geselecteerde dubbelen. Na opslaan verschijnt de saldocontrole.")" ActionLabel="Import opslaan" Cancel="() => commitConfirm = false" Accept="Commit" /> }
+{ <Confirm Title="@L["CommitImport"]" Text="@L["CommitImportQuestion", rows.Count(r => r.Include), State.AccountName(accountId)]" ActionLabel="@L["SaveImport"]" Cancel="() => commitConfirm = false" Accept="Commit" /> }
 @if (result is { } saved)
 {
-    <Modal Title="Import voltooid — saldocontrole" Cancel="OpenReview">
-        <p>@saved.Count transacties opgeslagen. @skippedCount regels niet geïmporteerd.</p>
-        <h3>Saldo per @saved.Balance.AsOf.ToString("dd-MM-yyyy"): @Money(saved.Balance.CalculatedBalance)</h3>
+    <Modal Title="@L["ImportCompleteBalanceCheck"]" Cancel="OpenReview">
+        <p>@L["ImportSavedCount", saved.Count, skippedCount]</p>
+        <h3>@L["BalanceAsOf", saved.Balance.AsOf.ToString("dd-MM-yyyy"), Money(saved.Balance.CalculatedBalance)]</h3>
         @if (saved.Balance.StatementBalance is { } bank)
-        { <p>Banksaldo importrekening: @Money(bank).</p><p class="notice @(saved.Balance.Difference == 0 ? "success" : "warning")">@(saved.Balance.Difference == 0 ? "Saldo komt overeen" : $"Verschil: {Money(saved.Balance.Difference!.Value)} (berekend min bank)")</p> }
-        else { <p class="notice warning">Geen automatische banksaldovergelijking: @BalanceReason(saved.Balance.Status)</p> }
-        <p class="muted">Alle geboekte transacties t/m de controledatum tellen mee, niet alleen deze import. Toekomstige transacties en effecten tellen niet mee. Uw beginsaldo is nooit aangepast. Een overeenkomend saldo bewijst geen volledige of foutloze import.</p>
-        <p>Ongeldige regels: @saved.Balance.InvalidRowCount · Toekomstige regels: @saved.Balance.FutureRowCount.</p>
-        <button class="primary" autofocus @onclick="OpenReview">Verder: categorieën controleren</button>
-        <a class="button" href="overboekingen">Transfers tussen eigen rekeningen controleren</a>
+        { <p>@L["StatementBalance"]: @Money(bank).</p><p class="notice @(saved.Balance.Difference == 0 ? "success" : "warning")">@(saved.Balance.Difference == 0 ? L["BalanceMatches"].Value : L["BalanceDifference", Money(saved.Balance.Difference!.Value)].Value)</p> }
+        else { <p class="notice warning">@L["NoBalanceComparison"]: @BalanceReason(saved.Balance.Status)</p> }
+        <p class="muted">@L["BalanceCheckNote"]</p>
+        <p>@L["InvalidFutureRows", saved.Balance.InvalidRowCount, saved.Balance.FutureRowCount]</p>
+        <button class="primary" autofocus @onclick="OpenReview">@L["ContinueCheckCategories"]</button>
+        <a class="button" href="overboekingen">@L["CheckOwnTransfers"]</a>
     </Modal>
 }
 @code {
-    private Guid? uploadId, accountId, profileId; private string fileName = "Geen bestand geselecteerd", worksheet = "";
+    private Guid? uploadId, accountId, profileId; private string? fileName; private string worksheet = "";
     private IReadOnlyList<string> sheets = [], headers = [];
     private bool windows1252, settingsOpen = true, commitConfirm;
     private DateOnly from, through; private ImportProfile? profile; private PreviewResponse? preview; private CommitImportResponse? result;
     private List<ImportDraftRow> rows = []; private int page, skippedCount;
     private readonly CancellationTokenSource cancellation = new();
     private static readonly (string Key, string Label)[] Columns = [
-        (nameof(ImportProfile.DateColumn), "Datum"), (nameof(ImportProfile.DescriptionColumn), "Omschrijving"), (nameof(ImportProfile.ExtraDescriptionColumn), "Extra omschrijving / mededeling"),
-        (nameof(ImportProfile.AmountColumn), "Getekend bedrag"), (nameof(ImportProfile.DebitColumn), "Af-bedrag (alternatief)"), (nameof(ImportProfile.CreditColumn), "Bij-bedrag (alternatief)"),
-        (nameof(ImportProfile.DirectionColumn), "Af/bij-indicator"), (nameof(ImportProfile.CurrencyColumn), "Munt / valuta"), (nameof(ImportProfile.AccountReferenceColumn), "Rekening opdrachtgever"),
-        (nameof(ImportProfile.BalanceColumn), "Saldo na verrichting"), (nameof(ImportProfile.FallbackDescriptionColumn), "Fallback: type verrichting")];
+        (nameof(ImportProfile.DateColumn), "Date"), (nameof(ImportProfile.DescriptionColumn), "Description"), (nameof(ImportProfile.ExtraDescriptionColumn), "ExtraDescription"),
+        (nameof(ImportProfile.AmountColumn), "SignedAmount"), (nameof(ImportProfile.DebitColumn), "DebitAlternative"), (nameof(ImportProfile.CreditColumn), "CreditAlternative"),
+        (nameof(ImportProfile.DirectionColumn), "DebitCreditIndicator"), (nameof(ImportProfile.CurrencyColumn), "Currency"), (nameof(ImportProfile.AccountReferenceColumn), "OriginatingAccount"),
+        (nameof(ImportProfile.BalanceColumn), "BalanceAfterEntry"), (nameof(ImportProfile.FallbackDescriptionColumn), "FallbackTransactionType")];
     protected override void OnInitialized()
     {
         base.OnInitialized(); from = new DateOnly(State.Year, State.Month, 1); through = from.AddMonths(1).AddDays(-1); accountId = State.Data.Accounts.FirstOrDefault()?.Id;
@@ -77,10 +77,10 @@
         await State.RunAsync(async () =>
         {
             var file = args.File; fileName = file.Name;
-            if (file.Size > 50L * 1024 * 1024) throw new InvalidDataException("Het bestand is groter dan 50 MB.");
+            if (file.Size > 50L * 1024 * 1024) throw new InvalidDataException(L["ImportFileTooLarge"]);
             await using var stream = file.OpenReadStream(50L * 1024 * 1024, cancellation.Token);
             var response = await Backend.UploadAsync(stream, file.Name, cancellation.Token); uploadId = response.UploadId; sheets = response.Worksheets;
-        }, "Bestand gereed voor voorbeeld. Er is niets opgeslagen.");
+        }, L["FileReadyForPreview"]);
     }
     private void UseProfile() { profile = State.Data.ImportProfiles.FirstOrDefault(p => p.Id == profileId) is { } p ? p with { } : null; Invalidate(); }
     private string ProfileValue(string key) => (string?)typeof(ImportProfile).GetProperty(key)!.GetValue(profile) ?? "";
@@ -93,7 +93,7 @@
         {
             preview = await Backend.PreviewAsync(new(uploadId.Value, accountId.Value, from, through, profile, worksheet.Length == 0 ? null : worksheet, windows1252), State.Revision);
             profile = preview.Profile with { }; headers = preview.Headers; rows = preview.Rows.Select(r => new ImportDraftRow(r)).ToList(); page = 0; settingsOpen = rows.Count == 0;
-        }, "Voorbeeld verwerkt. Controleer alle regels vóór opslaan.");
+        }, L["PreviewProcessed"]);
     }
     private async Task Adjust(ImportDraftRow row, ChangeEventArgs args)
     {
@@ -115,10 +115,10 @@
             result = await Backend.CommitAsync(new(preview.PreviewId, selections), preview.Revision);
             skippedCount = rows.Count - selections.Length; commitConfirm = false; preview = null; rows.Clear(); uploadId = null;
             State.OwnerId = null; State.ReviewBatchId = result.BatchId; await State.LoadAsync();
-        }, "Import opgeslagen. Controleer het saldo en de categorieën.");
+        }, L["ImportSaved"]);
     }
     private void OpenReview() { result = null; Navigation.NavigateTo("categoriseren"); }
-    private static string BalanceReason(StatementBalanceStatus status) => status switch { StatementBalanceStatus.Missing => "Banksaldo ontbreekt op de controledatum.", StatementBalanceStatus.Ambiguous => "Volgorde of banksaldi zijn niet eenduidig.", StatementBalanceStatus.InvalidRows => "Ongeldige regels of datums verhinderen de controle.", StatementBalanceStatus.NoActualRows => "Alleen toekomstige regels; het getoonde saldo is van vandaag.", _ => "Geen bankreferentie beschikbaar." };
+    private string BalanceReason(StatementBalanceStatus status) => L[status switch { StatementBalanceStatus.Missing => "MissingStatementBalance", StatementBalanceStatus.Ambiguous => "AmbiguousStatementBalance", StatementBalanceStatus.InvalidRows => "InvalidBalanceRows", StatementBalanceStatus.NoActualRows => "NoActualBalanceRows", _ => "NoBankReference" }];
     public override void Dispose() { cancellation.Cancel(); cancellation.Dispose(); base.Dispose(); }
     private sealed class ImportDraftRow(PreviewRow source)
     { public PreviewRow Source { get; set; } = source; public int Number => Source.RowNumber; public bool Include { get; set; } = source.Include; }

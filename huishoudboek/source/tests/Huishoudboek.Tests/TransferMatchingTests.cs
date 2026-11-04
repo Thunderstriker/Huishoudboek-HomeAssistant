@@ -415,6 +415,10 @@ public sealed class TransferMatchingTests
 
     private static async Task<string> RenderAsync<T>(HouseholdData data) where T : IComponent
     {
+        var previous = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
+        try
+        {
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddLocalization();
@@ -428,6 +432,8 @@ public sealed class TransferMatchingTests
             var component = await renderer.RenderComponentAsync<T>(ParameterView.Empty);
             return component.ToHtmlString();
         });
+        }
+        finally { System.Globalization.CultureInfo.CurrentUICulture = previous; }
     }
 
     private sealed class ReadOnlyBackend(HouseholdData data) : IWebAdministration

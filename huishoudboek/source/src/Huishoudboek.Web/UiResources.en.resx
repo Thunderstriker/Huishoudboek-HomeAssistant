@@ -54,44 +54,544 @@
   <data name="PagerSummary" xml:space="preserve"><value>{0} rows · page {1} of {2}</value></data>
   <data name="TransferFrom" xml:space="preserve"><value>From:</value></data>
   <data name="TransferTo" xml:space="preserve"><value>To:</value></data>
-  <data name="Actions" xml:space="preserve"><value>Actions</value></data>
-  <data name="AddAllocation" xml:space="preserve"><value>+ Split</value></data>
-  <data name="AddExpectedRepayment" xml:space="preserve"><value>+ Expected repayment</value></data>
-  <data name="AllDates" xml:space="preserve"><value>All dates</value></data>
-  <data name="AllocatedTransaction" xml:space="preserve"><value>Allocated / explicitly classified entry</value></data>
-  <data name="AllocationNote" xml:space="preserve"><value>Note (optional)</value></data>
-  <data name="AllocationRemainder" xml:space="preserve"><value>Remaining to allocate (must be € 0)</value></data>
-  <data name="AllocationTotalRequired" xml:space="preserve"><value>Add at least one allocation and distribute the full bank amount (remaining = € 0), or disable allocation.</value></data>
-  <data name="Amount" xml:space="preserve"><value>Amount</value></data>
+  <data name="Income" xml:space="preserve"><value>Income</value></data>
+  <data name="Outflow" xml:space="preserve"><value>Outgoings</value></data>
+  <data name="Savings" xml:space="preserve"><value>Set aside</value></data>
+  <data name="Available" xml:space="preserve"><value>Left over</value></data>
   <data name="Category" xml:space="preserve"><value>Category</value></data>
-  <data name="CategoryOnly" xml:space="preserve"><value>Category only (no purchase link)</value></data>
-  <data name="CloseExpectation" xml:space="preserve"><value>Close expectation / no further repayment expected</value></data>
-  <data name="Counterparty" xml:space="preserve"><value>Who will repay?</value></data>
-  <data name="Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Budget" xml:space="preserve"><value>Budget</value></data>
+  <data name="Spent" xml:space="preserve"><value>Spent</value></data>
+  <data name="Remaining" xml:space="preserve"><value>Remaining</value></data>
+  <data name="Usage" xml:space="preserve"><value>Usage</value></data>
+  <data name="NoLimit" xml:space="preserve"><value>No limit</value></data>
+  <data name="Account" xml:space="preserve"><value>Account</value></data>
+  <data name="Owners" xml:space="preserve"><value>Owners</value></data>
+  <data name="Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Date" xml:space="preserve"><value>Date</value></data>
+  <data name="Amount" xml:space="preserve"><value>Amount</value></data>
+  <data name="Description" xml:space="preserve"><value>Description</value></data>
   <data name="Edit" xml:space="preserve"><value>Edit</value></data>
-  <data name="ExpectationClosed" xml:space="preserve"><value>Closed</value></data>
-  <data name="ExpectedAmount" xml:space="preserve"><value>Expected amount</value></data>
-  <data name="ExpectedRepaymentDate" xml:space="preserve"><value>Expected payment date (optional)</value></data>
-  <data name="ExpectedRepayments" xml:space="preserve"><value>Reimbursements and shared purchases</value></data>
-  <data name="Expense" xml:space="preserve"><value>Expense</value></data>
-  <data name="ExpenseUntilPaidNote" xml:space="preserve"><value>An advanced amount remains an expense until repayment is received. Refunds and reimbursements reduce the spending category in the receipt month, not income. Expected amounts are not available cash.</value></data>
+  <data name="Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="Search" xml:space="preserve"><value>Search</value></data>
+  <data name="AllAccounts" xml:space="preserve"><value>All accounts</value></data>
+  <data name="AllDates" xml:space="preserve"><value>All dates</value></data>
+  <data name="Uncategorized" xml:space="preserve"><value>Uncategorized</value></data>
+  <data name="CurrentAccount" xml:space="preserve"><value>Current account</value></data>
+  <data name="SavingsAccount" xml:space="preserve"><value>Savings account</value></data>
+  <data name="InvestmentAccount" xml:space="preserve"><value>Investment account</value></data>
+  <data name="WelcomeHomeAssistant" xml:space="preserve"><value>Welcome to Huishoudboek for Home Assistant</value></data>
+  <data name="ExistingAdministrationNote" xml:space="preserve"><value>Use your existing records: import your Huishoudboek database (.db). All financial data will then be stored exclusively in this Home Assistant app. No Windows connection or new bank import is needed.</value></data>
+  <data name="ImportDatabase" xml:space="preserve"><value>Import existing database</value></data>
+  <data name="StartEmpty" xml:space="preserve"><value>Start with empty records</value></data>
+  <data name="DatabaseCopyNote" xml:space="preserve"><value>Use a database backup from the Windows app, or close both the Windows app and financial service before copying the .db file. After switching, do not edit both copies separately.</value></data>
+  <data name="ActualBalancesNote" xml:space="preserve"><value>Actual balances through {0}; future entries appear only in the forecast.</value></data>
+  <data name="ActuallyReceived" xml:space="preserve"><value>Actually received</value></data>
+  <data name="OutflowHousing" xml:space="preserve"><value>Spending &amp; housing costs</value></data>
+  <data name="IncludesPrincipal" xml:space="preserve"><value>Including mortgage principal repayments</value></data>
+  <data name="NetSavingsInvestments" xml:space="preserve"><value>Net savings &amp; investments</value></data>
+  <data name="AvailableThisMonth" xml:space="preserve"><value>Left over this month</value></data>
+  <data name="AvailableNote" xml:space="preserve"><value>Income − outgoings − set aside; not an account balance</value></data>
+  <data name="ImportedTransfersQuestion" xml:space="preserve"><value>Imported bank entries between your own accounts?</value></data>
+  <data name="CheckMatchTransfers" xml:space="preserve"><value>Check and match transfers</value></data>
+  <data name="TransfersReportingNote" xml:space="preserve"><value>to correctly distinguish income, spending and net savings. Balances remain unchanged.</value></data>
+  <data name="CategoryBudgets" xml:space="preserve"><value>Budget by category</value></data>
+  <data name="CategoryUsage" xml:space="preserve"><value>Usage for {0}</value></data>
+  <data name="HouseholdBudgetNote" xml:space="preserve"><value>Budget 0 = no limit set. Budgets apply to the household, even with an owner filter.</value></data>
+  <data name="MonthEndForecast" xml:space="preserve"><value>Month-end forecast · estimate</value></data>
+  <data name="ExpectedIncome" xml:space="preserve"><value>Expected income</value></data>
+  <data name="ExpectedOutflow" xml:space="preserve"><value>Expected outgoings</value></data>
+  <data name="ExpectedAvailable" xml:space="preserve"><value>Expected left over</value></data>
+  <data name="ProjectedCurrentBalance" xml:space="preserve"><value>Expected closing balance of current accounts</value></data>
+  <data name="CurrentBalance" xml:space="preserve"><value>Current account balances</value></data>
+  <data name="SavingsBuffer" xml:space="preserve"><value>Savings buffer</value></data>
+  <data name="NetWorthExcludingHome" xml:space="preserve"><value>Net worth excluding home</value></data>
+  <data name="NetWorthNote" xml:space="preserve"><value>Balances + securities − mortgage debt</value></data>
+  <data name="WelcomeAddAccounts" xml:space="preserve"><value>Welcome! Add owners and accounts first.</value></data>
+  <data name="SpentMoreThanReceived" xml:space="preserve"><value>Spent and set aside more than received</value></data>
+  <data name="CategoryOverBudget" xml:space="preserve"><value>Attention: category budget exceeded</value></data>
+  <data name="ExpectedShortfall" xml:space="preserve"><value>Attention: expected month-end shortfall</value></data>
+  <data name="SetBudgetsNote" xml:space="preserve"><value>Set budgets to identify overspending</value></data>
+  <data name="WithinBudgets" xml:space="preserve"><value>Within the category budgets set</value></data>
+  <data name="OverBudgetAmount" xml:space="preserve"><value>{0}: {1} over budget</value></data>
+  <data name="NoBudgetOverrun" xml:space="preserve"><value>No overspending in categories with a budget set.</value></data>
+  <data name="UnbudgetedAmount" xml:space="preserve"><value>{0} spent without a budget set.</value></data>
+  <data name="ShortfallAmount" xml:space="preserve"><value>Expected shortfall from monthly income: {0}.</value></data>
+  <data name="LargestPayments" xml:space="preserve"><value>Largest payments: {0}.</value></data>
+  <data name="ForecastCalculationNote" xml:space="preserve"><value>Estimate: recorded amounts + unmatched recurring payments + {0} additional variable spending based on the daily average.</value></data>
+  <data name="OverdueForecastNote" xml:space="preserve"><value>{0} overdue recurring payment(s) not yet matched; check for double counting.</value></data>
+  <data name="NoSavingsForecast" xml:space="preserve"><value>No automatic forecast of future savings transfers.</value></data>
+  <data name="LimitedHistoryNote" xml:space="preserve"><value>Limited data: the forecast has limited reliability.</value></data>
+  <data name="CashForecastNote" xml:space="preserve"><value>The expected closing balance of current accounts uses the daily cash forecast with up to 90 days of spending history; this is a different estimate from the monthly result.</value></data>
+  <data name="DistantForecastNote" xml:space="preserve"><value>Distant future month: the expected balance starts from today's balances, without intervening months.</value></data>
+  <data name="IncompleteImportsNote" xml:space="preserve"><value>Incomplete imports can distort the picture. Mortgage payments count in full as monthly outgoings; only recorded principal repayments reduce the debt.</value></data>
+  <data name="AccountsOwners" xml:space="preserve"><value>Accounts &amp; owners</value></data>
+  <data name="OpeningBalanceNote" xml:space="preserve"><value>Actual balances through {0}. The opening balance applies at the START of the opening date.</value></data>
+  <data name="CashBalance" xml:space="preserve"><value>Cash balance</value></data>
+  <data name="Securities" xml:space="preserve"><value>Securities</value></data>
+  <data name="Total" xml:space="preserve"><value>Total</value></data>
+  <data name="SavingsGoal" xml:space="preserve"><value>Savings goal</value></data>
+  <data name="Valuation" xml:space="preserve"><value>Valuation</value></data>
+  <data name="GoalProgress" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="NoValuation" xml:space="preserve"><value>No valuation</value></data>
+  <data name="EditName" xml:space="preserve"><value>Edit name</value></data>
+  <data name="SharedAccountsNote" xml:space="preserve"><value>Shared accounts are counted once. Ownership is not split into percentages.</value></data>
+  <data name="SecuritiesValuations" xml:space="preserve"><value>Securities valuations</value></data>
+  <data name="SecuritiesNote" xml:space="preserve"><value>Securities value only, excluding cash. The latest valuation on or before the balance date counts. No individual shares, live prices or crypto.</value></data>
+  <data name="SecuritiesValue" xml:space="preserve"><value>Securities value</value></data>
+  <data name="DeleteValuation" xml:space="preserve"><value>Delete valuation</value></data>
+  <data name="DeleteValuationQuestion" xml:space="preserve"><value>Delete this securities valuation? Cash and transactions remain unchanged.</value></data>
+  <data name="BudgetsCategories" xml:space="preserve"><value>Budgets &amp; categories</value></data>
+  <data name="Default" xml:space="preserve"><value>Default</value></data>
+  <data name="ThisMonth" xml:space="preserve"><value>This month</value></data>
+  <data name="Exceeded" xml:space="preserve"><value>Exceeded</value></data>
+  <data name="CategoryDefaultBudget" xml:space="preserve"><value>Category / default budget</value></data>
+  <data name="BudgetThisMonth" xml:space="preserve"><value>Budget this month</value></data>
+  <data name="DefaultBudgetNote" xml:space="preserve"><value>Default budgets apply monthly. A different monthly budget does not change other months. Budget 0 = no limit. Budgets apply to the whole household with an owner filter.</value></data>
+  <data name="AnnualActualNote" xml:space="preserve"><value>Only entries through today. Future months are not plotted. Left over = income minus outgoings and set aside; not an account balance.</value></data>
+  <data name="ViewMonthlyAmounts" xml:space="preserve"><value>View monthly amounts</value></data>
+  <data name="ViewAnnualBudgets" xml:space="preserve"><value>View categories and annual budgets</value></data>
+  <data name="AnnualBudgetNote" xml:space="preserve"><value>Annual budgets cover 12 months, not just the period through today. Budgets apply to the household, even with an owner filter. Budget 0 = no limit.</value></data>
+  <data name="AnnualBudget" xml:space="preserve"><value>Annual budget (12 months)</value></data>
+  <data name="ActuallySpent" xml:space="preserve"><value>Actually spent</value></data>
+  <data name="Transaction" xml:space="preserve"><value>Transaction</value></data>
+  <data name="ImportExcelCsv" xml:space="preserve"><value>Import Excel / CSV</value></data>
+  <data name="TransactionSearchHint" xml:space="preserve"><value>Description, category or account</value></data>
+  <data name="CategoryType" xml:space="preserve"><value>Category / type</value></data>
+  <data name="Principal" xml:space="preserve"><value>Principal repayment</value></data>
+  <data name="RecurringPayment" xml:space="preserve"><value>Recurring payment</value></data>
+  <data name="StatementBalance" xml:space="preserve"><value>Import account bank balance</value></data>
+  <data name="Planned" xml:space="preserve"><value>Planned</value></data>
+  <data name="NoTransactions" xml:space="preserve"><value>No transactions within these filters.</value></data>
+  <data name="PlannedTransactionsNote" xml:space="preserve"><value>Future transactions are planned: they count as actual only on their date. Manual and confirmed matched transfers are not income or spending. Matching two bank entries does not change balances.</value></data>
+  <data name="ManualTransfer" xml:space="preserve"><value>Manual transfer</value></data>
+  <data name="LinkedTransfer" xml:space="preserve"><value>Matched transfer</value></data>
   <data name="IncomeSingle" xml:space="preserve"><value>Income</value></data>
-  <data name="InvalidAllocationAmount" xml:space="preserve"><value>Enter valid amounts with at most two decimal places, without thousands separators.</value></data>
-  <data name="OriginalPurchase" xml:space="preserve"><value>Original purchase / expectation</value></data>
-  <data name="Outstanding" xml:space="preserve"><value>Outstanding</value></data>
-  <data name="PurchasePart" xml:space="preserve"><value>Part of purchase</value></data>
-  <data name="Received" xml:space="preserve"><value>Received</value></data>
-  <data name="RecoveryChartNote" xml:space="preserve"><value>The doughnut shows only categories with positive net spending. Negative category amounts from refunds/reimbursements are shown in the table and are not included in the doughnut total.</value></data>
-  <data name="Refund" xml:space="preserve"><value>Refund</value></data>
-  <data name="Reimbursement" xml:space="preserve"><value>Reimbursement</value></data>
-  <data name="RemoveAllocation" xml:space="preserve"><value>Remove split</value></data>
+  <data name="Expense" xml:space="preserve"><value>Expense</value></data>
+  <data name="DeleteTransaction" xml:space="preserve"><value>Delete transaction</value></data>
+  <data name="DeleteManualTransferQuestion" xml:space="preserve"><value>Delete this manual transfer? Its balance effects disappear from both accounts.</value></data>
+  <data name="DeleteTransactionQuestion" xml:space="preserve"><value>Delete this entry? Any transfer decision is removed; the other bank entry remains and counts again as ordinary income/spending.</value></data>
+  <data name="YourRecords" xml:space="preserve"><value>Your records</value></data>
+  <data name="ExportAllCsv" xml:space="preserve"><value>Export all transactions to CSV</value></data>
+  <data name="CreateBackup" xml:space="preserve"><value>Create backup</value></data>
+  <data name="BackupSecurityNote" xml:space="preserve"><value>A database backup contains all financial data. CSV includes all transactions regardless of filters and is not a complete restore copy. Potential spreadsheet formulas are neutralised. Databases and backups are not encrypted; store downloads securely. The website cannot open a Windows folder on the server.</value></data>
+  <data name="ImportRestoreDatabase" xml:space="preserve"><value>Import existing database / restore backup</value></data>
+  <data name="DatabasePreservesNote" xml:space="preserve"><value>Import your existing Huishoudboek database or database backup (.db). Transactions, custom descriptions, accounts, owners, budgets, rules, recurring payments, valuations, mortgage and import history are preserved. Your source file is not changed.</value></data>
+  <data name="HomeAssistantStorageNote" xml:space="preserve"><value>After importing, your records run entirely in persistent Home Assistant storage. No Windows computer with the financial app or shared network folder is needed.</value></data>
+  <data name="DatabaseRestoreWarning" xml:space="preserve"><value>Prefer a backup from the app. Otherwise close both the Windows app and financial service before copying the database: copying only an active .db may miss recent changes. Import replaces all records for ALL users. File format, supported version, SQLite integrity and financial references are checked first; then a safety copy of the current records is made. The file is uploaded only after explicit confirmation. Maximum 64 MB.</value></data>
+  <data name="DatabaseFile" xml:space="preserve"><value>Huishoudboek database or backup (.db)</value></data>
+  <data name="ImportHistory" xml:space="preserve"><value>Import history</value></data>
+  <data name="File" xml:space="preserve"><value>File</value></data>
+  <data name="Rows" xml:space="preserve"><value>Rows</value></data>
+  <data name="Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Undone" xml:space="preserve"><value>Undone</value></data>
+  <data name="Processed" xml:space="preserve"><value>Processed</value></data>
+  <data name="UndoEntireImport" xml:space="preserve"><value>Undo entire import</value></data>
+  <data name="AutomaticCategorization" xml:space="preserve"><value>Automatic categorization</value></data>
+  <data name="Rule" xml:space="preserve"><value>Rule</value></data>
+  <data name="ApplyExistingTransactions" xml:space="preserve"><value>Apply to existing transactions</value></data>
+  <data name="RulesOrderNote" xml:space="preserve"><value>Rules run in the order added; the first matching rule wins. Existing categories are preserved. Transfers are excluded from text rules. Recognition can also match recurring payments.</value></data>
+  <data name="Order" xml:space="preserve"><value>Order</value></data>
+  <data name="DescriptionContains" xml:space="preserve"><value>Description contains</value></data>
+  <data name="RestoreDatabaseQuestion" xml:space="preserve"><value>This database replaces all shared records. The source file remains unchanged. A safety copy of the current data is saved first. Unsaved changes and import previews become invalid. Continue?</value></data>
+  <data name="UndoImport" xml:space="preserve"><value>Undo import</value></data>
+  <data name="UndoImportQuestion" xml:space="preserve"><value>Undo this entire import? Transactions from this import, including those edited later, are removed. Other transactions and settings remain.</value></data>
+  <data name="DeleteRule" xml:space="preserve"><value>Delete categorization rule</value></data>
+  <data name="DeleteRuleQuestion" xml:space="preserve"><value>Delete this rule? Existing category assignments are preserved.</value></data>
+  <data name="ApplyRules" xml:space="preserve"><value>Apply rules</value></data>
+  <data name="ApplyRulesQuestion" xml:space="preserve"><value>Apply rules to all existing uncategorized, non-internal payments? Existing categories are preserved; recognised recurring payments may be matched.</value></data>
+  <data name="BackupTooLarge" xml:space="preserve"><value>The backup exceeds 64 MB.</value></data>
+  <data name="DatabaseImported" xml:space="preserve"><value>Database imported. A safety copy of the previous records was saved. Your source file was not changed.</value></data>
+  <data name="WhereMoneyGoes" xml:space="preserve"><value>Where does the money go?</value></data>
+  <data name="NoMonthlySpending" xml:space="preserve"><value>No spending this month yet.</value></data>
+  <data name="MonthlySpendingChart" xml:space="preserve"><value>Spending by category; amounts and percentages are listed alongside.</value></data>
+  <data name="LargestCategoriesNote" xml:space="preserve"><value>Largest categories; smaller expenses grouped together. Budgets are in the table below.</value></data>
+  <data name="ActualExpected" xml:space="preserve"><value>Actual and expected</value></data>
+  <data name="NoMonthlyAmounts" xml:space="preserve"><value>No amounts to show this month yet.</value></data>
+  <data name="MonthlyForecastChart" xml:space="preserve"><value>Actual income, outgoings and left over compared with the monthly forecast. Exact amounts are in the summaries on this page.</value></data>
+  <data name="ForecastChartNote" xml:space="preserve"><value>Forecast = month-end estimate. Left over = income minus outgoings and net savings; not an account balance.</value></data>
+  <data name="OtherCategories" xml:space="preserve"><value>Other categories</value></data>
+  <data name="Actual" xml:space="preserve"><value>Actual</value></data>
+  <data name="Forecast" xml:space="preserve"><value>Forecast</value></data>
+  <data name="IncomeSpending" xml:space="preserve"><value>Income and spending</value></data>
+  <data name="MonthlyTrendQuestion" xml:space="preserve"><value>How are your monthly outgoings changing?</value></data>
+  <data name="AverageMonthlyOutflow" xml:space="preserve"><value>Average outgoings / month</value></data>
+  <data name="NoAnnualEntries" xml:space="preserve"><value>No entries this year yet.</value></data>
+  <data name="AnnualTrendChart" xml:space="preserve"><value>Income as a line and monthly outgoings as bars. Exact amounts are in the monthly table below.</value></data>
+  <data name="AnnualChartActualNote" xml:space="preserve"><value>Actual entries only; the current month is incomplete and included in the average.</value></data>
+  <data name="SpendingBreakdown" xml:space="preserve"><value>Your spending breakdown</value></data>
+  <data name="NoAnnualSpending" xml:space="preserve"><value>No spending this year yet.</value></data>
+  <data name="AnnualSpendingChart" xml:space="preserve"><value>Annual spending breakdown; categories, amounts and percentages are listed below.</value></data>
+  <data name="TotalSpent" xml:space="preserve"><value>Total spent</value></data>
+  <data name="SavingsRhythm" xml:space="preserve"><value>Your savings rhythm</value></data>
+  <data name="NetContributions" xml:space="preserve"><value>Net contributions to savings and investments</value></data>
+  <data name="SetAsideThisYear" xml:space="preserve"><value>Set aside this year</value></data>
+  <data name="NoAnnualSavings" xml:space="preserve"><value>No savings or investment contributions this year yet.</value></data>
+  <data name="AnnualSavingsChart" xml:space="preserve"><value>Net savings per month and cumulative since January. This is not a savings account balance. Exact monthly amounts are in the table below.</value></data>
+  <data name="CumulativeSavingsNote" xml:space="preserve"><value>Line = contributions accumulated since January, not an account balance or return. Negative contributions are net withdrawals.</value></data>
+  <data name="CumulativeSavings" xml:space="preserve"><value>Set aside since January</value></data>
+  <data name="MonthlySavings" xml:space="preserve"><value>Net set aside per month</value></data>
+  <data name="SafeSpendingTitle" xml:space="preserve"><value>How much can I safely spend?</value></data>
+  <data name="PlanIncomeBills" xml:space="preserve"><value>Plan income &amp; recurring bills</value></data>
+  <data name="SafeSpendingNote" xml:space="preserve"><value>From today, {0}, regardless of the month filter. An estimate, not a guarantee. Current accounts only; savings are not transferred automatically.</value></data>
+  <data name="AddCurrentAccountNote" xml:space="preserve"><value>Add a current account with an opening balance to calculate spending headroom.</value></data>
+  <data name="EstimatedSpendable" xml:space="preserve"><value>Estimated spendable · reserved per account</value></data>
+  <data name="SpendableSumNote" xml:space="preserve"><value>Sum of separate spending headroom until the next income; not freely interchangeable.</value></data>
+  <data name="BillsNextDays" xml:space="preserve"><value>Known payments in the next {0} days</value></data>
+  <data name="BillsEstimateNote" xml:space="preserve"><value>Including overdue unmatched bills; excluding the additional variable estimate.</value></data>
+  <data name="BufferRiskWarning" xml:space="preserve"><value>The expected balance falls below the buffer on at least one account. A positive total balance or monthly result does not hide this shortfall; money in another account does not automatically cover the payment.</value></data>
+  <data name="StaleImportsWarning" xml:space="preserve"><value>Imports are outdated or missing on at least one account. Import recent bank data before relying on spending headroom.</value></data>
+  <data name="BalanceToday" xml:space="preserve"><value>Balance today</value></data>
+  <data name="NextIncome" xml:space="preserve"><value>Next income</value></data>
+  <data name="Buffer" xml:space="preserve"><value>Buffer</value></data>
+  <data name="SpendableUntilIncome" xml:space="preserve"><value>Estimated spendable until income</value></data>
+  <data name="LowestExpectedBalance" xml:space="preserve"><value>Lowest expected balance</value></data>
+  <data name="LowestBalanceDate" xml:space="preserve"><value>Lowest balance date</value></data>
+  <data name="CheckImport" xml:space="preserve"><value>Check import</value></data>
+  <data name="UnknownThirtyDays" xml:space="preserve"><value>Unknown (30 days)</value></data>
+  <data name="PurchaseAccount" xml:space="preserve"><value>Account for your purchase</value></data>
+  <data name="PurchaseAmountQuestion" xml:space="preserve"><value>Can I spend this amount today (€)?</value></data>
+  <data name="PurchaseDoesNotFit" xml:space="preserve"><value>{0} does not fit within the forecast and buffer for {1}.</value></data>
+  <data name="PurchaseUncertain" xml:space="preserve"><value>{0} appears to fit mathematically, but there is insufficient certainty.</value></data>
+  <data name="PurchaseFits" xml:space="preserve"><value>{0} fits the current estimate for {1}.</value></data>
+  <data name="PurchaseBalanceNote" xml:space="preserve"><value>After this purchase, the lowest estimated balance is {0} on {1}, with a buffer of {2}.</value></data>
+  <data name="PurchaseHorizonNote" xml:space="preserve"><value>This checks every day through {0}, not only the month end.</value></data>
+  <data name="PositiveAmountHint" xml:space="preserve"><value>Enter a positive amount with at most two decimal places and ‘{0}’ as the decimal separator, without thousands separators.</value></data>
+  <data name="SetBuffer" xml:space="preserve"><value>Set buffer</value></data>
+  <data name="AccountImportNote" xml:space="preserve"><value>{0}: bank entries through {1}, last import {2}. Expected additional daily spending: {3}.</value></data>
+  <data name="Unknown" xml:space="preserve"><value>unknown</value></data>
+  <data name="None" xml:space="preserve"><value>none</value></data>
+  <data name="AccountAttention" xml:space="preserve"><value>Points to check for {0}</value></data>
+  <data name="UpcomingPayments" xml:space="preserve"><value>Upcoming payments</value></data>
+  <data name="Days" xml:space="preserve"><value>{0} days</value></data>
+  <data name="ExpectedDate" xml:space="preserve"><value>Expected date</value></data>
+  <data name="Payment" xml:space="preserve"><value>Payment</value></data>
+  <data name="Source" xml:space="preserve"><value>Source</value></data>
+  <data name="OverdueUnmatched" xml:space="preserve"><value>Overdue since {0}; not yet matched</value></data>
+  <data name="RecordedEntry" xml:space="preserve"><value>Recorded entry</value></data>
+  <data name="RecurringEstimate" xml:space="preserve"><value>Recurring payment estimate</value></data>
+  <data name="DailyBalanceForecast" xml:space="preserve"><value>Daily balance forecast</value></data>
+  <data name="ThroughDate" xml:space="preserve"><value>through {0}</value></data>
+  <data name="DailyBalanceNote" xml:space="preserve"><value>Amounts before any purchase. The lowest balance conservatively assumes debits before receipts on the same day.</value></data>
+  <data name="OpeningBalance" xml:space="preserve"><value>Opening balance</value></data>
+  <data name="Receipts" xml:space="preserve"><value>Receipts</value></data>
+  <data name="KnownPayments" xml:space="preserve"><value>Known payments</value></data>
+  <data name="ExtraDaily" xml:space="preserve"><value>Extra daily</value></data>
+  <data name="LowestBalance" xml:space="preserve"><value>Lowest balance</value></data>
+  <data name="ClosingBalance" xml:space="preserve"><value>Closing balance</value></data>
+  <data name="EstimateAssumptions" xml:space="preserve"><value>Assumptions and limits of this estimate</value></data>
+  <data name="AssumptionImports" xml:space="preserve"><value>Starts from recorded balances through today. Bank imports become outdated after {0} days; a recent import of old entries is not an up-to-date balance either.</value></data>
+  <data name="AssumptionRecurring" xml:space="preserve"><value>Recurring payments follow your dates and frequency. One matched bank entry replaces one planned payment with the actual amount and bank date. Other payments retain your estimate; amounts are not adjusted automatically.</value></data>
+  <data name="AssumptionOverdue" xml:space="preserve"><value>The latest overdue unmatched expense per recurring payment is reserved tomorrow. Older missing payments are not added up. Overdue income is not assumed received. Check matches and schedules.</value></data>
+  <data name="AssumptionVariable" xml:space="preserve"><value>Additional daily spending uses the average of up to {0} days through the last imported bank date (without an import: today). Matched recurring bills, mortgages and confirmed transfers are excluded. Planned variable payments fill the daily average rather than being added on top.</value></data>
+  <data name="AssumptionSpendable" xml:space="preserve"><value>Spending headroom is the lowest balance through the next income day, minus your buffer, with a minimum of 0. The purchase check covers at least 30 days, or longer if income arrives later (up to {0} days). Costs conservatively precede income even on income day.</value></data>
+  <data name="AssumptionShared" xml:space="preserve"><value>Shared accounts are counted once. No automatic movement of savings, investments or money from other accounts; only explicitly recorded future transfers count. Unexpected expenses, holidays, interest and changed amounts are excluded unless you plan them.</value></data>
+  <data name="MortgageTitle" xml:space="preserve"><value>Mortgage · annuity, fixed rate</value></data>
+  <data name="EditMortgage" xml:space="preserve"><value>Set up / edit mortgage</value></data>
+  <data name="RecordPayment" xml:space="preserve"><value>Record payment</value></data>
+  <data name="DebtToday" xml:space="preserve"><value>Actual debt today</value></data>
+  <data name="MonthlyAnnuity" xml:space="preserve"><value>Monthly annuity</value></data>
+  <data name="FixedAnnualRate" xml:space="preserve"><value>Fixed annual interest rate</value></data>
+  <data name="EstimatedRemainingInterest" xml:space="preserve"><value>Estimated remaining interest</value></data>
+  <data name="MortgageEstimateNote" xml:space="preserve"><value>Debt on {0}: {1}. Actual debt is reduced only by recorded principal repayments. The schedule is an ESTIMATE: monthly payments at month end starting next month, without bank fees, daily interest, taxes or penalties.</value></data>
+  <data name="RateFixedUntil" xml:space="preserve"><value>Rate fixed through {0}; the same rate is assumed afterwards.</value></data>
+  <data name="RateEndUnknown" xml:space="preserve"><value>End of fixed-rate period unknown; constant rate assumed.</value></data>
+  <data name="RemainingDebtWarning" xml:space="preserve"><value>Attention: residual debt remains.</value></data>
+  <data name="MortgageCashNote" xml:space="preserve"><value>Home value is not included. Also record the mortgage as a recurring payment for the cash forecast.</value></data>
+  <data name="RepaymentSchedule" xml:space="preserve"><value>Expected repayment schedule</value></data>
+  <data name="Interest" xml:space="preserve"><value>Interest</value></data>
+  <data name="RemainingDebt" xml:space="preserve"><value>Remaining debt</value></data>
+  <data name="AfterFixedRateAssumption" xml:space="preserve"><value>Assumption after fixed-rate period</value></data>
+  <data name="UnchangedRate" xml:space="preserve"><value>Yes: unchanged rate</value></data>
+  <data name="NoMortgageNote" xml:space="preserve"><value>No mortgage set up yet. Add owners first and copy the debt and actual repayments from your lender.</value></data>
   <data name="TransactionHandling" xml:space="preserve"><value>Split / refund / reimbursement</value></data>
   <data name="TransactionHandlingNote" xml:space="preserve"><value>The original bank entry, description, date, amount and balance remain intact. Only categories and reporting change. Use positive amounts for receipts and negative amounts for expenses.</value></data>
-  <data name="TransactionHandlingSaved" xml:space="preserve"><value>Splits and reimbursements saved; bank entries unchanged.</value></data>
-  <data name="Treatment" xml:space="preserve"><value>Treatment</value></data>
-  <data name="Uncategorized" xml:space="preserve"><value>Uncategorized</value></data>
-  <data name="UnlinkHandlingNote" xml:space="preserve"><value>Disabling restores ordinary income/expenses. Remove or adjust dependent receipt/expectation links first; they are never silently removed. Unlinking with ‘Category only’ keeps the reimbursement as an expense reduction; choose ‘Income’ to undo that treatment.</value></data>
   <data name="UseAllocations" xml:space="preserve"><value>Allocate bank amount / explicitly classify receipt</value></data>
+  <data name="Treatment" xml:space="preserve"><value>Treatment</value></data>
+  <data name="Refund" xml:space="preserve"><value>Refund</value></data>
+  <data name="Reimbursement" xml:space="preserve"><value>Reimbursement</value></data>
+  <data name="OriginalPurchase" xml:space="preserve"><value>Original purchase / expectation</value></data>
+  <data name="CategoryOnly" xml:space="preserve"><value>Category only (no purchase link)</value></data>
   <data name="UsesOriginalCategory" xml:space="preserve"><value>Uses the category of the original purchase or split.</value></data>
+  <data name="AllocationNote" xml:space="preserve"><value>Note (optional)</value></data>
+  <data name="RemoveAllocation" xml:space="preserve"><value>Remove split</value></data>
+  <data name="AllocationRemainder" xml:space="preserve"><value>Remaining to allocate (must be € 0)</value></data>
+  <data name="AddAllocation" xml:space="preserve"><value>+ Split</value></data>
+  <data name="ExpectedRepayments" xml:space="preserve"><value>Reimbursements and shared purchases</value></data>
+  <data name="ExpenseUntilPaidNote" xml:space="preserve"><value>An advanced amount remains an expense until repayment is received. Refunds and reimbursements reduce the spending category in the receipt month, not income. Expected amounts are not available cash.</value></data>
+  <data name="Counterparty" xml:space="preserve"><value>Who will repay?</value></data>
+  <data name="ExpectedAmount" xml:space="preserve"><value>Expected amount</value></data>
+  <data name="PurchasePart" xml:space="preserve"><value>Part of purchase</value></data>
   <data name="WholePurchase" xml:space="preserve"><value>Whole purchase</value></data>
+  <data name="ExpectedRepaymentDate" xml:space="preserve"><value>Expected payment date (optional)</value></data>
+  <data name="CloseExpectation" xml:space="preserve"><value>Close expectation / no further repayment expected</value></data>
+  <data name="Received" xml:space="preserve"><value>Received</value></data>
+  <data name="Outstanding" xml:space="preserve"><value>Outstanding</value></data>
+  <data name="AddExpectedRepayment" xml:space="preserve"><value>+ Expected repayment</value></data>
+  <data name="UnlinkHandlingNote" xml:space="preserve"><value>Disabling restores ordinary income/expenses. Remove or adjust dependent receipt/expectation links first; they are never silently removed. Unlinking with ‘Category only’ keeps the reimbursement as an expense reduction; choose ‘Income’ to undo that treatment.</value></data>
+  <data name="InvalidAllocationAmount" xml:space="preserve"><value>Enter valid amounts with at most two decimal places, without thousands separators.</value></data>
+  <data name="TransactionHandlingSaved" xml:space="preserve"><value>Splits and reimbursements saved; bank entries unchanged.</value></data>
+  <data name="ExpectationClosed" xml:space="preserve"><value>Closed</value></data>
+  <data name="AllocatedTransaction" xml:space="preserve"><value>Allocated / explicitly classified entry</value></data>
+  <data name="RecoveryChartNote" xml:space="preserve"><value>The doughnut shows only categories with positive net spending. Negative category amounts from refunds/reimbursements are shown in the table and are not included in the doughnut total.</value></data>
+  <data name="ChangesSaved" xml:space="preserve"><value>Changes saved.</value></data>
+  <data name="InvalidAccountCategory" xml:space="preserve"><value>Choose a valid account or category.</value></data>
+  <data name="InvalidAmount" xml:space="preserve"><value>Enter a valid amount with ‘{0}’ as the decimal separator, without thousands separators.</value></data>
+  <data name="InvalidDate" xml:space="preserve"><value>Enter a valid date.</value></data>
+  <data name="AccountEditorNote" xml:space="preserve"><value>Opening balance = balance at the START of the opening date, before payments that day. A change that would invalidate existing entries is refused.</value></data>
+  <data name="AccountType" xml:space="preserve"><value>Account type</value></data>
+  <data name="BankReference" xml:space="preserve"><value>Account number / IBAN</value></data>
+  <data name="OpeningDate" xml:space="preserve"><value>Opening date</value></data>
+  <data name="OpeningBalanceEuro" xml:space="preserve"><value>Opening balance (€)</value></data>
+  <data name="SavingsGoalEuro" xml:space="preserve"><value>Savings goal (€), optional</value></data>
+  <data name="AccountBufferEuro" xml:space="preserve"><value>Minimum cash buffer for this account (€)</value></data>
+  <data name="CashBufferTitle" xml:space="preserve"><value>Cash buffer · {0}</value></data>
+  <data name="CashBufferEditorNote" xml:space="preserve"><value>This reserve is not counted as spending headroom. Money in other accounts does not automatically cover this buffer or payments. 0 means no additional reserve.</value></data>
+  <data name="BufferEuro" xml:space="preserve"><value>Minimum cash buffer (€)</value></data>
+  <data name="RenameCategory" xml:space="preserve"><value>Rename category</value></data>
+  <data name="RenameCategoryNote" xml:space="preserve"><value>Only the name changes, throughout your records. Matches and budgets are preserved.</value></data>
+  <data name="CategoryEditorNote" xml:space="preserve"><value>The default budget applies monthly. 0 means no limit set.</value></data>
+  <data name="DefaultMonthlyBudgetEuro" xml:space="preserve"><value>Default monthly budget (€)</value></data>
+  <data name="MonthlyBudgetTitle" xml:space="preserve"><value>Monthly budget · {0} · {1}</value></data>
+  <data name="MonthlyBudgetEditorNote" xml:space="preserve"><value>Only this month is changed. Other months and the default budget stay the same. 0 = no limit.</value></data>
+  <data name="BudgetEuro" xml:space="preserve"><value>Budget (€)</value></data>
+  <data name="TransactionEditorNote" xml:space="preserve"><value>Income is positive; expenses, mortgages and transfers are negative. A transfer is saved once and updates both accounts. For mortgages: enter only actual principal repayments; unknown = 0. The full payment is a cash outgoing.</value></data>
+  <data name="TransactionTransferNote" xml:space="preserve"><value>This entry has a transfer decision. Changing the amount, date, account, type or recurring match removes that decision. Use Match transfers for two imported entries; converting to a manual transfer may update the other account twice.</value></data>
+  <data name="TransactionAccount" xml:space="preserve"><value>Account (for transfers: FROM)</value></data>
+  <data name="OriginalDescription" xml:space="preserve"><value>Original description</value></data>
+  <data name="OwnDescriptionOptional" xml:space="preserve"><value>Custom description (optional)</value></data>
+  <data name="AmountEuro" xml:space="preserve"><value>Amount (€)</value></data>
+  <data name="IncomeExpense" xml:space="preserve"><value>Income / expense</value></data>
+  <data name="InternalTransfer" xml:space="preserve"><value>Internal transfer</value></data>
+  <data name="MortgagePrincipal" xml:space="preserve"><value>Mortgage / extra principal repayment</value></data>
+  <data name="AutomaticTransferCategory" xml:space="preserve"><value>Automatic for transfers: Savings / Investments (otherwise uncategorized)</value></data>
+  <data name="TransactionCategory" xml:space="preserve"><value>Category (transfer: label only)</value></data>
+  <data name="CounterAccount" xml:space="preserve"><value>TO account (transfers only)</value></data>
+  <data name="NotApplicable" xml:space="preserve"><value>Not applicable</value></data>
+  <data name="ActualPrincipalEuro" xml:space="preserve"><value>Actual principal repayment (€), mortgages only</value></data>
+  <data name="RecurringLink" xml:space="preserve"><value>Recurring payment match (avoids duplicate forecasts)</value></data>
+  <data name="NoLink" xml:space="preserve"><value>No match</value></data>
+  <data name="OptionalRecurringDueDate" xml:space="preserve"><value>Planned recurring payment date (optional; empty = bank month)</value></data>
+  <data name="TransactionRecurringNote" xml:space="preserve"><value>Prefer matching via Recurring payments, especially when the bank date falls in another month. A different actual amount does not change estimates for future payments.</value></data>
+  <data name="TransactionStatementNote" xml:space="preserve"><value>Bank balance of import account {0}: {1}. Does not replace your opening balance.</value></data>
+  <data name="RecurringEditorNote" xml:space="preserve"><value>A schedule does not change your actual balance. Quarterly/yearly schedules start in the start month; one-off payments use the start date. Days 29–31 are shortened in shorter months. A match replaces one estimate with the actual bank amount. Wider recognition margins produce suggestions for review; automatic matching remains limited to ± 1 cent and 5 days. Changing a matched schedule may require unmatching first.</value></data>
+  <data name="RecurringAmountEuro" xml:space="preserve"><value>Amount per payment (€), negative for expenses</value></data>
+  <data name="RecurringDay" xml:space="preserve"><value>Day (1–31; not for one-off payments)</value></data>
+  <data name="Frequency" xml:space="preserve"><value>Frequency</value></data>
+  <data name="StartDate" xml:space="preserve"><value>Start date</value></data>
+  <data name="OptionalEndDate" xml:space="preserve"><value>End date (optional)</value></data>
+  <data name="OptionalMatchText" xml:space="preserve"><value>Recognition text (optional)</value></data>
+  <data name="IsMortgagePayment" xml:space="preserve"><value>This is the mortgage payment</value></data>
+  <data name="MatchToleranceEuro" xml:space="preserve"><value>Recognition: maximum amount difference (€)</value></data>
+  <data name="MatchWindowDays" xml:space="preserve"><value>Recognition: maximum date difference (0–31 days)</value></data>
+  <data name="Monthly" xml:space="preserve"><value>Monthly</value></data>
+  <data name="Quarterly" xml:space="preserve"><value>Quarterly</value></data>
+  <data name="Yearly" xml:space="preserve"><value>Yearly</value></data>
+  <data name="Once" xml:space="preserve"><value>Once</value></data>
+  <data name="CategorizationRule" xml:space="preserve"><value>Categorization rule</value></data>
+  <data name="RuleEditorNote" xml:space="preserve"><value>The first matching rule wins. Existing categories are not overwritten; transfers are excluded from text rules.</value></data>
+  <data name="SecuritiesValuation" xml:space="preserve"><value>Securities valuation</value></data>
+  <data name="ValuationEditorNote" xml:space="preserve"><value>Securities value only, EXCLUDING cash. Value changes are not income. Individual shares, transactions, prices and crypto are not supported.</value></data>
+  <data name="ValuationDate" xml:space="preserve"><value>Valuation date</value></data>
+  <data name="SecuritiesMarketValueEuro" xml:space="preserve"><value>Securities market value (€)</value></data>
+  <data name="AnnuityMortgage" xml:space="preserve"><value>Annuity mortgage</value></data>
+  <data name="MortgageEditorNote" xml:space="preserve"><value>Debt on the reference date is before payments that day. Only recorded principal repayments on or after the reference date reduce actual debt. Copy amounts from your lender; avoid double counting with a new reference date.</value></data>
+  <data name="NameLender" xml:space="preserve"><value>Name / lender</value></data>
+  <data name="ReferenceDebtEuro" xml:space="preserve"><value>Outstanding debt on reference date (€)</value></data>
+  <data name="ReferenceDate" xml:space="preserve"><value>Reference date</value></data>
+  <data name="FixedAnnualRatePercent" xml:space="preserve"><value>Fixed annual interest rate (%)</value></data>
+  <data name="MonthlyAnnuityEuro" xml:space="preserve"><value>Monthly annuity (€)</value></data>
+  <data name="RemainingTermMonths" xml:space="preserve"><value>Remaining term on reference date (months)</value></data>
+  <data name="OptionalFixedRateUntil" xml:space="preserve"><value>Rate fixed through (optional)</value></data>
+  <data name="RecurringIncomeBills" xml:space="preserve"><value>Recurring income &amp; bills</value></data>
+  <data name="RecurringPlanningNote" xml:space="preserve"><value>Plan salary, mortgage, insurance, water and energy: monthly, quarterly, yearly or once. Positive = income, negative = expense. Schedules do not change your actual balance.</value></data>
+  <data name="MatchBankEntries" xml:space="preserve"><value>Match actual bank entries</value></data>
+  <data name="AvoidDuplicateEstimates" xml:space="preserve"><value>to avoid duplicate estimates, even with a different amount or bank date.</value></data>
+  <data name="AmountPerPayment" xml:space="preserve"><value>Amount per payment</value></data>
+  <data name="FrequencyDay" xml:space="preserve"><value>Frequency / day</value></data>
+  <data name="Period" xml:space="preserve"><value>Period</value></data>
+  <data name="Recognition" xml:space="preserve"><value>Recognition</value></data>
+  <data name="PaymentDay" xml:space="preserve"><value>· day {0}</value></data>
+  <data name="Ongoing" xml:space="preserve"><value>ongoing</value></data>
+  <data name="MatchScheduledPayment" xml:space="preserve"><value>Match bank entries to a planned payment</value></data>
+  <data name="RecurringMatchNote" xml:space="preserve"><value>A match replaces one estimate with the actual bank amount and date. The next salary or bill remains at your configured amount. Amounts, bank dates, descriptions and balances are not changed. One entry per planned payment; leave extra or partial payments unmatched.</value></data>
+  <data name="PossibleMatches" xml:space="preserve"><value>Possible matches</value></data>
+  <data name="EstimateDifference" xml:space="preserve"><value>Difference from estimate: {0}.</value></data>
+  <data name="MultipleRecurringCandidates" xml:space="preserve"><value>Multiple candidates; check which entry belongs to this planned payment.</value></data>
+  <data name="ConfirmMatch" xml:space="preserve"><value>Confirm match</value></data>
+  <data name="NoRecurringSuggestions" xml:space="preserve"><value>No suggestions. Configure recognition text and margins, or match manually below.</value></data>
+  <data name="ManualRecurringMatch" xml:space="preserve"><value>Match manually · even without recognition or outside the margin</value></data>
+  <data name="BankEntry" xml:space="preserve"><value>Bank entry</value></data>
+  <data name="ChooseBankEntry" xml:space="preserve"><value>Choose bank entry</value></data>
+  <data name="ChooseRecurringPayment" xml:space="preserve"><value>Choose recurring payment</value></data>
+  <data name="PlannedPaymentDate" xml:space="preserve"><value>Planned payment date</value></data>
+  <data name="ManualRecurringNote" xml:space="preserve"><value>Up to 100 entries; refine using Search. Choose the planned payment date, not necessarily the bank date. The entry and recurring payment must have the same account and payment direction. Selecting does not save anything.</value></data>
+  <data name="ViewUnmatchBankEntries" xml:space="preserve"><value>View / unmatch matched bank entries</value></data>
+  <data name="PlannedPayment" xml:space="preserve"><value>Planned payment</value></data>
+  <data name="Unmatch" xml:space="preserve"><value>Unmatch</value></data>
+  <data name="VisibleMatchesNote" xml:space="preserve"><value>{0} matches; up to 100 visible. Refine Search for older matches.</value></data>
+  <data name="LinkPlannedPayment" xml:space="preserve"><value>Match planned payment</value></data>
+  <data name="LinkPlannedPaymentQuestion" xml:space="preserve"><value>{0}: planned {1}, estimated {2}.
+{3}
+
+This entry replaces only this planned payment. Check that it is the same payment; the bank entry and subsequent estimates remain unchanged.</value></data>
+  <data name="RemoveRecurringMatch" xml:space="preserve"><value>Remove recurring payment match</value></data>
+  <data name="RemoveRecurringMatchQuestion" xml:space="preserve"><value>The bank entry remains unchanged. The planned payment is estimated separately again; check for double counting.</value></data>
+  <data name="DeleteRecurring" xml:space="preserve"><value>Delete recurring payment</value></data>
+  <data name="DeleteRecurringQuestion" xml:space="preserve"><value>Actual transactions remain; their match to this recurring payment is removed.</value></data>
+  <data name="TransferMatchNote" xml:space="preserve"><value>Match two existing bank entries after checking them. Amounts, bank dates, descriptions and account balances remain unchanged. Confirmed pairs do not count as income or spending. No receipt or extra entry is ever created.</value></data>
+  <data name="PossibleTransfers" xml:space="preserve"><value>Possible transfers</value></data>
+  <data name="ConfirmedMatches" xml:space="preserve"><value>Confirmed matches</value></data>
+  <data name="NotTransfer" xml:space="preserve"><value>Not a transfer</value></data>
+  <data name="SearchDescription" xml:space="preserve"><value>Search description</value></data>
+  <data name="TransferOwnerFilterNote" xml:space="preserve"><value>The owner filter shows pairs with at least one account in scope; the other side remains visible for checking. A suggestion is not proof. Unconfirmed entries remain ordinary income/spending.</value></data>
+  <data name="TransferSuggestionsNote" xml:space="preserve"><value>Suggestions: equal opposite amounts, different accounts of your own, up to {0} days apart. Actual entries only, without a recurring payment match.</value></data>
+  <data name="First500Suggestions" xml:space="preserve"><value>The first 500 suggestions are shown; refine the filters for more.</value></data>
+  <data name="PossiblePairsCount" xml:space="preserve"><value>{0} possible pairs.</value></data>
+  <data name="DaysApart" xml:space="preserve"><value>{0} day(s) apart.</value></data>
+  <data name="AccountReferenceFound" xml:space="preserve"><value>Account number found in the bank description.</value></data>
+  <data name="NoAccountReference" xml:space="preserve"><value>No supporting account number found in the bank description.</value></data>
+  <data name="MultipleTransferCandidates" xml:space="preserve"><value>There are multiple possible counterpart entries. Check the correct receipt; the app does not choose automatically.</value></data>
+  <data name="ConfirmTransfer" xml:space="preserve"><value>Confirm transfer</value></data>
+  <data name="NoTransferPairs" xml:space="preserve"><value>No possible pairs within these filters. Is one side missing? Import the other account. Use manual matching for a larger date difference.</value></data>
+  <data name="RejectedTransferNote" xml:space="preserve"><value>Rejected suggestion: both entries retain their ordinary reporting. This specific pair will not be suggested again.</value></data>
+  <data name="RemoveMatch" xml:space="preserve"><value>Remove match</value></data>
+  <data name="RemoveDecision" xml:space="preserve"><value>Remove decision</value></data>
+  <data name="EditDebit" xml:space="preserve"><value>Edit debit</value></data>
+  <data name="EditCredit" xml:space="preserve"><value>Edit credit</value></data>
+  <data name="NoTransferDecisions" xml:space="preserve"><value>No transfer decisions within these filters.</value></data>
+  <data name="ManualTransferMatch" xml:space="preserve"><value>Manually match two existing entries</value></data>
+  <data name="ManualTransferNote" xml:space="preserve"><value>For a larger date difference or a missing suggestion. Choose the debit first. Only equal receipts on a different account are selectable. Existing manual transfers and recurring matches are excluded.</value></data>
+  <data name="FromAccount" xml:space="preserve"><value>From account</value></data>
+  <data name="ChooseAccount" xml:space="preserve"><value>Choose account</value></data>
+  <data name="SearchDebit" xml:space="preserve"><value>Search debit</value></data>
+  <data name="Debit" xml:space="preserve"><value>Debit</value></data>
+  <data name="ChooseDebit" xml:space="preserve"><value>Choose debit</value></data>
+  <data name="SearchReceipt" xml:space="preserve"><value>Search receipt</value></data>
+  <data name="Receipt" xml:space="preserve"><value>Receipt</value></data>
+  <data name="ChooseReceipt" xml:space="preserve"><value>Choose receipt</value></data>
+  <data name="ManualTransferLimitNote" xml:space="preserve"><value>Up to 100 debits and 100 receipts visible; refine account/search text. Making a selection does not save anything.</value></data>
+  <data name="TransferSavingsNote" xml:space="preserve"><value>Net savings count once, on the current account's bank date, even across different months. As with manual transfers, the full savings contribution counts when at least one account is in the owner filter. Changing amount, date, account, type or recurring match removes the transfer decision; categories and custom descriptions do not change the match.</value></data>
+  <data name="TransferEffect" xml:space="preserve"><value>Account balances unchanged. Excluded from income, spending and the variable spending forecast.</value></data>
+  <data name="NoSavingsContribution" xml:space="preserve"><value>No net savings contribution.</value></data>
+  <data name="SavingsContribution" xml:space="preserve"><value>Net set aside: {0} on {1}.</value></data>
+  <data name="ConfirmInternalTransfer" xml:space="preserve"><value>Confirm internal transfer</value></data>
+  <data name="ConfirmTransferQuestion" xml:space="preserve"><value>Check that this is the same movement of money between your own accounts. Equal amounts alone do not prove this.</value></data>
+  <data name="RejectSuggestion" xml:space="preserve"><value>Reject suggestion</value></data>
+  <data name="RejectTransferQuestion" xml:space="preserve"><value>Stop suggesting this specific pair? Entries, balances and reporting remain unchanged. Other possible pairs remain available. You can remove this decision later.</value></data>
+  <data name="RemoveTransferDecision" xml:space="preserve"><value>Remove transfer decision</value></data>
+  <data name="RemoveTransferMatchQuestion" xml:space="preserve"><value>Remove the match? Both original entries remain and count again as ordinary income/spending. Account balances remain unchanged. The pair may be suggested again.</value></data>
+  <data name="RemoveTransferRejectionQuestion" xml:space="preserve"><value>Remove the rejection? The pair may be suggested again. Entries, balances and reporting remain unchanged.</value></data>
+  <data name="CategorizeScopeNote" xml:space="preserve"><value>This workspace covers all dates, including recognisable planned entries. The owner filter still applies. Categories on manual and matched transfers are labels only, not income or spending.</value></data>
+  <data name="ByCategory" xml:space="preserve"><value>By category</value></data>
+  <data name="StepByStep" xml:space="preserve"><value>Step by step</value></data>
+  <data name="LatestImport" xml:space="preserve"><value>Latest import</value></data>
+  <data name="ClearFilters" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="Import" xml:space="preserve"><value>Import</value></data>
+  <data name="AllImports" xml:space="preserve"><value>All imports</value></data>
+  <data name="IncludeInternalTransfers" xml:space="preserve"><value>Also show internal transfers</value></data>
+  <data name="CategoryGroups" xml:space="preserve"><value>Category groups</value></data>
+  <data name="DeleteCategory" xml:space="preserve"><value>Delete category</value></data>
+  <data name="ReviewTotalsNote" xml:space="preserve"><value>{0} payments · income {1} · outgoing {2}. Includes planned entries, excludes transfers; not strictly actual report totals.</value></data>
+  <data name="PlannedFuturePayment" xml:space="preserve"><value>Planned future payment</value></data>
+  <data name="WalkRemainingNote" xml:space="preserve"><value>{0} remaining in this round. Skipping changes nothing; the payment returns in a new round.</value></data>
+  <data name="WalkCompleteNote" xml:space="preserve"><value>This round is complete. Skipped payments have not changed.</value></data>
+  <data name="StartNewRound" xml:space="preserve"><value>Start new round</value></data>
+  <data name="Select" xml:space="preserve"><value>Select</value></data>
+  <data name="BankOwnDescription" xml:space="preserve"><value>Bank description / custom description</value></data>
+  <data name="SelectPayment" xml:space="preserve"><value>Select payment</value></data>
+  <data name="NoGroupPayments" xml:space="preserve"><value>No payments in this group and filters.</value></data>
+  <data name="RememberImports" xml:space="preserve"><value>Remember for future imports</value></data>
+  <data name="RulePreviewCount" xml:space="preserve"><value>{0} matches, {1} uncategorized.</value></data>
+  <data name="ReusesRule" xml:space="preserve"><value>Existing rule will be reused.</value></data>
+  <data name="HouseholdRule" xml:space="preserve"><value>Rule applies to future imports for the whole household.</value></data>
+  <data name="ConflictingRuleWarning" xml:space="preserve"><value>This exact text already has a different category. Edit the existing rule via Administration &amp; import.</value></data>
+  <data name="OverlappingRulesWarning" xml:space="preserve"><value>Overlap with other rules: {0} payments. The first matching rule still wins.</value></data>
+  <data name="ApplyFilteredMatches" xml:space="preserve"><value>Also update matching uncategorized payments within owner/account/import/search filters</value></data>
+  <data name="SaveNext" xml:space="preserve"><value>Save &amp; next</value></data>
+  <data name="SaveCategoryCount" xml:space="preserve"><value>Save category ({0})</value></data>
+  <data name="Skip" xml:space="preserve"><value>Skip</value></data>
+  <data name="CloseWalk" xml:space="preserve"><value>Close walkthrough</value></data>
+  <data name="ChooseCategoryOrSkip" xml:space="preserve"><value>Choose a category first or choose Skip.</value></data>
+  <data name="CategorySaved" xml:space="preserve"><value>Category saved.</value></data>
+  <data name="DeleteCategoryQuestion" xml:space="preserve"><value>Delete category ‘{0}’ across ALL records?
+{1} transactions and {2} recurring payments remain and become Uncategorized.
+{3} rules, {4} monthly budgets and default budget {5} are removed.
+Amounts, bank text, balances, principal repayments and import history are preserved. No immediate undo; make a backup first if needed.</value></data>
+  <data name="ImportAccountNote" xml:space="preserve"><value>Each import records entries only on the selected account, using the amount from the file. Other accounts are not automatically matched or adjusted; import each account's own file. Check duplicates, currency, account and opening date. Nothing is saved until explicit confirmation.</value></data>
+  <data name="AfterImportBothAccounts" xml:space="preserve"><value>After importing both accounts, you can</value></data>
+  <data name="ImportTransferReportingNote" xml:space="preserve"><value>for reporting, without extra entries or balance adjustments.</value></data>
+  <data name="ImportFileHint" xml:space="preserve"><value>File (.xls, .xlsx or .csv; maximum 50 MB and 100,000 non-empty rows)</value></data>
+  <data name="ImportAccount" xml:space="preserve"><value>Import account</value></data>
+  <data name="FromInclusive" xml:space="preserve"><value>From (inclusive)</value></data>
+  <data name="ThroughInclusive" xml:space="preserve"><value>Through (inclusive)</value></data>
+  <data name="ImportSettings" xml:space="preserve"><value>Import settings</value></data>
+  <data name="Worksheet" xml:space="preserve"><value>Worksheet</value></data>
+  <data name="FirstWorksheet" xml:space="preserve"><value>First worksheet</value></data>
+  <data name="SavedProfile" xml:space="preserve"><value>Saved profile</value></data>
+  <data name="AutoDetect" xml:space="preserve"><value>Detect automatically</value></data>
+  <data name="Windows1252Hint" xml:space="preserve"><value>CSV in Windows-1252 (default UTF-8)</value></data>
+  <data name="ProfileName" xml:space="preserve"><value>Profile name</value></data>
+  <data name="NumberCulture" xml:space="preserve"><value>Number format / culture</value></data>
+  <data name="DutchNumberFormat" xml:space="preserve"><value>Dutch: 1.234,56</value></data>
+  <data name="BelgianDutch" xml:space="preserve"><value>Dutch (Belgium)</value></data>
+  <data name="EnglishNumberFormat" xml:space="preserve"><value>English (US): 1,234.56</value></data>
+  <data name="GermanNumberFormat" xml:space="preserve"><value>German: 1.234,56</value></data>
+  <data name="OptionalDateFormat" xml:space="preserve"><value>Exact date format (optional)</value></data>
+  <data name="DoNotUse" xml:space="preserve"><value>Do not use</value></data>
+  <data name="PreviewColumnNote" xml:space="preserve"><value>Choose Process preview for automatic column detection. Afterwards you can adjust columns and culture and process again.</value></data>
+  <data name="ProcessPreview" xml:space="preserve"><value>Process preview</value></data>
+  <data name="NoFileSelected" xml:space="preserve"><value>No file selected</value></data>
+  <data name="UploadExpiryNote" xml:space="preserve"><value>Settings changes invalidate the old preview. Abandoned uploads expire after 20 minutes; up to four open uploads for the household.</value></data>
+  <data name="UnsavedImportPreview" xml:space="preserve"><value>Import preview · not saved yet</value></data>
+  <data name="PreviewRowsNote" xml:space="preserve"><value>{0} rows · {1} selected. Likely duplicates are not preselected but can still be selected explicitly. Invalid rows cannot be saved.</value></data>
+  <data name="Row" xml:space="preserve"><value>Row</value></data>
+  <data name="Check" xml:space="preserve"><value>Check</value></data>
+  <data name="SelectImportRow" xml:space="preserve"><value>Select import row</value></data>
+  <data name="ImportRowCategory" xml:space="preserve"><value>Import row category</value></data>
+  <data name="SaveSelectedRows" xml:space="preserve"><value>Save selected rows permanently</value></data>
+  <data name="CommitImport" xml:space="preserve"><value>Save import permanently</value></data>
+  <data name="CommitImportQuestion" xml:space="preserve"><value>Save {0} selected rows to {1}? Other accounts remain unchanged. Check categories and explicitly selected duplicates. The balance check appears after saving.</value></data>
+  <data name="SaveImport" xml:space="preserve"><value>Save import</value></data>
+  <data name="ImportCompleteBalanceCheck" xml:space="preserve"><value>Import complete — balance check</value></data>
+  <data name="ImportSavedCount" xml:space="preserve"><value>{0} transactions saved. {1} rows not imported.</value></data>
+  <data name="BalanceAsOf" xml:space="preserve"><value>Balance on {0}: {1}</value></data>
+  <data name="BalanceMatches" xml:space="preserve"><value>Balance matches</value></data>
+  <data name="BalanceDifference" xml:space="preserve"><value>Difference: {0} (calculated minus bank)</value></data>
+  <data name="NoBalanceComparison" xml:space="preserve"><value>No automatic bank balance comparison</value></data>
+  <data name="BalanceCheckNote" xml:space="preserve"><value>All recorded transactions through the check date count, not just this import. Future transactions and securities do not count. Your opening balance was never adjusted. A matching balance does not prove a complete or error-free import.</value></data>
+  <data name="InvalidFutureRows" xml:space="preserve"><value>Invalid rows: {0} · Future rows: {1}.</value></data>
+  <data name="ContinueCheckCategories" xml:space="preserve"><value>Next: check categories</value></data>
+  <data name="CheckOwnTransfers" xml:space="preserve"><value>Check transfers between your own accounts</value></data>
+  <data name="ExtraDescription" xml:space="preserve"><value>Extra description / message</value></data>
+  <data name="SignedAmount" xml:space="preserve"><value>Signed amount</value></data>
+  <data name="DebitAlternative" xml:space="preserve"><value>Debit amount (alternative)</value></data>
+  <data name="CreditAlternative" xml:space="preserve"><value>Credit amount (alternative)</value></data>
+  <data name="DebitCreditIndicator" xml:space="preserve"><value>Debit/credit indicator</value></data>
+  <data name="Currency" xml:space="preserve"><value>Currency</value></data>
+  <data name="OriginatingAccount" xml:space="preserve"><value>Originating account</value></data>
+  <data name="BalanceAfterEntry" xml:space="preserve"><value>Balance after transaction</value></data>
+  <data name="FallbackTransactionType" xml:space="preserve"><value>Fallback: transaction type</value></data>
+  <data name="ImportFileTooLarge" xml:space="preserve"><value>The file exceeds 50 MB.</value></data>
+  <data name="FileReadyForPreview" xml:space="preserve"><value>File ready for preview. Nothing has been saved.</value></data>
+  <data name="PreviewProcessed" xml:space="preserve"><value>Preview processed. Check every row before saving.</value></data>
+  <data name="ImportSaved" xml:space="preserve"><value>Import saved. Check the balance and categories.</value></data>
+  <data name="MissingStatementBalance" xml:space="preserve"><value>Bank balance missing on the check date.</value></data>
+  <data name="AmbiguousStatementBalance" xml:space="preserve"><value>Order or bank balances are ambiguous.</value></data>
+  <data name="InvalidBalanceRows" xml:space="preserve"><value>Invalid rows or dates prevent the check.</value></data>
+  <data name="NoActualBalanceRows" xml:space="preserve"><value>Future rows only; the displayed balance is today's.</value></data>
+  <data name="NoBankReference" xml:space="preserve"><value>No bank reference available.</value></data>
+  <data name="AdministrationConflict" xml:space="preserve"><value>The records were changed elsewhere. Your change was not saved. Refresh and check your input; process import previews again.</value></data>
+  <data name="FileProcessingError" xml:space="preserve"><value>The file could not be processed. Check its size, available disk space and access to the service folder.</value></data>
+  <data name="SessionRevoked" xml:space="preserve"><value>Your session has expired or been revoked. Sign in again.</value></data>
+  <data name="OperationIncomplete" xml:space="preserve"><value>The operation did not complete. Check the service status and refresh before trying again.</value></data>
+  <data name="OverduePaymentWarning" xml:space="preserve"><value>{0}: payment due on {1} is unmatched; reserved for tomorrow. Match the bank entry to avoid double counting.</value></data>
+  <data name="OverdueIncomeWarning" xml:space="preserve"><value>{0}: income due on {1} is unmatched. This overdue income is not assumed to be available; check the import or schedule.</value></data>
+  <data name="NoUsableImportWarning" xml:space="preserve"><value>No usable bank import for this account: the balance's freshness is unknown.</value></data>
+  <data name="OldImportWarning" xml:space="preserve"><value>Import outdated or insufficiently recent: last bank entry {0}, last import {1}. Unimported payments are missing.</value></data>
+  <data name="LimitedVariableHistoryWarning" xml:space="preserve"><value>Limited variable spending history: the daily average may underestimate necessary daily costs.</value></data>
+  <data name="NoBufferWarning" xml:space="preserve"><value>No minimum cash buffer set. Use Set buffer to reserve money for unexpected costs.</value></data>
+  <data name="NoNextIncomeWarning" xml:space="preserve"><value>No next income date known within {0} days; spending headroom calculated for {1} days, not until a known payday.</value></data>
+  <data name="AllocationTotalRequired" xml:space="preserve"><value>Add at least one allocation and distribute the full bank amount (remaining = € 0), or disable allocation.</value></data>
 </root>

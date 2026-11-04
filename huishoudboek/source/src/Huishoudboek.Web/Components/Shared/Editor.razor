@@ -38,7 +38,7 @@
     private static void ToggleOwner(EditorField field, Guid id, ChangeEventArgs args) { if ((bool)args.Value!) field.OwnerIds.Add(id); else field.OwnerIds.Remove(id); }
     private async Task Save()
     {
-        if (await State.RunAsync(() => State.SaveAsync(Draft.Apply, Draft.Revision), "Wijzigingen opgeslagen.")) await Closed.InvokeAsync();
+        if (await State.RunAsync(() => State.SaveAsync(Draft.Apply, Draft.Revision), L["ChangesSaved"])) await Closed.InvokeAsync();
         else Draft.Error = State.Message;
     }
 }

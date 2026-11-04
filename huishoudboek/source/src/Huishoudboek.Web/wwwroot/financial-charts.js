@@ -1,9 +1,9 @@
 import "./chart.umd.min.js";
 
-const money = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" });
-
 // Blazor wraps these return values when C# requests IJSObjectReference; return plain objects.
-export function create(spendingCanvas, forecastCanvas) {
+export function create(spendingCanvas, forecastCanvas, text) {
+    const money = new Intl.NumberFormat(text.locale, { style: "currency", currency: "EUR" });
+    const percent = new Intl.NumberFormat(text.locale, { style: "percent", maximumFractionDigits: 0 });
     const spendingChart = new Chart(spendingCanvas, {
         type: "doughnut",
         data: { labels: [], datasets: [{ data: [], borderWidth: 2, borderColor: "#fff" }] },
@@ -17,7 +17,7 @@ export function create(spendingCanvas, forecastCanvas) {
                 tooltip: { callbacks: { label(context) {
                     const total = context.dataset.data.reduce((sum, value) => sum + value, 0);
                     const share = total ? context.parsed / total : 0;
-                    return `${context.label}: ${money.format(context.parsed)} (${new Intl.NumberFormat("nl-NL", { style: "percent", maximumFractionDigits: 0 }).format(share)})`;
+                    return `${context.label}: ${money.format(context.parsed)} (${percent.format(share)})`;
                 } } }
             }
         }
@@ -25,17 +25,17 @@ export function create(spendingCanvas, forecastCanvas) {
     const forecastChart = new Chart(forecastCanvas, {
         type: "bar",
         data: {
-            labels: ["Inkomsten", "Lasten", "Over"],
+            labels: [text.income, text.outflow, text.available],
             datasets: [
-                { label: "Werkelijk", data: [], backgroundColor: "#087f75", borderRadius: 3, maxBarThickness: 24 },
-                { label: "Prognose", data: [], backgroundColor: "#d7e5ef", borderColor: "#5c86ab", borderWidth: 1, borderRadius: 3, maxBarThickness: 24 }
+                { label: text.actual, data: [], backgroundColor: "#087f75", borderRadius: 3, maxBarThickness: 24 },
+                { label: text.forecast, data: [], backgroundColor: "#d7e5ef", borderColor: "#5c86ab", borderWidth: 1, borderRadius: 3, maxBarThickness: 24 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             animation: false,
-            locale: "nl-NL",
+            locale: text.locale,
             plugins: {
                 legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, padding: 14 } },
                 tooltip: { callbacks: { label: context => `${context.dataset.label}: ${money.format(context.parsed.y)}` } }
@@ -67,7 +67,8 @@ export function create(spendingCanvas, forecastCanvas) {
     };
 }
 
-export function createYear(trendCanvas, spendingCanvas, savingsCanvas) {
+export function createYear(trendCanvas, spendingCanvas, savingsCanvas, text) {
+    const money = new Intl.NumberFormat(text.locale, { style: "currency", currency: "EUR" });
     const axis = {
         beginAtZero: true,
         ticks: { maxTicksLimit: 5, color: "#607188", callback: value => money.format(value) },
@@ -78,7 +79,7 @@ export function createYear(trendCanvas, spendingCanvas, savingsCanvas) {
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
-        locale: "nl-NL",
+        locale: text.locale,
         interaction: { mode: "index", intersect: false },
         plugins: {
             legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8, boxHeight: 8, padding: 18 } },
@@ -92,8 +93,8 @@ export function createYear(trendCanvas, spendingCanvas, savingsCanvas) {
     const trend = new Chart(trendCanvas, {
         type: "bar",
         data: { labels: [], datasets: [
-            { type: "line", label: "Inkomsten", data: [], borderColor: "#087f75", backgroundColor: "#087f75", borderWidth: 2, pointRadius: 3, tension: 0.2 },
-            { label: "Lasten", data: [], backgroundColor: "#d8a483", hoverBackgroundColor: "#be6432", borderRadius: 4, maxBarThickness: 26 }
+            { type: "line", label: text.income, data: [], borderColor: "#087f75", backgroundColor: "#087f75", borderWidth: 2, pointRadius: 3, tension: 0.2 },
+            { label: text.outflow, data: [], backgroundColor: "#d8a483", hoverBackgroundColor: "#be6432", borderRadius: 4, maxBarThickness: 26 }
         ] },
         options
     });
@@ -108,8 +109,8 @@ export function createYear(trendCanvas, spendingCanvas, savingsCanvas) {
     const savings = new Chart(savingsCanvas, {
         type: "bar",
         data: { labels: [], datasets: [
-            { type: "line", label: "Opzijgezet sinds januari", data: [], borderColor: "#526dc1", backgroundColor: "#526dc1", borderWidth: 2, pointRadius: 3, tension: 0.2 },
-            { label: "Netto opzijgezet per maand", data: [], backgroundColor: "#bfcbea", borderRadius: 3, maxBarThickness: 22 }
+            { type: "line", label: text.cumulativeSavings, data: [], borderColor: "#526dc1", backgroundColor: "#526dc1", borderWidth: 2, pointRadius: 3, tension: 0.2 },
+            { label: text.monthlySavings, data: [], backgroundColor: "#bfcbea", borderRadius: 3, maxBarThickness: 22 }
         ] },
         options
     });

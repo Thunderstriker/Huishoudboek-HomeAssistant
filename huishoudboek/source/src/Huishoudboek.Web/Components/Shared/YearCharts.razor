@@ -3,31 +3,31 @@
 
 <div class="year-charts">
     <section class="card trend-card">
-        <div class="chart-heading"><div><h2>Inkomsten en uitgaven</h2><p class="muted">Hoe ontwikkelen uw maandlasten zich?</p></div><div class="chart-stat"><small>Gemiddelde lasten / maand</small><strong>@Money(Months.Count > 0 ? Months.Average(m => m.Outflow) : 0)</strong></div></div>
-        @if (!hasActivity) { <p class="muted">Nog geen boekingen in dit jaar.</p> }
-        <div class="trend-canvas" hidden="@(!hasActivity)"><canvas @ref="trendCanvas" role="img" aria-label="Inkomsten als lijn en maandlasten als balken. Exacte bedragen staan in de maandtabel hieronder."></canvas></div>
-        <p class="muted chart-note">Alleen werkelijke boekingen; de huidige maand is nog onvolledig en telt mee in het gemiddelde.</p>
+        <div class="chart-heading"><div><h2>@L["IncomeSpending"]</h2><p class="muted">@L["MonthlyTrendQuestion"]</p></div><div class="chart-stat"><small>@L["AverageMonthlyOutflow"]</small><strong>@Money(Months.Count > 0 ? Months.Average(m => m.Outflow) : 0)</strong></div></div>
+        @if (!hasActivity) { <p class="muted">@L["NoAnnualEntries"]</p> }
+        <div class="trend-canvas" hidden="@(!hasActivity)"><canvas @ref="trendCanvas" role="img" aria-label="@L["AnnualTrendChart"]"></canvas></div>
+        <p class="muted chart-note">@L["AnnualChartActualNote"]</p>
     </section>
     <section class="card category-card">
-        <h2>Verdeling van uw uitgaven</h2>
-        @if (total == 0) { <p class="muted">Nog geen uitgaven in dit jaar.</p> }
+        <h2>@L["SpendingBreakdown"]</h2>
+        @if (total == 0) { <p class="muted">@L["NoAnnualSpending"]</p> }
         <div hidden="@(total == 0)">
-            <div class="doughnut-wrap"><canvas @ref="spendingCanvas" role="img" aria-label="Verdeling van jaaruitgaven; categorieën, bedragen en percentages staan hieronder."></canvas><div class="doughnut-total" aria-hidden="true"><small>Totaal uitgegeven</small><strong>@Money(total)</strong></div></div>
+            <div class="doughnut-wrap"><canvas @ref="spendingCanvas" role="img" aria-label="@L["AnnualSpendingChart"]"></canvas><div class="doughnut-total" aria-hidden="true"><small>@L["TotalSpent"]</small><strong>@Money(total)</strong></div></div>
             <ul class="spending-legend">
                 @for (var index = 0; index < spending.Count; index++)
                 {
                     var item = spending[index];
-                    <li><i style="background:@Colors[index]" aria-hidden="true"></i><span>@item.Name</span><strong>@Money(item.Spent)<small>@((item.Spent / total).ToString("P0", CultureInfo.GetCultureInfo("nl-NL")))</small></strong></li>
+                    <li><i style="background:@Colors[index]" aria-hidden="true"></i><span>@item.Name</span><strong>@Money(item.Spent)<small>@((item.Spent / total).ToString("P0", UiCulture.Culture))</small></strong></li>
                 }
             </ul>
         </div>
         @if (Categories.Any(c => c.Spent < 0)) { <p class="muted chart-note">@L["RecoveryChartNote"]</p> }
     </section>
     <section class="card savings-card">
-        <div class="chart-heading"><div><h2>Uw spaarritme</h2><p class="muted">Netto bijdragen aan sparen en beleggen</p></div><div class="chart-stat"><small>Opzijgezet dit jaar</small><strong>@Money(Months.Sum(m => m.Savings))</strong></div></div>
-        @if (!Months.Any(m => m.Savings != 0)) { <p class="muted">Nog geen spaar- of beleggingsbijdragen in dit jaar.</p> }
-        <div class="savings-canvas" hidden="@(!Months.Any(m => m.Savings != 0))"><canvas @ref="savingsCanvas" role="img" aria-label="Netto opzijgezet per maand en opgeteld sinds januari. Dit is geen spaarrekeningsaldo. Exacte maandbedragen staan in de tabel hieronder."></canvas></div>
-        <p class="muted chart-note">Lijn = bijdragen opgeteld sinds januari, geen rekeningsaldo of rendement. Negatieve bijdragen zijn netto-opnamen.</p>
+        <div class="chart-heading"><div><h2>@L["SavingsRhythm"]</h2><p class="muted">@L["NetContributions"]</p></div><div class="chart-stat"><small>@L["SetAsideThisYear"]</small><strong>@Money(Months.Sum(m => m.Savings))</strong></div></div>
+        @if (!Months.Any(m => m.Savings != 0)) { <p class="muted">@L["NoAnnualSavings"]</p> }
+        <div class="savings-canvas" hidden="@(!Months.Any(m => m.Savings != 0))"><canvas @ref="savingsCanvas" role="img" aria-label="@L["AnnualSavingsChart"]"></canvas></div>
+        <p class="muted chart-note">@L["CumulativeSavingsNote"]</p>
     </section>
 </div>
 
@@ -47,9 +47,9 @@
     protected override void OnParametersSet()
     {
         var categories = Categories.Where(c => c.Spent > 0).OrderByDescending(c => c.Spent).ToList();
-        spending = categories.Take(5).ToList();
+        spending = categories.Take(5).Select(c => c.Id == Guid.Empty ? c with { Name = L["Uncategorized"] } : c).ToList();
         if (categories.Count > 5)
-            spending.Add(new(Guid.Empty, "Overige categorieën", 0, categories.Skip(5).Sum(c => c.Spent)));
+            spending.Add(new(Guid.Empty, L["OtherCategories"], 0, categories.Skip(5).Sum(c => c.Spent)));
         total = categories.Sum(c => c.Spent);
         hasActivity = Months.Any(m => m.Income != 0 || m.Outflow != 0);
     }
@@ -62,11 +62,13 @@
             if (disposed) return;
             module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Huishoudboek.Web/financial-charts.js");
             if (disposed) return;
-            charts ??= await module.InvokeAsync<IJSObjectReference>("createYear", trendCanvas, spendingCanvas, savingsCanvas);
+            charts ??= await module.InvokeAsync<IJSObjectReference>("createYear", trendCanvas, spendingCanvas, savingsCanvas, new {
+                locale = UiCulture.Culture.Name, income = L["Income"].Value, outflow = L["Outflow"].Value,
+                cumulativeSavings = L["CumulativeSavings"].Value, monthlySavings = L["MonthlySavings"].Value });
             if (disposed) return;
             decimal cumulative = 0;
             await charts.InvokeVoidAsync("update", new {
-                months = Months.Select(m => CultureInfo.GetCultureInfo("nl-NL").DateTimeFormat.GetAbbreviatedMonthName(m.Month)),
+                months = Months.Select(m => UiCulture.Culture.DateTimeFormat.GetAbbreviatedMonthName(m.Month)),
                 income = Months.Select(m => m.Income), outflow = Months.Select(m => m.Outflow),
                 savings = Months.Select(m => m.Savings),
                 cumulativeSavings = Months.Select(m => cumulative += m.Savings).ToArray(),

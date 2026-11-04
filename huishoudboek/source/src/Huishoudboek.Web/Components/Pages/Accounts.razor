@@ -1,23 +1,23 @@
 @page "/rekeningen"
 @attribute [Authorize]
 @inherits EditPageBase
-<PageTitle>Rekeningen · Huishoudboek</PageTitle>
-<h1>Rekeningen &amp; eigenaren</h1>
-<section class="card"><div class="page-heading"><h2>Rekeningen</h2><button class="primary" @onclick="() => Draft = EditorDraft.Account(State)">+ Rekening</button></div>
-<p class="muted">Werkelijke saldi t/m @State.AsOf.ToString("dd-MM-yyyy"). Beginsaldo geldt aan het START van de openingsdatum.</p>
-<div class="table-scroll"><table><thead><tr><th>Naam</th><th>Type</th><th>Eigenaren</th><th class="money">Cashsaldo</th><th class="money">Effecten</th><th class="money">Totaal</th><th>Spaardoel</th><th>Waardering</th><th></th></tr></thead><tbody>
+<PageTitle>@L["Accounts"] · Huishoudboek</PageTitle>
+<h1>@L["AccountsOwners"]</h1>
+<section class="card"><div class="page-heading"><h2>@L["Accounts"]</h2><button class="primary" @onclick="() => Draft = EditorDraft.Account(State)">+ @L["Account"]</button></div>
+<p class="muted">@L["OpeningBalanceNote", State.AsOf.ToString("dd-MM-yyyy")]</p>
+<div class="table-scroll"><table><thead><tr><th>@L["Name"]</th><th>@L["Type"]</th><th>@L["Owners"]</th><th class="money">@L["CashBalance"]</th><th class="money">@L["Securities"]</th><th class="money">@L["Total"]</th><th>@L["SavingsGoal"]</th><th>@L["Valuation"]</th><th></th></tr></thead><tbody>
 @foreach (var summary in Reporting.Accounts(State.Data, State.AsOf).Accounts.Where(a => State.Scope.Contains(a.Id)))
 { var a = State.Data.Accounts.Single(a => a.Id == summary.Id);
-<tr><td>@a.Name</td><td>@Kind(a.Kind)</td><td>@string.Join(", ", State.Data.Owners.Where(o => a.OwnerIds.Contains(o.Id)).Select(o => o.Name))</td><td class="money">@Money(summary.Cash)</td><td class="money">@Money(summary.Securities)</td><td class="money">@Money(summary.Total)</td><td>@(a.SavingsGoal is { } goal ? $"{(summary.Cash / goal).ToString("P0", CultureInfo.GetCultureInfo("nl-NL"))} van {Money(goal)}" : "—")</td><td>@(summary.ValuationDate?.ToString("dd-MM-yyyy") ?? "Geen waardering")</td><td><button @onclick="() => Draft = EditorDraft.Account(State, a)">Bewerken</button></td></tr> }
+<tr><td>@a.Name</td><td>@Kind(a.Kind)</td><td>@string.Join(", ", State.Data.Owners.Where(o => a.OwnerIds.Contains(o.Id)).Select(o => o.Name))</td><td class="money">@Money(summary.Cash)</td><td class="money">@Money(summary.Securities)</td><td class="money">@Money(summary.Total)</td><td>@(a.SavingsGoal is { } goal ? L["GoalProgress", (summary.Cash / goal).ToString("P0", UiCulture.Culture), Money(goal)].Value : "—")</td><td>@(summary.ValuationDate?.ToString("dd-MM-yyyy") ?? L["NoValuation"].Value)</td><td><button @onclick="() => Draft = EditorDraft.Account(State, a)">@L["Edit"]</button></td></tr> }
 </tbody></table></div></section>
-<section class="card"><div class="page-heading"><h2>Eigenaren</h2><button @onclick="() => Draft = EditorDraft.Owner(State)">+ Eigenaar</button></div>
-<div class="table-scroll"><table><thead><tr><th>Naam</th><th></th></tr></thead><tbody>@foreach (var o in State.Data.Owners) { <tr><td>@o.Name</td><td><button @onclick="() => Draft = EditorDraft.Owner(State, o)">Naam bewerken</button></td></tr> }</tbody></table></div>
-<p class="muted">Gedeelde rekeningen tellen één keer mee. Eigendom wordt niet in percentages verdeeld.</p></section>
-<section class="card"><div class="page-heading"><h2>Effectenwaarderingen</h2><button @onclick="() => Draft = EditorDraft.Valuation(State)">+ Waardering</button></div>
-<p class="muted">Uitsluitend effectenwaarde, exclusief cash. De laatste waardering op of vóór de saldodatum telt mee. Geen individuele aandelen, live koersen of crypto.</p>
-<div class="table-scroll"><table><thead><tr><th>Datum</th><th>Effectenrekening</th><th class="money">Effectenwaarde</th><th></th></tr></thead><tbody>
+<section class="card"><div class="page-heading"><h2>@L["Owners"]</h2><button @onclick="() => Draft = EditorDraft.Owner(State)">+ @L["Owner"]</button></div>
+<div class="table-scroll"><table><thead><tr><th>@L["Name"]</th><th></th></tr></thead><tbody>@foreach (var o in State.Data.Owners) { <tr><td>@o.Name</td><td><button @onclick="() => Draft = EditorDraft.Owner(State, o)">@L["EditName"]</button></td></tr> }</tbody></table></div>
+<p class="muted">@L["SharedAccountsNote"]</p></section>
+<section class="card"><div class="page-heading"><h2>@L["SecuritiesValuations"]</h2><button @onclick="() => Draft = EditorDraft.Valuation(State)">+ @L["Valuation"]</button></div>
+<p class="muted">@L["SecuritiesNote"]</p>
+<div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th>@L["InvestmentAccount"]</th><th class="money">@L["SecuritiesValue"]</th><th></th></tr></thead><tbody>
 @foreach (var v in State.Data.Valuations.Where(v => State.Scope.Contains(v.AccountId)).OrderByDescending(v => v.Date))
-{ <tr><td>@v.Date.ToString("dd-MM-yyyy")</td><td>@State.AccountName(v.AccountId)</td><td class="money">@Money(v.SecuritiesValue)</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Valuation(State, v)">Bewerken</button><button @onclick="() => AskDelete(v)">Verwijderen</button></div></td></tr> }
+{ <tr><td>@v.Date.ToString("dd-MM-yyyy")</td><td>@State.AccountName(v.AccountId)</td><td class="money">@Money(v.SecuritiesValue)</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Valuation(State, v)">@L["Edit"]</button><button @onclick="() => AskDelete(v)">@L["Delete"]</button></div></td></tr> }
 </tbody></table></div></section>
 <EditDialogs Page="this" />
-@code { private void AskDelete(InvestmentValuation item) => Ask("Waardering verwijderen", "Deze effectenwaardering verwijderen? Cash en transacties blijven ongewijzigd.", d => d.Valuations.RemoveAll(v => v.Id == item.Id), "Verwijderen"); }
+@code { private void AskDelete(InvestmentValuation item) => Ask(L["DeleteValuation"], L["DeleteValuationQuestion"], d => d.Valuations.RemoveAll(v => v.Id == item.Id), L["Delete"]); }

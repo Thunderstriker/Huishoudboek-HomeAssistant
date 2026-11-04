@@ -2,6 +2,12 @@
 
 ## 0.1.9
 
+- Compacte taalkeuze `NL - EN` onder Beheer & import in de zijbalk, zonder keuzelijst
+  of aparte bevestigingsknop. De zijbalk blijft staan tijdens het scrollen van de pagina.
+- Pagina's, formulieren, bevestigingen, grafieken en bestedingsruimte gebruiken de
+  gekozen interfacetaal. Bedraginvoer volgt het decimaalteken van de taal; eigen namen
+  en bankteksten blijven ongewijzigd. Tests controleren taalwisselingen in beide
+  richtingen, ook achter het Home Assistant-ingresspad.
 - Bankboekingen verdelen over meerdere categorieën met bedragen die exact aansluiten
   op het oorspronkelijke bankbedrag. De banktekst, datum, importgegevens en saldi blijven intact.
 - Expliciete retouren en vergoedingen verlagen uitgaven in de ontvangstmaand, nooit

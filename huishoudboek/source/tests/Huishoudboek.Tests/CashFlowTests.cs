@@ -510,11 +510,17 @@ public sealed class CashFlowTests
 
     private static async Task<string> Render<T>(HouseholdData data) where T : IComponent
     {
+        var previous = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
+        try
+        {
         var services = new ServiceCollection(); services.AddLogging(); services.AddLocalization();
         services.AddSingleton<IWebAdministration>(new Backend(data)); services.AddSingleton<WebState>();
         using var provider = services.BuildServiceProvider(); await provider.GetRequiredService<WebState>().LoadAsync();
         await using var renderer = new HtmlRenderer(provider, provider.GetRequiredService<ILoggerFactory>());
         return await renderer.Dispatcher.InvokeAsync(async () => (await renderer.RenderComponentAsync<T>(ParameterView.Empty)).ToHtmlString());
+        }
+        finally { System.Globalization.CultureInfo.CurrentUICulture = previous; }
     }
 
     private sealed class Backend(HouseholdData data) : IWebAdministration

@@ -15,6 +15,13 @@
                 <NavLink href="@entry.Path.TrimStart('/')" Match="@(entry.Path == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)"><span aria-hidden="true">@entry.Symbol</span>@L[entry.Label]</NavLink>
             }
         </nav>
+        <form method="post" action="website/language" data-enhance="false" class="language-switch" aria-label="@L["Language"]" title="@L["LanguageReloadWarning"]">
+            <AntiforgeryToken />
+            <input type="hidden" name="returnPath" value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
+            <button type="submit" name="language" value="nl" lang="nl" aria-label="Nederlands" aria-current="@(UiCulture.Language == "nl" ? "true" : null)" disabled="@State.Busy">NL</button>
+            <span aria-hidden="true">-</span>
+            <button type="submit" name="language" value="en" lang="en" aria-label="English" aria-current="@(UiCulture.Language == "en" ? "true" : null)" disabled="@State.Busy">EN</button>
+        </form>
         <p class="sidebar-note">@L["LocalPrivate"]<br />@L["NoBankConnection"]</p>
     </aside>
     <div class="workspace">
@@ -27,12 +34,6 @@
                 <label class="compact"><span class="sr-only">@L["Year"]</span><input type="number" min="1900" max="2200" value="@State.Year" @onchange="YearChanged" class="year" /></label>
                 <button aria-label="@L["NextMonth"]" @onclick="() => Shift(1)">›</button>
                 <label class="compact"><span class="sr-only">@L["Owner"]</span><select @bind="State.OwnerId" @bind:after="State.Notify"><option value="">@L["AllOwners"]</option>@foreach (var owner in State.Data.Owners) { <option value="@owner.Id">@owner.Name</option> }</select></label>
-                <form method="post" action="website/language" data-enhance="false" class="toolbar" title="@L["LanguageReloadWarning"]">
-                    <AntiforgeryToken />
-                    <input type="hidden" name="returnPath" value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
-                    <label class="compact">@L["Language"]<select name="language" disabled="@State.Busy"><option value="nl" selected="@(UiCulture.Language == "nl")">Nederlands</option><option value="en" selected="@(UiCulture.Language == "en")">English</option></select></label>
-                    <button type="submit" disabled="@State.Busy">@L["ApplyLanguage"]</button>
-                </form>
                 @if (!HostSettings.HomeAssistant) { <a class="button" href="signout" data-enhance-nav="false">@L["SignOut"]</a> }
             </div>
         </header>

@@ -21,7 +21,7 @@ public sealed class WebState(IWebAdministration backend)
     public DateOnly AsOf => Today < new DateOnly(Year, Month, 1).AddMonths(1).AddDays(-1) ? Today : new DateOnly(Year, Month, 1).AddMonths(1).AddDays(-1);
     public HashSet<Guid> Scope => Data.Accounts.Where(a => OwnerId == null || a.OwnerIds.Contains(OwnerId.Value)).Select(a => a.Id).ToHashSet();
     public string AccountName(Guid? id) => Data.Accounts.FirstOrDefault(a => a.Id == id)?.Name ?? "—";
-    public string CategoryName(Guid? id) => Data.Categories.FirstOrDefault(c => c.Id == id)?.Name ?? "Zonder categorie";
+    public string CategoryName(Guid? id) => Data.Categories.FirstOrDefault(c => c.Id == id)?.Name ?? UiCulture.Text("Uncategorized");
     public void Notify() => Changed?.Invoke();
     public async Task LoadAsync()
     {
@@ -35,12 +35,12 @@ public sealed class WebState(IWebAdministration backend)
         if (Busy) return false;
         Busy = true; IsError = false; Message = ""; Notify();
         try { await action(); if (success != null) Message = success; return true; }
-        catch (AdministrationConflictException) { IsError = true; Message = "De administratie is elders gewijzigd. Uw wijziging is niet opgeslagen. Vernieuw en controleer uw invoer; verwerk een importvoorbeeld opnieuw."; }
+        catch (AdministrationConflictException) { IsError = true; Message = UiCulture.Text("AdministrationConflict"); }
         catch (Exception ex) when (ex is InvalidOperationException or InvalidDataException or FormatException or ArgumentException)
         { IsError = true; Message = ex.Message; }
-        catch (IOException) { IsError = true; Message = "Het bestand kon niet worden verwerkt. Controleer de bestandsgrootte, beschikbare schijfruimte en toegang tot de servicemap."; }
-        catch (UnauthorizedAccessException) { IsError = true; Message = "Uw sessie is verlopen of ingetrokken. Meld u opnieuw aan."; }
-        catch (Exception) { IsError = true; Message = "De handeling is niet voltooid. Controleer de servicestatus en vernieuw voordat u opnieuw probeert."; }
+        catch (IOException) { IsError = true; Message = UiCulture.Text("FileProcessingError"); }
+        catch (UnauthorizedAccessException) { IsError = true; Message = UiCulture.Text("SessionRevoked"); }
+        catch (Exception) { IsError = true; Message = UiCulture.Text("OperationIncomplete"); }
         finally { Busy = false; Notify(); }
         return false;
     }
@@ -50,5 +50,5 @@ public sealed class WebState(IWebAdministration backend)
         Data = snapshot.Data; Revision = snapshot.Revision; Notify();
     }
     public static string Money(decimal amount) => UiCulture.Euro(amount);
-    public static string Kind(AccountKind kind) => kind switch { AccountKind.Current => "Betaalrekening", AccountKind.Savings => "Spaarrekening", _ => "Effectenrekening" };
+    public static string Kind(AccountKind kind) => UiCulture.Text(kind switch { AccountKind.Current => "CurrentAccount", AccountKind.Savings => "SavingsAccount", _ => "InvestmentAccount" });
 }

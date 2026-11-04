@@ -52,8 +52,12 @@ public sealed class LocalizationTests
         {
             Assert.False(string.IsNullOrWhiteSpace(dutch.GetString(key)));
             Assert.False(string.IsNullOrWhiteSpace(english.GetString(key)));
-            _ = string.Format(CultureInfo.InvariantCulture, dutch.GetString(key)!, 1, 2, 3);
-            _ = string.Format(CultureInfo.InvariantCulture, english.GetString(key)!, 1, 2, 3);
+            var dutchFormat = System.Text.CompositeFormat.Parse(dutch.GetString(key)!);
+            var englishFormat = System.Text.CompositeFormat.Parse(english.GetString(key)!);
+            Assert.Equal(dutchFormat.MinimumArgumentCount, englishFormat.MinimumArgumentCount);
+            var arguments = Enumerable.Repeat<object>(1, dutchFormat.MinimumArgumentCount).ToArray();
+            _ = string.Format(CultureInfo.InvariantCulture, dutchFormat, arguments);
+            _ = string.Format(CultureInfo.InvariantCulture, englishFormat, arguments);
         }
     }
 

@@ -3,37 +3,37 @@
 
 <div class="monthly-charts">
     <section class="card chart-card">
-        <h2>Waar gaat het geld naartoe?</h2>
+        <h2>@L["WhereMoneyGoes"]</h2>
         @if (spending.Count == 0)
         {
-            <p class="muted">Nog geen uitgaven in deze maand.</p>
+            <p class="muted">@L["NoMonthlySpending"]</p>
         }
         <div class="spending-summary" hidden="@(spending.Count == 0)">
             <div class="doughnut-wrap">
-                <canvas @ref="spendingCanvas" role="img" aria-label="Uitgavenverdeling per categorie; bedragen en percentages staan ernaast."></canvas>
-                <div class="doughnut-total" aria-hidden="true"><small>Uitgegeven</small><strong>@Money(total)</strong></div>
+                <canvas @ref="spendingCanvas" role="img" aria-label="@L["MonthlySpendingChart"]"></canvas>
+                <div class="doughnut-total" aria-hidden="true"><small>@L["Spent"]</small><strong>@Money(total)</strong></div>
             </div>
             <ul class="spending-legend">
                 @for (var index = 0; index < spending.Count; index++)
                 {
                     var item = spending[index];
-                    <li><i style="background:@Colors[index]" aria-hidden="true"></i><span>@item.Name</span><strong>@Money(item.Spent)<small>@((item.Spent / total).ToString("P0", CultureInfo.GetCultureInfo("nl-NL")))</small></strong></li>
+                    <li><i style="background:@Colors[index]" aria-hidden="true"></i><span>@item.Name</span><strong>@Money(item.Spent)<small>@((item.Spent / total).ToString("P0", UiCulture.Culture))</small></strong></li>
                 }
             </ul>
         </div>
-        <p class="muted chart-note">Grootste categorieën; kleinere uitgaven samengevoegd. Budgetten staan in de tabel hieronder.</p>
+        <p class="muted chart-note">@L["LargestCategoriesNote"]</p>
         @if (Report.Categories.Any(c => c.Spent < 0)) { <p class="muted chart-note">@L["RecoveryChartNote"]</p> }
     </section>
     <section class="card chart-card">
-        <h2>Werkelijk en verwacht</h2>
+        <h2>@L["ActualExpected"]</h2>
         @if (!hasCashFlow)
         {
-            <p class="muted">Nog geen bedragen om te tonen in deze maand.</p>
+            <p class="muted">@L["NoMonthlyAmounts"]</p>
         }
         <div class="forecast-wrap" hidden="@(!hasCashFlow)">
-            <canvas @ref="forecastCanvas" role="img" aria-label="Werkelijke inkomsten, lasten en over vergeleken met de maandprognose. Exacte bedragen staan in de samenvattingen op deze pagina."></canvas>
+            <canvas @ref="forecastCanvas" role="img" aria-label="@L["MonthlyForecastChart"]"></canvas>
         </div>
-        <p class="muted chart-note">Prognose = schatting einde maand. Over = inkomsten min lasten en netto opzijgezet; geen rekeningsaldo.</p>
+        <p class="muted chart-note">@L["ForecastChartNote"]</p>
     </section>
 </div>
 
@@ -54,9 +54,9 @@
     protected override void OnParametersSet()
     {
         var categories = Report.Categories.Where(c => c.Spent > 0).OrderByDescending(c => c.Spent).ToList();
-        spending = categories.Take(5).ToList();
+        spending = categories.Take(5).Select(c => c.Id == Guid.Empty ? c with { Name = L["Uncategorized"] } : c).ToList();
         if (categories.Count > 5)
-            spending.Add(new(Guid.Empty, "Overige categorieën", 0, categories.Skip(5).Sum(c => c.Spent)));
+            spending.Add(new(Guid.Empty, L["OtherCategories"], 0, categories.Skip(5).Sum(c => c.Spent)));
         total = categories.Sum(c => c.Spent);
         hasCashFlow = Report.Income != 0 || Report.Outflow != 0 || Report.Available != 0 ||
             Report.Forecast.Income != 0 || Report.Forecast.Outflow != 0 || Report.Forecast.Available != 0;
@@ -70,7 +70,9 @@
             if (disposed) return;
             module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Huishoudboek.Web/financial-charts.js");
             if (disposed) return;
-            charts ??= await module.InvokeAsync<IJSObjectReference>("create", spendingCanvas, forecastCanvas);
+            charts ??= await module.InvokeAsync<IJSObjectReference>("create", spendingCanvas, forecastCanvas, new {
+                locale = UiCulture.Culture.Name, income = L["Income"].Value, outflow = L["Outflow"].Value,
+                available = L["Available"].Value, actual = L["Actual"].Value, forecast = L["Forecast"].Value });
             if (disposed) return;
             await charts.InvokeVoidAsync("update", new {
                 labels = spending.Select(c => c.Name),
