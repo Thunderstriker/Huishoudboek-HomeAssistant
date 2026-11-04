@@ -103,7 +103,7 @@ public sealed class ImportWorkspace : IDisposable
             return new(upload.PreviewId, snapshot.Revision, profile, table.Headers,
                 rows.FirstOrDefault(r => r.CategoryChoices.Count > 0)?.CategoryChoices ?? [], rows.Select(r =>
                     new PreviewRow(r.RowNumber, r.Date, r.Description, r.Amount, r.Transaction?.StatementBalance,
-                        r.IsValid, r.Include, r.Note, r.CategoryId, r.CounterAccountId, r.Kind)).ToList());
+                        r.IsValid, r.Include, r.Note, r.CategoryId, null, r.Kind)).ToList());
         }
     }
 
@@ -117,6 +117,8 @@ public sealed class ImportWorkspace : IDisposable
             if (revision != upload.Revision) throw new AdministrationConflictException();
             if (request.Rows.Length == 0 || request.Rows.Select(r => r.RowNumber).Distinct().Count() != request.Rows.Length)
                 throw new InvalidOperationException("Selecteer één of meer verschillende geldige regels.");
+            if (request.Rows.Any(r => r.CounterAccountId != null))
+                throw new InvalidOperationException("Imports boeken alleen op de gekozen rekening; een tegenrekening koppelen is niet toegestaan.");
             var batchId = Guid.NewGuid();
             var snapshot = coordinator.Update(revision, data =>
             {
@@ -129,24 +131,15 @@ public sealed class ImportWorkspace : IDisposable
                     var row = rows.SingleOrDefault(r => r.RowNumber == selection.RowNumber)
                         ?? throw new InvalidOperationException("Een geselecteerde regel bestaat niet in het voorbeeld.");
                     if (row.Transaction == null) throw new InvalidOperationException("Ongeldige regels kunnen niet worden geïmporteerd.");
-                    row.CounterAccountId = selection.CounterAccountId;
-                    // Auto-created preview category IDs can differ when a preview is rebuilt. Resolve by the preview's name.
-                    var category = upload.Rows!.SelectMany(r => r.CategoryChoices).FirstOrDefault(c => c.Id == selection.CategoryId);
                     var categoryId = selection.CategoryId;
                     if (categoryId != null && !data.Categories.Any(c => c.Id == categoryId))
-                    {
-                        if (category == null) throw new InvalidOperationException("Onbekende voorbeeldcategorie.");
-                        var resolved = row.PreviewCategories.FirstOrDefault(c => c.Name.Equals(category.Name, StringComparison.OrdinalIgnoreCase))
-                            ?? throw new InvalidOperationException("Onbekende voorbeeldcategorie.");
-                        categoryId = resolved.Id;
-                    }
+                        throw new InvalidOperationException("Onbekende categorie.");
                     row.CategoryId = categoryId;
-                    if (!row.IsValid) throw new InvalidOperationException("Een geselecteerde regel heeft geen geldige tegenrekening of openingsdatum.");
-                    if (categoryId is { } id && !data.Categories.Any(c => c.Id == id)) data.Categories.Add(row.PreviewCategories.Single(c => c.Id == id));
+                    if (!row.IsValid) throw new InvalidOperationException("Een geselecteerde regel is ongeldig.");
                     var transaction = row.Transaction;
                     transaction.ImportBatchId = batchId;
                     transaction.RecurringPaymentId = null;
-                    if (transaction.Kind != TransactionKind.Transfer) Finance.ApplySuggestions(data, transaction, suggestCategory: false);
+                    Finance.ApplySuggestions(data, transaction, suggestCategory: false);
                     data.Transactions.Add(transaction);
                     selected.Add(transaction);
                 }
@@ -163,6 +156,8 @@ public sealed class ImportWorkspace : IDisposable
 
     public PreviewRow Adjust(AdjustImportRequest request)
     {
+        if (request.CounterAccountId != null)
+            throw new InvalidOperationException("Imports boeken alleen op de gekozen rekening; een tegenrekening koppelen is niet toegestaan.");
         lock (_gate)
         {
             Cleanup();
@@ -171,9 +166,8 @@ public sealed class ImportWorkspace : IDisposable
             var row = upload.Rows!.SingleOrDefault(r => r.RowNumber == request.RowNumber)
                 ?? throw new InvalidOperationException("Onbekende voorbeeldregel.");
             if (request.SetCategory) row.CategoryId = request.CategoryId;
-            row.CounterAccountId = request.CounterAccountId;
             return new(row.RowNumber, row.Date, row.Description, row.Amount, row.Transaction?.StatementBalance,
-                row.IsValid, row.Include, row.Note, row.CategoryId, row.CounterAccountId, row.Kind);
+                row.IsValid, row.Include, row.Note, row.CategoryId, null, row.Kind);
         }
     }
 

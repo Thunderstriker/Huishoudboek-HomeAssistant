@@ -119,6 +119,7 @@ public sealed record ImportProfile
     public string DirectionColumn { get; set; } = "";
     public string CurrencyColumn { get; set; } = "";
     public string AccountReferenceColumn { get; set; } = "";
+    // Retained for database compatibility; statement imports do not link counterparties to accounts.
     public string CounterAccountReferenceColumn { get; set; } = "";
     public string BalanceColumn { get; set; } = "";
     public string FallbackDescriptionColumn { get; set; } = "";

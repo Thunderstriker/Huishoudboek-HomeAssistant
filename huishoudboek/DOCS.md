@@ -102,6 +102,29 @@ worden bewaard. Een Windows-desktopverbinding naar deze app is niet inbegrepen;
 er is standaard geen externe API-poort. De losse read-only sensorintegratie is een
 ander product en is niet automatisch met deze ingress-only app verbonden.
 
+## Excel/CSV importeren per rekening
+
+- Een bankimport boekt uitsluitend op de gekozen **Importrekening**. Bedragen
+  blijven positief of negatief zoals in het bestand; er wordt geen boeking op een
+  andere rekening aangemaakt en geen tegenrekening automatisch gekoppeld.
+- Importeer voor zicht-/betaal-, spaar- en beleggingsrekeningen ieder het eigen
+  bestand, of voer de eigen transacties handmatig in. Ook beide zijden van een
+  betaling tussen eigen rekeningen worden zo afzonderlijk geregistreerd.
+- Zonder expliciete handmatige overboeking zijn deze boekingen gewone inkomsten
+  of uitgaven in de overzichten. Een categorie is alleen een label en koppelt geen
+  rekeningen. Handmatig aangemaakte interne overboekingen werken wel beide rekeningen
+  bij; combineer die niet met twee afzonderlijke statementboekingen.
+- Dubbelen worden gecontroleerd op rekening, datum, bedrag en omschrijving.
+  Boekingen op andere rekeningen houden een eigen import niet tegen.
+- De update wijzigt bestaande opgeslagen overboekingen niet. Maak eerst een
+  databaseback-up. Corrigeer een oude automatisch gekoppelde import via
+  **Transacties → Bewerken**: kies de oorspronkelijke importrekening, het type
+  **Inkomst / uitgave** en het bedrag met het teken uit het bankbestand.
+  Bijvoorbeeld een ontvangst van € 27.234,13 op de zichtrekening blijft daar
+  **+€ 27.234,13**, zonder spaarrekeningkoppeling. Controleer daarna beide saldi
+  en eventuele dubbelen. U kunt ook de betreffende import terugdraaien en opnieuw
+  importeren; daarmee verwijdert u ook eventuele handmatige wijzigingen aan die import.
+
 ## Opslag, back-ups en updates
 
 - Actieve administratie: `/data/administration/huishoudboek.db`, met bijbehorende

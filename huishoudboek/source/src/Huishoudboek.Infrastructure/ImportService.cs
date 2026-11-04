@@ -17,18 +17,11 @@ public sealed record ImportCategoryChoice(Guid? Id, string Name);
 public sealed class ImportRow : INotifyPropertyChanged
 {
     private bool _include;
-    private Guid? _counterAccountId;
-    private bool _manualCategory;
     private string _statusNote = "";
-    private string _recognitionNote = "";
-    private string _validationNote = "";
-    private HouseholdData? _suggestions;
-    private Guid _sourceAccountId;
-    private decimal _sourceAmount;
     public int RowNumber { get; init; }
     public DateOnly? SourceDate { get; init; }
     public Transaction? Transaction { get; init; }
-    public bool IsValid => Transaction != null && _validationNote.Length == 0;
+    public bool IsValid => Transaction != null;
     public bool Include
     {
         get => _include;
@@ -36,11 +29,10 @@ public sealed class ImportRow : INotifyPropertyChanged
     }
     public DateOnly? Date => Transaction?.Date ?? SourceDate;
     public string Description => Transaction?.Description ?? "";
-    public decimal? Amount => Transaction == null ? null : _suggestions == null ? Transaction.Amount : _sourceAmount;
-    public string Note { get => string.Join(" ", new[] { _statusNote, _recognitionNote, _validationNote,
+    public decimal? Amount => Transaction?.Amount;
+    public string Note { get => string.Join(" ", new[] { _statusNote,
         Transaction?.Kind == TransactionKind.Mortgage ? "Hypotheek herkend; vul na import de werkelijke aflossing in." : "" }.Where(s => s.Length > 0)); init => _statusNote = value; }
     public IReadOnlyList<ImportCategoryChoice> CategoryChoices { get; internal set; } = [];
-    public IReadOnlyList<Category> PreviewCategories => _suggestions?.Categories ?? [];
     public string Kind => Transaction?.Kind switch { TransactionKind.Transfer => "Interne overboeking", TransactionKind.Mortgage => "Hypotheek", _ => "Inkomst / uitgave" };
     public Guid? CategoryId
     {
@@ -48,48 +40,9 @@ public sealed class ImportRow : INotifyPropertyChanged
         set
         {
             if (Transaction == null) return;
-            _manualCategory = true; Transaction.CategoryId = value;
+            Transaction.CategoryId = value;
             PropertyChanged?.Invoke(this, new(nameof(CategoryId)));
         }
-    }
-    public Guid? CounterAccountId
-    {
-        get => _counterAccountId;
-        set
-        {
-            if (_counterAccountId == value || _suggestions == null) return;
-            _counterAccountId = value;
-            _recognitionNote = "Tegenrekening handmatig gekozen; controleer het type en de categorie.";
-            UpdateTransaction();
-        }
-    }
-
-    internal void Configure(HouseholdData suggestions, Guid sourceAccountId, decimal amount, TransferRecognition recognition)
-    {
-        _suggestions = suggestions; _sourceAccountId = sourceAccountId; _sourceAmount = amount;
-        _counterAccountId = recognition.CounterAccountId; _recognitionNote = recognition.Note;
-        UpdateTransaction();
-    }
-
-    private void UpdateTransaction()
-    {
-        if (Transaction == null || _suggestions == null) return;
-        InternalTransfers.SetCounterAccount(Transaction, _sourceAccountId, _sourceAmount, _counterAccountId);
-        if (!_manualCategory) Transaction.CategoryId = null;
-        if (Transaction.Kind == TransactionKind.Transfer)
-        {
-            // A deliberate 'Zonder categorie' is not an invitation to apply a default again.
-            if (!_manualCategory) TransferCategories.ApplyDefault(_suggestions, Transaction);
-        }
-        else Finance.ApplySuggestions(_suggestions, Transaction, suggestCategory: !_manualCategory);
-        var counter = _suggestions.Accounts.FirstOrDefault(a => a.Id == _counterAccountId);
-        _validationNote = _counterAccountId != null && (counter == null || counter.Id == _sourceAccountId)
-            ? "Kies een andere geldige tegenrekening."
-            : counter != null && Transaction.Date < counter.OpeningDate
-                ? "Vóór openingsdatum van de tegenrekening: pas eerst de rekening en het beginsaldo aan." : "";
-        if (!IsValid) _include = false;
-        foreach (var name in new[] { nameof(CounterAccountId), nameof(CategoryId), nameof(Kind), nameof(Note), nameof(IsValid), nameof(Include) })
-            PropertyChanged?.Invoke(this, new(name));
     }
     public event PropertyChangedEventHandler? PropertyChanged;
 }
@@ -200,20 +153,13 @@ public static class ImportService
             throw new InvalidDataException("Kies een datumkolom en omschrijvingskolom.");
         if (string.IsNullOrWhiteSpace(profile.AmountColumn) && (string.IsNullOrWhiteSpace(profile.DebitColumn) || string.IsNullOrWhiteSpace(profile.CreditColumn)))
             throw new InvalidDataException("Kies één bedragkolom, of zowel een af- als bij-kolom.");
-        var counts = data.Transactions.GroupBy(Signature).ToDictionary(g => g.Key, g => g.Count());
-        var transferEffects = data.Transactions.Where(t => t.Kind == TransactionKind.Transfer &&
-                (t.AccountId == accountId || t.CounterAccountId == accountId))
-            .Select(t => (t.Date, Amount: Finance.AccountEffect(t, accountId))).ToHashSet();
+        var counts = data.Transactions.Where(t => t.AccountId == accountId)
+            .GroupBy(Signature).ToDictionary(g => g.Key, g => g.Count());
         var seen = new Dictionary<string, int>();
         var result = new List<ImportRow>();
         var account = data.Accounts.Single(a => a.Id == accountId);
-        // Preview defaults must never add categories to the live administration.
-        var suggestions = new HouseholdData { Accounts = data.Accounts, Categories = [.. data.Categories],
-            Rules = data.Rules, RecurringPayments = data.RecurringPayments, Transactions = data.Transactions };
-        foreach (var destination in data.Accounts.Where(a => a.Kind != AccountKind.Current))
-            TransferCategories.ApplyDefault(suggestions, new Transaction { Kind = TransactionKind.Transfer, CounterAccountId = destination.Id });
         var categoryChoices = new[] { new ImportCategoryChoice(null, "Zonder categorie") }
-            .Concat(suggestions.Categories.Select(c => new ImportCategoryChoice(c.Id, c.Name))).ToList();
+            .Concat(data.Categories.Select(c => new ImportCategoryChoice(c.Id, c.Name))).ToList();
         for (var i = 0; i < table.Rows.Count; i++)
         {
             DateOnly? sourceDate = null;
@@ -227,7 +173,7 @@ public static class ImportService
                 if (currency.Length > 0 && !currency.Equals("EUR", StringComparison.OrdinalIgnoreCase) && currency != "€")
                     throw new InvalidDataException("Alleen EUR wordt ondersteund; deze regel gebruikt " + currency + ".");
                 var reference = Cell(row, profile.AccountReferenceColumn, true).Text;
-                if (!string.IsNullOrWhiteSpace(reference) && InternalTransfers.NormalizeReference(reference) != InternalTransfers.NormalizeReference(account.BankReference))
+                if (!string.IsNullOrWhiteSpace(reference) && BankReferences.Normalize(reference) != BankReferences.Normalize(account.BankReference))
                     throw new InvalidDataException(string.IsNullOrWhiteSpace(account.BankReference)
                         ? "Vul eerst het rekeningnummer/IBAN in bij Rekeningen om de opdrachtgever te controleren."
                         : "Rekening opdrachtgever komt niet overeen met de gekozen rekening.");
@@ -263,18 +209,16 @@ public static class ImportService
                 seen[signature] = occurrence;
                 var exists = occurrence <= counts.GetValueOrDefault(signature);
                 var repeated = occurrence > 1;
-                var possibleTransfer = transferEffects.Contains((date, amount));
-                var recognition = InternalTransfers.Recognize(data, accountId, Cell(row, profile.CounterAccountReferenceColumn, true).Text);
+                // A statement row belongs only to the selected account, even when its counterparty is another own account.
+                Finance.ApplySuggestions(data, transaction);
                 var preview = new ImportRow
                 {
                     RowNumber = table.SourceRows?[i] ?? i + 2, Transaction = transaction,
                     CategoryChoices = categoryChoices,
                     Note = exists ? "Al aanwezig; controleer vóór opnieuw importeren." :
-                        possibleTransfer ? "Mogelijk al verwerkt als interne overboeking." :
                         repeated ? "Gelijke regel in dit bestand; kan een aparte betaling zijn." : "Gereed"
                 };
-                preview.Configure(suggestions, accountId, amount, recognition);
-                preview.Include = !exists && !repeated && !possibleTransfer && !recognition.RequiresReview;
+                preview.Include = !exists && !repeated;
                 result.Add(preview);
             }
             catch (Exception ex) when (ex is FormatException or InvalidDataException or OverflowException or ArgumentException)
@@ -305,7 +249,6 @@ public static class ImportService
             AmountColumn = Find("Bedrag", "Amount"), DebitColumn = Find("Af", "Debit"), CreditColumn = Find("Bij", "Credit"),
             CurrencyColumn = Find("Munt", "Valuta", "Currency"),
             AccountReferenceColumn = Find("Rekening opdrachtgever", argenta ? "Rekening" : ""), BalanceColumn = Find("Saldo na verrichting"),
-            CounterAccountReferenceColumn = Find("Rekening tegenpartij", "Tegenrekening", "Counterparty account"),
             DirectionColumn = Find("Af Bij", "Af/Bij")
         };
     }

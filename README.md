@@ -19,6 +19,8 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
 - **Rekeningen en vermogen:** betaal- en spaarrekeningen, beleggen, eigenaren en hypotheek.
 - **Import en export:** Excel/CSV-import, automatische herkenning van Argenta-exports,
   CSV-export en volledige databaseback-ups met herstel.
+- **Imports per rekening:** alleen de gekozen rekening wordt bijgewerkt, met de
+  bedragen uit het bestand. Geen automatische koppeling tussen eigen rekeningen.
 - **Bestaande administratie:** importeer een Huishoudboek-database (`.db`) of begin
   met een lege administratie.
 
@@ -104,6 +106,7 @@ onder `huishoudboek/source/src`, verdeeld over Core, Infrastructure, Web en Serv
 
 ```powershell
 dotnet build huishoudboek/source/src/Huishoudboek.Service/Huishoudboek.Service.csproj
+dotnet test huishoudboek/source/tests/Huishoudboek.Tests/Huishoudboek.Tests.csproj
 ```
 
 Voor een nieuwe appversie moeten `version` in `huishoudboek/config.yaml` en het

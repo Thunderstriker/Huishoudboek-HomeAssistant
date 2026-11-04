@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.6
+
+- Excel/CSV-imports boeken uitsluitend op de gekozen rekening en behouden het
+  oorspronkelijke bedrag, ook bij betalingen tussen eigen rekeningen.
+- Automatische tegenrekeningkoppeling en de tegenrekeningkeuze in het importvoorbeeld
+  verwijderd. Elke rekening gebruikt het eigen importbestand; boekingen op andere
+  rekeningen worden niet als dubbelen gebruikt.
+- Bestaande opgeslagen overboekingen blijven ongewijzigd; controleer en corrigeer
+  eerder gekoppelde imports zo nodig handmatig. Importprofielen blijven compatibel.
+- Regressietests toegevoegd voor rekeningonafhankelijke imports, bedragen,
+  dubbelen, saldocontrole en het weigeren van tegenrekeningkoppelingen via de API.
+
 ## 0.1.5
 
 - Blazor-JavaScript-koppeling voor maand- en jaargrafieken hersteld: geen dubbele

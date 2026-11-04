@@ -17,6 +17,8 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
   Chart.js is lokaal meegeleverd onder de MIT-licentie.
 - Excel/CSV-import met automatische Argenta-herkenning, categorisatieregels,
   CSV-export en volledige databaseback-ups met herstel.
+- Elke bankimport werkt alleen de gekozen rekening bij, met de bedragen uit het
+  bestand. Gebruik voor elke rekening het eigen bestand; geen automatische koppelingen.
 
 **Over** is inkomsten min lasten en netto opzijgezet, geen rekeningsaldo.
 Prognoses zijn schattingen; werkelijke bedragen bevatten alleen boekingen tot

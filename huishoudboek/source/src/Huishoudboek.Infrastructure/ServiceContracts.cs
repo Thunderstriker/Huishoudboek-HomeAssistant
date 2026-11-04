@@ -7,6 +7,7 @@ public sealed record CategorizeRequest(Guid[] TransactionIds, Guid? CategoryId, 
     Guid[]? MatchingUncategorizedIds = null, string? UserDescription = null);
 public sealed record PreviewRequest(Guid UploadId, Guid AccountId, DateOnly From, DateOnly Through,
     ImportProfile? Profile = null, string? Worksheet = null, bool Windows1252 = false);
+// CounterAccountId is retained for older clients, but imports reject non-null values.
 public sealed record ImportSelection(int RowNumber, Guid? CategoryId, Guid? CounterAccountId);
 public sealed record AdjustImportRequest(Guid PreviewId, int RowNumber, Guid? CounterAccountId, Guid? CategoryId, bool SetCategory);
 public sealed record CommitImportRequest(Guid PreviewId, ImportSelection[] Rows);

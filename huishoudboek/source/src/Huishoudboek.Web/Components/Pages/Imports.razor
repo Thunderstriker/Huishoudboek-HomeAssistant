@@ -5,7 +5,7 @@
 @inject NavigationManager Navigation
 <PageTitle>Importeren · Huishoudboek</PageTitle>
 <h1>Excel / CSV importeren</h1>
-<p class="notice warning">Importeer slechts één zijde van interne overboekingen. Controleer dubbelen, valuta, rekening en openingsdatum. Er wordt pas na expliciete bevestiging opgeslagen.</p>
+<p class="notice">Elke import boekt alleen op de gekozen rekening, met het bedrag uit het bestand. Andere rekeningen worden niet automatisch gekoppeld of aangepast; importeer voor elke rekening het eigen bestand. Controleer dubbelen, valuta, rekening en openingsdatum. Er wordt pas na expliciete bevestiging opgeslagen.</p>
 <section class="card">
     <label>Bestand (.xls, .xlsx of .csv; maximaal 50 MB en 100.000 niet-lege regels)<InputFile id="importFile" OnChange="Upload" accept=".xls,.xlsx,.csv" /></label>
     <div class="fields"><label>Importrekening<select id="importAccount" @bind="accountId" @bind:after="Invalidate"><option value="">Kies rekening</option>@foreach (var a in State.Data.Accounts) { <option value="@a.Id">@a.Name</option> }</select></label>
@@ -29,16 +29,16 @@
 @if (preview != null)
 {
     <section class="card" id="previewPanel"><h2>Importvoorbeeld · nog niet opgeslagen</h2><p>@rows.Count regels · @rows.Count(r => r.Include) geselecteerd. Waarschijnlijke dubbelen zijn niet voorgeselecteerd maar blijven expliciet selecteerbaar. Ongeldige regels kunnen niet worden opgeslagen.</p>
-    <div class="table-scroll"><table><thead><tr><th>Opslaan</th><th>Regel</th><th>Datum</th><th>Omschrijving</th><th class="money">Bedrag</th><th>Categorie</th><th>Eigen tegenrekening</th><th>Controle</th></tr></thead><tbody>
+    <div class="table-scroll"><table><thead><tr><th>Opslaan</th><th>Regel</th><th>Datum</th><th>Omschrijving</th><th class="money">Bedrag</th><th>Categorie</th><th>Controle</th></tr></thead><tbody>
     @foreach (var row in rows.Skip(page * 100).Take(100))
     { <tr @key="row.Number"><td><input type="checkbox" aria-label="Importregel selecteren" @bind="row.Include" disabled="@(!row.Source.IsValid)" /></td><td>@row.Number</td><td>@row.Source.Date?.ToString("dd-MM-yyyy")</td><td class="description">@row.Source.Description</td><td class="money">@(row.Source.Amount is { } amount ? Money(amount) : "—")</td>
-    <td><select aria-label="Categorie importregel" value="@row.Source.CategoryId" @onchange="e => Adjust(row, e, true)">@foreach (var category in preview.Categories) { <option value="@category.Id">@category.Name</option> }</select></td>
-    <td><select aria-label="Tegenrekening importregel" value="@row.Source.CounterAccountId" @onchange="e => Adjust(row, e, false)"><option value="">Geen interne overboeking</option>@foreach (var a in State.Data.Accounts.Where(a => a.Id != accountId)) { <option value="@a.Id">@a.Name</option> }</select></td><td class="description"><span class="badge">@row.Source.Kind</span><br />@row.Source.Note</td></tr> }
+    <td><select aria-label="Categorie importregel" value="@row.Source.CategoryId" @onchange="e => Adjust(row, e)">@foreach (var category in preview.Categories) { <option value="@category.Id">@category.Name</option> }</select></td>
+    <td class="description"><span class="badge">@row.Source.Kind</span><br />@row.Source.Note</td></tr> }
     </tbody></table></div><Pager Count="rows.Count" @bind-Page="page" />
     <button id="commit" class="primary" disabled="@(!rows.Any(r => r.Include))" @onclick="() => commitConfirm = true">Geselecteerde regels definitief opslaan…</button></section>
 }
 @if (commitConfirm && preview != null)
-{ <Confirm Title="Import definitief opslaan" Text="@($"{rows.Count(r => r.Include)} geselecteerde regels opslaan? Controleer categorieën, interne overboekingen en expliciet geselecteerde dubbelen. Na opslaan verschijnt de saldocontrole.")" ActionLabel="Import opslaan" Cancel="() => commitConfirm = false" Accept="Commit" /> }
+{ <Confirm Title="Import definitief opslaan" Text="@($"{rows.Count(r => r.Include)} geselecteerde regels opslaan op {State.AccountName(accountId)}? Andere rekeningen blijven ongewijzigd. Controleer categorieën en expliciet geselecteerde dubbelen. Na opslaan verschijnt de saldocontrole.")" ActionLabel="Import opslaan" Cancel="() => commitConfirm = false" Accept="Commit" /> }
 @if (result is { } saved)
 {
     <Modal Title="Import voltooid — saldocontrole" Cancel="OpenReview">
@@ -63,7 +63,7 @@
         (nameof(ImportProfile.DateColumn), "Datum"), (nameof(ImportProfile.DescriptionColumn), "Omschrijving"), (nameof(ImportProfile.ExtraDescriptionColumn), "Extra omschrijving / mededeling"),
         (nameof(ImportProfile.AmountColumn), "Getekend bedrag"), (nameof(ImportProfile.DebitColumn), "Af-bedrag (alternatief)"), (nameof(ImportProfile.CreditColumn), "Bij-bedrag (alternatief)"),
         (nameof(ImportProfile.DirectionColumn), "Af/bij-indicator"), (nameof(ImportProfile.CurrencyColumn), "Munt / valuta"), (nameof(ImportProfile.AccountReferenceColumn), "Rekening opdrachtgever"),
-        (nameof(ImportProfile.CounterAccountReferenceColumn), "Rekening tegenpartij"), (nameof(ImportProfile.BalanceColumn), "Saldo na verrichting"), (nameof(ImportProfile.FallbackDescriptionColumn), "Fallback: type verrichting")];
+        (nameof(ImportProfile.BalanceColumn), "Saldo na verrichting"), (nameof(ImportProfile.FallbackDescriptionColumn), "Fallback: type verrichting")];
     protected override void OnInitialized()
     {
         base.OnInitialized(); from = new DateOnly(State.Year, State.Month, 1); through = from.AddMonths(1).AddDays(-1); accountId = State.Data.Accounts.FirstOrDefault()?.Id;
@@ -93,14 +93,14 @@
             profile = preview.Profile with { }; headers = preview.Headers; rows = preview.Rows.Select(r => new ImportDraftRow(r)).ToList(); page = 0; settingsOpen = rows.Count == 0;
         }, "Voorbeeld verwerkt. Controleer alle regels vóór opslaan.");
     }
-    private async Task Adjust(ImportDraftRow row, ChangeEventArgs args, bool category)
+    private async Task Adjust(ImportDraftRow row, ChangeEventArgs args)
     {
         if (preview == null) return;
         var id = Guid.TryParse(args.Value?.ToString(), out var parsed) ? parsed : (Guid?)null;
         await State.RunAsync(async () =>
         {
             var keep = row.Include;
-            row.Source = await Backend.AdjustAsync(new(preview.PreviewId, row.Number, category ? row.Source.CounterAccountId : id, category ? id : row.Source.CategoryId, category));
+            row.Source = await Backend.AdjustAsync(new(preview.PreviewId, row.Number, null, id, true));
             row.Include = row.Source.IsValid && keep;
         });
     }
@@ -109,7 +109,7 @@
         if (preview == null) return;
         await State.RunAsync(async () =>
         {
-            var selections = rows.Where(r => r.Include).Select(r => new ImportSelection(r.Number, r.Source.CategoryId, r.Source.CounterAccountId)).ToArray();
+            var selections = rows.Where(r => r.Include).Select(r => new ImportSelection(r.Number, r.Source.CategoryId, null)).ToArray();
             result = await Backend.CommitAsync(new(preview.PreviewId, selections), preview.Revision);
             skippedCount = rows.Count - selections.Length; commitConfirm = false; preview = null; rows.Clear(); uploadId = null;
             State.OwnerId = null; State.ReviewBatchId = result.BatchId; await State.LoadAsync();
