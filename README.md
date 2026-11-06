@@ -34,6 +34,11 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   controlepunten en wachten op bankgegevens; ontbrekende imports zijn geen betalingsachterstand.
 - **Jaaroverzicht:** inkomsten tegenover maandlasten, een uitgavendoughnut en de
   ontwikkeling van netto spaarbijdragen. Exacte bedragen en jaarbudgetten zijn uitklapbaar.
+- **Categorietrends:** bekijk historische uitgaven voor één categorie over 6, 12 of
+  24 maanden of een eigen periode. Bedragstaven met een driemaandsgemiddelde,
+  twee jaren over elkaar en een kalenderheatmap tonen trends en seizoenspatronen.
+  Exacte bedragen blijven beschikbaar; onvolledige maanden en onbevestigde bankdekking
+  zijn herkenbaar. Open de pagina vanuit het dashboard of klik op een categorietotaal.
 - **Transacties en budgetten:** categorieën, categorisatieregels, maandafwijkingen,
   vaste posten en filters per eigenaar.
 - **Splitsingen, retouren en vergoedingen:** verdeel één bankboeking over categorieën,
@@ -93,6 +98,12 @@ doelapparaat. De huidige Microsoft .NET 10-container-images ondersteunen geen
 - Budgetten gelden voor het huishouden, ook wanneer u op een eigenaar filtert.
 - Prognoses zijn schattingen op basis van geregistreerde boekingen, vaste posten
   en het waargenomen uitgavenpatroon. Onvolledige imports kunnen het beeld vertekenen.
+- Categorietrends gebruikt een eigen periode (standaard 24 afgesloten maanden),
+  onafhankelijk van de maand/het jaar in de werkbalk; het eigenaarfilter blijft gelden.
+  Retouren en vergoedingen verlagen uitgaven op hun ontvangstdatum. De optionele
+  huidige maand telt niet mee voor gemiddelden, de hoogste maand of de vergelijking
+  van de laatste 12 afgesloten maanden met de vorige 12. Ontbrekende imports kunnen
+  lijken op een daling; een lege maand is niet automatisch een bevestigde nul.
 - Zet bij **Budgetten & categorieën → Categorie instellen → Telt als** een categorie
   op **Sparen & beleggen**. Netto opzijgezet telt alleen op de betaalrekening, op
   de eigen bankdatum; een ontvangst daar verlaagt opzijgezet. Gebruik dezelfde

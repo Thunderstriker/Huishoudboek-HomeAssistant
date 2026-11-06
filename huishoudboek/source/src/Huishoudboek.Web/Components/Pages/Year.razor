@@ -23,7 +23,7 @@
 <details class="card"><summary>@L["ViewAnnualBudgets"]</summary>
 <p class="muted">@L["AnnualBudgetNote"]</p>
 <div class="table-scroll"><table><thead><tr><th>@L["Category"]</th><th class="money">@L["AnnualBudget"]</th><th class="money">@L["ActuallySpent"]</th></tr></thead><tbody>
-    @foreach (var row in overview.Categories) { <tr><td>@State.CategoryName(row.Id)</td><td class="money">@Money(row.Budget)</td><td class="money">@Money(row.Spent)</td></tr> }
+    @foreach (var row in overview.Categories) { <tr><td><a href="categorietrends?categorie=@row.Id">@State.CategoryName(row.Id)</a></td><td class="money">@Money(row.Budget)</td><td class="money">@Money(row.Spent)</td></tr> }
 </tbody></table></div></details>
 @code {
     private static string MonthName(int month) => UiCulture.Culture.DateTimeFormat.GetAbbreviatedMonthName(month);

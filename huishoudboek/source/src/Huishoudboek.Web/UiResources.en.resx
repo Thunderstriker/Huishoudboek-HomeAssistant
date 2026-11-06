@@ -774,4 +774,57 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="PaymentsAndReserves" xml:space="preserve"><value>Payments / planning reserves</value></data>
   <data name="LatestImportedBankDate" xml:space="preserve"><value>Latest bank data: {0}</value></data>
   <data name="ConfirmExistingStatementPeriods" xml:space="preserve"><value>Confirm existing import periods</value></data>
+  <data name="CategoryTrends" xml:space="preserve"><value>Category trends</value></data>
+  <data name="HistoryIntro" xml:space="preserve"><value>Zoom out. See the patterns behind your everyday spending.</value></data>
+  <data name="HistoryFilters" xml:space="preserve"><value>Category history filters</value></data>
+  <data name="HistoryPeriod" xml:space="preserve"><value>Period</value></data>
+  <data name="HistoryMonths" xml:space="preserve"><value>{0} months</value></data>
+  <data name="HistoryCustom" xml:space="preserve"><value>Custom</value></data>
+  <data name="HistoryIncludeCurrent" xml:space="preserve"><value>Add the current month</value></data>
+  <data name="HistoryFrom" xml:space="preserve"><value>From month</value></data>
+  <data name="HistoryThrough" xml:space="preserve"><value>Through month</value></data>
+  <data name="HistoryFilterNote" xml:space="preserve"><value>This page uses its own date range, not the month/year in the toolbar. The owner filter still applies.</value></data>
+  <data name="HistoryInvalidRange" xml:space="preserve"><value>Choose a valid range of 1–120 months from January 1900 up to the current month. The end must not be before the start.</value></data>
+  <data name="HistoryActualNote" xml:space="preserve"><value>Recorded spending, not a forecast. Split purchases count only for their allocated category. Received refunds and reimbursements reduce spending in the month received; ordinary income, savings and internal transfers are excluded. Changing categories also changes historical reports.</value></data>
+  <data name="HistoryCoverageNote" xml:space="preserve"><value>Complete bank statements have not been confirmed for all accounts in {0} month(s). Missing imports can look like lower spending and distort averages and comparisons. A month without entries is not proof of no spending.</value></data>
+  <data name="HistoryPartialNote" xml:space="preserve"><value>The current month contains entries through {0} only. It is excluded from averages, peak-month figures and the two-year comparison.</value></data>
+  <data name="HistoryExactAmounts" xml:space="preserve"><value>Explore exact monthly amounts</value></data>
+  <data name="HistoryPurchases" xml:space="preserve"><value>Purchases</value></data>
+  <data name="HistoryRecoveries" xml:space="preserve"><value>Refunds &amp; reimbursements</value></data>
+  <data name="HistoryNetSpending" xml:space="preserve"><value>Net spending</value></data>
+  <data name="HistoryMovingAverage" xml:space="preserve"><value>3-month moving average</value></data>
+  <data name="HistoryDataStatus" xml:space="preserve"><value>Bank coverage</value></data>
+  <data name="HistoryPartial" xml:space="preserve"><value>Incomplete month</value></data>
+  <data name="HistoryCoverageConfirmed" xml:space="preserve"><value>Statements confirmed</value></data>
+  <data name="HistoryCoverageUnknown" xml:space="preserve"><value>Statement coverage unconfirmed</value></data>
+  <data name="HistoryNoEntries" xml:space="preserve"><value>No recorded spending entries</value></data>
+  <data name="HistoryEyebrow" xml:space="preserve"><value>Your spending story</value></data>
+  <data name="HistoryActualOnly" xml:space="preserve"><value>Recorded amounts</value></data>
+  <data name="HistoryMonthlyAverage" xml:space="preserve"><value>Average per month</value></data>
+  <data name="HistoryCompleteMonthsOnly" xml:space="preserve"><value>Completed months only</value></data>
+  <data name="HistoryEmptyTitle" xml:space="preserve"><value>A fresh canvas</value></data>
+  <data name="HistoryEmptyNote" xml:space="preserve"><value>No spending entries for this category and period within the owner filter. Try another category, expand the period or import your statements.</value></data>
+  <data name="HistoryTrendChart" xml:space="preserve"><value>Monthly net spending and 3-month moving average for {0}. Exact amounts are available below.</value></data>
+  <data name="HistoryHoverHint" xml:space="preserve"><value>Hover or tap to explore · exact amounts below</value></data>
+  <data name="HistoryPeakMonth" xml:space="preserve"><value>Highest recorded month</value></data>
+  <data name="HistoryNoCompleteActivity" xml:space="preserve"><value>No activity in completed months</value></data>
+  <data name="HistoryRecoveriesNote" xml:space="preserve"><value>Received amounts that reduced spending</value></data>
+  <data name="HistoryRecordedChange" xml:space="preserve"><value>Recorded 12-month change</value></data>
+  <data name="HistoryComparedYears" xml:space="preserve"><value>Latest 12 completed months vs previous 12</value></data>
+  <data name="HistoryNeedsTwoYears" xml:space="preserve"><value>Select at least 24 completed months to compare two full years.</value></data>
+  <data name="HistoryCompareEyebrow" xml:space="preserve"><value>A different perspective</value></data>
+  <data name="HistoryYearComparison" xml:space="preserve"><value>Same months. Different years.</value></data>
+  <data name="HistoryComparisonNote" xml:space="preserve"><value>The latest 12 completed months overlaid on the previous 12. Spot seasonal peaks and changes in recorded spending.</value></data>
+  <data name="HistoryComparisonChart" xml:space="preserve"><value>Latest 12 completed months compared with the previous 12 for {0}.</value></data>
+  <data name="HistoryComparisonAmounts" xml:space="preserve"><value>View paired monthly amounts</value></data>
+  <data name="HistoryPreviousYear" xml:space="preserve"><value>Previous 12 months</value></data>
+  <data name="HistoryLatestYear" xml:space="preserve"><value>Latest 12 months</value></data>
+  <data name="HistoryRhythmEyebrow" xml:space="preserve"><value>The bigger picture</value></data>
+  <data name="HistoryHeatmap" xml:space="preserve"><value>Your spending rhythm</value></data>
+  <data name="HistoryHeatmapNote" xml:space="preserve"><value>A whole year at a glance. Each tile is one month; a deeper colour means a larger amount.</value></data>
+  <data name="HistoryLess" xml:space="preserve"><value>Less</value></data>
+  <data name="HistoryMore" xml:space="preserve"><value>More</value></data>
+  <data name="HistoryHeatmapLegend" xml:space="preserve"><value>Teal: net spending · purple: net refunds · stripes: no spending entries · dashed outline: incomplete month. Hover, tap or focus a tile for its amount and bank coverage.</value></data>
+  <data name="HistoryDashboardLink" xml:space="preserve"><value>Explore spending trends</value></data>
+  <data name="HistoryCoverageBadge" xml:space="preserve"><value>Check bank coverage</value></data>
 </root>

@@ -9,6 +9,7 @@
         @if (State.Data.Accounts.Count == 0) { <a class="button primary" href="instellen">@L["GetStarted"]</a> }
         else { <button class="primary" disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State)">+ @L["AddExpense"]</button> }
         <a class="button" href="importeren">@L["ImportExcelCsv"]</a>
+        <a class="button" href="categorietrends"><span aria-hidden="true">⌁</span> @L["HistoryDashboardLink"]</a>
     </div>
 </div>
 

@@ -190,10 +190,50 @@ public sealed class DashboardLayoutTests
     [InlineData(typeof(Setup), "/instellen")]
     [InlineData(typeof(Outlook), "/vooruitblik")]
     [InlineData(typeof(WeeklyCheck), "/weekcontrole")]
+    [InlineData(typeof(CategoryTrends), "/categorietrends")]
     public void SupportingPagesHaveDedicatedAuthorizedRoutes(Type page, string route)
     {
         Assert.Contains(page.GetCustomAttributes(typeof(RouteAttribute), true).Cast<RouteAttribute>(), a => a.Template == route);
         Assert.NotEmpty(page.GetCustomAttributes(typeof(AuthorizeAttribute), true));
+    }
+
+    [Theory]
+    [InlineData("nl-NL", false)]
+    [InlineData("en-GB", false)]
+    [InlineData("nl-NL", true)]
+    [InlineData("en-GB", true)]
+    public async Task CategoryHistoryRendersLocalizedAccessibleChartsAndExactAmounts(string culture, bool empty)
+    {
+        using var language = new CultureScope(culture);
+        var data = empty ? HouseholdData.CreateEmpty() : Data();
+        if (!empty)
+        {
+            data.Categories.Add(new() { Name = "Savings only", Purpose = CategoryPurpose.Savings });
+            data.Transactions.Add(new() { AccountId = data.Accounts[0].Id, CategoryId = data.Categories[0].Id,
+                Date = DateOnly.FromDateTime(DateTime.Today).AddMonths(-1), Amount = -123.45m, Description = "Private bank text" });
+        }
+        using var services = Services(data); await services.GetRequiredService<WebState>().LoadAsync();
+        await using var renderer = new HtmlRenderer(services, services.GetRequiredService<ILoggerFactory>());
+        var html = WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(async () =>
+            (await renderer.RenderComponentAsync<CategoryTrends>()).ToHtmlString()));
+        Assert.Contains(UiCulture.Text("HistoryIntro"), html);
+        Assert.Contains(UiCulture.Text("HistoryFilterNote"), html);
+        Assert.Contains(UiCulture.Text("HistoryExactAmounts"), html);
+        Assert.Contains(UiCulture.Text("HistoryMovingAverage"), html);
+        Assert.Contains(UiCulture.Text("HistoryHeatmap"), html);
+        Assert.Equal(2, Regex.Matches(html, "<canvas ").Count);
+        Assert.Equal(2, Regex.Matches(html, "aria-describedby=\"history-method\"").Count);
+        Assert.Equal(24, Regex.Matches(html, "tabindex=\"0\" role=\"img\"").Count);
+        Assert.Contains("scope=\"col\"", html); Assert.Contains("scope=\"row\"", html);
+        Assert.Contains("aria-pressed=\"true\"", html);
+        Assert.DoesNotContain("Private bank text", html); Assert.DoesNotContain("Savings only", html);
+        Assert.DoesNotContain(UiCulture.Text("HistoryInvalidRange"), html);
+        Assert.Equal(empty, html.Contains(UiCulture.Text("HistoryEmptyTitle"), StringComparison.Ordinal));
+        if (!empty)
+        {
+            Assert.Contains(WebState.Money(123.45m), html);
+            Assert.Matches("id=\"history-chart-title\"[^>]*>Groceries</h2>", html);
+        }
     }
 
     private static HouseholdData Data()

@@ -92,6 +92,39 @@ Kleine waarschuwingen bij de bedragen verwijzen naar de volledige maanduitleg op
 **Financiële vooruitblik**. Daar staat ook de bestedingsplanner met aankoopcontrole,
 komende betalingen, buffers en dagelijkse saldoverwachtingen.
 
+### Historische uitgaven per categorie
+
+Open **Categorietrends** (`/categorietrends`) vanuit het dashboard of de navigatie.
+Klikken op een categorienaam in de maand-/jaartabel opent direct die categorie.
+Standaard ziet u de grootste uitgavencategorie over de recente historie en 24
+afgesloten maanden. Kies 6, 12 of 24 maanden of een eigen begin- en eindmaand
+(maximaal 120 maanden). Deze periode staat los van de maand/het jaar in de werkbalk;
+het eigenaarfilter blijft gelden en gedeelde rekeningen tellen eenmaal.
+
+- De bedragstaven tonen netto uitgaven; de lijn toont het gemiddelde van de huidige
+  en twee voorafgaande maanden binnen de gekozen periode. Daarom begint de lijn
+  pas bij de derde afgesloten maand. Negatieve bedragen blijven onder de nullijn.
+- De vergelijking legt de laatste 12 afgesloten maanden over de vorige 12.
+  Bij minder dan 24 afgesloten maanden wordt geen vergelijking getoond. Bij een
+  nul- of negatieve uitgangswaarde staat een bedragverschil in plaats van een percentage.
+- De kalenderheatmap toont uitgaven in groen en netto retouren in paars; gestreepte
+  vakjes hebben geen uitgavenboekingen. Beweeg, tik of gebruik het toetsenbord voor
+  details. Exacte bedragen staan ook in de uitklapbare tabellen.
+- **Huidige maand toevoegen** voegt de lopende maand toe aan de gekozen afgesloten
+  maanden. Die bevat alleen boekingen tot vandaag en telt niet mee voor gemiddelden,
+  de hoogste maand of de jaarvergelijking. Een stippelrand maakt dit zichtbaar.
+- Splitsingen, retouren en ontvangen vergoedingen volgen de bestaande boekhoudregels.
+  Een terugbetaling verlaagt de uitgaven op de ontvangstdatum. Gewone inkomsten,
+  sparen en eigen rekeningbewegingen tellen niet mee. Categorieën wijzigen verandert
+  ook deze historie, nooit de bankbedragen of saldi.
+- Afschriftdekking is alleen bevestigd als voor alle in-scope rekeningen expliciet
+  volledige afschriften beschikbaar zijn, rekening houdend met de openingsdatum.
+  Gaten en ongedaan gemaakte imports blijven onbevestigd. Ontbrekende gegevens kunnen
+  lijken op een daling; een maand zonder boekingen is geen bewijs dat er niets is uitgegeven.
+
+Alle grafieken werken lokaal, passen zich aan de schermbreedte aan en respecteren
+de browservoorkeur voor minder animatie.
+
 **Instellen** staat onder **Beheer & import → Instellen & navigatie**. **Wekelijkse
 controle** heeft een eigen pagina in de navigatie. Kies op die pagina of onder
 **Beheer & import → Instellen & navigatie** voor **Wekelijkse controle verbergen in de

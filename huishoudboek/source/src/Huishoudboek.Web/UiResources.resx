@@ -774,4 +774,57 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="PaymentsAndReserves" xml:space="preserve"><value>Betalingen / planningsreserves</value></data>
   <data name="LatestImportedBankDate" xml:space="preserve"><value>Laatste bankgegevens: {0}</value></data>
   <data name="ConfirmExistingStatementPeriods" xml:space="preserve"><value>Bestaande importperioden bevestigen</value></data>
+  <data name="CategoryTrends" xml:space="preserve"><value>Categorietrends</value></data>
+  <data name="HistoryIntro" xml:space="preserve"><value>Neem wat afstand. Ontdek de patronen achter uw dagelijkse uitgaven.</value></data>
+  <data name="HistoryFilters" xml:space="preserve"><value>Filters voor categoriehistorie</value></data>
+  <data name="HistoryPeriod" xml:space="preserve"><value>Periode</value></data>
+  <data name="HistoryMonths" xml:space="preserve"><value>{0} maanden</value></data>
+  <data name="HistoryCustom" xml:space="preserve"><value>Zelf kiezen</value></data>
+  <data name="HistoryIncludeCurrent" xml:space="preserve"><value>Huidige maand toevoegen</value></data>
+  <data name="HistoryFrom" xml:space="preserve"><value>Vanaf maand</value></data>
+  <data name="HistoryThrough" xml:space="preserve"><value>Tot en met maand</value></data>
+  <data name="HistoryFilterNote" xml:space="preserve"><value>Deze pagina gebruikt een eigen periode, niet de maand/het jaar in de werkbalk. Het eigenaarfilter blijft gelden.</value></data>
+  <data name="HistoryInvalidRange" xml:space="preserve"><value>Kies een geldige periode van 1–120 maanden vanaf januari 1900 tot en met de huidige maand. De eindmaand mag niet vóór de beginmaand liggen.</value></data>
+  <data name="HistoryActualNote" xml:space="preserve"><value>Geboekte uitgaven, geen prognose. Bij splitsingen telt alleen het deel voor deze categorie. Ontvangen retouren en vergoedingen verlagen de uitgaven in de maand van ontvangst; gewone inkomsten, sparen en interne overboekingen tellen niet mee. Categorieën wijzigen verandert ook historische rapporten.</value></data>
+  <data name="HistoryCoverageNote" xml:space="preserve"><value>Voor {0} maand(en) zijn niet voor alle rekeningen volledige bankafschriften bevestigd. Ontbrekende imports kunnen lijken op lagere uitgaven en gemiddelden en vergelijkingen vertekenen. Een maand zonder boekingen bewijst niet dat er niets is uitgegeven.</value></data>
+  <data name="HistoryPartialNote" xml:space="preserve"><value>De huidige maand bevat alleen boekingen tot en met {0}. Deze telt niet mee voor gemiddelden, de hoogste maand en de vergelijking van twee jaren.</value></data>
+  <data name="HistoryExactAmounts" xml:space="preserve"><value>Bekijk de exacte maandbedragen</value></data>
+  <data name="HistoryPurchases" xml:space="preserve"><value>Aankopen</value></data>
+  <data name="HistoryRecoveries" xml:space="preserve"><value>Retouren &amp; vergoedingen</value></data>
+  <data name="HistoryNetSpending" xml:space="preserve"><value>Netto uitgaven</value></data>
+  <data name="HistoryMovingAverage" xml:space="preserve"><value>Voortschrijdend gemiddelde (3 mnd)</value></data>
+  <data name="HistoryDataStatus" xml:space="preserve"><value>Bankdekking</value></data>
+  <data name="HistoryPartial" xml:space="preserve"><value>Onvolledige maand</value></data>
+  <data name="HistoryCoverageConfirmed" xml:space="preserve"><value>Afschriften bevestigd</value></data>
+  <data name="HistoryCoverageUnknown" xml:space="preserve"><value>Afschriftdekking niet bevestigd</value></data>
+  <data name="HistoryNoEntries" xml:space="preserve"><value>Geen geboekte uitgaven</value></data>
+  <data name="HistoryEyebrow" xml:space="preserve"><value>Het verhaal achter uw uitgaven</value></data>
+  <data name="HistoryActualOnly" xml:space="preserve"><value>Geboekte bedragen</value></data>
+  <data name="HistoryMonthlyAverage" xml:space="preserve"><value>Gemiddeld per maand</value></data>
+  <data name="HistoryCompleteMonthsOnly" xml:space="preserve"><value>Alleen afgesloten maanden</value></data>
+  <data name="HistoryEmptyTitle" xml:space="preserve"><value>Een leeg canvas</value></data>
+  <data name="HistoryEmptyNote" xml:space="preserve"><value>Geen uitgaven geboekt voor deze categorie en periode binnen het eigenaarfilter. Kies een andere categorie, vergroot de periode of importeer uw afschriften.</value></data>
+  <data name="HistoryTrendChart" xml:space="preserve"><value>Netto maanduitgaven en voortschrijdend gemiddelde over 3 maanden voor {0}. Exacte bedragen staan hieronder.</value></data>
+  <data name="HistoryHoverHint" xml:space="preserve"><value>Beweeg of tik voor details · exacte bedragen hieronder</value></data>
+  <data name="HistoryPeakMonth" xml:space="preserve"><value>Hoogste geboekte maand</value></data>
+  <data name="HistoryNoCompleteActivity" xml:space="preserve"><value>Geen activiteit in afgesloten maanden</value></data>
+  <data name="HistoryRecoveriesNote" xml:space="preserve"><value>Ontvangen bedragen die uitgaven verlaagden</value></data>
+  <data name="HistoryRecordedChange" xml:space="preserve"><value>Geboekte verandering over 12 maanden</value></data>
+  <data name="HistoryComparedYears" xml:space="preserve"><value>Laatste 12 afgesloten maanden t.o.v. de vorige 12</value></data>
+  <data name="HistoryNeedsTwoYears" xml:space="preserve"><value>Kies minstens 24 afgesloten maanden om twee volledige jaren te vergelijken.</value></data>
+  <data name="HistoryCompareEyebrow" xml:space="preserve"><value>Een ander perspectief</value></data>
+  <data name="HistoryYearComparison" xml:space="preserve"><value>Dezelfde maanden. Andere jaren.</value></data>
+  <data name="HistoryComparisonNote" xml:space="preserve"><value>De laatste 12 afgesloten maanden over de vorige 12 gelegd. Herken seizoenspieken en veranderingen in geboekte uitgaven.</value></data>
+  <data name="HistoryComparisonChart" xml:space="preserve"><value>Laatste 12 afgesloten maanden vergeleken met de vorige 12 voor {0}.</value></data>
+  <data name="HistoryComparisonAmounts" xml:space="preserve"><value>Bekijk maandbedragen naast elkaar</value></data>
+  <data name="HistoryPreviousYear" xml:space="preserve"><value>Vorige 12 maanden</value></data>
+  <data name="HistoryLatestYear" xml:space="preserve"><value>Laatste 12 maanden</value></data>
+  <data name="HistoryRhythmEyebrow" xml:space="preserve"><value>Het grotere geheel</value></data>
+  <data name="HistoryHeatmap" xml:space="preserve"><value>Uw uitgavenritme</value></data>
+  <data name="HistoryHeatmapNote" xml:space="preserve"><value>Een heel jaar in één oogopslag. Elk vakje is een maand; een diepere kleur betekent een groter bedrag.</value></data>
+  <data name="HistoryLess" xml:space="preserve"><value>Minder</value></data>
+  <data name="HistoryMore" xml:space="preserve"><value>Meer</value></data>
+  <data name="HistoryHeatmapLegend" xml:space="preserve"><value>Groen: netto uitgaven · paars: netto retouren · strepen: geen uitgaven geboekt · stippelrand: onvolledige maand. Beweeg, tik of focus op een vakje voor bedrag en bankdekking.</value></data>
+  <data name="HistoryDashboardLink" xml:space="preserve"><value>Ontdek uw uitgaventrends</value></data>
+  <data name="HistoryCoverageBadge" xml:space="preserve"><value>Bankdekking controleren</value></data>
 </root>

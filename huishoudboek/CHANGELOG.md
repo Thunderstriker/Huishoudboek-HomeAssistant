@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.14
+
+- Nieuwe pagina Categorietrends: historische maanduitgaven per categorie met
+  kleurrijke bedragstaven, een voortschrijdend gemiddelde over drie maanden,
+  een vergelijking van twee jaren en een interactieve kalenderheatmap.
+- Kies 6, 12 of 24 afgesloten maanden of een eigen periode tot tien jaar.
+  De huidige maand is optioneel en telt niet mee voor gemiddelden en jaarvergelijkingen.
+  Eigenaarfilters, splitsingen, retouren en vergoedingen volgen de bestaande boekhoudregels.
+- Exacte bedragen blijven uitklapbaar beschikbaar. Ontbrekende afschriftbevestigingen
+  worden zichtbaar gemeld; geen boekingen betekent niet automatisch geen uitgaven.
+- Rechtstreeks bereikbaar vanaf het dashboard, de navigatie en categorietotalen in
+  maand-/jaaroverzichten. Beide talen, mobiele weergave en verminderde animatie ondersteund.
+
 ## 0.1.13
 
 - Nieuw dashboard als startpagina met individuele rekeningsaldi van vandaag,

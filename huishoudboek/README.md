@@ -27,6 +27,11 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
 - **Jaaroverzicht:** een inkomsten-en-lastentrend, een uitgavendoughnut en een
   spaarritmegrafiek met maandbijdragen en het totaal sinds januari, geen rekeningsaldo.
   Tabellen met exacte bedragen en jaarbudgetten zijn uitklapbaar.
+- **Categorietrends:** historische uitgaven per categorie met bedragstaven, een
+  driemaandsgemiddelde, twee jaren over elkaar en een kalenderheatmap. Kies 6, 12 of
+  24 afgesloten maanden of een eigen periode; voeg de huidige maand optioneel toe.
+  Open vanuit het dashboard of klik op een categorietotaal in het maand-/jaaroverzicht.
+  Het eigenaarfilter blijft gelden; de pagina heeft een eigen periodekeuze.
 - Negatieve bedragen staan onder de nullijn; exacte bedragen blijven beschikbaar
   in tabellen of samenvattingen. De grafieken passen zich aan de schermbreedte aan.
   Chart.js is lokaal meegeleverd onder de MIT-licentie.

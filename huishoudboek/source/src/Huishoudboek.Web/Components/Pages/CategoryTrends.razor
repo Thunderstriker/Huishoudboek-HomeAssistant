@@ -1,0 +1,132 @@
+@page "/categorietrends"
+@attribute [Authorize]
+@inherits PageBase
+<PageTitle>@L["CategoryTrends"] · Huishoudboek</PageTitle>
+
+<div class="page-heading">
+    <div><h1>@L["CategoryTrends"]</h1><p class="muted">@L["HistoryIntro"]</p></div>
+</div>
+<section class="card history-controls" aria-label="@L["HistoryFilters"]">
+    <div class="history-filter-row">
+        <label class="category-picker">@L["Category"]
+            <select @bind="selectedCategory" @bind:after="Rebuild">
+                @foreach (var category in State.Data.Categories.Where(c => c.Purpose == CategoryPurpose.Normal).OrderBy(c => c.Name))
+                { <option value="@category.Id">@category.Name</option> }
+                <option value="@Guid.Empty">@L["Uncategorized"]</option>
+            </select>
+        </label>
+        <div class="range-picker"><span class="filter-label">@L["HistoryPeriod"]</span>
+            <div class="range-buttons" role="group" aria-label="@L["HistoryPeriod"]">
+                @foreach (var length in new[] { 6, 12, 24 })
+                { <button type="button" class="@(period == length ? "selected" : "")" aria-pressed="@(period == length ? "true" : "false")" @onclick="() => SetPeriod(length)">@L["HistoryMonths", length]</button> }
+                <button type="button" class="@(period == 0 ? "selected" : "")" aria-pressed="@(period == 0 ? "true" : "false")" @onclick="() => SetPeriod(0)">@L["HistoryCustom"]</button>
+            </div>
+        </div>
+        @if (period != 0)
+        { <label class="check current-toggle"><input type="checkbox" @bind="includeCurrent" @bind:after="ApplyPeriod" />@L["HistoryIncludeCurrent"]</label> }
+    </div>
+    @if (period == 0)
+    {
+        <div class="custom-range">
+            <label>@L["HistoryFrom"]<input type="month" min="1900-01" max="@CurrentMonth" value="@fromMonth" @onchange="args => ChangeMonth(args, true)" /></label>
+            <label>@L["HistoryThrough"]<input type="month" min="1900-01" max="@CurrentMonth" value="@throughMonth" @onchange="args => ChangeMonth(args, false)" /></label>
+        </div>
+    }
+    <p class="muted filter-note">@L["HistoryFilterNote"]</p>
+</section>
+
+@if (overview is null)
+{
+    <p class="notice error" role="alert">@L["HistoryInvalidRange"]</p>
+}
+else
+{
+    <CategoryHistoryCharts Overview="overview" CategoryName="@CategoryName" />
+    <div class="history-notes" id="history-method">
+        <p>@L["HistoryActualNote"]</p>
+        @if (overview.UnconfirmedMonths > 0)
+        { <p class="coverage-note"><span aria-hidden="true">◌</span> @L["HistoryCoverageNote", overview.UnconfirmedMonths] <a href="importeren">@L["ImportExcelCsv"] →</a></p> }
+        @if (overview.Months.Any(m => m.IsPartial))
+        { <p>@L["HistoryPartialNote", overview.Through.ToString("dd-MM-yyyy")]</p> }
+    </div>
+    <details class="card history-table">
+        <summary>@L["HistoryExactAmounts"]</summary>
+        <div class="table-scroll"><table>
+            <caption class="sr-only">@L["CategoryTrends"] · @CategoryName</caption>
+            <thead><tr><th scope="col">@L["Month"]</th><th scope="col" class="money">@L["HistoryPurchases"]</th><th scope="col" class="money">@L["HistoryRecoveries"]</th><th scope="col" class="money">@L["HistoryNetSpending"]</th><th scope="col" class="money">@L["HistoryMovingAverage"]</th><th scope="col">@L["HistoryDataStatus"]</th></tr></thead>
+            <tbody>
+                @foreach (var row in overview.Months.Reverse())
+                {
+                    <tr><th scope="row">@row.Month.ToString("MMM yyyy", UiCulture.Culture) @if (row.IsPartial) { <span class="badge">@L["HistoryPartial"]</span> }</th>
+                        <td class="money">@Money(row.Purchases)</td><td class="money">@Money(row.Recoveries)</td><td class="money"><strong>@Money(row.Spent)</strong></td>
+                        <td class="money">@(row.MovingAverage is { } average ? Money(average) : "—")</td>
+                        <td>@L[row.CoverageConfirmed ? "HistoryCoverageConfirmed" : "HistoryCoverageUnknown"] @if (row.EntryCount == 0) { <small> · @L["HistoryNoEntries"]</small> }</td></tr>
+                }
+            </tbody>
+        </table></div>
+    </details>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "categorie")] public Guid? CategoryId { get; set; }
+    private Guid selectedCategory;
+    private Guid? appliedQuery;
+    private bool queryApplied, includeCurrent;
+    private int period = 24;
+    private string fromMonth = "", throughMonth = "";
+    private CategoryHistoryOverview? overview;
+    private string CurrentMonth => State.Today.ToString("yyyy-MM", CultureInfo.InvariantCulture);
+    private string CategoryName => selectedCategory == Guid.Empty ? L["Uncategorized"].Value : State.CategoryName(selectedCategory);
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        selectedCategory = DefaultCategory();
+        ApplyPeriod();
+    }
+    protected override void OnParametersSet()
+    {
+        if (!queryApplied || appliedQuery != CategoryId)
+        {
+            queryApplied = true; appliedQuery = CategoryId;
+            if (CategoryId is { } id && (id == Guid.Empty || State.Data.Categories.Any(c => c.Id == id && c.Purpose == CategoryPurpose.Normal)))
+                selectedCategory = id;
+            Rebuild();
+        }
+    }
+    protected override void OnStateChanged() => Rebuild();
+    private Guid DefaultCategory()
+    {
+        var first = new DateOnly(State.Today.Year, State.Today.Month, 1).AddMonths(-24);
+        var scope = State.Scope;
+        return TransactionAccounting.Lines(State.Data, State.Data.Transactions.Where(t => t.Date >= first && t.Date <= State.Today && scope.Contains(t.AccountId)))
+            .Where(l => l.Spending > 0).GroupBy(l => l.CategoryId ?? Guid.Empty)
+            .OrderByDescending(g => g.Sum(l => l.Spending)).Select(g => (Guid?)g.Key).FirstOrDefault()
+            ?? State.Data.Categories.Where(c => c.Purpose == CategoryPurpose.Normal).OrderBy(c => c.Name).Select(c => c.Id).FirstOrDefault();
+    }
+    private void SetPeriod(int value) { period = value; if (period != 0) ApplyPeriod(); }
+    private void ChangeMonth(ChangeEventArgs args, bool from)
+    {
+        if (from) fromMonth = args.Value?.ToString() ?? "";
+        else throughMonth = args.Value?.ToString() ?? "";
+        Rebuild();
+    }
+    private void ApplyPeriod()
+    {
+        var current = new DateOnly(State.Today.Year, State.Today.Month, 1);
+        fromMonth = current.AddMonths(-period).ToString("yyyy-MM", CultureInfo.InvariantCulture);
+        throughMonth = (includeCurrent ? current : current.AddMonths(-1)).ToString("yyyy-MM", CultureInfo.InvariantCulture);
+        Rebuild();
+    }
+    private void Rebuild()
+    {
+        if (selectedCategory != Guid.Empty && !State.Data.Categories.Any(c => c.Id == selectedCategory && c.Purpose == CategoryPurpose.Normal))
+            selectedCategory = DefaultCategory();
+        overview = null;
+        if (!DateOnly.TryParseExact(fromMonth + "-01", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var from) ||
+            !DateOnly.TryParseExact(throughMonth + "-01", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var through)) return;
+        var count = (through.Year - from.Year) * 12 + through.Month - from.Month + 1;
+        if (from.Year < 1900 || through.Year > 2200 || count is < 1 or > 120 || through > State.Today) return;
+        overview = CategoryHistory.Create(State.Data, selectedCategory, from, through, State.Today, State.OwnerId);
+    }
+}

@@ -1,0 +1,132 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div class="history-visuals">
+    <section class="history-hero" aria-labelledby="history-chart-title">
+        <div class="hero-heading">
+            <div><span class="eyebrow">@L["HistoryEyebrow"]</span><h2 id="history-chart-title">@CategoryName</h2><p>@Overview.From.ToString("MMM yyyy", UiCulture.Culture) — @Overview.Through.ToString("MMM yyyy", UiCulture.Culture)</p></div>
+            <div class="hero-status"><span class="actual-pill"><i aria-hidden="true"></i>@L["HistoryActualOnly"]</span>
+                @if (Overview.UnconfirmedMonths > 0) { <a class="coverage-pill" href="#history-method">@L["HistoryCoverageBadge"] ↗</a> }
+            </div>
+        </div>
+        <div class="hero-numbers">
+            <div><span class="hero-label">@L["HistoryNetSpending"]</span><strong class="hero-total">@Money(Overview.Total)</strong></div>
+            <div class="hero-average"><span class="hero-label">@L["HistoryMonthlyAverage"]</span><strong>@(Overview.MonthlyAverage is { } average ? Money(average) : "—")</strong><small>@L["HistoryCompleteMonthsOnly"]</small></div>
+        </div>
+        @if (!Overview.HasActivity)
+        { <div class="chart-empty"><span aria-hidden="true">◌</span><h3>@L["HistoryEmptyTitle"]</h3><p>@L["HistoryEmptyNote"]</p></div> }
+        <div class="history-main-canvas" hidden="@(!Overview.HasActivity)"><canvas @ref="trendCanvas" role="img" aria-label="@L["HistoryTrendChart", CategoryName]" aria-describedby="history-method"></canvas></div>
+        <div class="hero-legend"><span><i class="legend-bar"></i>@L["HistoryNetSpending"]</span><span><i class="legend-line"></i>@L["HistoryMovingAverage"]</span><small>@L["HistoryHoverHint"]</small></div>
+    </section>
+
+    <div class="history-insights">
+        <section class="insight-card"><span class="insight-icon" aria-hidden="true">↗</span><div><h3>@L["HistoryPeakMonth"]</h3>
+            <strong>@(Overview.Peak is { } peak ? Money(peak.Spent) : "—")</strong><small>@(Overview.Peak?.Month.ToString("MMMM yyyy", UiCulture.Culture) ?? L["HistoryNoCompleteActivity"].Value)</small></div></section>
+        <section class="insight-card"><span class="insight-icon purple" aria-hidden="true">↶</span><div><h3>@L["HistoryRecoveries"]</h3><strong>@Money(Overview.Recoveries)</strong><small>@L["HistoryRecoveriesNote"]</small></div></section>
+        <section class="insight-card"><span class="insight-icon blue" aria-hidden="true">⇄</span><div><h3>@L["HistoryRecordedChange"]</h3>
+            @if (Overview.Comparison is { } comparison)
+            { <strong>@(comparison.Change is { } change ? SignedPercent(change) : Money(comparison.Difference))</strong><small>@L["HistoryComparedYears"]</small> }
+            else { <strong>—</strong><small>@L["HistoryNeedsTwoYears"]</small> }
+        </div></section>
+    </div>
+
+    <section class="card comparison-card">
+        <div class="chart-heading"><div><span class="eyebrow">@L["HistoryCompareEyebrow"]</span><h2>@L["HistoryYearComparison"]</h2><p class="muted">@L["HistoryComparisonNote"]</p></div>
+            @if (Overview.Comparison is { } years)
+            { <div class="comparison-totals"><span><i class="previous-dot"></i>@YearRange(years.Previous)<strong>@Money(years.PreviousTotal)</strong></span><span><i class="latest-dot"></i>@YearRange(years.Latest)<strong>@Money(years.LatestTotal)</strong></span></div> }
+        </div>
+        @if (Overview.Comparison is null) { <p class="comparison-empty">@L["HistoryNeedsTwoYears"]</p> }
+        <div class="comparison-canvas" hidden="@(Overview.Comparison is null || !Overview.HasActivity)"><canvas @ref="comparisonCanvas" role="img" aria-label="@L["HistoryComparisonChart", CategoryName]" aria-describedby="history-method"></canvas></div>
+        @if (Overview.Comparison is { } exactYears)
+        {
+            <details class="comparison-details"><summary>@L["HistoryComparisonAmounts"]</summary><div class="table-scroll"><table>
+                <thead><tr><th scope="col">@L["HistoryPreviousYear"]</th><th scope="col" class="money">@L["HistoryNetSpending"]</th><th scope="col">@L["HistoryLatestYear"]</th><th scope="col" class="money">@L["HistoryNetSpending"]</th></tr></thead>
+                <tbody>@for (var index = 0; index < 12; index++) { <tr><td>@exactYears.Previous[index].Month.ToString("MMM yyyy", UiCulture.Culture)</td><td class="money">@Money(exactYears.Previous[index].Spent)</td><td>@exactYears.Latest[index].Month.ToString("MMM yyyy", UiCulture.Culture)</td><td class="money">@Money(exactYears.Latest[index].Spent)</td></tr> }</tbody>
+            </table></div></details>
+        }
+    </section>
+
+    <section class="card heatmap-card" aria-labelledby="history-heatmap-title">
+        <div class="chart-heading"><div><span class="eyebrow">@L["HistoryRhythmEyebrow"]</span><h2 id="history-heatmap-title">@L["HistoryHeatmap"]</h2><p class="muted">@L["HistoryHeatmapNote"]</p></div>
+            <div class="heat-key"><span>@L["HistoryLess"]</span><i></i><i></i><i></i><i></i><span>@L["HistoryMore"]</span></div>
+        </div>
+        <div class="heat-grid">
+            <div></div>@for (var month = 1; month <= 12; month++) { <div class="heat-month" title="@UiCulture.Culture.DateTimeFormat.GetMonthName(month)">@UiCulture.Culture.DateTimeFormat.GetAbbreviatedMonthName(month)</div> }
+            @foreach (var year in Overview.Months.Select(m => m.Month.Year).Distinct())
+            {
+                <div class="heat-year">@year</div>
+                @for (var month = 1; month <= 12; month++)
+                {
+                    var cell = Overview.Months.FirstOrDefault(m => m.Month.Year == year && m.Month.Month == month);
+                    if (cell is null) { <div class="heat-outside" aria-hidden="true"></div> }
+                    else
+                    {
+                        var description = $"{cell.Month.ToString("MMMM yyyy", UiCulture.Culture)} · {Money(cell.Spent)} · {L[cell.CoverageConfirmed ? "HistoryCoverageConfirmed" : "HistoryCoverageUnknown"].Value}" +
+                            (cell.IsPartial ? $" · {L["HistoryPartial"].Value}" : "");
+                        <div class="heat-cell @(cell.Spent < 0 ? "recovery" : "") @(cell.EntryCount == 0 ? "no-entries" : "") @(cell.IsPartial ? "partial" : "")" style="--intensity:@Intensity(cell)" tabindex="0" role="img" aria-label="@description">
+                            <span class="heat-value" aria-hidden="true">@(cell.IsPartial ? "◐" : cell.EntryCount == 0 ? "·" : "")</span><span class="heat-tooltip" aria-hidden="true">@description</span>
+                        </div>
+                    }
+                }
+            }
+        </div>
+        <p class="muted heatmap-footnote">@L["HistoryHeatmapLegend"]</p>
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CategoryHistoryOverview Overview { get; set; } = null!;
+    [Parameter, EditorRequired] public string CategoryName { get; set; } = "";
+    private ElementReference trendCanvas, comparisonCanvas;
+    private IJSObjectReference? module, charts;
+    private readonly SemaphoreSlim chartLock = new(1, 1);
+    private bool disposed;
+    private static string SignedPercent(decimal amount) => (amount > 0 ? "+" : "") + amount.ToString("P1", UiCulture.Culture);
+    private static string YearRange(IReadOnlyList<CategoryHistoryMonth> months) =>
+        $"{months[0].Month.ToString("MMM yy", UiCulture.Culture)} – {months[^1].Month.ToString("MMM yy", UiCulture.Culture)}";
+    private string Intensity(CategoryHistoryMonth month)
+    {
+        var max = Overview.Months.Max(m => Math.Abs(m.Spent));
+        return (max == 0 ? 0 : Math.Abs(month.Spent) / max).ToString("0.###", CultureInfo.InvariantCulture);
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await chartLock.WaitAsync();
+        try
+        {
+            if (disposed) return;
+            module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Huishoudboek.Web/category-history-charts.js");
+            if (disposed) return;
+            charts ??= await module.InvokeAsync<IJSObjectReference>("createHistory", trendCanvas, comparisonCanvas, new {
+                locale = UiCulture.Culture.Name, spending = L["HistoryNetSpending"].Value,
+                movingAverage = L["HistoryMovingAverage"].Value, previous = L["HistoryPreviousYear"].Value,
+                latest = L["HistoryLatestYear"].Value, partial = L["HistoryPartial"].Value,
+                unconfirmed = L["HistoryCoverageUnknown"].Value });
+            if (disposed) return;
+            await charts.InvokeVoidAsync("update", new {
+                months = Overview.Months.Select(m => m.Month.ToString("MMM yy", UiCulture.Culture)),
+                fullMonths = Overview.Months.Select(m => m.Month.ToString("MMMM yyyy", UiCulture.Culture)),
+                spending = Overview.Months.Select(m => m.Spent), average = Overview.Months.Select(m => m.MovingAverage),
+                partial = Overview.Months.Select(m => m.IsPartial), covered = Overview.Months.Select(m => m.CoverageConfirmed),
+                comparisonMonths = Overview.Comparison?.Latest.Select(m => m.Month.ToString("MMM", UiCulture.Culture)),
+                previous = Overview.Comparison?.Previous.Select(m => m.Spent), latest = Overview.Comparison?.Latest.Select(m => m.Spent),
+                previousMonths = Overview.Comparison?.Previous.Select(m => m.Month.ToString("MMMM yyyy", UiCulture.Culture)),
+                latestMonths = Overview.Comparison?.Latest.Select(m => m.Month.ToString("MMMM yyyy", UiCulture.Culture))
+            });
+        }
+        catch (JSDisconnectedException) { }
+        finally { chartLock.Release(); }
+    }
+    public async ValueTask DisposeAsync()
+    {
+        disposed = true;
+        await chartLock.WaitAsync();
+        try
+        {
+            if (charts != null) { await charts.InvokeVoidAsync("destroy"); await charts.DisposeAsync(); }
+            if (module != null) await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException) { }
+        finally { chartLock.Release(); }
+    }
+}

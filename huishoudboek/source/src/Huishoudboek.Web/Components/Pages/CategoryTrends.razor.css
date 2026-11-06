@@ -1,0 +1,26 @@
+.history-controls { border-radius: 16px; }
+.history-filter-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px; }
+.category-picker { flex: 1 1 220px; max-width: 380px; }
+.range-picker { min-width: 0; }
+.filter-label { display: block; font-weight: 600; margin-bottom: .3rem; }
+.range-buttons { display: flex; flex-wrap: wrap; gap: 4px; background: #eef3f8; padding: 4px; border-radius: 10px; }
+.range-buttons button { border: 0; background: transparent; padding: .45rem .8rem; min-height: 36px; }
+.range-buttons button.selected { background: #14283e; color: white; box-shadow: 0 2px 6px #14283e24; }
+.current-toggle { align-self: center; padding-top: 20px; }
+.custom-range { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
+.custom-range label { flex: 0 1 200px; }
+.filter-note { margin: 14px 0 0; }
+.history-notes { margin: 20px 2px; color: #52657b; font-size: .88rem; }
+.history-notes p { margin: 8px 0; }
+.coverage-note { border-left: 3px solid #ba8435; padding-left: 12px; }
+.history-table { border-radius: 16px; }
+.history-table summary { cursor: pointer; font-weight: 600; }
+.history-table .table-scroll { margin-top: 16px; }
+.history-table tbody th { text-align: left; font-weight: 400; white-space: nowrap; }
+@media (max-width: 600px) {
+    .history-filter-row { gap: 14px; }
+    .category-picker { max-width: none; flex-basis: 100%; }
+    .range-picker { width: 100%; }
+    .range-buttons button { flex: 1; padding-inline: .4rem; }
+    .current-toggle { padding-top: 0; }
+}
