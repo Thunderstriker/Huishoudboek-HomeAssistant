@@ -6,7 +6,7 @@
 <div class="actions"><button class="primary" disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State)">+ @L["AddExpense"]</button><button disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State, true)">+ @L["AddIncome"]</button><button disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.Transaction(State)">@L["AdvancedTransaction"]</button><a class="button" href="importeren">@L["ImportExcelCsv"]</a></div>
 <div class="filters"><label>@L["Search"]<input type="search" @bind="search" @bind:event="oninput" @bind:after="Reset" placeholder="@L["TransactionSearchHint"]" /></label>
 <label>@L["Account"]<select @bind="accountId" @bind:after="Reset"><option value="">@L["AllAccounts"]</option>@foreach (var a in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@a.Id">@a.Name</option> }</select></label>
-<label class="check"><input type="checkbox" @bind="allDates" @bind:after="Reset" />@L["AllDates"]</label></div>
+<label class="check"><input type="checkbox" @bind="AllDates" @bind:after="Reset" />@L["AllDates"]</label></div>
 @{ var rows = Rows.ToList(); page = Math.Min(page, Math.Max(0, (rows.Count - 1) / 100)); }
 <section class="card"><MobileTransactions Transactions="rows.Skip(page * 100).Take(100)" TypeLabel="TransactionType" Edit="row => Draft = EditorDraft.Transaction(State, row)" Handle="OpenDetails" Delete="AskDelete" Recurring="OpenRecurring" /><div class="table-scroll desktop-transactions"><table id="transactions"><thead><tr><th>@L["Date"]</th><th>@L["Account"]</th><th>@L["Description"]</th><th class="money">@L["Amount"]</th><th>@L["CategoryType"]</th><th class="money">@L["Principal"]</th><th>@L["RecurringPayment"]</th><th class="money">@L["StatementBalance"]</th><th>@L["Actions"]</th></tr></thead><tbody>
 @foreach (var row in rows.Skip(page * 100).Take(100))
@@ -34,7 +34,8 @@
 @if (recurringTransaction is { } recurringEntry)
 { <RecurringTransactionLink @key="recurringEntry.Id" Transaction="recurringEntry" Closed="() => recurringTransaction = null" Create="CreateRecurring" /> }
 @code {
-    private string search = ""; private Guid? accountId; private bool allDates; private int page;
+    private string search = ""; private Guid? accountId; private int page;
+    [SupplyParameterFromQuery(Name = "allDates")] public bool AllDates { get; set; }
     private TransactionDetailsDraft? details;
     private Transaction? recurringTransaction;
     private void OpenRecurring(Transaction transaction) => recurringTransaction = transaction;
@@ -49,7 +50,7 @@
             var detailsText = string.IsNullOrWhiteSpace(search) ? null : TransactionAccounting.Lines(State.Data, State.Data.Transactions)
                 .GroupBy(l => l.Transaction.Id).ToDictionary(g => g.Key, g => string.Join(" ", g.Select(l => State.CategoryName(l.CategoryId) + " " + l.Note)));
             return State.Data.Transactions.Where(t => (scope.Contains(t.AccountId) || t.CounterAccountId is { } counter && scope.Contains(counter)) &&
-                (allDates || t.Date.Year == State.Year && t.Date.Month == State.Month) && (accountId == null || t.AccountId == accountId || t.CounterAccountId == accountId) &&
+                (AllDates || t.Date.Year == State.Year && t.Date.Month == State.Month) && (accountId == null || t.AccountId == accountId || t.CounterAccountId == accountId) &&
                 (detailsText == null || $"{t.Description} {t.UserDescription} {State.CategoryName(t.CategoryId)} {State.AccountName(t.AccountId)} {State.AccountName(t.CounterAccountId)} {detailsText.GetValueOrDefault(t.Id)}".Contains(search, StringComparison.OrdinalIgnoreCase)))
                 .OrderByDescending(t => t.Date).ThenBy(t => t.Id);
         }

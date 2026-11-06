@@ -1,4 +1,5 @@
 .monthly-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.monthly-charts.spending-only { grid-template-columns: 1fr; }
 .chart-card { min-width: 0; }
 .spending-summary { display: flex; align-items: center; gap: 20px; min-height: 220px; }
 .spending-summary[hidden], .forecast-wrap[hidden] { display: none; }

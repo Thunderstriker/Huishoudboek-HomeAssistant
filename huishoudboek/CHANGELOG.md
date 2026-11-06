@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.13
+
+- Nieuw dashboard als startpagina met individuele rekeningsaldi van vandaag,
+  compacte maandcijfers, uitgavencategorieën en budgetbewaking, komende betalingen,
+  volgende inkomensdatums, recente boekingen en gerichte aandachtspunten.
+- Rekeningkaarten kiezen per browser; standaard de betaalrekeningen/zichtrekeningen.
+  Spaar- en beleggingsrekeningen zijn optioneel, met cash en effecten apart vermeld.
+  De kaartkeuze verandert geen rapporten; eigenaarfilters blijven overal gelden.
+- Het bestaande maandoverzicht blijft behouden als aparte pagina op `/maand`.
+  Dashboard en maandoverzicht hebben elk een eigen navigatielink.
+- Nederlandse/Engelse teksten, documentatie en regressietests voor de nieuwe startpagina,
+  lokale voorkeuren, bankactualiteit, eigenaarfilters en onzekere betalingen.
+
 ## 0.1.12
 
 - Rustiger maandoverzicht: maandcijfers direct bovenaan, zonder eerste-weekchecklist,

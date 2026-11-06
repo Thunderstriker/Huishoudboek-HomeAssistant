@@ -1,0 +1,92 @@
+@inherits PageBase
+@inject UiPreferences Preferences
+
+<section class="dashboard-accounts" aria-labelledby="dashboard-accounts-heading">
+    <div class="page-heading">
+        <div><h2 id="dashboard-accounts-heading">@L["DashboardYourAccounts"]</h2><p class="muted">@L["DashboardBalancesToday", State.Today.ToString("dd-MM-yyyy")]</p></div>
+        @if (Accounts.Count > 0)
+        {
+            <details class="account-picker">
+                <summary>@L["DashboardChooseAccounts"]</summary>
+                <div class="card account-picker-panel">
+                    <fieldset disabled="@(!Preferences.Loaded || saving)">
+                        <legend class="sr-only">@L["DashboardChooseAccounts"]</legend>
+                        @foreach (var item in Accounts)
+                        {
+                            var account = item.Account;
+                            <label class="check" @key="account.Id"><input type="checkbox" checked="@Selected(account)" @onchange="e => Toggle(account.Id, e.Value is true)" />@account.Name <small>@Kind(account.Kind)</small></label>
+                        }
+                        <button @onclick="Reset">@L["DashboardDefaultAccounts"]</button>
+                    </fieldset>
+                    <p class="muted" role="status">@L[Preferences.CanPersist ? "DashboardAccountPreferenceNote" : "DashboardPreferenceSessionOnly"]</p>
+                </div>
+            </details>
+        }
+    </div>
+    @if (Accounts.Count == 0)
+    {
+        <div class="card"><p class="muted">@L["DashboardNoAccounts"] <a href="rekeningen">@L["Accounts"]</a></p></div>
+    }
+    else if (!Preferences.Loaded)
+    {
+        <div class="card" role="status">@L["DashboardLoadingAccounts"]</div>
+    }
+    else if (!Accounts.Any(a => Selected(a.Account)))
+    {
+        <div class="card"><p class="muted">@L["DashboardNoSelectedAccounts"]</p><button @onclick="Reset" disabled="@saving">@L["DashboardDefaultAccounts"]</button></div>
+    }
+    else
+    {
+        <div class="account-grid">
+            @foreach (var item in Accounts.Where(a => Selected(a.Account)))
+            {
+                var account = item.Account;
+                <article class="card account-card @(account.Kind == AccountKind.Current ? "current-account" : "")" data-account-id="@account.Id" @key="account.Id">
+                    <div class="account-kind">@Kind(account.Kind)</div>
+                    <h3>@account.Name</h3>
+                    <div class="metric-label">@L[account.Kind == AccountKind.Investment ? "DashboardRecordedValue" : "DashboardRecordedBalance"]</div>
+                    <div class="metric-value @(item.Balance.Total < 0 ? "negative" : "")">@Money(item.Balance.Total)</div>
+                    @if (account.Kind == AccountKind.Investment)
+                    {
+                        <p class="muted">@L["CashBalance"]: @Money(item.Balance.Cash) · @L["Securities"]: @Money(item.Balance.Securities)<br />@L["Valuation"]: @(item.Balance.ValuationDate?.ToString("dd-MM-yyyy") ?? L["NoValuation"].Value)</p>
+                    }
+                    <div class="account-freshness">
+                        <span class="badge @(item.StaleImports ? "warning" : "")">@L[item.StaleImports ? "CheckImport" : "DashboardRecentImport"]</span>
+                        <small>@L["DashboardImportedThrough", item.ImportedThrough?.ToString("dd-MM-yyyy") ?? L["Unknown"].Value]</small>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<HomeAccount> Accounts { get; set; } = [];
+    private bool saving;
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Preferences.Changed += PreferencesChanged;
+    }
+    private void PreferencesChanged() => _ = InvokeAsync(StateHasChanged);
+    private bool Selected(Account account) => Preferences.DashboardAccountIds?.Contains(account.Id) ?? account.Kind == AccountKind.Current;
+    private async Task Toggle(Guid id, bool selected)
+    {
+        var ids = Preferences.DashboardAccountIds?.ToHashSet() ?? State.Data.Accounts.Where(a => a.Kind == AccountKind.Current).Select(a => a.Id).ToHashSet();
+        if (selected) ids.Add(id); else ids.Remove(id);
+        saving = true;
+        try { await Preferences.SetDashboardAccountsAsync(ids); }
+        finally { saving = false; }
+    }
+    private async Task Reset()
+    {
+        saving = true;
+        try { await Preferences.SetDashboardAccountsAsync(null); }
+        finally { saving = false; }
+    }
+    public override void Dispose()
+    {
+        Preferences.Changed -= PreferencesChanged;
+        base.Dispose();
+    }
+}

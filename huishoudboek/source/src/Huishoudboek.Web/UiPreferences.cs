@@ -8,6 +8,8 @@ public sealed class UiPreferences(IJSRuntime js)
     private Task? load;
     public bool Loaded { get; private set; }
     public bool HideWeeklyReview { get; private set; }
+    // Null means the default (all current accounts); an empty list deliberately hides every card.
+    public IReadOnlyList<Guid>? DashboardAccountIds { get; private set; }
     public bool CanPersist { get; private set; } = true;
     public event Action? Changed;
 
@@ -23,6 +25,14 @@ public sealed class UiPreferences(IJSRuntime js)
             CanPersist = hidden.HasValue;
         }
         catch (JSException) { CanPersist = false; }
+        try
+        {
+            var saved = await js.InvokeAsync<DashboardAccountsPreference?>("huishoudboek.preferences.readDashboardAccounts");
+            CanPersist &= saved?.Available == true;
+            if (saved?.AccountIds is { } ids && ids.All(id => Guid.TryParse(id, out _)))
+                DashboardAccountIds = ids.Select(Guid.Parse).Distinct().ToArray();
+        }
+        catch (JSException) { CanPersist = false; }
         Loaded = true;
         Changed?.Invoke();
     }
@@ -35,4 +45,15 @@ public sealed class UiPreferences(IJSRuntime js)
         catch (JSException) { CanPersist = false; }
         Changed?.Invoke();
     }
+
+    public async Task SetDashboardAccountsAsync(IEnumerable<Guid>? accountIds)
+    {
+        await LoadAsync();
+        DashboardAccountIds = accountIds?.Distinct().ToArray();
+        try { CanPersist = await js.InvokeAsync<bool>("huishoudboek.preferences.writeDashboardAccounts", new object?[] { DashboardAccountIds }); }
+        catch (JSException) { CanPersist = false; }
+        Changed?.Invoke();
+    }
 }
+
+public sealed record DashboardAccountsPreference(bool Available, string[]? AccountIds);

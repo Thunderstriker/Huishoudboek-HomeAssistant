@@ -8,6 +8,11 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
 
 ## Functies
 
+- **Dashboard als startpagina:** saldi van vandaag per rekening, maandcijfers,
+  uitgavencategorieën, budgetbewaking, betalingen over 7 dagen en recente boekingen.
+  Kies zelf rekeningkaarten; standaard staan de betaalrekeningen (zichtrekeningen) aan.
+  De keuze wordt per browser bewaard en verandert geen overzichten of financiële gegevens.
+  Het volledige maandoverzicht blijft apart beschikbaar via **Maandoverzicht**.
 - **Instellen en wekelijkse controle:** aparte pagina's met een checklist voor rekeningen, beginsaldi,
   imports, banksaldocontrole, categorisatie en budgetten/vaste posten. Daarna een compacte
   review voor recente imports, uitzonderingen en betalingen over 7 dagen. Instellen staat

@@ -26,6 +26,40 @@
   <data name="FooterNote" xml:space="preserve"><value>Shared household records · amounts from recorded data ·</value></data>
   <data name="BackupAdministration" xml:space="preserve"><value>Backup &amp; administration</value></data>
   <data name="MonthlyOverview" xml:space="preserve"><value>Monthly overview</value></data>
+  <data name="StartDashboard" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="DashboardIntro" xml:space="preserve"><value>Your balances, spending and the week ahead.</value></data>
+  <data name="DashboardYourAccounts" xml:space="preserve"><value>Your accounts</value></data>
+  <data name="DashboardBalancesToday" xml:space="preserve"><value>Recorded balances as of {0} · not a live bank connection.</value></data>
+  <data name="DashboardChooseAccounts" xml:space="preserve"><value>Choose accounts</value></data>
+  <data name="DashboardDefaultAccounts" xml:space="preserve"><value>Show current accounts (default)</value></data>
+  <data name="DashboardAccountPreferenceNote" xml:space="preserve"><value>Remembered in this browser. Only these account cards change; reports still follow the owner and month filters.</value></data>
+  <data name="DashboardPreferenceSessionOnly" xml:space="preserve"><value>Browser storage is unavailable. Your account selection lasts only for this session; reports are unchanged.</value></data>
+  <data name="DashboardNoAccounts" xml:space="preserve"><value>No accounts open today within this owner filter. Add an account or change the filter.</value></data>
+  <data name="DashboardNoSelectedAccounts" xml:space="preserve"><value>No account cards selected within this owner filter. Use Choose accounts or restore the default.</value></data>
+  <data name="DashboardLoadingAccounts" xml:space="preserve"><value>Loading your account selection…</value></data>
+  <data name="DashboardRecordedValue" xml:space="preserve"><value>Recorded account value</value></data>
+  <data name="DashboardRecordedBalance" xml:space="preserve"><value>Recorded balance</value></data>
+  <data name="DashboardRecentImport" xml:space="preserve"><value>Recent bank data</value></data>
+  <data name="DashboardImportedThrough" xml:space="preserve"><value>Bank data through {0}</value></data>
+  <data name="DashboardMonthlyNote" xml:space="preserve"><value>Actual amounts for the selected month, up to today. Account cards above always show today's balances.</value></data>
+  <data name="DashboardFullMonth" xml:space="preserve"><value>Full monthly overview</value></data>
+  <data name="DashboardBudgetWatch" xml:space="preserve"><value>Budget watch</value></data>
+  <data name="DashboardLargestCategoriesNote" xml:space="preserve"><value>The five largest spending categories; smaller categories are grouped together. See the full monthly overview for all amounts.</value></data>
+  <data name="DashboardNoBudgets" xml:space="preserve"><value>No spending limits set for this month. The category chart shows where your money went.</value></data>
+  <data name="DashboardSetBudgets" xml:space="preserve"><value>Set budgets</value></data>
+  <data name="DashboardBudgetOver" xml:space="preserve"><value>{0} over budget</value></data>
+  <data name="DashboardBudgetRemaining" xml:space="preserve"><value>{0} remaining</value></data>
+  <data name="DashboardComingUp" xml:space="preserve"><value>Coming up</value></data>
+  <data name="DashboardUpcomingNote" xml:space="preserve"><value>From {0} · all current accounts within the owner filter, regardless of the account cards chosen. Scheduled amounts are estimates.</value></data>
+  <data name="DashboardNoUpcoming" xml:space="preserve"><value>No known scheduled payments in the next seven days. Everyday spending and unconfirmed payment reserves are not included here.</value></data>
+  <data name="DashboardIncomeUnknown" xml:space="preserve"><value>Not scheduled</value></data>
+  <data name="DashboardRecentActivity" xml:space="preserve"><value>Recent activity</value></data>
+  <data name="DashboardRecentNote" xml:space="preserve"><value>Latest five recorded transactions up to today · all dates within the owner filter.</value></data>
+  <data name="DashboardNoRecent" xml:space="preserve"><value>No recorded transactions yet within this owner filter.</value></data>
+  <data name="DashboardAttention" xml:space="preserve"><value>Worth a look</value></data>
+  <data name="DashboardStaleCount" xml:space="preserve"><value>Check bank data for {0} account(s)</value></data>
+  <data name="DashboardUncategorizedCount" xml:space="preserve"><value>{0} recorded transaction(s) still need a category</value></data>
+  <data name="DashboardBufferRisk" xml:space="preserve"><value>{0}: projected balance {1} on {2}, below the cash buffer</value></data>
   <data name="FinancialOutlook" xml:space="preserve"><value>Financial outlook</value></data>
   <data name="SetupTitle" xml:space="preserve"><value>Setup</value></data>
   <data name="GetStarted" xml:space="preserve"><value>Get started</value></data>

@@ -6,6 +6,11 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
 
 ## Inzicht in Uw Financiën
 
+- **Dashboard:** nieuwe startpagina met saldi van vandaag per rekening, compacte
+  maandcijfers, uitgaven per categorie, budgetbewaking, komende betalingen en recente
+  boekingen. Via **Rekeningen kiezen** bepaalt u welke rekeningkaarten zichtbaar zijn;
+  standaard de betaalrekeningen (zichtrekeningen). De keuze blijft in deze browser
+  en verandert geen rapportfilters. Het volledige maandoverzicht blijft een aparte pagina.
 - **Maandoverzicht:** compacte doughnutgrafiek met de grootste uitgavencategorieën
   en percentages, plus werkelijke bedragen tegenover de maandprognose. De maandcijfers
   staan direct bovenaan, zonder startchecklist of bestedingsplanner erboven.

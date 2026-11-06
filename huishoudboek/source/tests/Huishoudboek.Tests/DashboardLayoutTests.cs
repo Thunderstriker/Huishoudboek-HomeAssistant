@@ -22,6 +22,102 @@ public sealed class DashboardLayoutTests
     [InlineData("en-GB", false)]
     [InlineData("nl-NL", true)]
     [InlineData("en-GB", true)]
+    public async Task StartPageShowsAccountBalancesBeforeACompactMonthlyOverview(string culture, bool empty)
+    {
+        using var language = new CultureScope(culture);
+        var data = empty ? HouseholdData.CreateEmpty() : Data();
+        using var services = Services(data);
+        var state = services.GetRequiredService<WebState>(); await state.LoadAsync();
+        await services.GetRequiredService<UiPreferences>().LoadAsync();
+        await using var renderer = new HtmlRenderer(services, services.GetRequiredService<ILoggerFactory>());
+        var html = WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(async () =>
+            (await renderer.RenderComponentAsync<Home>()).ToHtmlString()));
+        Assert.Contains(UiCulture.Text("DashboardIntro"), html);
+        Assert.Contains("href=\"maand\"", html);
+        Assert.True(html.IndexOf("id=\"dashboard-accounts-heading\"", StringComparison.Ordinal) <
+            html.IndexOf("id=\"dashboard-monthly-figures\"", StringComparison.Ordinal));
+        Assert.Contains(UiCulture.Text("DashboardBalancesToday", state.Today.ToString("dd-MM-yyyy")), html);
+        Assert.Contains(UiCulture.Text("AvailableNote"), html);
+        Assert.Contains("class=\"monthly-charts spending-only\"", html);
+        Assert.DoesNotContain(UiCulture.Text("ActualExpected"), html);
+        Assert.DoesNotContain("id=\"monthly-figures\"", html); // The original monthly page is separate.
+        Assert.DoesNotContain("<table", html);
+        Assert.Contains("href=\"transacties?allDates=true\"", html);
+        Assert.Contains(UiCulture.Text("DashboardNoRecent"), html);
+        Assert.Contains(UiCulture.Text("DashboardNoUpcoming"), html);
+        Assert.Equal(empty, html.Contains("href=\"instellen\"", StringComparison.Ordinal));
+        Assert.Equal(!empty, html.Contains("data-account-id=", StringComparison.Ordinal));
+        Assert.Equal(!empty, html.Contains("id=\"dashboard-attention-heading\"", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData("nl-NL")]
+    [InlineData("en-GB")]
+    public async Task AccountSelectionUpdatesCardsWithoutFilteringReportsAndSurvivesOwnerChanges(string culture)
+    {
+        using var language = new CultureScope(culture);
+        var data = Data(); var current = data.Accounts[0];
+        var savings = current with { Id = Guid.NewGuid(), Name = "Savings", Kind = AccountKind.Savings };
+        var otherOwner = new Owner { Name = "Other" }; data.Owners.Add(otherOwner);
+        var other = current with { Id = Guid.NewGuid(), Name = "Other account", OwnerIds = [otherOwner.Id] };
+        data.Accounts.AddRange([savings, other]);
+        using var services = Services(data); var state = services.GetRequiredService<WebState>(); await state.LoadAsync();
+        var preferences = services.GetRequiredService<UiPreferences>(); await preferences.LoadAsync();
+        await using var renderer = new HtmlRenderer(services, services.GetRequiredService<ILoggerFactory>());
+        var root = await renderer.Dispatcher.InvokeAsync(async () => await renderer.RenderComponentAsync<Home>());
+        async Task<string> Html() => WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(root.ToHtmlString));
+        var initial = await Html();
+        Assert.Contains($"data-account-id=\"{current.Id}\"", initial);
+        Assert.Contains($"data-account-id=\"{other.Id}\"", initial);
+        Assert.DoesNotContain($"data-account-id=\"{savings.Id}\"", initial);
+
+        await renderer.Dispatcher.InvokeAsync(() => preferences.SetDashboardAccountsAsync([savings.Id]));
+        var selected = await Html();
+        Assert.Contains($"data-account-id=\"{savings.Id}\"", selected);
+        Assert.DoesNotContain($"data-account-id=\"{current.Id}\"", selected);
+        var monthStart = "<section class=\"dashboard-month\"";
+        Assert.Equal(initial[initial.IndexOf(monthStart, StringComparison.Ordinal)..], selected[selected.IndexOf(monthStart, StringComparison.Ordinal)..]);
+
+        await renderer.Dispatcher.InvokeAsync(() => preferences.SetDashboardAccountsAsync([current.Id, other.Id]));
+        await renderer.Dispatcher.InvokeAsync(() => { state.OwnerId = current.OwnerIds[0]; state.Notify(); });
+        var firstOwner = await Html();
+        Assert.Contains($"data-account-id=\"{current.Id}\"", firstOwner);
+        Assert.DoesNotContain($"data-account-id=\"{other.Id}\"", firstOwner);
+        await renderer.Dispatcher.InvokeAsync(() => { state.OwnerId = otherOwner.Id; state.Notify(); });
+        var secondOwner = await Html();
+        Assert.Contains($"data-account-id=\"{other.Id}\"", secondOwner);
+        Assert.DoesNotContain($"data-account-id=\"{current.Id}\"", secondOwner);
+        Assert.Equal(new[] { current.Id, other.Id }, preferences.DashboardAccountIds);
+
+        await renderer.Dispatcher.InvokeAsync(() => preferences.SetDashboardAccountsAsync([]));
+        var hidden = await Html();
+        Assert.DoesNotContain("data-account-id=", hidden);
+        Assert.Contains(UiCulture.Text("DashboardNoSelectedAccounts"), hidden);
+        await renderer.Dispatcher.InvokeAsync(() => preferences.SetDashboardAccountsAsync(null));
+        Assert.Contains($"data-account-id=\"{other.Id}\"", await Html());
+    }
+
+    [Fact]
+    public async Task FreshEmptyAccountsDoNotProduceAnAttentionPanelAndUnbudgetedSpendingHasAnExplanation()
+    {
+        var data = Data(); var account = data.Accounts[0]; data.Categories.Clear();
+        data.ImportBatches.Add(new() { AccountId = account.Id, CoverageFrom = account.OpeningDate,
+            CoverageThrough = DateOnly.FromDateTime(DateTime.Today) });
+        using var services = Services(data); await services.GetRequiredService<WebState>().LoadAsync();
+        await services.GetRequiredService<UiPreferences>().LoadAsync();
+        await using var renderer = new HtmlRenderer(services, services.GetRequiredService<ILoggerFactory>());
+        var html = WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(async () =>
+            (await renderer.RenderComponentAsync<Home>()).ToHtmlString()));
+        Assert.DoesNotContain("id=\"dashboard-attention-heading\"", html);
+        Assert.Contains(UiCulture.Text("DashboardNoBudgets"), html);
+        Assert.Contains(UiCulture.Text("DashboardRecentImport"), html);
+    }
+
+    [Theory]
+    [InlineData("nl-NL", false)]
+    [InlineData("en-GB", false)]
+    [InlineData("nl-NL", true)]
+    [InlineData("en-GB", true)]
     public async Task MonthlyOverviewStartsWithFiguresAndKeepsGuidanceOnSeparatePages(string culture, bool empty)
     {
         using var language = new CultureScope(culture);
@@ -89,6 +185,8 @@ public sealed class DashboardLayoutTests
     }
 
     [Theory]
+    [InlineData(typeof(Home), "/")]
+    [InlineData(typeof(Dashboard), "/maand")]
     [InlineData(typeof(Setup), "/instellen")]
     [InlineData(typeof(Outlook), "/vooruitblik")]
     [InlineData(typeof(WeeklyCheck), "/weekcontrole")]
@@ -127,8 +225,17 @@ public sealed class DashboardLayoutTests
 
     private sealed class StaticJs : IJSRuntime
     {
-        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) => throw new NotSupportedException();
-        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args) => throw new NotSupportedException();
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+        {
+            object? result = identifier switch {
+                "huishoudboek.preferences.readWeeklyReviewHidden" => (bool?)false,
+                "huishoudboek.preferences.readDashboardAccounts" => new DashboardAccountsPreference(true, null),
+                "huishoudboek.preferences.writeDashboardAccounts" => true,
+                _ => throw new NotSupportedException(identifier)
+            };
+            return ValueTask.FromResult((TValue)result!);
+        }
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args) => InvokeAsync<TValue>(identifier, args);
     }
 
     private sealed class CultureScope : IDisposable

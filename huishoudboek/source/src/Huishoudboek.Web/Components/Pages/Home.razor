@@ -1,0 +1,129 @@
+@page "/"
+@attribute [Authorize]
+@inherits EditPageBase
+<PageTitle>@L["StartDashboard"] · Huishoudboek</PageTitle>
+
+<div class="page-heading dashboard-heading">
+    <div><h1>@L["StartDashboard"]</h1><p class="muted">@L["DashboardIntro"]</p></div>
+    <div class="actions">
+        @if (State.Data.Accounts.Count == 0) { <a class="button primary" href="instellen">@L["GetStarted"]</a> }
+        else { <button class="primary" disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State)">+ @L["AddExpense"]</button> }
+        <a class="button" href="importeren">@L["ImportExcelCsv"]</a>
+    </div>
+</div>
+
+<DashboardAccounts Accounts="overview.Accounts" />
+
+<section class="dashboard-month" aria-labelledby="dashboard-month-heading">
+    <div class="page-heading section-heading">
+        <div><h2 id="dashboard-month-heading">@(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2><p class="muted">@L["DashboardMonthlyNote"]</p></div>
+        <a href="maand">@L["DashboardFullMonth"] →</a>
+    </div>
+    <div class="metrics dashboard-metrics" id="dashboard-monthly-figures">
+        <div class="card"><div class="metric-label">@L["Income"]</div><div class="metric-value positive">@Money(overview.Month.Income)</div><small>@L["ActuallyReceived"]</small></div>
+        <div class="card"><div class="metric-label">@L["OutflowHousing"]</div><div class="metric-value">@Money(overview.Month.Outflow)</div><small>@L["IncludesPrincipal"]</small></div>
+        <div class="card"><div class="metric-label">@L["Savings"]</div><div class="metric-value">@Money(overview.Month.Savings)</div><small>@L["NetSavingsInvestments"]</small></div>
+        <div class="card result-card"><div class="metric-label">@L["AvailableThisMonth"]</div><div class="metric-value @(overview.Month.Available < 0 ? "negative" : "positive")">@Money(overview.Month.Available)</div><small>@L["AvailableNote"]</small></div>
+    </div>
+    <div class="dashboard-columns spending-columns">
+        <MonthlyCharts Report="overview.Month" SpendingOnly="true" />
+        <section class="card budget-watch" aria-labelledby="dashboard-budget-heading">
+            <div class="page-heading"><h2 id="dashboard-budget-heading">@L["DashboardBudgetWatch"]</h2><a href="budgetten">@L["Budgets"] →</a></div>
+            @if (budgets.Count == 0)
+            {
+                <p class="muted">@L["DashboardNoBudgets"]</p>
+                <a class="button" href="budgetten">@L["DashboardSetBudgets"]</a>
+            }
+            else
+            {
+                <ul class="dashboard-list">
+                    @foreach (var category in budgets)
+                    {
+                        <li>
+                            <div class="list-heading"><strong>@State.CategoryName(category.Id)</strong><span>@Money(category.Spent) <small>/ @Money(category.Budget)</small></span></div>
+                            <progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@L["CategoryUsage", State.CategoryName(category.Id)]" class="@(category.IsOverBudget ? "over-budget" : "")"></progress>
+                            <small class="@(category.IsOverBudget ? "negative" : "")">@L[category.IsOverBudget ? "DashboardBudgetOver" : "DashboardBudgetRemaining", Money(category.IsOverBudget ? category.Overspent : category.Remaining)]</small>
+                        </li>
+                    }
+                </ul>
+                <p class="muted compact-note">@L["HouseholdBudgetNote"]</p>
+            }
+        </section>
+    </div>
+</section>
+
+<div class="dashboard-columns">
+    <section class="card" aria-labelledby="dashboard-upcoming-heading">
+        <div class="page-heading"><h2 id="dashboard-upcoming-heading">@L["DashboardComingUp"]</h2><a href="vooruitblik">@L["FinancialOutlook"] →</a></div>
+        <p class="muted">@L["DashboardUpcomingNote", State.Today.ToString("dd-MM-yyyy")]</p>
+        <div class="upcoming-total"><span>@L["BillsNextDays", 7]</span><strong>@Money(overview.CashFlow.Bills7Days)</strong></div>
+        @if (overview.Upcoming.Count == 0) { <p class="muted">@L["DashboardNoUpcoming"]</p> }
+        else
+        {
+            <ul class="dashboard-list">
+                @foreach (var payment in overview.Upcoming.Take(5))
+                {
+                    <li class="activity-row"><div><strong>@payment.Name</strong><small>@payment.Date.ToString("dd-MM-yyyy") · @State.AccountName(payment.AccountId) · @L[payment.TransactionId != null ? "RecordedEntry" : "RecurringEstimate"]</small></div><strong class="activity-amount">@Money(-payment.Amount)</strong></li>
+                }
+            </ul>
+        }
+        @if (overview.CashFlow.Accounts.Count > 0)
+        {
+            <div class="next-income"><h3>@L["NextIncome"]</h3>
+                @foreach (var account in overview.CashFlow.Accounts)
+                {
+                    <div class="list-heading"><span>@account.Account.Name</span><strong>@(account.NextIncomeDate?.ToString("dd-MM-yyyy") ?? L["DashboardIncomeUnknown"].Value)</strong></div>
+                }
+            </div>
+        }
+    </section>
+    <section class="card" aria-labelledby="dashboard-recent-heading">
+        <div class="page-heading"><h2 id="dashboard-recent-heading">@L["DashboardRecentActivity"]</h2><a href="transacties?allDates=true">@L["Transactions"] →</a></div>
+        <p class="muted">@L["DashboardRecentNote"]</p>
+        @if (overview.Recent.Count == 0) { <p class="muted">@L["DashboardNoRecent"]</p> }
+        else
+        {
+            <ul class="dashboard-list">
+                @foreach (var row in overview.Recent)
+                {
+                    var transaction = row.Transaction;
+                    <li class="activity-row" @key="transaction.Id"><div><strong>@(transaction.UserDescription.Length > 0 ? transaction.UserDescription : transaction.Description)</strong><small>@transaction.Date.ToString("dd-MM-yyyy") · @State.AccountName(row.AccountId)</small><small><TransactionAllocationSummary Transaction="transaction" /></small></div><strong class="activity-amount @(row.Amount > 0 ? "positive" : "")">@Money(row.Amount)</strong></li>
+                }
+            </ul>
+        }
+    </section>
+</div>
+
+@if (overview.Accounts.Any(a => a.StaleImports) || overview.UncategorizedCount > 0 || overview.CashFlow.Accounts.Any(a => a.BufferAtRisk))
+{
+    <section class="card dashboard-attention" aria-labelledby="dashboard-attention-heading">
+        <h2 id="dashboard-attention-heading">@L["DashboardAttention"]</h2>
+        <div class="attention-links">
+            @if (overview.Accounts.Any(a => a.StaleImports)) { <a href="importeren">@L["DashboardStaleCount", overview.Accounts.Count(a => a.StaleImports)] →</a> }
+            @if (overview.UncategorizedCount > 0) { <a href="categoriseren">@L["DashboardUncategorizedCount", overview.UncategorizedCount] →</a> }
+            @foreach (var account in overview.CashFlow.Accounts.Where(a => a.BufferAtRisk))
+            {
+                <a href="vooruitblik#bestedingsruimte">@L["DashboardBufferRisk", account.Account.Name, Money(account.LowestBalance), account.LowestDate.ToString("dd-MM-yyyy")] →</a>
+            }
+        </div>
+    </section>
+}
+
+<EditDialogs Page="this" />
+
+@code {
+    private HomeOverview overview = null!;
+    private IReadOnlyList<CategoryResult> budgets = [];
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Rebuild();
+    }
+    protected override void OnStateChanged() => Rebuild();
+    private void Rebuild()
+    {
+        overview = HomeOverview.Create(State.Data, State.Year, State.Month, State.Today, State.OwnerId);
+        budgets = overview.Month.Categories.Where(c => c.Budget > 0).OrderByDescending(c => c.IsOverBudget)
+            .ThenByDescending(c => c.Spent / c.Budget).ThenBy(c => c.Name).Take(4).ToArray();
+    }
+}

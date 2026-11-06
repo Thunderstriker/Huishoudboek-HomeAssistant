@@ -22,7 +22,7 @@ export function create(spendingCanvas, forecastCanvas, text) {
             }
         }
     });
-    const forecastChart = new Chart(forecastCanvas, {
+    const forecastChart = forecastCanvas ? new Chart(forecastCanvas, {
         type: "bar",
         data: {
             labels: [text.income, text.outflow, text.available],
@@ -49,20 +49,22 @@ export function create(spendingCanvas, forecastCanvas, text) {
                 }
             }
         }
-    });
+    }) : null;
     return {
         update(data) {
             spendingChart.data.labels = data.labels;
             spendingChart.data.datasets[0].data = data.spending;
             spendingChart.data.datasets[0].backgroundColor = data.colors;
-            forecastChart.data.datasets[0].data = data.actual;
-            forecastChart.data.datasets[1].data = data.forecast;
+            if (forecastChart) {
+                forecastChart.data.datasets[0].data = data.actual;
+                forecastChart.data.datasets[1].data = data.forecast;
+            }
             spendingChart.update("none");
-            forecastChart.update("none");
+            forecastChart?.update("none");
         },
         destroy() {
             spendingChart.destroy();
-            forecastChart.destroy();
+            forecastChart?.destroy();
         }
     };
 }

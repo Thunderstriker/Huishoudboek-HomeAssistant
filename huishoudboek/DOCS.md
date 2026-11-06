@@ -67,9 +67,25 @@ nieuwe app; bewerk niet beide kopieën verder.
 Deze lokale distributie voegt geen openbare repository toe en publiceert niets
 naar GitHub of een containerregister. Alleen amd64 is in deze versie opgenomen.
 
-## Rustig maandoverzicht en aparte werkpagina's
+## Dashboard, maandoverzicht en aparte werkpagina's
 
-De startpagina **Maandoverzicht** begint direct met de maandcijfers, gevolgd door
+De startpagina **Dashboard** (`/`) begint met rekeningkaarten en de geregistreerde
+saldi van vandaag, met de actualiteit van de bankgegevens erbij. Standaard staan de
+betaalrekeningen (zichtrekeningen) aan. Via **Rekeningen kiezen** kunt u ook spaar- en
+beleggingsrekeningen tonen of alle kaarten verbergen. De keuze wordt per browser
+bewaard, niet in de financiële database; zonder browseropslag alleen voor de sessie.
+Herstel de standaard via **Betaalrekeningen tonen (standaard)**. Een eigenaarfilter
+verbergt rekeningen buiten die selectie zonder uw rekeningkeuze te wissen.
+
+De maandcijfers, uitgavengrafiek en budgetbewaking volgen de gekozen maand en eigenaar,
+niet de gekozen rekeningkaarten. **Binnenkort** toont bekende betalingen over 7 dagen
+en het volgende inkomen voor alle betaalrekeningen binnen het eigenaarfilter, vanaf
+vandaag. Onzekere reserves krijgen geen verzonnen betaaldatum en tellen niet mee in
+dit 7-dagentotaal. **Recente boekingen** toont de laatste vijf boekingen tot vandaag,
+ongeacht de gekozen maand. Signalen verwijzen naar import, categoriseren of vooruitblik.
+
+Het bestaande **Maandoverzicht** blijft ongewijzigd beschikbaar via de navigatie
+op `/maand`. Deze pagina begint direct met de maandcijfers, gevolgd door
 grafieken, categoriebudgetten, sparen, prognoses en saldi. Langere berekeningen en
 categorie-uitleg staan achter **Berekeningsdetails** of **Budgetdetails & categorie-instellingen**.
 Kleine waarschuwingen bij de bedragen verwijzen naar de volledige maanduitleg op
@@ -86,7 +102,7 @@ De pagina blijft via Beheer & import bereikbaar en financiële controles verande
 
 ## Nieuw beginnen: uw eerste week
 
-Een bestaande database is niet nodig. Kies op het lege maandoverzicht **Aan de slag**,
+Een bestaande database is niet nodig. Kies op het lege dashboard **Aan de slag**,
 of open **Beheer & import → Instellen**, en volg **Uw eerste week**:
 
 1. Maak bij **Rekeningen** eerst een eigenaar aan en daarna uw rekeningen met IBAN.

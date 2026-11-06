@@ -1,0 +1,26 @@
+.dashboard-accounts { margin-bottom: 26px; }
+.page-heading { align-items: start; gap: 16px; }
+h2 { margin-bottom: 4px; }
+.page-heading p { margin: 0; }
+.account-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 16px; }
+.account-card { margin-bottom: 0; min-width: 0; border-top: 3px solid #bdcbd9; }
+.current-account { border-top-color: var(--accent); background: linear-gradient(140deg, #f0faf7, white 75%); }
+.account-kind { font-size: .78rem; color: var(--muted); }
+h3 { margin: 2px 0 18px; font-size: 1.15rem; overflow-wrap: anywhere; }
+.metric-value { margin: 4px 0 16px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.account-freshness { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.account-freshness .warning { background: #fff3da; color: #825b17; }
+.account-picker { position: relative; flex-shrink: 0; }
+.account-picker > summary { cursor: pointer; color: var(--accent); padding: 8px 0; }
+.account-picker-panel { position: absolute; right: 0; top: 100%; width: min(360px, calc(100vw - 48px)); z-index: 5; box-shadow: 0 10px 35px #14283e20; }
+.account-picker-panel fieldset { border: 0; margin: 0; padding: 0; }
+.account-picker-panel .check { padding: 8px 0; overflow-wrap: anywhere; flex-wrap: wrap; }
+.account-picker-panel .check small { margin-left: auto; }
+.account-picker-panel button { margin: 10px 0; }
+.account-picker-panel p { margin: 0; }
+summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 500px) {
+    .page-heading { flex-direction: column; gap: 4px; }
+    .account-picker { width: 100%; }
+    .account-picker-panel { left: 0; right: auto; }
+}

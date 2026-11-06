@@ -53,7 +53,8 @@ public sealed class LanguageSwitchTests
         Assert.Contains("Income and spending", english);
         Assert.DoesNotContain("Jaaroverzicht", english);
         foreach (var (path, expected) in new[] {
-            ("/", "Monthly overview"), ("/rekeningen", "Accounts & owners"),
+            ("/", "Your balances, spending and the week ahead."), ("/maand", "Monthly overview"),
+            ("/rekeningen", "Accounts & owners"),
             ("/vooruitblik", "How much can I safely spend?"), ("/instellen", "Your first week"),
             ("/weekcontrole", "Hide weekly review from navigation"),
             ("/budgetten", "Budgets & categories"), ("/transacties", "No transactions within these filters."),
@@ -72,6 +73,7 @@ public sealed class LanguageSwitchTests
         Assert.Contains("Jaaroverzicht", switchedBack);
         Assert.DoesNotContain("Annual overview", switchedBack);
         foreach (var (path, expected) in new[] {
+            ("/", "Uw saldi, uitgaven en de komende week"), ("/maand", "Maandoverzicht"),
             ("/vooruitblik", "Hoeveel kan ik verantwoord uitgeven?"), ("/instellen", "Uw eerste week"),
             ("/weekcontrole", "Wekelijkse controle verbergen in de navigatie") })
         {

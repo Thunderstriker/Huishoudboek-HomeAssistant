@@ -1,7 +1,7 @@
 @implements IAsyncDisposable
 @inject IJSRuntime JS
 
-<div class="monthly-charts">
+<div class="@(SpendingOnly ? "monthly-charts spending-only" : "monthly-charts")">
     <section class="card chart-card">
         <h2>@L["WhereMoneyGoes"]</h2>
         @if (spending.Count == 0)
@@ -21,24 +21,28 @@
                 }
             </ul>
         </div>
-        <p class="muted chart-note">@L["LargestCategoriesNote"]</p>
+        <p class="muted chart-note">@L[SpendingOnly ? "DashboardLargestCategoriesNote" : "LargestCategoriesNote"]</p>
         @if (Report.Categories.Any(c => c.Spent < 0)) { <p class="muted chart-note">@L["RecoveryChartNote"]</p> }
     </section>
-    <section class="card chart-card">
-        <h2>@L["ActualExpected"]</h2>
-        @if (!hasCashFlow)
-        {
-            <p class="muted">@L["NoMonthlyAmounts"]</p>
-        }
-        <div class="forecast-wrap" hidden="@(!hasCashFlow)">
-            <canvas @ref="forecastCanvas" role="img" aria-label="@L["MonthlyForecastChart"]"></canvas>
-        </div>
-        <p class="muted chart-note">@L["ForecastChartNote"]</p>
-    </section>
+    @if (!SpendingOnly)
+    {
+        <section class="card chart-card">
+            <h2>@L["ActualExpected"]</h2>
+            @if (!hasCashFlow)
+            {
+                <p class="muted">@L["NoMonthlyAmounts"]</p>
+            }
+            <div class="forecast-wrap" hidden="@(!hasCashFlow)">
+                <canvas @ref="forecastCanvas" role="img" aria-label="@L["MonthlyForecastChart"]"></canvas>
+            </div>
+            <p class="muted chart-note">@L["ForecastChartNote"]</p>
+        </section>
+    }
 </div>
 
 @code {
     [Parameter, EditorRequired] public MonthlyReport Report { get; set; } = null!;
+    [Parameter] public bool SpendingOnly { get; set; }
 
     private static readonly string[] Colors = ["#087f75", "#526dc1", "#be6432", "#8556a3", "#b18a28", "#8393a5"];
     private List<CategoryResult> spending = [];
@@ -70,7 +74,7 @@
             if (disposed) return;
             module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Huishoudboek.Web/financial-charts.js");
             if (disposed) return;
-            charts ??= await module.InvokeAsync<IJSObjectReference>("create", spendingCanvas, forecastCanvas, new {
+            charts ??= await module.InvokeAsync<IJSObjectReference>("create", spendingCanvas, SpendingOnly ? null : (object)forecastCanvas, new {
                 locale = UiCulture.Culture.Name, income = L["Income"].Value, outflow = L["Outflow"].Value,
                 available = L["Available"].Value, actual = L["Actual"].Value, forecast = L["Forecast"].Value });
             if (disposed) return;

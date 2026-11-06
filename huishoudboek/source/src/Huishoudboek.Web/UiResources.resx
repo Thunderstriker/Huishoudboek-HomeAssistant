@@ -26,6 +26,40 @@
   <data name="FooterNote" xml:space="preserve"><value>Gedeelde administratie · bedragen uit geregistreerde gegevens ·</value></data>
   <data name="BackupAdministration" xml:space="preserve"><value>Back-up &amp; beheer</value></data>
   <data name="MonthlyOverview" xml:space="preserve"><value>Maandoverzicht</value></data>
+  <data name="StartDashboard" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="DashboardIntro" xml:space="preserve"><value>Uw saldi, uitgaven en de komende week in één oogopslag.</value></data>
+  <data name="DashboardYourAccounts" xml:space="preserve"><value>Uw rekeningen</value></data>
+  <data name="DashboardBalancesToday" xml:space="preserve"><value>Geregistreerde saldi op {0} · geen live bankkoppeling.</value></data>
+  <data name="DashboardChooseAccounts" xml:space="preserve"><value>Rekeningen kiezen</value></data>
+  <data name="DashboardDefaultAccounts" xml:space="preserve"><value>Betaalrekeningen tonen (standaard)</value></data>
+  <data name="DashboardAccountPreferenceNote" xml:space="preserve"><value>Onthouden in deze browser. Alleen deze rekeningkaarten veranderen; overzichten blijven het eigenaar- en maandfilter volgen.</value></data>
+  <data name="DashboardPreferenceSessionOnly" xml:space="preserve"><value>Browseropslag is niet beschikbaar. Uw rekeningkeuze geldt alleen voor deze sessie; overzichten veranderen niet.</value></data>
+  <data name="DashboardNoAccounts" xml:space="preserve"><value>Geen vandaag geopende rekeningen binnen dit eigenaarfilter. Voeg een rekening toe of wijzig het filter.</value></data>
+  <data name="DashboardNoSelectedAccounts" xml:space="preserve"><value>Geen rekeningkaarten gekozen binnen dit eigenaarfilter. Gebruik Rekeningen kiezen of herstel de standaardkeuze.</value></data>
+  <data name="DashboardLoadingAccounts" xml:space="preserve"><value>Uw rekeningkeuze laden…</value></data>
+  <data name="DashboardRecordedValue" xml:space="preserve"><value>Geregistreerde rekeningwaarde</value></data>
+  <data name="DashboardRecordedBalance" xml:space="preserve"><value>Geregistreerd saldo</value></data>
+  <data name="DashboardRecentImport" xml:space="preserve"><value>Recente bankgegevens</value></data>
+  <data name="DashboardImportedThrough" xml:space="preserve"><value>Bankgegevens t/m {0}</value></data>
+  <data name="DashboardMonthlyNote" xml:space="preserve"><value>Werkelijke bedragen voor de gekozen maand, tot en met vandaag. De rekeningkaarten hierboven tonen altijd de saldi van vandaag.</value></data>
+  <data name="DashboardFullMonth" xml:space="preserve"><value>Volledig maandoverzicht</value></data>
+  <data name="DashboardBudgetWatch" xml:space="preserve"><value>Budgetten in het oog</value></data>
+  <data name="DashboardLargestCategoriesNote" xml:space="preserve"><value>De vijf grootste uitgavencategorieën; kleinere categorieën zijn samengevoegd. Alle bedragen staan in het volledige maandoverzicht.</value></data>
+  <data name="DashboardNoBudgets" xml:space="preserve"><value>Geen uitgavenlimieten ingesteld voor deze maand. De categoriegrafiek toont waar uw geld naartoe ging.</value></data>
+  <data name="DashboardSetBudgets" xml:space="preserve"><value>Budgetten instellen</value></data>
+  <data name="DashboardBudgetOver" xml:space="preserve"><value>{0} boven budget</value></data>
+  <data name="DashboardBudgetRemaining" xml:space="preserve"><value>{0} over</value></data>
+  <data name="DashboardComingUp" xml:space="preserve"><value>Binnenkort</value></data>
+  <data name="DashboardUpcomingNote" xml:space="preserve"><value>Vanaf {0} · alle betaalrekeningen binnen het eigenaarfilter, ongeacht de gekozen rekeningkaarten. Geplande bedragen zijn schattingen.</value></data>
+  <data name="DashboardNoUpcoming" xml:space="preserve"><value>Geen bekende geplande betalingen in de komende zeven dagen. Dagelijkse uitgaven en onbevestigde betalingsreserves staan hier niet bij.</value></data>
+  <data name="DashboardIncomeUnknown" xml:space="preserve"><value>Niet gepland</value></data>
+  <data name="DashboardRecentActivity" xml:space="preserve"><value>Recente boekingen</value></data>
+  <data name="DashboardRecentNote" xml:space="preserve"><value>Laatste vijf geregistreerde boekingen tot en met vandaag · alle datums binnen het eigenaarfilter.</value></data>
+  <data name="DashboardNoRecent" xml:space="preserve"><value>Nog geen geregistreerde boekingen binnen dit eigenaarfilter.</value></data>
+  <data name="DashboardAttention" xml:space="preserve"><value>Even bekijken</value></data>
+  <data name="DashboardStaleCount" xml:space="preserve"><value>Bankgegevens van {0} rekening(en) controleren</value></data>
+  <data name="DashboardUncategorizedCount" xml:space="preserve"><value>{0} geregistreerde boeking(en) nog categoriseren</value></data>
+  <data name="DashboardBufferRisk" xml:space="preserve"><value>{0}: geschat saldo {1} op {2}, onder de cashbuffer</value></data>
   <data name="FinancialOutlook" xml:space="preserve"><value>Financiële vooruitblik</value></data>
   <data name="SetupTitle" xml:space="preserve"><value>Instellen</value></data>
   <data name="GetStarted" xml:space="preserve"><value>Aan de slag</value></data>

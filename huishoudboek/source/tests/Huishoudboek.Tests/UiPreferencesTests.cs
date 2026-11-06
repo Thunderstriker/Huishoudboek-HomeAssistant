@@ -48,6 +48,48 @@ public sealed class UiPreferencesTests
         Assert.True(preferences.HideWeeklyReview); Assert.False(preferences.CanPersist);
         await preferences.LoadAsync(); Assert.True(preferences.HideWeeklyReview);
         await preferences.SetWeeklyReviewHiddenAsync(false); Assert.False(preferences.HideWeeklyReview);
+        var id = Guid.NewGuid();
+        await preferences.SetDashboardAccountsAsync([id]);
+        Assert.Equal(new[] { id }, preferences.DashboardAccountIds);
+        Assert.False(preferences.CanPersist);
+        await preferences.LoadAsync();
+        Assert.Equal(new[] { id }, preferences.DashboardAccountIds);
+    }
+
+    [Fact]
+    public async Task DashboardSelectionPersistsAndDistinguishesDefaultFromDeliberatelyEmpty()
+    {
+        var browser = new BrowserJs(); var preferences = new UiPreferences(browser);
+        await preferences.LoadAsync();
+        Assert.Null(preferences.DashboardAccountIds);
+        var first = Guid.NewGuid(); var second = Guid.NewGuid();
+        await preferences.SetDashboardAccountsAsync([first, second, first]);
+        Assert.Equal(new[] { first, second }, preferences.DashboardAccountIds);
+        var next = new UiPreferences(browser); await next.LoadAsync();
+        Assert.Equal(new[] { first, second }, next.DashboardAccountIds);
+        await next.SetDashboardAccountsAsync([]);
+        var empty = new UiPreferences(browser); await empty.LoadAsync();
+        Assert.Empty(empty.DashboardAccountIds!);
+        await empty.SetDashboardAccountsAsync(null);
+        var defaults = new UiPreferences(browser); await defaults.LoadAsync();
+        Assert.Null(defaults.DashboardAccountIds);
+        Assert.Null((await LoadOtherBrowser()).DashboardAccountIds);
+
+        static async Task<UiPreferences> LoadOtherBrowser()
+        {
+            var other = new UiPreferences(new BrowserJs()); await other.LoadAsync(); return other;
+        }
+    }
+
+    [Fact]
+    public async Task InvalidStoredAccountIdsFallBackToDefaultsWithoutAffectingWeeklyPreference()
+    {
+        var browser = new BrowserJs { AccountIds = ["not-a-guid"] };
+        var preferences = new UiPreferences(browser);
+        await preferences.SetWeeklyReviewHiddenAsync(true);
+        Assert.Null(preferences.DashboardAccountIds);
+        Assert.True(preferences.HideWeeklyReview);
+        Assert.True(preferences.CanPersist);
     }
 
     [Theory]
@@ -74,6 +116,8 @@ public sealed class UiPreferencesTests
             var hidden = await Html();
             Assert.DoesNotContain("href=\"weekcontrole\"", hidden);
             Assert.Contains("href=\"vooruitblik\"", hidden); Assert.Contains("href=\"beheer\"", hidden);
+            Assert.Contains("href=\"maand\"", hidden);
+            Assert.Contains(UiCulture.Text("StartDashboard"), hidden);
             Assert.Contains(UiCulture.Text("FinancialOutlook"), hidden);
             Assert.DoesNotContain("href=\"instellen\"", hidden); // Setup is a secondary administration link.
             await renderer.Dispatcher.InvokeAsync(() => preferences.SetWeeklyReviewHiddenAsync(false));
@@ -93,6 +137,7 @@ public sealed class UiPreferencesTests
         public bool Throws { get; set; }
         public bool Hidden { get; private set; }
         public int Reads { get; private set; }
+        public string[]? AccountIds { get; set; }
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
         {
             if (Throws) throw new JSException("Storage unavailable");
@@ -104,6 +149,13 @@ public sealed class UiPreferencesTests
             else if (identifier == "huishoudboek.preferences.writeWeeklyReviewHidden")
             {
                 if (Available) Hidden = (bool)args![0]!;
+                result = Available;
+            }
+            else if (identifier == "huishoudboek.preferences.readDashboardAccounts")
+                result = new DashboardAccountsPreference(Available, Available ? AccountIds : null);
+            else if (identifier == "huishoudboek.preferences.writeDashboardAccounts")
+            {
+                if (Available) AccountIds = ((IReadOnlyList<Guid>?)args![0])?.Select(id => id.ToString()).ToArray();
                 result = Available;
             }
             else throw new NotSupportedException(identifier);
