@@ -353,9 +353,9 @@ public sealed class TransferMatchingTests
         Assert.Equal(originalBytes, File.ReadAllBytes(files.Database));
         Assert.Throws<InvalidDataException>(() => new SqliteHouseholdStore(files.Database, allowCreate: false, allowUpgrade: false));
         var upgraded = new SqliteHouseholdStore(files.Database, allowCreate: false, allowUpgrade: true);
-        Assert.Equal(10L, ReadVersion(files.Database));
+        Assert.Equal(11L, ReadVersion(files.Database));
         Assert.Empty(upgraded.Load().TransferMatches);
-        var safety = Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-10-*.db"));
+        var safety = Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-11-*.db"));
         Assert.Equal((long)version, ReadVersion(safety));
         Assert.Equal(data.Transactions.Select(t => t.Amount), SqliteHouseholdStore.ReadBackup(safety).Transactions.Select(t => t.Amount));
         Confirm(imported);
@@ -372,7 +372,7 @@ public sealed class TransferMatchingTests
         var original = File.ReadAllBytes(files.Database);
         Assert.Throws<InvalidDataException>(() => new SqliteHouseholdStore(files.Database, allowCreate: false, allowUpgrade: true));
         Assert.Equal(original, File.ReadAllBytes(files.Database));
-        Assert.Empty(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-10-*.db"));
+        Assert.Empty(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-11-*.db"));
     }
 
     [Theory]
@@ -466,7 +466,7 @@ public sealed class TransferMatchingTests
         Assert.Single(coordinator.Read().Data.TransferMatches);
         var replacement = JsonSerializer.Deserialize<HouseholdData>(JsonSerializer.Serialize(saved.Data))!;
         Assert.Single(coordinator.Replace(saved.Revision, replacement).Data.TransferMatches);
-        Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-10-*.db"));
+        Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-11-*.db"));
     }
 
     private static void CreatePreviousDatabase(string path, HouseholdData data, int version)

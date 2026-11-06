@@ -13,7 +13,7 @@ namespace Huishoudboek.Infrastructure;
 /// </summary>
 public sealed class SqliteHouseholdStore : IAdministrationStore
 {
-    private const int SchemaVersion = 10;
+    private const int SchemaVersion = 11;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -55,7 +55,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
     private static readonly Type[] EntityTypes = [typeof(Owner), typeof(Account), typeof(Category),
         typeof(BudgetOverride), typeof(Transaction), typeof(RecurringPayment), typeof(CategorizationRule),
         typeof(InvestmentValuation), typeof(ImportBatch), typeof(ImportProfile), typeof(TransferMatch),
-        typeof(TransactionAllocation), typeof(ReimbursementClaim), typeof(AccountReview)];
+        typeof(TransactionAllocation), typeof(ReimbursementClaim), typeof(AccountReview), typeof(AccountStatementPeriod)];
 
     private static SqliteConnection Open(string path, bool readOnly = false)
     {
@@ -139,11 +139,15 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             Execute(connection, tx, "ALTER TABLE [ImportBatch] ADD COLUMN [CoverageFrom] TEXT NULL");
             Execute(connection, tx, "ALTER TABLE [ImportBatch] ADD COLUMN [CoverageThrough] TEXT NULL");
         }
-        Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [IsEssential] INTEGER NOT NULL DEFAULT 0");
-        Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [IsExceptional] INTEGER NOT NULL DEFAULT 0");
-        Execute(connection, tx, "ALTER TABLE [Account] ADD COLUMN [IncludeInFreedom] INTEGER NOT NULL DEFAULT 1");
-        Execute(connection, tx, "ALTER TABLE [Account] ADD COLUMN [EarmarkedAmount] TEXT NOT NULL DEFAULT '0'");
-        Execute(connection, tx, "ALTER TABLE app_metadata ADD COLUMN insights TEXT NULL");
+        if (version < 10)
+        {
+            Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [IsEssential] INTEGER NOT NULL DEFAULT 0");
+            Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [IsExceptional] INTEGER NOT NULL DEFAULT 0");
+            Execute(connection, tx, "ALTER TABLE [Account] ADD COLUMN [IncludeInFreedom] INTEGER NOT NULL DEFAULT 1");
+            Execute(connection, tx, "ALTER TABLE [Account] ADD COLUMN [EarmarkedAmount] TEXT NOT NULL DEFAULT '0'");
+            Execute(connection, tx, "ALTER TABLE app_metadata ADD COLUMN insights TEXT NULL");
+        }
+        if (version < 11) CreateTable(connection, tx, typeof(AccountStatementPeriod));
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -181,7 +185,8 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             TransferMatches = version >= 4 ? Read<TransferMatch>(connection, tx) : [],
             TransactionAllocations = version >= 6 ? Read<TransactionAllocation>(connection, tx) : [],
             ReimbursementClaims = version >= 6 ? Read<ReimbursementClaim>(connection, tx) : [],
-            AccountReviews = version >= 7 ? Read<AccountReview>(connection, tx) : []
+            AccountReviews = version >= 7 ? Read<AccountReview>(connection, tx) : [],
+            AccountStatementPeriods = version >= 11 ? Read<AccountStatementPeriod>(connection, tx) : []
         };
         using var command = connection.CreateCommand();
         command.Transaction = tx;
@@ -213,6 +218,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         Write(connection, tx, data.TransferMatches);
         Write(connection, tx, data.TransactionAllocations); Write(connection, tx, data.ReimbursementClaims);
         Write(connection, tx, data.AccountReviews);
+        Write(connection, tx, data.AccountStatementPeriods);
         using var command = connection.CreateCommand();
         command.Transaction = tx;
         command.CommandText = "UPDATE app_metadata SET mortgage=$mortgage, insights=$insights WHERE id=1";

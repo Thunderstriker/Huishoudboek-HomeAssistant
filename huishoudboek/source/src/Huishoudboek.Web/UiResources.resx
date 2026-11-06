@@ -746,7 +746,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="RecurringSeedUnavailable" xml:space="preserve"><value>Deze boeking heeft al een koppeling of expliciete verwerking. Controleer die eerst.</value></data>
   <data name="RecurringFromEntryNote" xml:space="preserve"><value>De bankboeking blijft intact. Bewaar alleen de vaste leverancier-/werkgevertekst voor herkenning; verwijder wisselende datums en referenties. Kies een vast of wisselend bedrag. Pas de begindatum aan voor oudere historie. U controleert echte boekingen vóór het koppelen.</value></data>
   <data name="ConfirmStatementCoverage" xml:space="preserve"><value>Afschriftperiode bevestigen</value></data>
-  <data name="ConfirmStatementCoverageNote" xml:space="preserve"><value>Bevestig alleen als deze import alle bankboekingen voor deze rekening in de gekozen periode bevat, ook dagen zonder activiteit. Controleer eerst het bankafschrift. Dit importeert geen boekingen en wijzigt geen saldi. Ontbrekende of gewijzigde regels vereisen eerst controle van de administratie.</value></data>
+  <data name="ConfirmStatementCoverageNote" xml:space="preserve"><value>Bevestig alleen als deze import alle bankboekingen voor deze rekening in de gekozen periode bevat, ook dagen zonder activiteit. Neem de begin- en einddatum van uw bankafschrift over: de voorgestelde eerste en laatste transactiedatum zijn niet altijd de volledige periode. Eén bevestiging kan meerdere maanden of jaren omvatten. Dit importeert geen boekingen en wijzigt geen saldi.</value></data>
   <data name="InvalidStatementCoverage" xml:space="preserve"><value>Kies een volledige periode tot uiterlijk vandaag met alle regels van deze actieve import. Het oorspronkelijke aantal boekingen moet nog aanwezig zijn.</value></data>
   <data name="StatementCoverage" xml:space="preserve"><value>Bevestigde afschriftperiode</value></data>
   <data name="ExistingImportCoverageHelp" xml:space="preserve"><value>Van oudere imports is de afschriftperiode onbekend. Bevestig hier na controle van uw bankafschrift de volledige periode; importeer het bestand niet opnieuw alleen om de periode vast te leggen.</value></data>
@@ -830,7 +830,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="FinancialInsights" xml:space="preserve"><value>Inzichten</value></data>
   <data name="InsightsIntro" xml:space="preserve"><value>Niet alleen hoeveel geld u heeft, maar hoeveel ruimte het u geeft.</value></data>
   <data name="InsightsPeriodNote" xml:space="preserve"><value>Saldi per {0} · {1} bevestigde, afgesloten maanden uit de laatste 12. De maandkeuze bovenaan verandert deze actuele analyse niet; het eigenaarfilter wel.</value></data>
-  <data name="InsightsCoverageNote" xml:space="preserve"><value>{0} maanden hebben geen volledige bevestigde bankdekking of beginnen bij een rekeningopening. Ze tellen niet mee voor gemiddelden of gedragsclaims. Bevestig volledige bestaande afschriftperioden via Beheer &amp; import.</value></data>
+  <data name="InsightsCoverageNote" xml:space="preserve"><value>{0} maanden tellen nog niet mee voor gemiddelden en patronen. Hieronder ziet u per maand welke rekening en periode ontbreken, of wanneer een rekening pas halverwege de maand begon.</value></data>
   <data name="InsightsNeedHistory" xml:space="preserve"><value>Minstens 3 volledig bevestigde, afgesloten maanden nodig. Ontbrekende gegevens tellen niet als nul uitgaven.</value></data>
   <data name="InsightsUnclassified" xml:space="preserve"><value>Gemiddeld {0} per maand is nog zonder categorie. Het telt mee in gewone uitgaven, maar niet als essentieel. Uw bufferbereik kan hierdoor te hoog lijken.</value></data>
   <data name="InsightsDiscoveries" xml:space="preserve"><value>Wat uw geldpatroon vertelt</value></data>
@@ -902,4 +902,36 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="FingerprintEvidence" xml:space="preserve"><value>Bekijk de onderliggende aankopen</value></data>
   <data name="FingerprintEvidenceHelp" xml:space="preserve"><value>Alleen het geanalyseerde niet-essentiële uitgavendeel wordt getoond. Dit kan bij splitsingen afwijken van het volledige bankbedrag. De vergelijking gebruikt ook bevestigde dagen zonder aankopen.</value></data>
   <data name="FingerprintEvidenceLimited" xml:space="preserve"><value>De eerste 100 boekingen zijn getoond; alle ondersteunende boekingen tellen mee in de berekening.</value></data>
+  <data name="AccountStatementPeriods" xml:space="preserve"><value>Bankperioden bevestigen · ook zonder import</value></data>
+  <data name="ConfirmAccountPeriod" xml:space="preserve"><value>Periode bevestigen</value></data>
+  <data name="ConfirmWithoutImport" xml:space="preserve"><value>Periode bevestigen zonder import</value></data>
+  <data name="EditStatementCoverage" xml:space="preserve"><value>Afschriftperiode wijzigen</value></data>
+  <data name="ReconfirmAccountPeriod" xml:space="preserve"><value>Opnieuw controleren en bevestigen</value></data>
+  <data name="AccountPeriodTitle" xml:space="preserve"><value>Periode bevestigen · {0}</value></data>
+  <data name="AccountPeriodsHelp" xml:space="preserve"><value>Bevestig hier dat uw bankgegevens voor een rekening volledig zijn, zonder een bestand te importeren. Dit kan ook voor een spaarrekening zonder activiteit. Eén periode kan meerdere maanden of jaren omvatten; per maand bevestigen is niet nodig. Deze bevestigingen en bevestigde importperioden tellen samen voor Inzichten.</value></data>
+  <data name="AccountPeriodNote" xml:space="preserve"><value>Controleer deze periode in uw bankomgeving of op uw afschrift. Alle rente, opnames en overboekingen moeten al handmatig of via import zijn vastgelegd. Ook een periode zonder activiteit kunt u bevestigen. Kies de volledige periode, inclusief stille dagen; meerdere maanden of jaren tegelijk mag. Er worden geen transacties, imports of saldi aangemaakt of aangepast.</value></data>
+  <data name="AccountPeriodConsent" xml:space="preserve"><value>Ik heb mijn bankgegevens gecontroleerd: alle boekingen in deze periode zijn vastgelegd, of er was geen activiteit.</value></data>
+  <data name="AccountPeriodConsentRequired" xml:space="preserve"><value>Controleer eerst uw bankgegevens en vink aan dat de periode volledig is vastgelegd.</value></data>
+  <data name="InvalidAccountPeriod" xml:space="preserve"><value>Kies een begin- en einddatum tussen de openingsdatum van deze betaal- of spaarrekening en vandaag.</value></data>
+  <data name="AccountPeriodConfirmedThrough" xml:space="preserve"><value>Laatste bevestigde bankdatum: {0}. Gaten tussen perioden blijven onbevestigd.</value></data>
+  <data name="AccountPeriodNotConfirmed" xml:space="preserve"><value>Nog geen bankperiode bevestigd voor deze rekening.</value></data>
+  <data name="AccountPeriodConfirmed" xml:space="preserve"><value>Bevestigd</value></data>
+  <data name="AccountPeriodNeedsReview" xml:space="preserve"><value>Bankgegevens gewijzigd · opnieuw bevestigen</value></data>
+  <data name="AccountPeriodsBalanceNote" xml:space="preserve"><value>Een periodebevestiging verandert of controleert uw saldo niet. Gebruik daarvoor de afzonderlijke saldocontrole. Wijzigt u bankgegevens binnen een bevestigde periode, dan moet u die periode opnieuw controleren; alleen categoriseren verandert de bevestiging niet.</value></data>
+  <data name="StatementPeriodSaved" xml:space="preserve"><value>Periode bevestigd. Inzichten is bijgewerkt; daar ziet u of andere rekeningen nog bevestiging nodig hebben.</value></data>
+  <data name="DeleteAccountPeriod" xml:space="preserve"><value>Periodebevestiging verwijderen</value></data>
+  <data name="DeleteAccountPeriodQuestion" xml:space="preserve"><value>Deze periodebevestiging verwijderen? Transacties en saldi blijven intact. Maanden die hierdoor niet meer volledig bevestigd zijn, tellen niet meer mee voor Inzichten.</value></data>
+  <data name="InsightsSetupTitle" xml:space="preserve"><value>Waarom zijn sommige inzichten nog niet berekend?</value></data>
+  <data name="InsightsHistoryProgress" xml:space="preserve"><value>{0} van minimaal {1} volledige, afgesloten maanden bevestigd.</value></data>
+  <data name="InsightsSetupHistoryHelp" xml:space="preserve"><value>Voor maandgemiddelden moeten dezelfde volledige maanden zijn bevestigd voor alle toen bestaande betaal- én spaarrekeningen in het eigenaarfilter. Een stille spaarrekening kan ook zonder import worden bevestigd. Eén bevestiging mag meerdere maanden of jaren omvatten. De huidige maand telt nog niet mee. De bestedingsruimte kan al wel worden geschat en staat los van deze historische gemiddelden.</value></data>
+  <data name="InsightsCoverageDetails" xml:space="preserve"><value>Bekijk ontbrekende rekeningen en perioden</value></data>
+  <data name="InsightsAccountGap" xml:space="preserve"><value>{0}: nog niet bevestigd van {1} t/m {2}.</value></data>
+  <data name="InsightsAccountOpened" xml:space="preserve"><value>{0} begon op {1}. Deze maand is geen volledige waargenomen maand en kan niet met een periodebevestiging worden aangevuld.</value></data>
+  <data name="InsightsNoAccountsInMonth" xml:space="preserve"><value>Er was deze maand geen betaal- of spaarrekening binnen het eigenaarfilter.</value></data>
+  <data name="FreedomNotCalculated" xml:space="preserve"><value>Nog niet berekend</value></data>
+  <data name="FreedomHistoryNeeded" xml:space="preserve"><value>Historie nodig</value></data>
+  <data name="FreedomEssentialsNeeded" xml:space="preserve"><value>Essentiële uitgaven nodig</value></data>
+  <data name="FreedomIncomeNeeded" xml:space="preserve"><value>Geen gewoon inkomen</value></data>
+  <data name="FreedomSpendingNeeded" xml:space="preserve"><value>Geen gewone uitgaven</value></data>
+  <data name="FreedomNoIncomeHelp" xml:space="preserve"><value>Er is geen positief gewoon maandinkomen in de bevestigde historie en actieve vaste posten. Daarom kan het vastgelegde inkomenspercentage nog niet worden berekend.</value></data>
 </root>

@@ -415,7 +415,7 @@ public sealed class FinancialInsightsTests
         Assert.Equal(6, old.InsightSettings.BufferTargetMonths);
         var migrated = new SqliteHouseholdStore(files.Database, allowCreate: false).Load();
         Assert.Equal(JsonSerializer.Serialize(old), JsonSerializer.Serialize(migrated));
-        Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-10-*.db"));
+        Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-11-*.db"));
         Assert.Equal(data.Transactions, migrated.Transactions);
     }
 

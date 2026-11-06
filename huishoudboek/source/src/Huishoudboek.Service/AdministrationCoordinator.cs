@@ -72,6 +72,7 @@ public sealed class AdministrationCoordinator : IDisposable
         candidate.ReimbursementClaims = data.ReimbursementClaims;
         candidate.BudgetOverrides = data.BudgetOverrides; candidate.Valuations = data.Valuations;
         candidate.ImportBatches = data.ImportBatches; candidate.ImportProfiles = data.ImportProfiles;
+        candidate.AccountStatementPeriods = data.AccountStatementPeriods;
         candidate.Rules = data.Rules; candidate.Mortgage = data.Mortgage;
     });
 

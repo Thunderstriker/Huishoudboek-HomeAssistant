@@ -746,7 +746,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="RecurringSeedUnavailable" xml:space="preserve"><value>This entry already has a link or explicit handling. Review those first.</value></data>
   <data name="RecurringFromEntryNote" xml:space="preserve"><value>The bank entry stays unchanged. Keep only the stable supplier/employer text in recognition; remove changing dates and references. Choose Fixed or Variable amount. Adjust the start date to include earlier history. You will review actual entries before linking.</value></data>
   <data name="ConfirmStatementCoverage" xml:space="preserve"><value>Confirm statement period</value></data>
-  <data name="ConfirmStatementCoverageNote" xml:space="preserve"><value>Only confirm if this import contains every bank entry for this account in the chosen period, including days with no activity. Check your bank statement first. This does not import transactions or change balances. Missing or edited rows require checking the records first.</value></data>
+  <data name="ConfirmStatementCoverageNote" xml:space="preserve"><value>Only confirm if this import contains every bank entry for this account in the chosen period, including days with no activity. Use the start and end dates from your bank statement: the suggested first and last transaction dates are not always the full period. One confirmation can cover several months or years. This does not import transactions or change balances.</value></data>
   <data name="InvalidStatementCoverage" xml:space="preserve"><value>Choose a past or current complete period containing all rows of this active import. Its original number of entries must still be present.</value></data>
   <data name="StatementCoverage" xml:space="preserve"><value>Confirmed statement period</value></data>
   <data name="ExistingImportCoverageHelp" xml:space="preserve"><value>Older imports have unknown statement coverage. Confirm their complete bank period here after checking your statement; do not reimport the file just to record coverage.</value></data>
@@ -830,7 +830,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="FinancialInsights" xml:space="preserve"><value>Insights</value></data>
   <data name="InsightsIntro" xml:space="preserve"><value>Not just how much money you have, but how much freedom it gives you.</value></data>
   <data name="InsightsPeriodNote" xml:space="preserve"><value>Balances as of {0} · {1} confirmed, completed months from the last 12. The month selector above does not change this current analysis; the owner filter does.</value></data>
-  <data name="InsightsCoverageNote" xml:space="preserve"><value>{0} months lack full confirmed bank coverage or include an account opening. They are excluded from averages and behavioral claims. Confirm complete existing statement periods under Administration &amp; import.</value></data>
+  <data name="InsightsCoverageNote" xml:space="preserve"><value>{0} months are not yet included in averages and patterns. The monthly details below show which account and period are missing, or when an account opened partway through the month.</value></data>
   <data name="InsightsNeedHistory" xml:space="preserve"><value>At least 3 fully confirmed, completed months are needed. Missing data does not count as zero spending.</value></data>
   <data name="InsightsUnclassified" xml:space="preserve"><value>An average of {0} per month is still uncategorized. It counts as ordinary spending, but not as essential. Your emergency runway could therefore appear too generous.</value></data>
   <data name="InsightsDiscoveries" xml:space="preserve"><value>What your money patterns reveal</value></data>
@@ -902,4 +902,36 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="FingerprintEvidence" xml:space="preserve"><value>View the underlying purchases</value></data>
   <data name="FingerprintEvidenceHelp" xml:space="preserve"><value>Only the analyzed discretionary expense portion is shown. With splits, this can differ from the full bank amount. The comparison also uses confirmed days without purchases.</value></data>
   <data name="FingerprintEvidenceLimited" xml:space="preserve"><value>The first 100 entries are shown; all supporting entries count in the calculation.</value></data>
+  <data name="AccountStatementPeriods" xml:space="preserve"><value>Confirm bank periods · no import required</value></data>
+  <data name="ConfirmAccountPeriod" xml:space="preserve"><value>Confirm period</value></data>
+  <data name="ConfirmWithoutImport" xml:space="preserve"><value>Confirm period without importing</value></data>
+  <data name="EditStatementCoverage" xml:space="preserve"><value>Edit statement period</value></data>
+  <data name="ReconfirmAccountPeriod" xml:space="preserve"><value>Check and confirm again</value></data>
+  <data name="AccountPeriodTitle" xml:space="preserve"><value>Confirm period · {0}</value></data>
+  <data name="AccountPeriodsHelp" xml:space="preserve"><value>Confirm that an account's bank history is complete without importing a file. This also works for a savings account with no activity. One period can cover several months or years; there is no need to confirm each month separately. These confirmations and confirmed import periods count together for Insights.</value></data>
+  <data name="AccountPeriodNote" xml:space="preserve"><value>Check this period in your banking app or statement. All interest, withdrawals and transfers must already be recorded manually or through an import. You can also confirm a period with no activity. Choose the full period, including quiet days; several months or years at once is fine. No transactions, imports or balances are created or changed.</value></data>
+  <data name="AccountPeriodConsent" xml:space="preserve"><value>I have checked my bank history: all entries in this period are recorded, or there was no activity.</value></data>
+  <data name="AccountPeriodConsentRequired" xml:space="preserve"><value>Check your bank history first and tick the box confirming that the period is complete.</value></data>
+  <data name="InvalidAccountPeriod" xml:space="preserve"><value>Choose a start and end date between this current or savings account's opening date and today.</value></data>
+  <data name="AccountPeriodConfirmedThrough" xml:space="preserve"><value>Latest confirmed bank date: {0}. Gaps between periods remain unconfirmed.</value></data>
+  <data name="AccountPeriodNotConfirmed" xml:space="preserve"><value>No bank period has been confirmed for this account yet.</value></data>
+  <data name="AccountPeriodConfirmed" xml:space="preserve"><value>Confirmed</value></data>
+  <data name="AccountPeriodNeedsReview" xml:space="preserve"><value>Bank data changed · confirm again</value></data>
+  <data name="AccountPeriodsBalanceNote" xml:space="preserve"><value>A period confirmation does not change or verify your balance. Use the separate balance check for that. Changing bank data within a confirmed period requires checking that period again; categorization alone does not affect confirmation.</value></data>
+  <data name="StatementPeriodSaved" xml:space="preserve"><value>Period confirmed. Insights has been updated; check there to see whether other accounts still need confirmation.</value></data>
+  <data name="DeleteAccountPeriod" xml:space="preserve"><value>Delete period confirmation</value></data>
+  <data name="DeleteAccountPeriodQuestion" xml:space="preserve"><value>Delete this period confirmation? Transactions and balances stay unchanged. Months that are no longer fully confirmed will stop counting towards Insights.</value></data>
+  <data name="InsightsSetupTitle" xml:space="preserve"><value>Why are some insights not calculated yet?</value></data>
+  <data name="InsightsHistoryProgress" xml:space="preserve"><value>{0} of at least {1} complete, finished months confirmed.</value></data>
+  <data name="InsightsSetupHistoryHelp" xml:space="preserve"><value>Monthly averages require the same full months to be confirmed for all current and savings accounts that existed then within the owner filter. A quiet savings account can be confirmed without an import. One confirmation may cover several months or years. The current month does not count yet. Spendable cash can already be estimated independently of these historical averages.</value></data>
+  <data name="InsightsCoverageDetails" xml:space="preserve"><value>View missing accounts and periods</value></data>
+  <data name="InsightsAccountGap" xml:space="preserve"><value>{0}: not yet confirmed from {1} through {2}.</value></data>
+  <data name="InsightsAccountOpened" xml:space="preserve"><value>{0} opened on {1}. This is not a full observed month and cannot be completed by confirming a period.</value></data>
+  <data name="InsightsNoAccountsInMonth" xml:space="preserve"><value>No current or savings account existed within the owner filter this month.</value></data>
+  <data name="FreedomNotCalculated" xml:space="preserve"><value>Not calculated yet</value></data>
+  <data name="FreedomHistoryNeeded" xml:space="preserve"><value>History needed</value></data>
+  <data name="FreedomEssentialsNeeded" xml:space="preserve"><value>Essential spending needed</value></data>
+  <data name="FreedomIncomeNeeded" xml:space="preserve"><value>No ordinary income</value></data>
+  <data name="FreedomSpendingNeeded" xml:space="preserve"><value>No ordinary spending</value></data>
+  <data name="FreedomNoIncomeHelp" xml:space="preserve"><value>No positive ordinary monthly income is available from confirmed history and active recurring payments. The committed-income percentage cannot be calculated yet.</value></data>
 </root>

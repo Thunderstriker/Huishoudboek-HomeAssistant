@@ -133,6 +133,29 @@ categorieverhouding bij het omrekenen naar maandbedragen.
 Koppel ontbrekende herkenningen bij Vaste posten om overlap met ongekoppelde
 uitgaven te voorkomen. Minder dan 12 maanden kan seizoenen en jaarlasten missen.
 
+**Ziet u ‘Nog niet berekend’ of ‘Afschriftdekking niet bevestigd’?** Inzichten toont
+onder **Bekijk ontbrekende rekeningen en perioden** per maand welke rekening en
+welke datums nog niet bevestigd zijn. Alle toen bestaande betaal- én spaarrekeningen
+binnen het eigenaarfilter moeten dezelfde volledige maanden dekken. Een bevestiging
+voor uw betaalrekening bevestigt niet automatisch uw spaarrekening.
+
+Open **Rekeningen → Bankperioden bevestigen · ook zonder import → Periode bevestigen**
+bij de betreffende rekening. Kies de volledige periode uit uw bankomgeving of
+afschrift, controleer dat alle rente, opnames en overboekingen zijn vastgelegd en
+vink dit expliciet aan. Ook een spaarrekening zonder activiteit kunt u zo bevestigen.
+Eén periode mag meerdere maanden of jaren omvatten: per maand bevestigen is niet nodig.
+Er wordt geen import gemaakt en geen boeking of saldo gewijzigd. Bevestigde imports
+en rekeningperioden tellen samen; gaten ertussen blijven onbevestigd. Inzichten
+wordt na opslaan herberekend. Zijn minstens drie volledige maanden bevestigd, maar
+ontbreekt het bufferbereik nog? Markeer noodzakelijke uitgavencategorieën als
+**Essentiële uitgaven (nodig zonder inkomen)**.
+
+Rekeningperioden kunnen worden gewijzigd of verwijderd. Wijzigt u bankgegevens
+binnen de periode of de openingsgegevens van de rekening, dan verschijnt
+**Bankgegevens gewijzigd · opnieuw bevestigen**. Alleen categoriseren, een eigen
+omschrijving of vaste-postkoppeling verandert deze bevestiging niet. Een periode
+bevestigen is geen saldocontrole; die blijft afzonderlijk onder **Rekeningen** beschikbaar.
+
 De **geldvingerafdruk** toont uitgavenregelmaat, uitgavenpieken, spaarritme, vaste
 verplichtingen, uitgavenconcentratie en financiële ruimte. Kies een band voor de
 definitie en exacte waarde. Een grotere waarde is niet automatisch beter; intenties
@@ -144,11 +167,11 @@ zijn uitklapbaar; bij splitsingen toont bewijs alleen het geanalyseerde uitgaven
 Reservegroei sinds vorige maandultimo gebruikt dezelfde huidige essentiële
 kostenbasis. Dit is geen opgeslagen historische score. Onbevestigde actuele saldi
 verbergen de vergelijking. Onbekende essentiële kosten of inkomen leveren een
-streepje op, geen oneindig bereik. Financieel bereik zonder inkomen is geen
+uitleg op in plaats van een berekend bereik. Financieel bereik zonder inkomen is geen
 financiële onafhankelijkheid; duurzaam beleggingsinkomen wordt niet verondersteld.
 
 Alle berekeningen en SVG-visualisaties werken lokaal, zonder externe diensten.
-Instellingen blijven behouden in databaseback-ups. Databaseschema 10 maakt vóór
+Instellingen en rekeningperiodebevestigingen blijven behouden in databaseback-ups. Databaseschema 11 maakt vóór
 migratie een veiligheidskopie; bestaande categorieën worden niet automatisch
 essentieel of uitzonderlijk gemarkeerd.
 
@@ -254,12 +277,12 @@ zonder ingestelde planning is dit geen bevestiging dat er niets te betalen is.
 4. Controleer de waarschuwing en bevestig expliciet met **Database importeren**.
    Annuleren wijzigt niets. Een import vervangt de volledige administratie;
    het is geen samenvoeging van twee huishoudboeken.
-5. De app valideert applicatiemarker, schema (versies 1–9), SQLite-integriteit en
+5. De app valideert applicatiemarker, schema (versies 1–11), SQLite-integriteit en
    financiële verwijzingen. Vervolgens bewaart hij de huidige administratie als
    veiligheidskopie en slaat hij de geïmporteerde administratie atomair op.
    Een onbekende versie of ongeldig bestand wordt geweigerd, niet gereset.
 6. Controleer na afloop rekeningen, transacties en bedragen. Uw bronbestand op
-   Windows blijft ongewijzigd. Bestaande versies 1–8 worden bij import ingelezen
+   Windows blijft ongewijzigd. Bestaande versies 1–10 worden bij import ingelezen
    naar de huidige structuur zonder het bronbestand te migreren.
 
 Alle financiële gegevens blijven behouden: transacties en eigen omschrijvingen,
@@ -308,6 +331,8 @@ ander product en is niet automatisch met deze ingress-only app verbonden.
 - Bij oudere imports is de volledige periode onbekend. Controleer uw bankafschrift
   en gebruik **Beheer & import → Importgeschiedenis → Afschriftperiode bevestigen**.
   Importeer geen bestand opnieuw alleen om de periode vast te leggen: dat maakt dubbelen.
+  Zonder import kunt u dezelfde volledigheid per rekening bevestigen onder
+  **Rekeningen → Bankperioden bevestigen · ook zonder import**.
   Aaneengesloten bevestigde perioden tellen samen; gaten en teruggedraaide imports niet.
   Wijzigen of verwijderen van bankgegevens trekt de periodebevestiging van die import in;
   categoriseren en vaste-postkoppelingen veranderen de bevestiging niet.
@@ -510,11 +535,11 @@ niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
   `/data` is de private, permanente app-opslag van de Supervisor, geen Windows-pad.
 - Normale herstarts en updates behouden `/data`. Een bestaande ontbrekende of
   beschadigde database wordt nooit automatisch vervangen door een lege database.
-- Bij een Home Assistant-update worden ondersteunde schema's 1–9 na validatie
-  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 10. Vooraf wordt
-  een SQLite-bewuste `.voor-versie-10-….db`-veiligheidskopie naast de database gemaakt.
+- Bij een Home Assistant-update worden ondersteunde schema's 1–10 na validatie
+  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 11. Vooraf wordt
+  een SQLite-bewuste `.voor-versie-11-….db`-veiligheidskopie naast de database gemaakt.
   Onbekende schema's worden geweigerd. Teruggaan naar een oude appversie vereist
-  herstel van een passende oude back-up; schema-10-back-ups zijn niet leesbaar in
+  herstel van een passende oude back-up; schema-11-back-ups zijn niet leesbaar in
   oudere apps. De normale Windows-service blijft automatische upgrades weigeren.
 - Alleen een werkelijk nieuwe installatie begint met een lege administratie en
   standaardcategorieën, zonder fictieve bedragen. U kunt ook zelf rekeningen aanmaken.
@@ -550,7 +575,7 @@ niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
 - Database, configuratie en gedownloade databaseback-ups zijn **niet door deze app
   versleuteld**. Beveilig de Windows-host, VM-schijf en back-ups. Zet geen financiële
   bestanden of proxyheaders in gedeelde logs/screenshots.
-- Geldberekeningen blijven decimal, schema is versie 9. Saldi zijn berekend uit
+- Geldberekeningen blijven decimal, schema is versie 11. Saldi zijn berekend uit
   geregistreerde gegevens, geen live bankgegevens. Prognoses blijven schattingen.
 - Geen publieke internet-/Cloudflare-configuratie, automatische discovery of HACS.
   Dit is de volledige app, niet een HACS-integratie.

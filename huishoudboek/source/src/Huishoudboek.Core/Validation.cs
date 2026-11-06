@@ -29,6 +29,7 @@ public static class Validation
         Unique(data.ImportProfiles.Select(x => x.Id), "importprofielen");
         Unique(data.Rules.Select(x => x.Id), "regels");
         Unique(data.AccountReviews.Select(x => x.Id), "rekeningcontroles");
+        Unique(data.AccountStatementPeriods.Select(x => x.Id), "rekeningperioden");
         var owners = data.Owners.Select(o => o.Id).ToHashSet();
         var accounts = data.Accounts.Select(a => a.Id).ToHashSet();
         var categories = data.Categories.Select(c => c.Id).ToHashSet();
@@ -130,6 +131,8 @@ public static class Validation
         Require(data.ImportBatches.All(b => accounts.Contains(b.AccountId) && b.RowCount >= 0), "Ongeldige importgeschiedenis.");
         Require(data.ImportBatches.All(b => (b.CoverageFrom == null) == (b.CoverageThrough == null) &&
             (b.CoverageFrom == null || b.CoverageFrom <= b.CoverageThrough)), "Ongeldige afschriftperiode.");
+        Require(data.AccountStatementPeriods.All(p => accounts.Contains(p.AccountId) && p.From <= p.Through &&
+            p.BankDataFingerprint is { Length: 64 } && p.BankDataFingerprint.All(Uri.IsHexDigit)), "Ongeldige bevestigde rekeningperiode.");
         if (data.Mortgage is { } m)
         {
             Require(m.ReferencePrincipal > 0 && m.MonthlyPayment > 0 && m.AnnualInterestPercent is >= 0 and <= 100 && m.RemainingMonths is > 0 and <= 600,

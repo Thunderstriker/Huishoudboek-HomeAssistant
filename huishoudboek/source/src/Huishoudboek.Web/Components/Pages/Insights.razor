@@ -9,7 +9,21 @@
 </div>
 <p class="muted">@L["InsightsPeriodNote", State.Today.ToString("dd-MM-yyyy"), overview.CoveredMonths]</p>
 @if (overview.CoveredMonths < FinancialInsights.HistoryMonths)
-{ <p class="notice">@L["InsightsCoverageNote", FinancialInsights.HistoryMonths - overview.CoveredMonths] <a href="beheer#importgeschiedenis">@L["AdministrationImport"] →</a></p> }
+{ <p class="notice">@L["InsightsCoverageNote", FinancialInsights.HistoryMonths - overview.CoveredMonths] <a href="#coverage-details">@L["InsightsCoverageDetails"] →</a></p> }
+@if (overview.LimitedHistory || overview.Freedom.MonthlyEssentials == null)
+{
+    <section class="card insights-setup" aria-labelledby="insights-setup-title">
+        <h2 id="insights-setup-title">@L["InsightsSetupTitle"]</h2>
+        @if (overview.LimitedHistory)
+        {
+            <p><strong>@L["InsightsHistoryProgress", overview.CoveredMonths, FinancialInsights.MinimumMonths]</strong></p>
+            <p>@L["InsightsSetupHistoryHelp"]</p>
+            <div class="actions"><a class="button primary" href="rekeningen#statement-periods">@L["ConfirmWithoutImport"]</a><a class="button" href="#coverage-details">@L["InsightsCoverageDetails"]</a></div>
+        }
+        else
+        { <p>@L["FreedomChooseEssentials"]</p><a class="button primary" href="budgetten">@L["CategorySettings"] →</a> }
+    </section>
+}
 @if (overview.UnclassifiedSpending > 0)
 { <p class="notice">@L["InsightsUnclassified", Money(overview.UnclassifiedSpending)] <a href="categoriseren">@L["Categorize"] →</a></p> }
 <div class="insights-visuals">
@@ -37,7 +51,7 @@
     }
 </section>
 
-<details class="card insights-method">
+<details class="card insights-method" id="coverage-details" open="@overview.LimitedHistory">
     <summary>@L["CalculationDetails"]</summary>
     <p>@L["InsightsMethod"]</p>
     <p>@L["InsightsScheduleMethod"]</p>
@@ -48,7 +62,28 @@
         <caption>@L["InsightsExactMonths"]</caption>
         <thead><tr><th>@L["Month"]</th><th class="money">@L["Income"]</th><th class="money">@L["InsightsNormalSpending"]</th><th class="money">@L["CategoryEssentialBadge"]</th><th class="money">@L["CategoryExceptionalBadge"]</th><th class="money">@L["Savings"]</th><th>@L["HistoryDataStatus"]</th></tr></thead>
         <tbody>@foreach (var month in overview.Months.Reverse())
-        { <tr><th scope="row">@month.Month.ToString("MMM yyyy", UiCulture.Culture)</th><td class="money">@Money(month.Income)</td><td class="money">@Money(month.Spending)</td><td class="money">@Money(month.Essentials)</td><td class="money">@Money(month.Exceptional)</td><td class="money">@Money(month.Savings)</td><td>@L[month.Covered ? "HistoryCoverageConfirmed" : "HistoryCoverageUnknown"]</td></tr> }</tbody>
+        {
+            <tr><th scope="row">@month.Month.ToString("MMM yyyy", UiCulture.Culture)</th><td class="money">@Money(month.Income)</td><td class="money">@Money(month.Spending)</td><td class="money">@Money(month.Essentials)</td><td class="money">@Money(month.Exceptional)</td><td class="money">@Money(month.Savings)</td>
+                <td>@L[month.Covered ? "HistoryCoverageConfirmed" : "HistoryCoverageUnknown"]
+                    @if (!month.Covered)
+                    {
+                        <ul class="coverage-issues">@foreach (var issue in month.CoverageIssues)
+                        {
+                            <li>@if (issue.OpeningMonth)
+                                { @L["InsightsAccountOpened", State.AccountName(issue.AccountId), issue.From.ToString("dd-MM-yyyy")] }
+                                else
+                                {
+                                    <span>@L["InsightsAccountGap", State.AccountName(issue.AccountId), issue.From.ToString("dd-MM-yyyy"), issue.Through.ToString("dd-MM-yyyy")]</span>
+                                    <a href="@($"rekeningen#statement-periods-{issue.AccountId}")">@L["ConfirmAccountPeriod"] →</a>
+                                }
+                            </li>
+                        }
+                        @if (month.CoverageIssues.Count == 0) { <li>@L["InsightsNoAccountsInMonth"]</li> }
+                        </ul>
+                    }
+                </td>
+            </tr>
+        }</tbody>
     </table></div>
 </details>
 

@@ -11,6 +11,32 @@
 { var a = State.Data.Accounts.Single(a => a.Id == summary.Id);
 <tr><td>@a.Name</td><td>@Kind(a.Kind)</td><td>@string.Join(", ", State.Data.Owners.Where(o => a.OwnerIds.Contains(o.Id)).Select(o => o.Name))</td><td class="money">@Money(summary.Cash)</td><td class="money">@Money(summary.Securities)</td><td class="money">@Money(summary.Total)</td><td>@(a.SavingsGoal is { } goal ? L["GoalProgress", (summary.Cash / goal).ToString("P0", UiCulture.Culture), Money(goal)].Value : "—")</td><td>@(summary.ValuationDate?.ToString("dd-MM-yyyy") ?? L["NoValuation"].Value)</td><td><button @onclick="() => Draft = EditorDraft.Account(State, a)">@L["Edit"]</button></td></tr> }
 </tbody></table></div></section>
+<section class="card" id="statement-periods"><h2>@L["AccountStatementPeriods"]</h2>
+<p>@L["AccountPeriodsHelp"]</p>
+@foreach (var account in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id) && a.Kind != AccountKind.Investment))
+{
+    var periods = State.Data.AccountStatementPeriods.Where(p => p.AccountId == account.Id).OrderByDescending(p => p.Through).ToList();
+    var confirmedThrough = BankImportCoverage.ConfirmedThrough(State.Data, account.Id);
+    <div class="account-check" id="@($"statement-periods-{account.Id}")" @key="account.Id">
+        <h3>@account.Name</h3>
+        <p>@(confirmedThrough is { } date ? L["AccountPeriodConfirmedThrough", date.ToString("dd-MM-yyyy")] : L["AccountPeriodNotConfirmed"])</p>
+        <div class="actions"><button aria-label="@L["AccountPeriodTitle", account.Name]" @onclick="() => Draft = EditorDraft.AccountCoverage(State, account)">@L["ConfirmAccountPeriod"]</button></div>
+        @if (periods.Count > 0)
+        {
+            <ul>@foreach (var period in periods)
+            {
+                var current = BankImportCoverage.IsCurrent(State.Data, period);
+                <li><strong>@period.From.ToString("dd-MM-yyyy") – @period.Through.ToString("dd-MM-yyyy")</strong>
+                    <span class="badge">@L[current ? "AccountPeriodConfirmed" : "AccountPeriodNeedsReview"]</span>
+                    <div class="actions"><button @onclick="() => Draft = EditorDraft.AccountCoverage(State, account, period)">@L[current ? "EditStatementCoverage" : "ReconfirmAccountPeriod"]</button>
+                        <button @onclick="() => DeletePeriod(period)">@L["Delete"]</button></div>
+                </li>
+            }</ul>
+        }
+    </div>
+}
+<p class="muted">@L["AccountPeriodsBalanceNote"] <a href="rekeningen#balance-checks">@L["CheckBankBalance"] →</a></p>
+</section>
 <section class="card" id="balance-checks"><h2>@L["OpeningAndBalanceChecks"]</h2><p class="muted">@L["OpeningConfirmationNote"]</p>
 @foreach (var account in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id)))
 {
@@ -38,6 +64,7 @@
 </tbody></table></div></section>
 <EditDialogs Page="this" />
 @code {
+    private void DeletePeriod(AccountStatementPeriod period) => Ask(L["DeleteAccountPeriod"], L["DeleteAccountPeriodQuestion"], d => d.AccountStatementPeriods.RemoveAll(p => p.Id == period.Id), L["Delete"]);
     private void ConfirmOpening(Account account) => Ask(L["ConfirmOpeningBalance"], L["ConfirmOpeningQuestion", account.Name, account.OpeningDate.ToString("dd-MM-yyyy"), Money(account.OpeningBalance)], d => FirstWeek.ConfirmOpening(d, account.Id), L["ConfirmOpeningBalance"]);
     private void AskDelete(InvestmentValuation item) => Ask(L["DeleteValuation"], L["DeleteValuationQuestion"], d => d.Valuations.RemoveAll(v => v.Id == item.Id), L["Delete"]);
 }

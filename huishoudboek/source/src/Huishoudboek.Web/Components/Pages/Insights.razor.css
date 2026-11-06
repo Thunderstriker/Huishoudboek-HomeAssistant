@@ -1,5 +1,9 @@
 .insights-visuals { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 1.2rem; margin: 1.2rem 0; }
 .insights-discoveries, .insights-method, .insights-accounts { margin-bottom: 1.2rem; }
+.insights-setup { margin: 1rem 0; border-inline-start: 4px solid #edb464; }
+.coverage-issues { min-width: 230px; padding-inline-start: 1.1rem; margin: .5rem 0 0; font-size: .85rem; }
+.coverage-issues li + li { margin-top: .5rem; }
+.coverage-issues a { display: block; }
 .discovery { padding: .5rem 0 1rem; border-bottom: 1px solid #718e9928; }
 .discovery:last-child { border-bottom: 0; padding-bottom: 0; }
 .discovery p { margin: .5rem 0; }

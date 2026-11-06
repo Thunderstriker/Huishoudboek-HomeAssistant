@@ -17,9 +17,15 @@
     <div class="actions"><a class="button" href="instellen">@L["SetupTitle"]</a><a class="button" href="weekcontrole">@L["WeeklyReviewTitle"]</a></div>
     <WeeklyReviewVisibility />
 </section>
-<section class="card" id="importgeschiedenis"><h2>@L["ImportHistory"]</h2><p class="muted">@L["ExistingImportCoverageHelp"]</p><div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th>@L["File"]</th><th>@L["Account"]</th><th>@L["Rows"]</th><th>@L["Status"]</th><th>@L["StatementCoverage"]</th><th></th></tr></thead><tbody>
+<section class="card" id="importgeschiedenis"><h2>@L["ImportHistory"]</h2><p class="muted">@L["ExistingImportCoverageHelp"] <a href="rekeningen#statement-periods">@L["ConfirmWithoutImport"] →</a></p><div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th>@L["File"]</th><th>@L["Account"]</th><th>@L["Rows"]</th><th>@L["Status"]</th><th>@L["StatementCoverage"]</th><th></th></tr></thead><tbody>
 @foreach (var b in State.Data.ImportBatches.OrderByDescending(b => b.ImportedAt))
-{ <tr><td>@b.ImportedAt.ToString("dd-MM-yyyy HH:mm")</td><td>@b.FileName</td><td>@State.AccountName(b.AccountId)</td><td>@b.RowCount</td><td>@L[b.Undone ? "Undone" : "Processed"]</td><td>@(b.CoverageFrom is { } start && b.CoverageThrough is { } end && !b.Undone ? $"{start:dd-MM-yyyy} – {end:dd-MM-yyyy}" : L["Unknown"].Value)</td><td>@if (!b.Undone) { <div class="actions"><button @onclick="() => Draft = EditorDraft.ImportCoverage(State, b)">@L["ConfirmStatementCoverage"]</button><button @onclick="() => Undo(b)">@L["UndoEntireImport"]</button></div> }</td></tr> }
+{
+    var confirmed = !b.Undone && b.CoverageFrom != null && b.CoverageThrough != null;
+    <tr><td>@b.ImportedAt.ToString("dd-MM-yyyy HH:mm")</td><td>@b.FileName</td><td>@State.AccountName(b.AccountId)</td><td>@b.RowCount</td><td>@L[b.Undone ? "Undone" : "Processed"]</td>
+        <td>@if (confirmed) { <span class="badge">@L["AccountPeriodConfirmed"]</span> <span>@($"{b.CoverageFrom:dd-MM-yyyy} – {b.CoverageThrough:dd-MM-yyyy}")</span> } else { @L["Unknown"] }</td>
+        <td>@if (!b.Undone) { <div class="actions"><button @onclick="() => Draft = EditorDraft.ImportCoverage(State, b)">@L[confirmed ? "EditStatementCoverage" : "ConfirmStatementCoverage"]</button><button @onclick="() => Undo(b)">@L["UndoEntireImport"]</button></div> }</td>
+    </tr>
+}
 </tbody></table></div></section>
 <section class="card"><h2>@L["AutomaticCategorization"]</h2><div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Rule(State)">+ @L["Rule"]</button><button @onclick="ApplyRules">@L["ApplyExistingTransactions"]</button></div>
 <p class="muted">@L["RulesOrderNote"]</p>

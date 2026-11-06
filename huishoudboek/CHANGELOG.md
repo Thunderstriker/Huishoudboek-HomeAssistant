@@ -1,5 +1,16 @@
 # Changelog
 
+## Nog niet uitgebracht
+
+- Bankperioden rechtstreeks per betaal- of spaarrekening bevestigen, ook zonder import
+  en voor meerdere maanden of jaren tegelijk. Bevestigingen veranderen geen boekingen
+  of saldi en blijven bewaard in databaseback-ups. Gewijzigde bankgegevens vragen om
+  een nieuwe controle; categoriseren trekt een bevestiging niet in.
+- Inzichten toont ontbrekende rekeningen en datumbereiken per maand, een concrete
+  uitleg bij onvoldoende historie en duidelijke meldingen in plaats van lege ringen.
+  Bevestigde imports krijgen een bevestigingsstatus en de actie Afschriftperiode wijzigen.
+- Databaseschema 11 met een veiligheidskopie vóór migratie van schema's 1–10.
+
 ## 0.1.15
 
 - Nieuwe pagina Inzichten met een financiële vrijheidskaart: maanden essentiële

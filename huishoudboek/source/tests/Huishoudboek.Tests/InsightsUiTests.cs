@@ -1,10 +1,14 @@
 using System.Globalization;
 using System.Net;
+using System.Reflection;
+using System.Text.Json;
 using Huishoudboek.Core;
 using Huishoudboek.Infrastructure;
 using Huishoudboek.Web;
 using Huishoudboek.Web.Components.Pages;
+using Huishoudboek.Web.Components.Shared;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -88,11 +92,134 @@ public sealed class InsightsUiTests
         Assert.DoesNotContain(WebState.Money(19800m), filtered);
     }
 
+    [Theory]
+    [InlineData("nl-NL")]
+    [InlineData("en-GB")]
+    public async Task ConfirmingSavingsThroughTheEditorUpdatesOpenInsightsWithoutImportingOrRefreshing(string culture)
+    {
+        using var language = new CultureScope(culture);
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var data = FinancialInsightsTests.Data(asOf: today); var savings = data.Accounts[1];
+        data.ImportBatches.RemoveAll(b => b.AccountId == savings.Id);
+        var bank = JsonSerializer.Serialize(data.Transactions); var imports = JsonSerializer.Serialize(data.ImportBatches);
+        using var services = Services(data); var state = services.GetRequiredService<WebState>(); await state.LoadAsync();
+        await using var renderer = new HtmlRenderer(services, services.GetRequiredService<ILoggerFactory>());
+        var insights = await renderer.Dispatcher.InvokeAsync(() => renderer.RenderComponentAsync<Insights>());
+        var accounts = await renderer.Dispatcher.InvokeAsync(() => renderer.RenderComponentAsync<Accounts>());
+        var initial = WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(insights.ToHtmlString));
+        var previousMonth = new DateOnly(today.Year, today.Month, 1).AddMonths(-1);
+        var gap = UiCulture.Text("InsightsAccountGap", savings.Name, previousMonth.ToString("dd-MM-yyyy"), previousMonth.AddMonths(1).AddDays(-1).ToString("dd-MM-yyyy"));
+        Assert.Contains(gap, initial);
+        Assert.Contains($"rekeningen#statement-periods-{savings.Id}", initial);
+        Assert.Contains(UiCulture.Text("FreedomNotCalculated"), initial);
+        var accountHtml = WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(accounts.ToHtmlString));
+        Assert.Contains(UiCulture.Text("AccountStatementPeriods"), accountHtml);
+        Assert.Contains(UiCulture.Text("ConfirmAccountPeriod"), accountHtml);
+
+        var capture = services.GetRequiredService<EditorCapture>(); capture.Draft = EditorDraft.AccountCoverage(state, savings);
+        var editor = await renderer.Dispatcher.InvokeAsync(() => renderer.RenderComponentAsync<CoverageEditorProbe>());
+        var editorHtml = WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(editor.ToHtmlString));
+        Assert.Contains(UiCulture.Text("AccountPeriodConsent"), editorHtml);
+        Assert.Contains(UiCulture.Text("ConfirmAccountPeriod"), editorHtml);
+        Assert.Empty(data.AccountStatementPeriods); // Opening the form saves nothing.
+        await renderer.Dispatcher.InvokeAsync(() => InvokeEditor(capture.Editor, "Save"));
+        Assert.False(capture.Closed); Assert.Empty(data.AccountStatementPeriods);
+        Assert.Contains(UiCulture.Text("AccountPeriodConsentRequired"), WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(editor.ToHtmlString)));
+
+        capture.Draft.Fields.Single(f => f.Key == "complete").Value = "True";
+        await renderer.Dispatcher.InvokeAsync(() => InvokeEditor(capture.Editor, "Save"));
+        Assert.True(capture.Closed); Assert.Single(data.AccountStatementPeriods);
+        Assert.Equal(UiCulture.Text("StatementPeriodSaved"), state.Message);
+        var updated = WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(insights.ToHtmlString));
+        Assert.DoesNotContain(gap, updated);
+        Assert.DoesNotContain(UiCulture.Text("FreedomNotCalculated"), updated);
+        Assert.DoesNotContain(UiCulture.Text("InsightsSetupTitle"), updated);
+        Assert.Contains(UiCulture.Text("InsightsPeriodNote", today.ToString("dd-MM-yyyy"), 6), updated);
+        Assert.Contains(UiCulture.Text("AccountPeriodConfirmed"), WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(accounts.ToHtmlString)));
+        Assert.Equal(bank, JsonSerializer.Serialize(data.Transactions)); Assert.Equal(imports, JsonSerializer.Serialize(data.ImportBatches));
+
+        await renderer.Dispatcher.InvokeAsync(() => state.SaveAsync(d => d.AccountStatementPeriods.Clear()));
+        Assert.Contains(gap, WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(insights.ToHtmlString)));
+    }
+
+    [Theory]
+    [InlineData("nl-NL")]
+    [InlineData("en-GB")]
+    public async Task AccountPeriodEditorRejectsInvalidDatesAndCancellationChangesNothing(string culture)
+    {
+        using var language = new CultureScope(culture);
+        var today = DateOnly.FromDateTime(DateTime.Today); var data = FinancialInsightsTests.Data(asOf: today);
+        using var services = Services(data); var state = services.GetRequiredService<WebState>(); await state.LoadAsync();
+        var before = JsonSerializer.Serialize(data); var account = data.Accounts[1];
+        var capture = services.GetRequiredService<EditorCapture>(); capture.Draft = EditorDraft.AccountCoverage(state, account);
+        capture.Draft.Fields.Single(f => f.Key == "complete").Value = "True";
+        foreach (var range in new[] { (account.OpeningDate.AddDays(-1), today), (today, today.AddDays(-1)), (account.OpeningDate, today.AddDays(1)) })
+        {
+            capture.Draft.Fields.Single(f => f.Key == "from").Value = range.Item1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            capture.Draft.Fields.Single(f => f.Key == "through").Value = range.Item2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            Assert.Equal(UiCulture.Text("InvalidAccountPeriod"), Assert.Throws<InvalidOperationException>(() => capture.Draft.Apply(data)).Message);
+            Assert.Equal(before, JsonSerializer.Serialize(data));
+        }
+        await using var renderer = new HtmlRenderer(services, services.GetRequiredService<ILoggerFactory>());
+        await renderer.Dispatcher.InvokeAsync(() => renderer.RenderComponentAsync<CoverageEditorProbe>());
+        await renderer.Dispatcher.InvokeAsync(() => InvokeEditor(capture.Editor, "Cancel"));
+        Assert.True(capture.Closed); Assert.Equal(before, JsonSerializer.Serialize(data));
+    }
+
+    [Theory]
+    [InlineData("nl-NL")]
+    [InlineData("en-GB")]
+    public async Task ConfirmedImportShowsConfirmedStatusAndAnEditActionInsteadOfTheSameConfirmButton(string culture)
+    {
+        using var language = new CultureScope(culture);
+        var today = DateOnly.FromDateTime(DateTime.Today); var data = FinancialInsightsTests.Data(asOf: today);
+        var batch = data.ImportBatches[0]; batch.CoverageFrom = batch.CoverageThrough = null;
+        data.ImportBatches.RemoveAt(1);
+        using var services = Services(data); var state = services.GetRequiredService<WebState>(); await state.LoadAsync();
+        await using var renderer = new HtmlRenderer(services, services.GetRequiredService<ILoggerFactory>());
+        var root = await renderer.Dispatcher.InvokeAsync(() => renderer.RenderComponentAsync<Administration>());
+        Assert.Contains(UiCulture.Text("ConfirmStatementCoverage"), WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(root.ToHtmlString)));
+        var draft = EditorDraft.ImportCoverage(state, batch);
+        await renderer.Dispatcher.InvokeAsync(() => state.SaveAsync(draft.Apply, draft.Revision));
+        var html = WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(root.ToHtmlString));
+        Assert.Contains(UiCulture.Text("EditStatementCoverage"), html);
+        Assert.Contains(UiCulture.Text("AccountPeriodConfirmed"), html);
+        Assert.DoesNotContain(UiCulture.Text("ConfirmStatementCoverage"), html);
+    }
+
+    private static async Task InvokeEditor(Editor editor, string method)
+    {
+        await (Task)typeof(Editor).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(editor, null)!;
+        typeof(ComponentBase).GetMethod("StateHasChanged", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(editor, null);
+    }
+
+    public sealed class EditorCapture
+    {
+        public EditorDraft Draft { get; set; } = null!;
+        public Editor Editor { get; set; } = null!;
+        public bool Closed { get; set; }
+    }
+
+    public sealed class CoverageEditorProbe : ComponentBase
+    {
+        [Inject] public EditorCapture Capture { get; set; } = null!;
+        protected override void BuildRenderTree(RenderTreeBuilder builder)
+        {
+            if (Capture.Closed) return;
+            builder.OpenComponent<Editor>(0);
+            builder.AddAttribute(1, "Draft", Capture.Draft);
+            builder.AddAttribute(2, "Closed", EventCallback.Factory.Create(this, () => Capture.Closed = true));
+            builder.AddComponentReferenceCapture(3, component => Capture.Editor = (Editor)component);
+            builder.CloseComponent();
+        }
+    }
+
     private static ServiceProvider Services(HouseholdData data)
     {
         var services = new ServiceCollection(); services.AddLogging(); services.AddLocalization();
         services.AddSingleton<IWebAdministration>(new Backend(data)); services.AddSingleton<WebState>();
         services.AddSingleton<IJSRuntime>(new NoJs()); services.AddSingleton<UiPreferences>();
+        services.AddSingleton(new WebHostSettings(false)); services.AddSingleton<EditorCapture>();
         return services.BuildServiceProvider();
     }
 
@@ -105,7 +232,7 @@ public sealed class InsightsUiTests
     private sealed class Backend(HouseholdData data) : IWebAdministration
     {
         public Task<AdministrationSnapshot> ReadAsync() => Task.FromResult(new AdministrationSnapshot("test", data));
-        public Task<AdministrationSnapshot> UpdateAsync(string revision, Action<HouseholdData> change) { change(data); return ReadAsync(); }
+        public Task<AdministrationSnapshot> UpdateAsync(string revision, Action<HouseholdData> change) { change(data); Validation.Validate(data); return ReadAsync(); }
         public Task<UploadResponse> UploadAsync(Stream source, string name, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<PreviewResponse> PreviewAsync(PreviewRequest request, string revision) => throw new NotSupportedException();
         public Task<PreviewRow> AdjustAsync(AdjustImportRequest request) => throw new NotSupportedException();

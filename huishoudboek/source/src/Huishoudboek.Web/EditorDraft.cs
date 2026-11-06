@@ -30,6 +30,8 @@ public sealed class EditorDraft(string title, string revision)
     public string Revision { get; } = revision;
     public string Note { get; private set; } = "";
     public string Error { get; set; } = "";
+    public string SaveLabel { get; private set; } = UiCulture.Text("Save");
+    public string SuccessMessage { get; private set; } = UiCulture.Text("ChangesSaved");
     public List<EditorField> Fields { get; } = [];
     public Action<HouseholdData> Apply { get; private set; } = _ => { };
     private Guid? _recurringPaymentId;
@@ -309,7 +311,8 @@ public sealed class EditorDraft(string title, string revision)
     public static EditorDraft ImportCoverage(WebState s, ImportBatch batch)
     {
         var entries = s.Data.Transactions.Where(t => t.ImportBatchId == batch.Id).ToList();
-        var draft = new EditorDraft(UiCulture.Text("ConfirmStatementCoverage"), s.Revision) { Note = UiCulture.Text("ConfirmStatementCoverageNote") };
+        var draft = new EditorDraft(UiCulture.Text(batch.CoverageFrom != null ? "EditStatementCoverage" : "ConfirmStatementCoverage"), s.Revision)
+        { Note = UiCulture.Text("ConfirmStatementCoverageNote"), SaveLabel = UiCulture.Text("Confirm"), SuccessMessage = UiCulture.Text("StatementPeriodSaved") };
         draft.DateField("from", "FromInclusive", batch.CoverageFrom ?? entries.Select(t => (DateOnly?)t.Date).Min() ?? s.Today);
         draft.DateField("through", "ThroughInclusive", batch.CoverageThrough ?? entries.Select(t => (DateOnly?)t.Date).Max() ?? s.Today);
         draft.Apply = d =>
@@ -321,6 +324,29 @@ public sealed class EditorDraft(string title, string revision)
                 rows.Any(t => t.Date < from || t.Date > through))
                 throw new InvalidOperationException(UiCulture.Text("InvalidStatementCoverage"));
             saved.CoverageFrom = from; saved.CoverageThrough = through;
+        };
+        return draft;
+    }
+
+    public static EditorDraft AccountCoverage(WebState s, Account account, AccountStatementPeriod? original = null)
+    {
+        var draft = new EditorDraft(UiCulture.Text("AccountPeriodTitle", account.Name), s.Revision)
+        {
+            Note = UiCulture.Text("AccountPeriodNote"), SaveLabel = UiCulture.Text("ConfirmAccountPeriod"),
+            SuccessMessage = UiCulture.Text("StatementPeriodSaved")
+        };
+        draft.DateField("from", "FromInclusive", original?.From ?? account.OpeningDate);
+        draft.DateField("through", "ThroughInclusive", original?.Through ?? s.Today);
+        draft.Field("complete", "AccountPeriodConsent", "checkbox", "False");
+        draft.Apply = d =>
+        {
+            if (!bool.TryParse(draft.Text("complete"), out var complete) || !complete)
+                throw new InvalidOperationException(UiCulture.Text("AccountPeriodConsentRequired"));
+            var saved = d.Accounts.Single(a => a.Id == account.Id);
+            var from = draft.Date("from"); var through = draft.Date("through");
+            if (saved.Kind == AccountKind.Investment || from < saved.OpeningDate || from > through || through > s.Today)
+                throw new InvalidOperationException(UiCulture.Text("InvalidAccountPeriod"));
+            BankImportCoverage.ConfirmAccountPeriod(d, account.Id, from, through, s.Today, original?.Id);
         };
         return draft;
     }

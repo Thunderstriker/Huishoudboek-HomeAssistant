@@ -45,7 +45,7 @@
                     }
                 }
             </div>
-            <div class="actions"><button type="button" @onclick="Cancel">@L["Cancel"]</button><button type="submit" class="primary">@L["Save"]</button></div>
+            <div class="actions"><button type="button" @onclick="Cancel">@L["Cancel"]</button><button type="submit" class="primary">@Draft.SaveLabel</button></div>
         </fieldset>
     </form>
     }
@@ -71,7 +71,7 @@
         if (proposal is not { } operation) return;
         Action<HouseholdData> apply = link && operation.SaveSelected is { } save ? d => save(d, selected) : link ? operation.SaveAndLink : operation.SaveOnly;
         if (await State.RunAsync(() => State.SaveAsync(apply, Draft.Revision),
-            link ? L["RecurringRowsLinked", selected.Count] : L["ChangesSaved"])) await Closed.InvokeAsync();
+            link ? L["RecurringRowsLinked", selected.Count] : Draft.SuccessMessage)) await Closed.InvokeAsync();
         else Draft.Error = State.Message;
     }
 }

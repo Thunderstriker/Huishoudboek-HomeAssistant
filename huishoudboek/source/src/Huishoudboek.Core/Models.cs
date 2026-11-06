@@ -164,6 +164,16 @@ public sealed record ImportBatch
     public DateOnly? CoverageThrough { get; set; }
 }
 
+/// <summary>Explicit account-history confirmation, independent of any file import or balance check.</summary>
+public sealed record AccountStatementPeriod
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid AccountId { get; set; }
+    public DateOnly From { get; set; }
+    public DateOnly Through { get; set; }
+    public string BankDataFingerprint { get; set; } = "";
+}
+
 public sealed record ImportProfile
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -199,6 +209,7 @@ public sealed class HouseholdData
     public List<CategorizationRule> Rules { get; set; } = [];
     public List<InvestmentValuation> Valuations { get; set; } = [];
     public List<ImportBatch> ImportBatches { get; set; } = [];
+    public List<AccountStatementPeriod> AccountStatementPeriods { get; set; } = [];
     public List<ImportProfile> ImportProfiles { get; set; } = [];
     public List<AccountReview> AccountReviews { get; set; } = [];
     public Mortgage? Mortgage { get; set; }

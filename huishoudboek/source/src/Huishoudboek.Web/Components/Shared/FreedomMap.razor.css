@@ -13,6 +13,7 @@ circle { fill: none; stroke-width: 9; }
 .ring-3 { stroke: var(--lifestyle); }
 .freedom-centre { position: absolute; inset: 30%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #f3fbff; text-align: center; line-height: 1.25; }
 .freedom-centre strong { font-size: clamp(1.7rem, 3vw, 2.8rem); font-variant-numeric: tabular-nums; }
+.freedom-map .freedom-centre.unknown strong { font-size: .95rem; margin-bottom: .4rem; }
 .freedom-centre span { text-transform: uppercase; letter-spacing: .07em; font-size: .65rem; margin: .3rem 0; }
 .freedom-centre small { font-size: .67rem; color: #bed4df; }
 .freedom-legend { display: grid; gap: .45rem; }

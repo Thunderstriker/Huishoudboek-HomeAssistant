@@ -58,7 +58,8 @@ public static class FirstWeek
         return [
             new("SetupAccounts", "rekeningen", hasAccounts),
             new("SetupOpening", "rekeningen#balance-checks", hasAccounts && accounts.All(a => OpeningConfirmed(data, a))),
-            new("SetupImport", "importeren", hasAccounts && accounts.All(a => data.ImportBatches.Any(b => b.AccountId == a.Id && !b.Undone && (b.RowCount > 0 || b.CoverageThrough != null)))),
+            new("SetupImport", "importeren", hasAccounts && accounts.All(a => BankImportCoverage.ConfirmedThrough(data, a.Id) != null ||
+                data.ImportBatches.Any(b => b.AccountId == a.Id && !b.Undone && b.RowCount > 0))),
             new("SetupBalances", "rekeningen#balance-checks", hasAccounts && accounts.All(a => BalanceChecked(data, a, today))),
             new("SetupCategorize", "categoriseren", hasEntries && UncategorizedCount(data, today) == 0),
             new("SetupPlans", "budgetten", (data.Categories.Any(c => c.MonthlyBudget > 0) || data.BudgetOverrides.Any(b => b.Amount > 0)) && data.RecurringPayments.Count > 0)

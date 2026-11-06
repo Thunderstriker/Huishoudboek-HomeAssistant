@@ -2,7 +2,12 @@ namespace Huishoudboek.Core;
 
 public sealed record InsightMonth(DateOnly Month, bool Covered, decimal Income, decimal Spending,
     decimal Essentials, decimal Exceptional, decimal Savings, decimal Discretionary,
-    IReadOnlyList<AccountingLine> Lines);
+    IReadOnlyList<AccountingLine> Lines)
+{
+    public IReadOnlyList<InsightCoverageIssue> CoverageIssues { get; init; } = [];
+}
+
+public sealed record InsightCoverageIssue(Guid AccountId, DateOnly From, DateOnly Through, bool OpeningMonth = false);
 
 public sealed record InsightDiscovery(string Key, decimal Value, DateOnly From, DateOnly Through,
     IReadOnlyList<InsightEvidence> Evidence);
@@ -49,15 +54,18 @@ public static class FinancialInsights
             var end = month.AddMonths(1).AddDays(-1);
             var relevant = accounts.Where(a => a.Kind != AccountKind.Investment && a.OpeningDate <= end).ToList();
             // A mid-month opening is not a full observed month.
-            var covered = relevant.Count > 0 && relevant.All(a => a.OpeningDate <= month &&
-                BankImportCoverage.Covers(data, a.Id, month, end));
+            var issues = relevant.SelectMany(a => a.OpeningDate > month
+                ? new[] { new InsightCoverageIssue(a.Id, a.OpeningDate, end, OpeningMonth: true) }
+                : BankImportCoverage.MissingPeriods(data, a.Id, month, end)
+                    .Select(p => new InsightCoverageIssue(a.Id, p.From, p.Through))).ToList();
+            var covered = relevant.Count > 0 && issues.Count == 0;
             // Investment-account activity is not a normal household spending/income baseline.
             var entries = byMonth[month].Where(l => accounts.Any(a => a.Id == l.Transaction.AccountId && a.Kind != AccountKind.Investment)).ToList();
             var report = Finance.Report(data, month.Year, month.Month, today, scope);
             months.Add(new(month, covered, entries.Where(l => !l.IsExceptional).Sum(l => l.Income),
                 entries.Sum(l => l.TypicalSpending), entries.Where(l => l.IsEssential).Sum(l => l.TypicalSpending),
                 entries.Where(l => l.IsExceptional).Sum(l => l.Spending), report.Savings,
-                entries.Where(IsDiscretionary).Sum(l => l.TypicalSpending), entries));
+                entries.Where(IsDiscretionary).Sum(l => l.TypicalSpending), entries) { CoverageIssues = issues });
         }
 
         var observed = months.Where(m => m.Covered).ToList();
