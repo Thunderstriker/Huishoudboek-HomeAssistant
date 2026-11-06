@@ -17,6 +17,7 @@
 *.pdb
 *.so
 service.json
+preview.json
 home-assistant.json
 desktop-service.json
 options.json

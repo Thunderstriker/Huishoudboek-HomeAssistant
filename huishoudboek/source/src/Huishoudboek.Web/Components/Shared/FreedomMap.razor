@@ -1,0 +1,68 @@
+<section class="card freedom-map @(Compact ? "compact" : "")" aria-label="@L["FreedomTitle"]">
+    <div class="page-heading">
+        <div><h2>@L["FreedomTitle"]</h2><p class="muted map-eyebrow">@L["FreedomEssentialsHeadline"]</p></div>
+        @if (Compact) { <a href="inzichten">@L["FinancialInsights"] →</a> }
+    </div>
+    <div class="freedom-body">
+        <div class="freedom-dial">
+            <svg viewBox="0 0 260 260" role="img" aria-label="@L["FreedomChartLabel"]">
+                <title>@L["FreedomTitle"]</title>
+                @for (var index = 0; index < Rings.Length; index++)
+                {
+                    var ring = Rings[index];
+                    <circle class="ring-track" cx="130" cy="130" r="@(112 - index * 17)" />
+                    <circle class="ring-value ring-@index @(ring.Ratio == null ? "unknown" : "")" cx="130" cy="130" r="@(112 - index * 17)"
+                            pathLength="100" stroke-dasharray="@Dash(ring.Ratio)" transform="rotate(-90 130 130)" />
+                }
+            </svg>
+            <div class="freedom-centre"><strong>@Number(Overview.EssentialMonths)</strong><span>@L["FreedomMonths"]</span><small>@L["FreedomWithoutIncome"]</small></div>
+        </div>
+        <div class="freedom-legend">
+            @for (var index = 0; index < Rings.Length; index++)
+            {
+                var ring = Rings[index]; var selected = index;
+                @if (Compact)
+                {
+                    <div class="ring-label"><i class="swatch ring-colour-@index" aria-hidden="true"></i><span>@L[ring.Label]</span><strong>@ring.Value</strong></div>
+                }
+                else
+                {
+                    <button type="button" class="ring-label @(active == index ? "active" : "")" aria-pressed="@(active == index ? "true" : "false")" @onclick="() => active = selected">
+                        <i class="swatch ring-colour-@index" aria-hidden="true"></i><span>@L[ring.Label]</span><strong>@ring.Value</strong>
+                    </button>
+                }
+            }
+        </div>
+    </div>
+    @if (!Compact)
+    {
+        <div class="ring-explanation" aria-live="polite"><strong>@L[Rings[active].Label]</strong><p>@L[Rings[active].Explanation]</p></div>
+        <dl class="freedom-amounts">
+            <div><dt>@L["FreedomUsableReserves"]</dt><dd>@Money(Overview.UsableReserves)</dd></div>
+            <div><dt>@L["FreedomMonthlyEssentials"]</dt><dd>@Amount(Overview.MonthlyEssentials)</dd></div>
+            <div><dt>@L["FreedomMonthlyLifestyle"]</dt><dd>@Amount(Overview.MonthlyLifestyle)</dd></div>
+            <div><dt>@L["FreedomReserveChange"]</dt><dd>@(Overview.ReserveChangeMonths is { } change ? $"{(change > 0 ? "+" : "")}{change.ToString("N1", UiCulture.Culture)} {L["FreedomMonths"].Value}" : "—")</dd></div>
+        </dl>
+        <p class="muted">@L["FreedomChangeHelp"]</p>
+    }
+    @if (LimitedHistory) { <p class="map-note">@L["InsightsNeedHistory"]</p> }
+    else if (Overview.MonthlyEssentials == null) { <p class="map-note">@L["FreedomChooseEssentials"] <a href="budgetten">@L["CategorySettings"] →</a></p> }
+    @if (!Overview.BalancesCovered || Overview.SpendingUncertain) { <p class="map-note">@L["FreedomProvisional"]</p> }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public Huishoudboek.Core.FreedomMap Overview { get; set; } = null!;
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public bool LimitedHistory { get; set; }
+    private int active;
+    private sealed record Ring(string Label, string Value, decimal? Ratio, string Explanation);
+    private Ring[] Rings => [
+        new("FreedomSecurity", Overview.EssentialMonths is { } months ? $"{months.ToString("N1", UiCulture.Culture)} / {Overview.TargetMonths} {L["FreedomMonths"].Value}" : "—", Overview.EssentialMonths / Overview.TargetMonths, "FreedomSecurityHelp"),
+        new("FreedomFlexibility", Money(Overview.Spendable), Overview.CurrentCash > 0 ? Overview.Spendable / Overview.CurrentCash : null, "FreedomFlexibilityHelp"),
+        new("FreedomCommitments", Overview.MonthlyIncome is > 0 ? (Overview.MonthlyCommitments / Overview.MonthlyIncome.Value).ToString("P0", UiCulture.Culture) : "—", Overview.MonthlyIncome is > 0 ? Overview.MonthlyCommitments / Overview.MonthlyIncome.Value : null, "FreedomCommitmentsHelp"),
+        new("FreedomLifestyle", Overview.LifestyleMonths is { } lifestyle ? $"{lifestyle.ToString("N1", UiCulture.Culture)} {L["FreedomMonths"].Value}" : "—", Overview.LifestyleMonths / Overview.TargetMonths, "FreedomLifestyleHelp")
+    ];
+    private static string Dash(decimal? ratio) => $"{(Math.Clamp(ratio ?? 0, 0, 1) * 100).ToString("0.##", CultureInfo.InvariantCulture)} 100";
+    private static string Number(decimal? value) => value?.ToString("N1", UiCulture.Culture) ?? "—";
+    private static string Amount(decimal? value) => value is { } amount ? Money(amount) : "—";
+}

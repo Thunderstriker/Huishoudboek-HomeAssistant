@@ -1,0 +1,49 @@
+.freedom-map { --security: #42ccb4; --flexibility: #7fb7ff; --commitments: #edb464; --lifestyle: #b7a3ed; overflow: hidden; }
+.map-eyebrow { font-size: .82rem; margin: .25rem 0 0; }
+.freedom-body { display: grid; grid-template-columns: minmax(190px, 1fr) minmax(180px, 1fr); align-items: center; gap: 1.4rem; }
+.freedom-dial { position: relative; width: min(100%, 300px); margin: auto; aspect-ratio: 1; background: radial-gradient(ellipse at center, #183d4e, #112737 70%); border-radius: 50%; }
+svg { width: 100%; height: 100%; display: block; }
+circle { fill: none; stroke-width: 9; }
+.ring-track { stroke: #ffffff14; }
+.ring-value { stroke-linecap: round; }
+.ring-value.unknown { opacity: 0; }
+.ring-0 { stroke: var(--security); }
+.ring-1 { stroke: var(--flexibility); }
+.ring-2 { stroke: var(--commitments); }
+.ring-3 { stroke: var(--lifestyle); }
+.freedom-centre { position: absolute; inset: 30%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #f3fbff; text-align: center; line-height: 1.25; }
+.freedom-centre strong { font-size: clamp(1.7rem, 3vw, 2.8rem); font-variant-numeric: tabular-nums; }
+.freedom-centre span { text-transform: uppercase; letter-spacing: .07em; font-size: .65rem; margin: .3rem 0; }
+.freedom-centre small { font-size: .67rem; color: #bed4df; }
+.freedom-legend { display: grid; gap: .45rem; }
+.ring-label { display: grid; grid-template-columns: 9px 1fr auto; gap: .6rem; align-items: center; padding: .8rem .65rem; text-align: start; width: 100%; font: inherit; background: transparent; border: 1px solid transparent; border-radius: 9px; color: inherit; }
+button.ring-label { cursor: pointer; }
+button.ring-label:hover, button.ring-label.active { background: #718e9910; border-color: #718e9938; }
+.ring-label span { font-size: .88rem; }
+.ring-label strong { font-size: .88rem; font-variant-numeric: tabular-nums; text-align: end; }
+.swatch { display: block; width: 9px; height: 9px; border-radius: 50%; }
+.ring-colour-0 { background: var(--security); }
+.ring-colour-1 { background: var(--flexibility); }
+.ring-colour-2 { background: var(--commitments); }
+.ring-colour-3 { background: var(--lifestyle); }
+.ring-explanation { padding: .85rem 1rem; margin-top: 1rem; border-radius: 10px; background: #718e9910; font-size: .88rem; }
+.ring-explanation p { margin: .3rem 0 0; }
+.freedom-amounts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.2rem 0; }
+.freedom-amounts dt { font-size: .82rem; opacity: .8; }
+.freedom-amounts dd { margin: .3rem 0 0; font-size: 1.15rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.map-note { font-size: .83rem; border-top: 1px solid #718e9928; padding-top: .8rem; margin: .8rem 0 0; }
+.compact { margin-bottom: 1.2rem; }
+.compact .freedom-body { grid-template-columns: 160px 1fr; max-width: 620px; margin: auto; }
+.compact .freedom-centre strong { font-size: 1.7rem; }
+.compact .freedom-centre small { font-size: .55rem; }
+.compact .ring-label { padding: .35rem; }
+@media (max-width: 600px) {
+    .freedom-body { grid-template-columns: 1fr; gap: .6rem; }
+    .freedom-dial { max-width: 250px; }
+    .compact .freedom-body { grid-template-columns: 130px 1fr; gap: .6rem; }
+    .compact .ring-label { grid-template-columns: 7px 1fr; gap: .3rem; }
+    .compact .ring-label strong { grid-column: 2; text-align: start; }
+    .compact .ring-label span, .compact .ring-label strong { font-size: .78rem; }
+    .compact .freedom-centre strong { font-size: 1.4rem; }
+    .compact .freedom-centre span { font-size: .5rem; }
+}

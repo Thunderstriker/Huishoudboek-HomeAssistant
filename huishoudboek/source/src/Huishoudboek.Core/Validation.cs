@@ -48,8 +48,14 @@ public static class Validation
             Require(a.SavingsGoal is null or > 0, "Een spaardoel moet positief zijn.");
             Require(Money(a.OpeningBalance) && (a.SavingsGoal == null || Money(a.SavingsGoal.Value)), "Rekeningsaldi en doelen hebben maximaal twee decimalen.");
             Require(a.MinimumCashBuffer >= 0 && Money(a.MinimumCashBuffer), "De minimale cashbuffer moet niet-negatief zijn en heeft maximaal twee decimalen.");
+            Require(a.EarmarkedAmount >= 0 && Money(a.EarmarkedAmount), "Gereserveerd geld moet niet-negatief zijn en heeft maximaal twee decimalen.");
         }
         Require(data.Categories.All(c => !string.IsNullOrWhiteSpace(c.Name) && c.MonthlyBudget >= 0 && Money(c.MonthlyBudget) && Enum.IsDefined(c.Purpose)), "Ongeldige categorie, verwerking of budget (maximaal twee decimalen).");
+        Require(data.Categories.All(c => !(c.IsEssential && c.IsExceptional) &&
+            (c.Purpose == CategoryPurpose.Normal || !c.IsEssential && !c.IsExceptional)),
+            "Kies essentieel óf uitzonderlijk, alleen voor gewone categorieën.");
+        Require(data.InsightSettings != null && data.InsightSettings.BufferTargetMonths is >= 1 and <= 36,
+            "Kies een bufferdoel van 1 tot 36 maanden.");
         foreach (var t in data.Transactions)
         {
             Require(accounts.Contains(t.AccountId) && !string.IsNullOrWhiteSpace(t.Description), "Transactie mist een rekening of omschrijving.");

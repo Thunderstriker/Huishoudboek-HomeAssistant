@@ -32,6 +32,12 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
   24 afgesloten maanden of een eigen periode; voeg de huidige maand optioneel toe.
   Open vanuit het dashboard of klik op een categorietotaal in het maand-/jaaroverzicht.
   Het eigenaarfilter blijft gelden; de pagina heeft een eigen periodekeuze.
+- **Inzichten:** financiële vrijheidskaart met maanden essentiële uitgaven zonder
+  inkomen, bestedingsruimte, bufferdoel en leefstijlbereik; compact op het dashboard.
+  De geldvingerafdruk toont zes verklaarbare patronen en ontdekkingen met bronboekingen.
+  Markeer categorieën als essentieel of uitzonderlijk en kies toegankelijke reserves
+  en extra gereserveerd geld. Uitzonderlijke uitgaven blijven echte uitgaven, maar
+  verstoren geen gewone kostenramingen. Alleen bevestigde afschriftmaanden tellen mee.
 - Negatieve bedragen staan onder de nullijn; exacte bedragen blijven beschikbaar
   in tabellen of samenvattingen. De grafieken passen zich aan de schermbreedte aan.
   Chart.js is lokaal meegeleverd onder de MIT-licentie.

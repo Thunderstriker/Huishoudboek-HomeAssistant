@@ -14,6 +14,8 @@
     <div class="card"><div class="metric-label">@L["Savings"]</div><div class="metric-value">@Money(overview.Savings)</div></div>
     <div class="card"><div class="metric-label">@L["Available"]</div><div class="metric-value">@Money(overview.Available)</div></div>
 </div>
+@if (overview.ExceptionalOutflow != 0)
+{ <p class="notice">@L["ExceptionalActualNote", Money(overview.ExceptionalOutflow)]</p> }
 <YearCharts Months="actualMonths" Categories="overview.Categories" />
 <p class="muted">@L["AnnualActualNote"]</p>
 <details class="card"><summary>@L["ViewMonthlyAmounts"]</summary>

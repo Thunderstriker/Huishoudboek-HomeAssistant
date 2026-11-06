@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.15
+
+- Nieuwe pagina Inzichten met een financiële vrijheidskaart: maanden essentiële
+  uitgaven zonder inkomen, bufferdoel, bestedingsruimte, vaste verplichtingen en
+  leefstijlbereik. Compacte kaart op het dashboard, exacte bedragen en uitleg per ring.
+- Categorieën als essentieel of uitzonderlijk markeren. Uitzonderlijke kosten blijven
+  in werkelijke saldi, budgetten en maand-/jaaroverzichten, maar verstoren geen gewone
+  uitgavenschattingen of gedragspatronen. Toekomstige betalingen blijven gereserveerd.
+- Geldvingerafdruk met zes verklaarbare dimensies, daggemiddelde-vergelijkingen en
+  bronboekingen. Alleen voldoende bevestigde bankhistorie ondersteunt ontdekkingen;
+  ontbrekende gegevens worden nooit als nul of een perfecte score gepresenteerd.
+- Instelbare toegankelijke reserverekeningen, extra gereserveerd geld en een bufferdoel.
+  Beleggingen tellen niet mee als liquide noodreserve; bereik is geen financiële
+  onafhankelijkheid. Nederlands/Engels, responsive SVG's zonder externe diensten.
+- Databaseschema 10 met veiligheidskopie vóór migratie van schema's 1–9 en veilige
+  standaardinstellingen. Nieuwe regressietests voor berekeningen, migratie en weergave.
+
 ## 0.1.14
 
 - Nieuwe pagina Categorietrends: historische maanduitgaven per categorie met

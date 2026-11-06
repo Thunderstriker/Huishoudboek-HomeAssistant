@@ -21,9 +21,10 @@ public sealed class WebsiteOptions
     public string PasswordHash { get; init; } = "";
     public string SessionVersion { get; init; } = "1";
     public bool IngressEnabled { get; internal set; }
+    public bool PreviewEnabled { get; internal set; }
     public void Validate()
     {
-        if (!Enabled || IngressEnabled) return;
+        if (!Enabled || IngressEnabled || PreviewEnabled) return;
         if (string.IsNullOrWhiteSpace(Username) || PasswordHash.Length < 50 || string.IsNullOrWhiteSpace(SessionVersion))
             throw new InvalidOperationException("Stel Website:Username, PasswordHash en SessionVersion in. Maak de hash met --hash-password.");
         try { _ = Convert.FromBase64String(PasswordHash); }
@@ -45,11 +46,11 @@ public sealed class WebsiteSessions
     {
         _options = options; _clock = clock ?? TimeProvider.System;
         _directory = Path.Combine(service.DataDirectory, "website-auth", "sessions");
-        if (options.Enabled && !options.IngressEnabled) Directory.CreateDirectory(_directory);
+        if (options.Enabled && !options.IngressEnabled && !options.PreviewEnabled) Directory.CreateDirectory(_directory);
     }
     public ClaimsPrincipal Create(bool remember)
     {
-        if (!_options.Enabled || _options.IngressEnabled) throw new UnauthorizedAccessException();
+        if (!_options.Enabled || _options.IngressEnabled || _options.PreviewEnabled) throw new UnauthorizedAccessException();
         var id = Guid.NewGuid().ToString("N");
         var expires = _clock.GetUtcNow().Add(remember ? TimeSpan.FromDays(90) : TimeSpan.FromHours(12));
         lock (_gate)
@@ -72,6 +73,7 @@ public sealed class WebsiteSessions
     }
     public bool Valid(ClaimsPrincipal user)
     {
+        if (_options.PreviewEnabled) return _options.Enabled && LocalPreviewAuthentication.Valid(user);
         if (_options.IngressEnabled) return _options.Enabled && HomeAssistantIngress.Valid(user, _clock.GetUtcNow());
         if (!_options.Enabled || user.Identity?.IsAuthenticated != true || user.FindFirst("stamp")?.Value != _options.Stamp ||
             !Guid.TryParseExact(user.FindFirst("sid")?.Value, "N", out var id) ||
@@ -117,7 +119,10 @@ public static class WebsiteAuthentication
             protection.PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(service.DataDirectory, "website-auth", "keys")));
             if (OperatingSystem.IsWindows()) protection.ProtectKeysWithDpapi(protectToLocalMachine: true);
         }
-        if (options.IngressEnabled)
+        if (options.PreviewEnabled)
+            builder.Services.AddAuthentication(LocalPreviewAuthentication.SchemeName)
+                .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, LocalPreviewAuthentication>(LocalPreviewAuthentication.SchemeName, _ => { });
+        else if (options.IngressEnabled)
             builder.Services.AddAuthentication(HomeAssistantIngress.Scheme)
                 .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, HomeAssistantAuthentication>(HomeAssistantIngress.Scheme, _ => { });
         else builder.Services.AddAuthentication(WebsiteSessions.Scheme).AddCookie(WebsiteSessions.Scheme, o =>
@@ -156,6 +161,12 @@ public static class WebsiteAuthentication
 
     public static void Map(WebApplication app, WebsiteOptions options)
     {
+        if (options.PreviewEnabled)
+        {
+            app.MapGet("/login", () => Results.Redirect("/"));
+            app.MapGet("/signout", () => Results.Redirect("/"));
+            return;
+        }
         if (options.IngressEnabled)
         {
             app.MapGet("/login", (HttpContext context) => Results.Redirect(context.Request.PathBase + "/"));

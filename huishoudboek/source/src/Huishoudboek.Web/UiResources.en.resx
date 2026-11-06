@@ -827,4 +827,79 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="HistoryHeatmapLegend" xml:space="preserve"><value>Teal: net spending · purple: net refunds · stripes: no spending entries · dashed outline: incomplete month. Hover, tap or focus a tile for its amount and bank coverage.</value></data>
   <data name="HistoryDashboardLink" xml:space="preserve"><value>Explore spending trends</value></data>
   <data name="HistoryCoverageBadge" xml:space="preserve"><value>Check bank coverage</value></data>
+  <data name="FinancialInsights" xml:space="preserve"><value>Insights</value></data>
+  <data name="InsightsIntro" xml:space="preserve"><value>Not just how much money you have, but how much freedom it gives you.</value></data>
+  <data name="InsightsPeriodNote" xml:space="preserve"><value>Balances as of {0} · {1} confirmed, completed months from the last 12. The month selector above does not change this current analysis; the owner filter does.</value></data>
+  <data name="InsightsCoverageNote" xml:space="preserve"><value>{0} months lack full confirmed bank coverage or include an account opening. They are excluded from averages and behavioral claims. Confirm complete existing statement periods under Administration &amp; import.</value></data>
+  <data name="InsightsNeedHistory" xml:space="preserve"><value>At least 3 fully confirmed, completed months are needed. Missing data does not count as zero spending.</value></data>
+  <data name="InsightsUnclassified" xml:space="preserve"><value>An average of {0} per month is still uncategorized. It counts as ordinary spending, but not as essential. Your emergency runway could therefore appear too generous.</value></data>
+  <data name="InsightsDiscoveries" xml:space="preserve"><value>What your money patterns reveal</value></data>
+  <data name="InsightsMethod" xml:space="preserve"><value>We use up to 12 completed months with complete, explicitly confirmed statement coverage for all current and savings accounts that existed then within the owner filter. A mid-month account opening is not a full observed month. Investment accounts are excluded from lifestyle costs. Splits, refunds, reimbursements and internal transfers follow existing accounting rules. Exceptional categories remain in balances, budgets and actual reports, but not in the ordinary spending or income baseline.</value></data>
+  <data name="InsightsScheduleMethod" xml:space="preserve"><value>Active ordinary recurring payments are converted to monthly amounts: quarterly amounts divided by 3, yearly amounts by 12. Their explicitly linked historical entries are replaced, not counted twice. Splits retain their observed category proportions; exceptional portions and savings movements do not become ordinary lifestyle costs. Review and link missing matches under Recurring payments to avoid overlap with unlinked entries. Known future exceptional expenses over 12 months are reserved separately; a linked bank entry replaces its scheduled payment.</value></data>
+  <data name="InsightsSeasonalNote" xml:space="preserve"><value>Fewer than 12 confirmed months gives a provisional baseline: seasonal costs and unscheduled annual bills may be missing. Ordinary annual costs are not exceptional just because they are paid once a year. Mark all necessary categories as essential; unmarked costs are not silently assumed to be necessities.</value></data>
+  <data name="InsightsExactMonths" xml:space="preserve"><value>Actual monthly amounts before recurring-payment normalization</value></data>
+  <data name="InsightsNormalSpending" xml:space="preserve"><value>Ordinary spending</value></data>
+  <data name="CategoryEssential" xml:space="preserve"><value>Essential expenses (needed without income)</value></data>
+  <data name="CategoryExceptional" xml:space="preserve"><value>Exceptional (not my normal lifestyle)</value></data>
+  <data name="CategoryEssentialBadge" xml:space="preserve"><value>Essential</value></data>
+  <data name="CategoryExceptionalBadge" xml:space="preserve"><value>Exceptional</value></data>
+  <data name="CategoryInsightHelp" xml:space="preserve"><value>Choose essential OR exceptional for an ordinary category. Exceptional expenses remain real spending and affect balances and budgets, but do not inflate everyday-spending estimates. Saving also recalculates past analysis. Use separate categories for a home purchase and ordinary housing costs, for example.</value></data>
+  <data name="ExceptionalActualNote" xml:space="preserve"><value>Includes {0} in net exceptional expenses. This remains actual spending, but does not count as a repeating lifestyle cost.</value></data>
+  <data name="FreedomTitle" xml:space="preserve"><value>Your financial freedom</value></data>
+  <data name="FreedomEssentialsHeadline" xml:space="preserve"><value>Essential expenses covered without income</value></data>
+  <data name="FreedomChartLabel" xml:space="preserve"><value>Four rings for buffer protection, spending room, recurring commitments and lifestyle runway. Exact values are beside the chart.</value></data>
+  <data name="FreedomMonths" xml:space="preserve"><value>months</value></data>
+  <data name="FreedomWithoutIncome" xml:space="preserve"><value>without income</value></data>
+  <data name="FreedomSecurity" xml:space="preserve"><value>Buffer protection</value></data>
+  <data name="FreedomFlexibility" xml:space="preserve"><value>Spending room</value></data>
+  <data name="FreedomCommitments" xml:space="preserve"><value>Income committed</value></data>
+  <data name="FreedomLifestyle" xml:space="preserve"><value>Current lifestyle</value></data>
+  <data name="FreedomSecurityHelp" xml:space="preserve"><value>Usable liquid reserves divided by estimated monthly essential expenses. The ring compares this with your buffer target. Your emergency buffer counts here: it exists to support you if income stops. This is an estimate, not a guarantee.</value></data>
+  <data name="FreedomFlexibilityHelp" xml:space="preserve"><value>Estimated room on current accounts until the next known income (otherwise 30 days), after planned payments, ordinary daily spending, minimum cash buffers and additional earmarked money. The ring shows this as a share of the combined current-account balance. Accounts are not interchangeable: check the paying account and warnings under Financial outlook.</value></data>
+  <data name="FreedomCommitmentsHelp" xml:space="preserve"><value>Active ordinary recurring expenses per month as a percentage of estimated ordinary monthly income. A fuller ring means MORE income committed, not necessarily a better situation. Exceptional categories and savings/internal movements are excluded. The exact value can exceed 100%.</value></data>
+  <data name="FreedomLifestyleHelp" xml:space="preserve"><value>How long the same reserves could support your ordinary lifestyle, including discretionary spending but excluding exceptional purchases. The ring uses the same month target as the emergency buffer. Values above the target remain visible; the ring stops at a full circle.</value></data>
+  <data name="FreedomUsableReserves" xml:space="preserve"><value>Usable reserves</value></data>
+  <data name="FreedomMonthlyEssentials" xml:space="preserve"><value>Monthly essential costs</value></data>
+  <data name="FreedomMonthlyLifestyle" xml:space="preserve"><value>Ordinary monthly lifestyle</value></data>
+  <data name="FreedomReserveChange" xml:space="preserve"><value>Reserve growth since last month-end</value></data>
+  <data name="FreedomChangeHelp" xml:space="preserve"><value>Reserve growth is expressed in months at the same current essential-cost baseline. It is not a saved historical score and does not measure changes in the cost baseline. Only shown when balances are confirmed for both periods; current account selections and earmarks are also applied to the comparison.</value></data>
+  <data name="FreedomChooseEssentials" xml:space="preserve"><value>Mark your necessary categories as essential to calculate your runway without income.</value></data>
+  <data name="FreedomProvisional" xml:space="preserve"><value>Provisional estimate: current balances are not fully confirmed, or the spending forecast contains uncertainty. Check recent imports, buffers and recurring payments.</value></data>
+  <data name="FreedomNotIndependence" xml:space="preserve"><value>Runway without income is not the same as financial independence. Investments, home equity, future returns and expected but unpaid reimbursements are not immediately available reserves. No sustainable investment withdrawal income is assumed.</value></data>
+  <data name="FreedomTarget" xml:space="preserve"><value>Set buffer target</value></data>
+  <data name="FreedomTargetMonths" xml:space="preserve"><value>Buffer target in months (1–36)</value></data>
+  <data name="FreedomTargetHelp" xml:space="preserve"><value>This target sets the scale of the protection and lifestyle rings. It does not change balances or monthly costs. Default: 6 months.</value></data>
+  <data name="FreedomAccounts" xml:space="preserve"><value>Accounts and earmarked money</value></data>
+  <data name="FreedomIncludeAccount" xml:space="preserve"><value>Include as an accessible freedom reserve (not investments)</value></data>
+  <data name="FreedomEarmarkedEuro" xml:space="preserve"><value>Additional earmarked money (€)</value></data>
+  <data name="FreedomEarmarked" xml:space="preserve"><value>Additional earmarks</value></data>
+  <data name="FreedomAccountHelp" xml:space="preserve"><value>Only selected current and freely accessible savings accounts count toward runway. Exclude locked accounts. Investments never count. Additional earmarked money is unavailable for living costs and is also protected in the spending forecast. Do not enter money already recorded as a future exceptional payment: those payments are deducted separately. A savings goal does not automatically earmark money. A cash buffer does remain part of your emergency reserve.</value></data>
+  <data name="FreedomLiquidBalance" xml:space="preserve"><value>Selected liquid balances</value></data>
+  <data name="FreedomPlannedExceptional" xml:space="preserve"><value>Known exceptional payments (12 months)</value></data>
+  <data name="FreedomAccountIncluded" xml:space="preserve"><value>Included in freedom reserve</value></data>
+  <data name="FreedomAccountExcluded" xml:space="preserve"><value>Excluded from freedom reserve</value></data>
+  <data name="FingerprintTitle" xml:space="preserve"><value>Your money fingerprint</value></data>
+  <data name="FingerprintIntro" xml:space="preserve"><value>Six dimensions of your money behavior. Select a pattern for its explanation; a longer strand is not automatically better.</value></data>
+  <data name="FingerprintChartLabel" xml:space="preserve"><value>Six colored bands show spending consistency, spending bursts, saving rhythm, commitments, concentration and financial flexibility. Exact percentages and definitions are beside the chart.</value></data>
+  <data name="FingerprintNoScore" xml:space="preserve"><value>A pattern, not a report card</value></data>
+  <data name="FingerprintConsistency" xml:space="preserve"><value>Spending consistency</value></data>
+  <data name="FingerprintBursts" xml:space="preserve"><value>Spending bursts</value></data>
+  <data name="FingerprintSaving" xml:space="preserve"><value>Saving rhythm</value></data>
+  <data name="FingerprintCommitments" xml:space="preserve"><value>Recurring commitments</value></data>
+  <data name="FingerprintConcentration" xml:space="preserve"><value>Spending concentration</value></data>
+  <data name="FingerprintFlexibility" xml:space="preserve"><value>Financial flexibility</value></data>
+  <data name="FingerprintConsistencyHelp" xml:space="preserve"><value>Consistency of non-essential, unlinked ordinary monthly spending: 1 divided by (1 + standard deviation/mean). 100% means equal monthly amounts. Exceptional expenses are excluded. No spending is unknown, not a perfect score.</value></data>
+  <data name="FingerprintBurstsHelp" xml:space="preserve"><value>Share of non-essential ordinary purchases on days when purchases exceed twice the average per calendar day. Refunds are not new purchases. This describes concentration in time, not whether a purchase was impulsive.</value></data>
+  <data name="FingerprintSavingHelp" xml:space="preserve"><value>Share of confirmed months with positive net savings/investment contributions from current accounts, including existing transfer history. Withdrawals reduce contributions; this is not investment performance or a judgment about discipline.</value></data>
+  <data name="FingerprintCommitmentsHelp" xml:space="preserve"><value>Active ordinary monthly commitments divided by estimated ordinary monthly income. Quarterly and yearly amounts are converted. A higher share means less income free to allocate; values above 100% remain visible.</value></data>
+  <data name="FingerprintConcentrationHelp" xml:space="preserve"><value>Average share of the three largest non-essential ordinary purchases per month in all such purchases. Splits of the same bank entry are combined first. Refunds are not new purchases. Higher concentration is not automatically bad.</value></data>
+  <data name="FingerprintFlexibilityHelp" xml:space="preserve"><value>Estimated ordinary monthly income minus ordinary lifestyle costs, as a share of income, before saving. A negative value means the cost baseline exceeds income. The drawing is capped at 0–100%; the exact value is not. This is not a spendable account balance.</value></data>
+  <data name="FingerprintMethod" xml:space="preserve"><value>Behavior patterns use only confirmed completed months. Discretionary expenses are ordinary categories without essential or exceptional flags and without a recurring-payment link. There is no AI profiling or external processing. Behavioral claims require 6 consecutive confirmed months and at least 20 distinct purchases. The last five days are compared with earlier days using daily averages, not unequal period totals. Patterns do not prove intent or cause.</value></data>
+  <data name="FingerprintNoDiscovery" xml:space="preserve"><value>No sufficiently supported discovery yet. That does not mean there is no pattern: there may be too few confirmed months or purchases, or the differences may be too small.</value></data>
+  <data name="FingerprintLateMonth" xml:space="preserve"><value>Your average daily non-essential purchases were {0} higher during the last five days of the month.</value></data>
+  <data name="FingerprintLessPredictable" xml:space="preserve"><value>Your income stayed stable, while your non-essential monthly spending varied more in the last three months than in the previous three.</value></data>
+  <data name="FingerprintEvidencePeriod" xml:space="preserve"><value>{0} through {1} · {2} supporting bank entries</value></data>
+  <data name="FingerprintEvidence" xml:space="preserve"><value>View the underlying purchases</value></data>
+  <data name="FingerprintEvidenceHelp" xml:space="preserve"><value>Only the analyzed discretionary expense portion is shown. With splits, this can differ from the full bank amount. The comparison also uses confirmed days without purchases.</value></data>
+  <data name="FingerprintEvidenceLimited" xml:space="preserve"><value>The first 100 entries are shown; all supporting entries count in the calculation.</value></data>
 </root>

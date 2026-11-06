@@ -38,7 +38,8 @@ public sealed class EditorDraft(string title, string revision)
     private bool _category;
     public string Label(EditorField field) => _category && field.Key == "budget" && Text("purpose") == "Savings"
         ? UiCulture.Text("DefaultMonthlyTargetEuro") : field.Label;
-    public bool IsFieldVisible(EditorField field) => _recurringPaymentId != null && field.Key == "tolerance"
+    public bool IsFieldVisible(EditorField field) => _category && field.Key is "essential" or "exceptional"
+        ? Text("purpose") == "Normal" : _recurringPaymentId != null && field.Key == "tolerance"
         ? Text("amountMode") == "Fixed" : _category && field.Key == "budget"
         ? Text("purpose") != "OwnAccountMovement" : !_transaction || field.Key switch
     {
@@ -125,17 +126,20 @@ public sealed class EditorDraft(string title, string revision)
     public static EditorDraft Account(WebState s, Account? original = null)
     {
         var item = original ?? new Account { OwnerIds = s.Data.Owners.Select(o => o.Id).ToList(), OpeningDate = new DateOnly(s.Today.Year, 1, 1) };
-        var draft = new EditorDraft(UiCulture.Text("Account"), s.Revision) { Note = UiCulture.Text("AccountEditorNote") };
+        var draft = new EditorDraft(UiCulture.Text("Account"), s.Revision) { Note = UiCulture.Text("AccountEditorNote") + " " + UiCulture.Text("FreedomAccountHelp") };
         draft.Field("name", "Name", "text", item.Name);
         draft.Choice("kind", "AccountType", Enum.GetValues<AccountKind>().Select(k => new FieldOption(k.ToString(), WebState.Kind(k))), item.Kind.ToString());
         draft.Field("reference", "BankReference", "text", item.BankReference, false); draft.Owners(s.Data, item.OwnerIds);
         draft.DateField("date", "OpeningDate", item.OpeningDate); draft.Money("balance", "OpeningBalanceEuro", item.OpeningBalance);
         draft.Field("goal", "SavingsGoalEuro", "money", item.SavingsGoal?.ToString("0.00", Culture) ?? "", false);
         draft.Money("buffer", "AccountBufferEuro", item.MinimumCashBuffer);
+        draft.Field("freedom", "FreedomIncludeAccount", "checkbox", item.IncludeInFreedom.ToString());
+        draft.Money("earmarked", "FreedomEarmarkedEuro", item.EarmarkedAmount);
         draft.Apply = d => HouseholdEdits.SaveAccount(d, item with { Name = draft.Text("name"), Kind = Enum.Parse<AccountKind>(draft.Text("kind")),
             BankReference = draft.Text("reference"), OwnerIds = draft.Fields.Single(f => f.Key == "owners").OwnerIds.ToList(), OpeningDate = draft.Date("date"),
             OpeningBalance = draft.Number("balance"), SavingsGoal = draft.Text("goal").Length == 0 ? null : draft.Number("goal"),
-            MinimumCashBuffer = draft.Number("buffer") }); return draft;
+            MinimumCashBuffer = draft.Number("buffer"), IncludeInFreedom = bool.Parse(draft.Text("freedom")),
+            EarmarkedAmount = draft.Number("earmarked") }); return draft;
     }
     public static EditorDraft CashBuffer(WebState s, Account item)
     {
@@ -185,17 +189,28 @@ public sealed class EditorDraft(string title, string revision)
     {
         var item = original ?? new Category();
         var draft = new EditorDraft(UiCulture.Text(renameOnly ? "RenameCategory" : "CategoryDefaultBudget"), s.Revision)
-        { Note = UiCulture.Text(renameOnly ? "RenameCategoryNote" : "CategoryEditorNote") };
+        { Note = UiCulture.Text(renameOnly ? "RenameCategoryNote" : "CategoryEditorNote") + (renameOnly ? "" : " " + UiCulture.Text("CategoryInsightHelp")) };
         draft.Field("name", "Name", "text", item.Name);
         if (!renameOnly)
         {
             draft._category = true;
             draft.Choice("purpose", "CountsAs", Enum.GetValues<CategoryPurpose>().Select(p => new FieldOption(p.ToString(), PurposeLabel(p))), item.Purpose.ToString());
             draft.Money("budget", "DefaultMonthlyBudgetEuro", item.MonthlyBudget);
+            draft.Field("essential", "CategoryEssential", "checkbox", item.IsEssential.ToString());
+            draft.Field("exceptional", "CategoryExceptional", "checkbox", item.IsExceptional.ToString());
         }
         draft.Apply = d => { if (renameOnly) Categorization.RenameCategory(d, item.Id, draft.Text("name"));
             else HouseholdEdits.SaveCategory(d, item with { Name = draft.Text("name"), MonthlyBudget = draft.Number("budget"),
-                Purpose = Enum.Parse<CategoryPurpose>(draft.Text("purpose")) }); }; return draft;
+                Purpose = Enum.Parse<CategoryPurpose>(draft.Text("purpose")),
+                IsEssential = draft.Text("purpose") == "Normal" && bool.Parse(draft.Text("essential")),
+                IsExceptional = draft.Text("purpose") == "Normal" && bool.Parse(draft.Text("exceptional")) }); }; return draft;
+    }
+    public static EditorDraft FreedomTarget(WebState s)
+    {
+        var draft = new EditorDraft(UiCulture.Text("FreedomTarget"), s.Revision) { Note = UiCulture.Text("FreedomTargetHelp") };
+        draft.Field("months", "FreedomTargetMonths", "number", s.Data.InsightSettings.BufferTargetMonths.ToString(CultureInfo.InvariantCulture));
+        draft.Apply = d => d.InsightSettings = new() { BufferTargetMonths = int.TryParse(draft.Text("months"), out var months) ? months : 0 };
+        return draft;
     }
     public static EditorDraft Budget(WebState s, Category item)
     {

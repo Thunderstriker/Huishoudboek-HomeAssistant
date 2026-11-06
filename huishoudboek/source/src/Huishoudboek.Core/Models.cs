@@ -24,6 +24,8 @@ public sealed record Account
     public DateOnly OpeningDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     public decimal? SavingsGoal { get; set; }
     public decimal MinimumCashBuffer { get; set; }
+    public bool IncludeInFreedom { get; set; } = true;
+    public decimal EarmarkedAmount { get; set; }
 }
 
 public sealed record Category
@@ -32,6 +34,13 @@ public sealed record Category
     public string Name { get; set; } = "";
     public decimal MonthlyBudget { get; set; }
     public CategoryPurpose Purpose { get; set; }
+    public bool IsEssential { get; set; }
+    public bool IsExceptional { get; set; }
+}
+
+public sealed record InsightSettings
+{
+    public int BufferTargetMonths { get; set; } = 6;
 }
 
 public sealed record BudgetOverride
@@ -193,6 +202,7 @@ public sealed class HouseholdData
     public List<ImportProfile> ImportProfiles { get; set; } = [];
     public List<AccountReview> AccountReviews { get; set; } = [];
     public Mortgage? Mortgage { get; set; }
+    public InsightSettings InsightSettings { get; set; } = new();
 
     public static HouseholdData CreateEmpty() => new()
     {

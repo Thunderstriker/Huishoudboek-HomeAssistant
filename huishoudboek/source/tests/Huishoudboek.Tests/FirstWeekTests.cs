@@ -174,7 +174,7 @@ public sealed class FirstWeekTests
         var migrated = new SqliteHouseholdStore(legacy, allowCreate: false);
         Assert.Empty(migrated.Load().AccountReviews); Assert.Equal(data.Transactions, migrated.Load().Transactions);
         Assert.Equal(data.Categories, migrated.Load().Categories);
-        Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-9-*.db"));
+        Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-10-*.db"));
     }
 
     [Theory]

@@ -8,6 +8,7 @@ public sealed record AnnualMonth(int Month, decimal Income, decimal Outflow, dec
 }
 public sealed record AnnualOverview(IReadOnlyList<AnnualMonth> Months, IReadOnlyList<CategoryResult> Categories)
 {
+    public decimal ExceptionalOutflow { get; init; }
     public decimal Income => Months.Sum(m => m.Income);
     public decimal Outflow => Months.Sum(m => m.Outflow);
     public decimal Savings => Months.Sum(m => m.Savings);
@@ -89,6 +90,6 @@ public static class DetailedReporting
             reports.SelectMany(r => r.Categories).Where(r => r.Id == c.Id).Sum(r => r.Spent)))
             .Concat(reports.SelectMany(r => r.Categories).Where(c => c.Id == Guid.Empty).GroupBy(c => c.Id).Select(g => new CategoryResult(Guid.Empty, "Zonder categorie", 0, g.Sum(c => c.Spent))))
             .OrderByDescending(c => c.Spent).ToList();
-        return new(months, categories);
+        return new(months, categories) { ExceptionalOutflow = reports.Sum(r => r.ExceptionalOutflow) };
     }
 }

@@ -827,4 +827,79 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="HistoryHeatmapLegend" xml:space="preserve"><value>Groen: netto uitgaven · paars: netto retouren · strepen: geen uitgaven geboekt · stippelrand: onvolledige maand. Beweeg, tik of focus op een vakje voor bedrag en bankdekking.</value></data>
   <data name="HistoryDashboardLink" xml:space="preserve"><value>Ontdek uw uitgaventrends</value></data>
   <data name="HistoryCoverageBadge" xml:space="preserve"><value>Bankdekking controleren</value></data>
+  <data name="FinancialInsights" xml:space="preserve"><value>Inzichten</value></data>
+  <data name="InsightsIntro" xml:space="preserve"><value>Niet alleen hoeveel geld u heeft, maar hoeveel ruimte het u geeft.</value></data>
+  <data name="InsightsPeriodNote" xml:space="preserve"><value>Saldi per {0} · {1} bevestigde, afgesloten maanden uit de laatste 12. De maandkeuze bovenaan verandert deze actuele analyse niet; het eigenaarfilter wel.</value></data>
+  <data name="InsightsCoverageNote" xml:space="preserve"><value>{0} maanden hebben geen volledige bevestigde bankdekking of beginnen bij een rekeningopening. Ze tellen niet mee voor gemiddelden of gedragsclaims. Bevestig volledige bestaande afschriftperioden via Beheer &amp; import.</value></data>
+  <data name="InsightsNeedHistory" xml:space="preserve"><value>Minstens 3 volledig bevestigde, afgesloten maanden nodig. Ontbrekende gegevens tellen niet als nul uitgaven.</value></data>
+  <data name="InsightsUnclassified" xml:space="preserve"><value>Gemiddeld {0} per maand is nog zonder categorie. Het telt mee in gewone uitgaven, maar niet als essentieel. Uw bufferbereik kan hierdoor te hoog lijken.</value></data>
+  <data name="InsightsDiscoveries" xml:space="preserve"><value>Wat uw geldpatroon vertelt</value></data>
+  <data name="InsightsMethod" xml:space="preserve"><value>We gebruiken maximaal 12 afgesloten maanden met volledige, expliciet bevestigde afschriftdekking voor alle toen bestaande betaal- en spaarrekeningen in het eigenaarfilter. Een rekeningopening halverwege de maand telt niet als volledige maand. Beleggingsrekeningen tellen niet mee in de leefkosten. Splitsingen, retouren, vergoedingen en interne overboekingen volgen de bestaande boekhoudregels. Uitzonderlijke categorieën blijven in saldi, budgetten en werkelijke rapporten staan, maar niet in het gewone uitgaven- of inkomenspatroon.</value></data>
+  <data name="InsightsScheduleMethod" xml:space="preserve"><value>Actieve gewone vaste posten worden naar maandbedragen omgerekend: kwartaalbedragen delen door 3, jaarbedragen door 12. Hun expliciet gekoppelde historische boekingen worden vervangen, niet dubbel geteld. Bij splitsingen blijft de waargenomen categorieverhouding behouden; uitzonderlijke delen en spaarbewegingen worden geen gewone leefkosten. Controleer en koppel ontbrekende herkenningen bij Vaste posten om overlap met ongekoppelde boekingen te voorkomen. Bekende toekomstige uitzonderlijke uitgaven over 12 maanden worden apart gereserveerd; een gekoppelde bankboeking vervangt de planning.</value></data>
+  <data name="InsightsSeasonalNote" xml:space="preserve"><value>Minder dan 12 bevestigde maanden geeft een voorlopige basis: seizoenen en ongeplande jaarlijkse rekeningen kunnen ontbreken. Gewone jaarlasten zijn niet uitzonderlijk alleen omdat u ze één keer per jaar betaalt. Markeer alle noodzakelijke categorieën als essentieel; niet-gemarkeerde kosten worden niet stilzwijgend als noodzakelijk beschouwd.</value></data>
+  <data name="InsightsExactMonths" xml:space="preserve"><value>Werkelijke maandbedragen vóór normalisatie van vaste posten</value></data>
+  <data name="InsightsNormalSpending" xml:space="preserve"><value>Gewone uitgaven</value></data>
+  <data name="CategoryEssential" xml:space="preserve"><value>Essentiële uitgaven (nodig zonder inkomen)</value></data>
+  <data name="CategoryExceptional" xml:space="preserve"><value>Uitzonderlijk (niet mijn normale leefpatroon)</value></data>
+  <data name="CategoryEssentialBadge" xml:space="preserve"><value>Essentieel</value></data>
+  <data name="CategoryExceptionalBadge" xml:space="preserve"><value>Uitzonderlijk</value></data>
+  <data name="CategoryInsightHelp" xml:space="preserve"><value>Kies essentieel óf uitzonderlijk voor een gewone categorie. Uitzonderlijke uitgaven blijven echte uitgaven en veranderen saldi en budgetten, maar verhogen geen dagelijkse uitgavenschatting. Opslaan herberekent ook eerdere analyses. Gebruik aparte categorieën voor bijvoorbeeld een woningaankoop en gewone woonlasten.</value></data>
+  <data name="ExceptionalActualNote" xml:space="preserve"><value>Inclusief {0} netto uitzonderlijke uitgaven. Dit blijft werkelijk uitgegeven geld, maar telt niet mee als terugkerend leefpatroon.</value></data>
+  <data name="FreedomTitle" xml:space="preserve"><value>Uw financiële vrijheid</value></data>
+  <data name="FreedomEssentialsHeadline" xml:space="preserve"><value>Essentiële uitgaven gedekt zonder inkomen</value></data>
+  <data name="FreedomChartLabel" xml:space="preserve"><value>Vier ringen voor bufferbescherming, bestedingsruimte, vaste verplichtingen en leefstijlbereik. Exacte waarden staan naast de grafiek.</value></data>
+  <data name="FreedomMonths" xml:space="preserve"><value>maanden</value></data>
+  <data name="FreedomWithoutIncome" xml:space="preserve"><value>zonder inkomen</value></data>
+  <data name="FreedomSecurity" xml:space="preserve"><value>Bufferbescherming</value></data>
+  <data name="FreedomFlexibility" xml:space="preserve"><value>Bestedingsruimte</value></data>
+  <data name="FreedomCommitments" xml:space="preserve"><value>Inkomen al vastgelegd</value></data>
+  <data name="FreedomLifestyle" xml:space="preserve"><value>Huidige leefstijl</value></data>
+  <data name="FreedomSecurityHelp" xml:space="preserve"><value>Bruikbare liquide reserves gedeeld door de geschatte essentiële maandlasten. De ring vergelijkt dit met uw bufferdoel. Uw noodbuffer telt hier mee: hij is bedoeld om van te leven als inkomen wegvalt. De waarde is een schatting, geen garantie.</value></data>
+  <data name="FreedomFlexibilityHelp" xml:space="preserve"><value>Geschatte ruimte op betaalrekeningen tot het volgende bekende inkomen (anders 30 dagen), na geplande betalingen, gewone daguitgaven, de minimale cashbuffer en extra gereserveerd geld. De ring toont dit als deel van het huidige gezamenlijke betaalrekeningsaldo. Rekeningen zijn niet onderling uitwisselbaar: controleer de betaalrekening en waarschuwingen bij Financiële vooruitblik.</value></data>
+  <data name="FreedomCommitmentsHelp" xml:space="preserve"><value>Actieve gewone vaste uitgaven per maand als percentage van het geschatte gewone maandinkomen. Een vollere ring betekent méér vastgelegde inkomsten, niet automatisch een betere situatie. Uitzonderlijke categorieën en spaar-/eigenrekeningbewegingen tellen niet mee. De exacte waarde kan boven 100% liggen.</value></data>
+  <data name="FreedomLifestyleHelp" xml:space="preserve"><value>Hoe lang dezelfde reserves uw gewone leefstijl zouden dragen, inclusief niet-essentiële uitgaven maar zonder uitzonderlijke aankopen. De ring gebruikt hetzelfde maandendoel als de noodbuffer. Waarden boven het doel blijven exact zichtbaar; de ring stopt bij een volle cirkel.</value></data>
+  <data name="FreedomUsableReserves" xml:space="preserve"><value>Bruikbare reserves</value></data>
+  <data name="FreedomMonthlyEssentials" xml:space="preserve"><value>Essentiële maandlasten</value></data>
+  <data name="FreedomMonthlyLifestyle" xml:space="preserve"><value>Gewone leefstijl per maand</value></data>
+  <data name="FreedomReserveChange" xml:space="preserve"><value>Reservegroei sinds vorige maandultimo</value></data>
+  <data name="FreedomChangeHelp" xml:space="preserve"><value>Reservegroei wordt uitgedrukt in maanden tegen dezelfde huidige essentiële maandlasten. Het is geen opgeslagen historische score en meet geen wijziging van de kostenbasis. Alleen zichtbaar bij bevestigde saldi voor beide perioden; huidige rekeningkeuzes en reserveringen worden ook op de vergelijking toegepast.</value></data>
+  <data name="FreedomChooseEssentials" xml:space="preserve"><value>Markeer uw noodzakelijke categorieën als essentieel om het bereik zonder inkomen te berekenen.</value></data>
+  <data name="FreedomProvisional" xml:space="preserve"><value>Voorlopige schatting: actuele saldi zijn niet volledig bevestigd, of de bestedingsprognose bevat onzekerheden. Controleer recente imports, buffers en vaste posten.</value></data>
+  <data name="FreedomNotIndependence" xml:space="preserve"><value>Bereik zonder inkomen is niet hetzelfde als financiële onafhankelijkheid. Beleggingen, woningwaarde, toekomstige rendementen en verwachte maar nog niet ontvangen vergoedingen zijn geen direct beschikbare reserves. Er wordt geen duurzaam opneembaar beleggingsinkomen verondersteld.</value></data>
+  <data name="FreedomTarget" xml:space="preserve"><value>Bufferdoel instellen</value></data>
+  <data name="FreedomTargetMonths" xml:space="preserve"><value>Bufferdoel in maanden (1–36)</value></data>
+  <data name="FreedomTargetHelp" xml:space="preserve"><value>Dit doel bepaalt de schaal van de beschermings- en leefstijlring. Het verandert geen saldi of maandlasten. Standaard: 6 maanden.</value></data>
+  <data name="FreedomAccounts" xml:space="preserve"><value>Rekeningen en gereserveerd geld</value></data>
+  <data name="FreedomIncludeAccount" xml:space="preserve"><value>Opnemen als toegankelijke vrijheidsreserve (geen beleggingen)</value></data>
+  <data name="FreedomEarmarkedEuro" xml:space="preserve"><value>Extra gereserveerd geld (€)</value></data>
+  <data name="FreedomEarmarked" xml:space="preserve"><value>Extra gereserveerd</value></data>
+  <data name="FreedomAccountHelp" xml:space="preserve"><value>Alleen geselecteerde betaal- en vrij opneembare spaarrekeningen tellen mee voor het bereik. Sluit geblokkeerde rekeningen uit. Beleggingen tellen nooit mee. Extra gereserveerd geld is niet beschikbaar om van te leven en wordt ook beschermd in de bestedingsprognose. Vul hier geen bedrag in dat al als toekomstige uitzonderlijke betaling is vastgelegd: die wordt apart afgetrokken. Een spaardoel is niet automatisch gereserveerd geld. Een cashbuffer blijft wel onderdeel van uw noodreserve.</value></data>
+  <data name="FreedomLiquidBalance" xml:space="preserve"><value>Geselecteerde liquide saldi</value></data>
+  <data name="FreedomPlannedExceptional" xml:space="preserve"><value>Bekende uitzonderlijke betalingen (12 maanden)</value></data>
+  <data name="FreedomAccountIncluded" xml:space="preserve"><value>In vrijheidsreserve</value></data>
+  <data name="FreedomAccountExcluded" xml:space="preserve"><value>Niet in vrijheidsreserve</value></data>
+  <data name="FingerprintTitle" xml:space="preserve"><value>Uw geldvingerafdruk</value></data>
+  <data name="FingerprintIntro" xml:space="preserve"><value>Zes kanten van uw geldgedrag. Kies een patroon voor uitleg; een langere lijn is niet automatisch beter.</value></data>
+  <data name="FingerprintChartLabel" xml:space="preserve"><value>Zes gekleurde banden tonen uitgavenregelmaat, uitgavenpieken, spaarritme, verplichtingen, concentratie en financiële ruimte. Exacte percentages en definities staan naast de grafiek.</value></data>
+  <data name="FingerprintNoScore" xml:space="preserve"><value>Een patroon, geen rapportcijfer</value></data>
+  <data name="FingerprintConsistency" xml:space="preserve"><value>Uitgavenregelmaat</value></data>
+  <data name="FingerprintBursts" xml:space="preserve"><value>Uitgavenpieken</value></data>
+  <data name="FingerprintSaving" xml:space="preserve"><value>Spaarritme</value></data>
+  <data name="FingerprintCommitments" xml:space="preserve"><value>Vaste verplichtingen</value></data>
+  <data name="FingerprintConcentration" xml:space="preserve"><value>Uitgavenconcentratie</value></data>
+  <data name="FingerprintFlexibility" xml:space="preserve"><value>Financiële ruimte</value></data>
+  <data name="FingerprintConsistencyHelp" xml:space="preserve"><value>Regelmaat van niet-essentiële, niet-gekoppelde gewone maanduitgaven: 1 gedeeld door (1 + standaardafwijking/gemiddelde). 100% betekent gelijke maandbedragen. Uitzonderlijke uitgaven tellen niet mee. Geen uitgaven is onbekend, geen perfecte score.</value></data>
+  <data name="FingerprintBurstsHelp" xml:space="preserve"><value>Aandeel van niet-essentiële gewone aankopen op dagen waarop de aankopen meer dan twee keer het gemiddelde per kalenderdag bedragen. Retouren zijn geen nieuwe aankopen. Dit beschrijft concentratie in tijd, niet of een aankoop impulsief was.</value></data>
+  <data name="FingerprintSavingHelp" xml:space="preserve"><value>Aandeel bevestigde maanden met een positieve netto spaar-/beleggingsbijdrage vanaf betaalrekeningen, inclusief bestaande transferhistorie. Opnames verlagen de bijdrage; dit is geen beleggingsrendement of oordeel over discipline.</value></data>
+  <data name="FingerprintCommitmentsHelp" xml:space="preserve"><value>Actieve gewone vaste maandlasten gedeeld door het geschatte gewone maandinkomen. Kwartaal- en jaarbedragen zijn omgerekend. Een hoger aandeel betekent minder vrij te verdelen inkomen; waarden boven 100% blijven zichtbaar.</value></data>
+  <data name="FingerprintConcentrationHelp" xml:space="preserve"><value>Gemiddeld aandeel van de drie grootste niet-essentiële gewone aankopen per maand in alle zulke aankopen. Splitsingen van dezelfde bankboeking worden eerst samengevoegd. Retouren zijn geen nieuwe aankopen. Hogere concentratie is niet automatisch slecht.</value></data>
+  <data name="FingerprintFlexibilityHelp" xml:space="preserve"><value>Geschat gewoon maandinkomen min gewone leefkosten, als aandeel van het inkomen, vóór sparen. Een negatieve waarde betekent dat de kostenbasis boven het inkomen ligt. De tekening stopt bij 0–100%, de exacte waarde niet. Dit is geen vrij besteedbaar rekeningsaldo.</value></data>
+  <data name="FingerprintMethod" xml:space="preserve"><value>Gedragspatronen gebruiken alleen bevestigde afgesloten maanden. Niet-essentiële uitgaven zijn gewone categorieën zonder essentieel- of uitzonderlijk-markering en zonder vaste-postkoppeling. Er is geen AI-profiel of externe verwerking. Gedragsclaims vereisen 6 opeenvolgende bevestigde maanden en minstens 20 verschillende aankopen. De laatste vijf dagen worden met de eerdere dagen vergeleken op daggemiddelden, niet op ongelijke periodetotalen. Patronen bewijzen geen intentie of oorzaak.</value></data>
+  <data name="FingerprintNoDiscovery" xml:space="preserve"><value>Nog geen voldoende onderbouwde ontdekking. Dit betekent niet dat er geen patroon is: er kunnen te weinig bevestigde maanden of aankopen zijn, of de verschillen zijn te klein.</value></data>
+  <data name="FingerprintLateMonth" xml:space="preserve"><value>Uw gemiddelde dagelijkse niet-essentiële aankopen waren {0} hoger tijdens de laatste vijf dagen van de maand.</value></data>
+  <data name="FingerprintLessPredictable" xml:space="preserve"><value>Uw inkomen bleef stabiel, terwijl uw niet-essentiële maanduitgaven de laatste drie maanden meer varieerden dan in de drie maanden ervoor.</value></data>
+  <data name="FingerprintEvidencePeriod" xml:space="preserve"><value>{0} t/m {1} · {2} ondersteunende bankboekingen</value></data>
+  <data name="FingerprintEvidence" xml:space="preserve"><value>Bekijk de onderliggende aankopen</value></data>
+  <data name="FingerprintEvidenceHelp" xml:space="preserve"><value>Alleen het geanalyseerde niet-essentiële uitgavendeel wordt getoond. Dit kan bij splitsingen afwijken van het volledige bankbedrag. De vergelijking gebruikt ook bevestigde dagen zonder aankopen.</value></data>
+  <data name="FingerprintEvidenceLimited" xml:space="preserve"><value>De eerste 100 boekingen zijn getoond; alle ondersteunende boekingen tellen mee in de berekening.</value></data>
 </root>

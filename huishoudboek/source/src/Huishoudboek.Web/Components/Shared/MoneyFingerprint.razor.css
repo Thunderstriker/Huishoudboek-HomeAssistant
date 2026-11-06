@@ -1,0 +1,17 @@
+.fingerprint-body { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(170px, 1fr); align-items: center; gap: 1rem; }
+.fingerprint-art { background: radial-gradient(ellipse at 45% 45%, #244759, #142d3d 70%); border-radius: 18px; overflow: hidden; }
+svg { display: block; width: 100%; max-height: 330px; }
+path { fill: none; stroke-width: 1.7; stroke-linecap: round; }
+.fingerprint-track { stroke: #ffffff13; }
+.fingerprint-strand { opacity: .65; }
+.fingerprint-strand.selected { opacity: 1; stroke-width: 2.5; }
+.fingerprint-strand.unknown { opacity: 0; }
+.fingerprint-caption { display: block; text-align: center; color: #bfd2dc; font-size: .7rem; padding: 0 .75rem 1rem; letter-spacing: .03em; }
+.fingerprint-legend { display: grid; gap: .3rem; }
+.fingerprint-label { width: 100%; display: grid; grid-template-columns: 8px 1fr auto; gap: .5rem; align-items: center; text-align: start; padding: .7rem .5rem; background: transparent; border: 1px solid transparent; border-radius: 8px; color: inherit; font: inherit; cursor: pointer; font-size: .85rem; }
+.fingerprint-label:hover, .fingerprint-label.active { background: #718e9910; border-color: #718e9938; }
+.fingerprint-label i { width: 8px; height: 8px; border-radius: 50%; }
+.fingerprint-label strong { font-variant-numeric: tabular-nums; }
+.fingerprint-explanation { background: #718e9910; border-radius: 10px; padding: .85rem 1rem; margin-top: 1rem; font-size: .88rem; }
+.fingerprint-explanation p { margin: .3rem 0 0; }
+@media (max-width: 600px) { .fingerprint-body { grid-template-columns: 1fr; } .fingerprint-art { max-width: 320px; width: 100%; margin: auto; } }

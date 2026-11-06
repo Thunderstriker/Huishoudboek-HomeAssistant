@@ -4,6 +4,7 @@
 <PageTitle>@L["Budgets"] · Huishoudboek</PageTitle>
 <h1>@L["BudgetsCategories"]</h1>
 <p class="notice">@L["CategoryPurposeHelp"]</p>
+<p class="muted">@L["CategoryInsightHelp"]</p>
 <div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Category(State)">+ @L["Category"]</button></div>
 @{ var budgets = DetailedReporting.Budgets(State.Data, State.Year, State.Month, State.Today, State.Scope); }
 <h2>@(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
@@ -21,7 +22,7 @@
     @foreach (var row in budgets.Where(b => b.Purpose == purpose))
     {
         var c = State.Data.Categories.Single(c => c.Id == row.Id);
-        <tr><td>@row.Name @if (row.IsOverBudget) { <span class="badge negative">@L["Exceeded"]</span> }</td>
+        <tr><td>@row.Name @if (c.IsEssential) { <span class="badge">@L["CategoryEssentialBadge"]</span> } @if (c.IsExceptional) { <span class="badge">@L["CategoryExceptionalBadge"]</span> } @if (row.IsOverBudget) { <span class="badge negative">@L["Exceeded"]</span> }</td>
         @if (!movement)
         {
             <td class="money">@Money(row.DefaultBudget)</td><td class="money">@Money(row.Budget)</td><td class="money">@Money(row.Spent)</td>

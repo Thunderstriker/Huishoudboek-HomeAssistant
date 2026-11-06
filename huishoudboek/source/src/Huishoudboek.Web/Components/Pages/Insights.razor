@@ -1,0 +1,76 @@
+@page "/inzichten"
+@attribute [Authorize]
+@inherits EditPageBase
+<PageTitle>@L["FinancialInsights"] · Huishoudboek</PageTitle>
+
+<div class="page-heading">
+    <div><h1>@L["FinancialInsights"]</h1><p class="muted">@L["InsightsIntro"]</p></div>
+    <div class="actions"><a class="button" href="budgetten">@L["CategorySettings"]</a><button @onclick="() => Draft = EditorDraft.FreedomTarget(State)">@L["FreedomTarget"]</button></div>
+</div>
+<p class="muted">@L["InsightsPeriodNote", State.Today.ToString("dd-MM-yyyy"), overview.CoveredMonths]</p>
+@if (overview.CoveredMonths < FinancialInsights.HistoryMonths)
+{ <p class="notice">@L["InsightsCoverageNote", FinancialInsights.HistoryMonths - overview.CoveredMonths] <a href="beheer#importgeschiedenis">@L["AdministrationImport"] →</a></p> }
+@if (overview.UnclassifiedSpending > 0)
+{ <p class="notice">@L["InsightsUnclassified", Money(overview.UnclassifiedSpending)] <a href="categoriseren">@L["Categorize"] →</a></p> }
+<div class="insights-visuals">
+    <FreedomMap Overview="overview.Freedom" LimitedHistory="overview.LimitedHistory" />
+    <MoneyFingerprint Overview="overview.Fingerprint" LimitedHistory="overview.LimitedHistory" />
+</div>
+
+<section class="card insights-discoveries">
+    <h2>@L["InsightsDiscoveries"]</h2>
+    @if (overview.Fingerprint.Discoveries.Count == 0) { <p class="muted">@L["FingerprintNoDiscovery"]</p> }
+    @foreach (var discovery in overview.Fingerprint.Discoveries)
+    {
+        <article class="discovery">
+            <p><strong>@L[discovery.Key, discovery.Value.ToString("P0", UiCulture.Culture)]</strong></p>
+            <p class="muted">@L["FingerprintEvidencePeriod", discovery.From.ToString("dd-MM-yyyy"), discovery.Through.ToString("dd-MM-yyyy"), discovery.Evidence.Count]</p>
+            <details><summary>@L["FingerprintEvidence"]</summary>
+                <p class="muted">@L["FingerprintEvidenceHelp"]</p>
+                <div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th>@L["Description"]</th><th class="money">@L["Spent"]</th></tr></thead><tbody>
+                    @foreach (var evidence in discovery.Evidence.Take(100))
+                    { <tr><td>@evidence.Transaction.Date.ToString("dd-MM-yyyy")</td><td>@(evidence.Transaction.UserDescription.Length > 0 ? evidence.Transaction.UserDescription : evidence.Transaction.Description)</td><td class="money">@Money(evidence.Spending)</td></tr> }
+                </tbody></table></div>
+                @if (discovery.Evidence.Count > 100) { <p class="muted">@L["FingerprintEvidenceLimited"]</p> }
+            </details>
+        </article>
+    }
+</section>
+
+<details class="card insights-method">
+    <summary>@L["CalculationDetails"]</summary>
+    <p>@L["InsightsMethod"]</p>
+    <p>@L["InsightsScheduleMethod"]</p>
+    <p>@L["InsightsSeasonalNote"]</p>
+    <p>@L["FreedomNotIndependence"]</p>
+    <p>@L["FingerprintMethod"]</p>
+    <div class="table-scroll"><table>
+        <caption>@L["InsightsExactMonths"]</caption>
+        <thead><tr><th>@L["Month"]</th><th class="money">@L["Income"]</th><th class="money">@L["InsightsNormalSpending"]</th><th class="money">@L["CategoryEssentialBadge"]</th><th class="money">@L["CategoryExceptionalBadge"]</th><th class="money">@L["Savings"]</th><th>@L["HistoryDataStatus"]</th></tr></thead>
+        <tbody>@foreach (var month in overview.Months.Reverse())
+        { <tr><th scope="row">@month.Month.ToString("MMM yyyy", UiCulture.Culture)</th><td class="money">@Money(month.Income)</td><td class="money">@Money(month.Spending)</td><td class="money">@Money(month.Essentials)</td><td class="money">@Money(month.Exceptional)</td><td class="money">@Money(month.Savings)</td><td>@L[month.Covered ? "HistoryCoverageConfirmed" : "HistoryCoverageUnknown"]</td></tr> }</tbody>
+    </table></div>
+</details>
+
+<details class="card insights-accounts">
+    <summary>@L["FreedomAccounts"]</summary>
+    <p>@L["FreedomAccountHelp"]</p>
+    <dl class="reserve-calculation">
+        <div><dt>@L["FreedomLiquidBalance"]</dt><dd>@Money(overview.Freedom.LiquidBalance)</dd></div>
+        <div><dt>@L["FreedomEarmarked"]</dt><dd>− @Money(overview.Freedom.Earmarked)</dd></div>
+        <div><dt>@L["FreedomPlannedExceptional"]</dt><dd>− @Money(overview.Freedom.ExceptionalReserve)</dd></div>
+        <div><dt>@L["FreedomUsableReserves"]</dt><dd>@Money(overview.Freedom.UsableReserves)</dd></div>
+    </dl>
+    @foreach (var account in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id) && a.Kind != AccountKind.Investment))
+    {
+        <div class="insight-account"><div><strong>@account.Name</strong><small>@L[account.IncludeInFreedom ? "FreedomAccountIncluded" : "FreedomAccountExcluded"] · @Money(Finance.Balance(State.Data, account, State.Today)) · @L["FreedomEarmarked"]: @Money(account.EarmarkedAmount)</small></div><button @onclick="() => Draft = EditorDraft.Account(State, account)">@L["Edit"]</button></div>
+    }
+</details>
+<EditDialogs Page="this" />
+
+@code {
+    private FinancialInsightsReport overview = null!;
+    protected override void OnInitialized() { base.OnInitialized(); Rebuild(); }
+    protected override void OnStateChanged() => Rebuild();
+    private void Rebuild() => overview = FinancialInsights.Create(State.Data, State.Today, State.OwnerId);
+}

@@ -311,7 +311,7 @@ public sealed class RecurringRecognitionTests
         Assert.Equal(RecurringPaymentStatus.AwaitingBankData, RecurringSchedule.Status(old, old.RecurringPayments[0], Due, Today));
         var migrated = new SqliteHouseholdStore(path, allowCreate: false).Load();
         Assert.Equal(JsonSerializer.Serialize(data), JsonSerializer.Serialize(migrated));
-        var safety = Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-9-*.db"));
+        var safety = Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-10-*.db"));
         Assert.Equal(JsonSerializer.Serialize(data), JsonSerializer.Serialize(SqliteHouseholdStore.ReadBackup(safety)));
         migrated.RecurringPayments[0].AmountMode = PaymentAmountMode.Variable;
         Coverage(migrated, new(2026, 10, 1), Today);

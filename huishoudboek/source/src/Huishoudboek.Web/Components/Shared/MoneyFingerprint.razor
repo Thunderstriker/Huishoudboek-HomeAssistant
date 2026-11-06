@@ -1,0 +1,57 @@
+<section class="card money-fingerprint" aria-label="@L["FingerprintTitle"]">
+    <h2>@L["FingerprintTitle"]</h2>
+    <p class="muted">@L["FingerprintIntro"]</p>
+    <div class="fingerprint-body">
+        <div class="fingerprint-art">
+            <svg viewBox="0 0 330 320" role="img" aria-label="@L["FingerprintChartLabel"]">
+                <title>@L["FingerprintTitle"]</title>
+                @for (var dimension = 0; dimension < Metrics.Length; dimension++)
+                {
+                    var metric = Metrics[dimension];
+                    @for (var strand = 0; strand < 4; strand++)
+                    {
+                        var index = dimension * 4 + strand;
+                        <path d="@Contour(index)" class="fingerprint-track" />
+                        <path d="@Contour(index)" pathLength="100" stroke="@Colours[dimension]" stroke-dasharray="@Dash(metric.Value)"
+                              class="fingerprint-strand @(active == dimension ? "selected" : "") @(metric.Value == null ? "unknown" : "")" />
+                    }
+                }
+            </svg>
+            <span class="fingerprint-caption">@L["FingerprintNoScore"]</span>
+        </div>
+        <div class="fingerprint-legend">
+            @for (var index = 0; index < Metrics.Length; index++)
+            {
+                var metric = Metrics[index]; var selected = index;
+                <button type="button" class="fingerprint-label @(active == index ? "active" : "")" aria-pressed="@(active == index ? "true" : "false")" @onclick="() => active = selected">
+                    <i style="background:@Colours[index]" aria-hidden="true"></i><span>@L[metric.Label]</span><strong>@(metric.Value?.ToString("P0", UiCulture.Culture) ?? "—")</strong>
+                </button>
+            }
+        </div>
+    </div>
+    <div class="fingerprint-explanation" aria-live="polite"><strong>@L[Metrics[active].Label]</strong><p>@L[Metrics[active].Help]</p></div>
+    @if (LimitedHistory) { <p class="muted">@L["InsightsNeedHistory"]</p> }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public Huishoudboek.Core.MoneyFingerprint Overview { get; set; } = null!;
+    [Parameter] public bool LimitedHistory { get; set; }
+    private int active;
+    private static readonly string[] Colours = ["#58d4bd", "#e8b86b", "#87b6f2", "#d793ad", "#b3a0eb", "#a5cf78"];
+    private sealed record Metric(string Label, decimal? Value, string Help);
+    private Metric[] Metrics => [
+        new("FingerprintConsistency", Overview.Consistency, "FingerprintConsistencyHelp"),
+        new("FingerprintBursts", Overview.BurstShare, "FingerprintBurstsHelp"),
+        new("FingerprintSaving", Overview.SavingRhythm, "FingerprintSavingHelp"),
+        new("FingerprintCommitments", Overview.Commitments, "FingerprintCommitmentsHelp"),
+        new("FingerprintConcentration", Overview.Concentration, "FingerprintConcentrationHelp"),
+        new("FingerprintFlexibility", Overview.Flexibility, "FingerprintFlexibilityHelp")
+    ];
+    private static string Dash(decimal? value) => $"{(Math.Clamp(value ?? 0, 0, 1) * 100).ToString("0.##", CultureInfo.InvariantCulture)} 100";
+    private static string Contour(int index)
+    {
+        var x = 32 + index * 4.8;
+        var y = 41 + index * 4.1;
+        return FormattableString.Invariant($"M {165 + x * .55:F2} {160 + y * .7:F2} C {165 + x * 1.3:F2} {160 - y * .1:F2}, {165 + x:F2} {160 - y:F2}, 165 {160 - y:F2} C {165 - x:F2} {160 - y:F2}, {165 - x * 1.2:F2} {160 + y:F2}, {165 - x * .1:F2} {160 + y:F2} C {165 + x * .6:F2} {160 + y:F2}, {165 + x * .1:F2} 160, 165 {160 - y * .4:F2}");
+    }
+}

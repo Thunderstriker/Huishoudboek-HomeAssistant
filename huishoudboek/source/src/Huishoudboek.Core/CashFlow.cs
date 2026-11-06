@@ -14,9 +14,10 @@ public sealed record AccountCashFlow(Account Account, decimal CurrentBalance, Da
     public int PaymentsToReviewCount { get; init; }
     public decimal UncertainReserve => -Events.Where(e => e.IsUncertain && e.Amount < 0).Sum(e => e.Amount);
     public decimal BillsUntil(DateOnly date) => -Events.Where(e => e.Amount < 0 && !e.IsUncertain && e.Date <= date).Sum(e => e.Amount);
-    public bool BufferAtRisk => LowestBalance < Account.MinimumCashBuffer;
+    public bool BufferAtRisk => LowestBalance < Account.MinimumCashBuffer + Account.EarmarkedAmount;
     public bool HasUncertainty => Warnings.Count > 0 || AwaitingBankDataCount > 0 || PaymentsToReviewCount > 0;
-    public bool CanAfford(decimal amount) => amount > 0 && amount <= EstimatedSpendable && LowestBalance - amount >= Account.MinimumCashBuffer;
+    public bool CanAfford(decimal amount) => amount > 0 && amount <= EstimatedSpendable &&
+        LowestBalance - amount >= Account.MinimumCashBuffer + Account.EarmarkedAmount;
 }
 public sealed record CashFlowOverview(DateOnly Today, IReadOnlyList<AccountCashFlow> Accounts)
 {
@@ -54,7 +55,7 @@ public static class CashFlow
         // Classification changes reporting, never cash. Only the ordinary expense part
         // of a bank debit belongs in the everyday-spending estimate.
         var spending = TransactionAccounting.Lines(data, data.Transactions.Where(t => t.Amount < 0))
-            .GroupBy(l => l.Transaction.Id).ToDictionary(g => g.Key, g => Math.Max(0, g.Sum(l => l.Spending)));
+            .GroupBy(l => l.Transaction.Id).ToDictionary(g => g.Key, g => Math.Max(0, g.Sum(l => l.TypicalSpending)));
         bool Variable(Transaction t) => t.Amount < 0 && t.Kind == TransactionKind.Normal &&
             t.RecurringPaymentId == null && !transfers.Contains(t.Id) && spending.GetValueOrDefault(t.Id) > 0;
         foreach (var t in data.Transactions.Where(t => t.Date > today && t.Date <= searchEnd))
@@ -87,11 +88,11 @@ public static class CashFlow
         // A future linked bank entry replaces the estimate on its real date, even across month boundaries.
         var transactions = data.Transactions.ToDictionary(t => t.Id);
         var incomeIds = TransactionAccounting.Lines(data, data.Transactions.Where(t => t.Date > today && t.Date <= searchEnd))
-            .Where(l => l.Income > 0).Select(l => l.Transaction.Id).ToHashSet();
+            .Where(l => l.Income > 0 && !l.IsExceptional).Select(l => l.Transaction.Id).ToHashSet();
         var nextIncome = events.Where(e => e.Amount > 0 && (e.TransactionId == null ||
             incomeIds.Contains(e.TransactionId.Value)) && (e.RecurringPaymentId == null ||
             data.RecurringPayments.Any(r => r.Id == e.RecurringPaymentId &&
-                (r.CategoryId == null || data.Categories.Any(c => c.Id == r.CategoryId && c.Purpose == CategoryPurpose.Normal)))))
+                 (r.CategoryId == null || data.Categories.Any(c => c.Id == r.CategoryId && c.Purpose == CategoryPurpose.Normal && !c.IsExceptional)))))
             .Select(e => (DateOnly?)e.Date).Min();
         var until = nextIncome ?? today.AddDays(minimumDays);
         var end = until > today.AddDays(minimumDays) ? until : today.AddDays(minimumDays);
@@ -141,7 +142,7 @@ public static class CashFlow
             days.Add(new(date, balance, income, payments, variable, trough, trough + income));
             balance = trough + income;
         }
-        return new(account, current, nextIncome, until, Math.Max(0, spendableFloor - account.MinimumCashBuffer),
+        return new(account, current, nextIncome, until, Math.Max(0, spendableFloor - account.MinimumCashBuffer - account.EarmarkedAmount),
             lowest, lowestDate, dailyVariable, statementThrough, lastImport, stale, limited, warnings, events, days)
             { AwaitingBankDataCount = awaitingBankData, PaymentsToReviewCount = reviewPayments };
     }

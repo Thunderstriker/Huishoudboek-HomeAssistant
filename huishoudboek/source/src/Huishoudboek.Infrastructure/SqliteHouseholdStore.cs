@@ -13,7 +13,7 @@ namespace Huishoudboek.Infrastructure;
 /// </summary>
 public sealed class SqliteHouseholdStore : IAdministrationStore
 {
-    private const int SchemaVersion = 9;
+    private const int SchemaVersion = 10;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -37,7 +37,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         {
             if (!allowCreate) throw new InvalidDataException("De ingestelde database is leeg; automatisch initialiseren is uitgeschakeld.");
             using var transaction = connection.BeginTransaction();
-            Execute(connection, transaction, "CREATE TABLE app_metadata (id INTEGER PRIMARY KEY CHECK(id=1), application TEXT NOT NULL, mortgage TEXT NULL)");
+            Execute(connection, transaction, "CREATE TABLE app_metadata (id INTEGER PRIMARY KEY CHECK(id=1), application TEXT NOT NULL, mortgage TEXT NULL, insights TEXT NULL)");
             Execute(connection, transaction, "INSERT INTO app_metadata(id,application) VALUES(1,'Huishoudboek')");
             foreach (var type in EntityTypes) CreateTable(connection, transaction, type);
             Execute(connection, transaction, "CREATE INDEX ix_transactions_date_account ON [Transaction] ([Date], [AccountId])");
@@ -133,9 +133,17 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         }
         if (version < 7) CreateTable(connection, tx, typeof(AccountReview));
         if (version < 8) Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [Purpose] INTEGER NOT NULL DEFAULT 0");
-        Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [AmountMode] INTEGER NOT NULL DEFAULT 0");
-        Execute(connection, tx, "ALTER TABLE [ImportBatch] ADD COLUMN [CoverageFrom] TEXT NULL");
-        Execute(connection, tx, "ALTER TABLE [ImportBatch] ADD COLUMN [CoverageThrough] TEXT NULL");
+        if (version < 9)
+        {
+            Execute(connection, tx, "ALTER TABLE [RecurringPayment] ADD COLUMN [AmountMode] INTEGER NOT NULL DEFAULT 0");
+            Execute(connection, tx, "ALTER TABLE [ImportBatch] ADD COLUMN [CoverageFrom] TEXT NULL");
+            Execute(connection, tx, "ALTER TABLE [ImportBatch] ADD COLUMN [CoverageThrough] TEXT NULL");
+        }
+        Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [IsEssential] INTEGER NOT NULL DEFAULT 0");
+        Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [IsExceptional] INTEGER NOT NULL DEFAULT 0");
+        Execute(connection, tx, "ALTER TABLE [Account] ADD COLUMN [IncludeInFreedom] INTEGER NOT NULL DEFAULT 1");
+        Execute(connection, tx, "ALTER TABLE [Account] ADD COLUMN [EarmarkedAmount] TEXT NOT NULL DEFAULT '0'");
+        Execute(connection, tx, "ALTER TABLE app_metadata ADD COLUMN insights TEXT NULL");
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -177,8 +185,16 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         };
         using var command = connection.CreateCommand();
         command.Transaction = tx;
-        command.CommandText = "SELECT mortgage FROM app_metadata WHERE id=1";
-        if (command.ExecuteScalar() is string json) data.Mortgage = JsonSerializer.Deserialize<Mortgage>(json);
+        command.CommandText = version >= 10 ? "SELECT mortgage, insights FROM app_metadata WHERE id=1" : "SELECT mortgage FROM app_metadata WHERE id=1";
+        using (var reader = command.ExecuteReader())
+        {
+            if (reader.Read())
+            {
+                if (!reader.IsDBNull(0)) data.Mortgage = JsonSerializer.Deserialize<Mortgage>(reader.GetString(0));
+                if (version >= 10 && !reader.IsDBNull(1))
+                    data.InsightSettings = JsonSerializer.Deserialize<InsightSettings>(reader.GetString(1)) ?? new();
+            }
+        }
         tx.Commit();
         Validation.Validate(data);
         return data;
@@ -199,8 +215,9 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         Write(connection, tx, data.AccountReviews);
         using var command = connection.CreateCommand();
         command.Transaction = tx;
-        command.CommandText = "UPDATE app_metadata SET mortgage=$mortgage WHERE id=1";
+        command.CommandText = "UPDATE app_metadata SET mortgage=$mortgage, insights=$insights WHERE id=1";
         command.Parameters.AddWithValue("$mortgage", data.Mortgage == null ? DBNull.Value : JsonSerializer.Serialize(data.Mortgage));
+        command.Parameters.AddWithValue("$insights", JsonSerializer.Serialize(data.InsightSettings));
         command.ExecuteNonQuery();
         tx.Commit();
     }
@@ -241,6 +258,9 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
 
     private static string? PreviousDefault(Type type, string property, int version)
     {
+        if (version < 10 && type == typeof(Category) && property is nameof(Category.IsEssential) or nameof(Category.IsExceptional)) return "0";
+        if (version < 10 && type == typeof(Account) && property == nameof(Account.IncludeInFreedom)) return "1";
+        if (version < 10 && type == typeof(Account) && property == nameof(Account.EarmarkedAmount)) return "'0'";
         if (version < 9 && type == typeof(RecurringPayment) && property == nameof(RecurringPayment.AmountMode)) return "0";
         if (version < 9 && type == typeof(ImportBatch) && property is nameof(ImportBatch.CoverageFrom) or nameof(ImportBatch.CoverageThrough)) return "NULL";
         if (version < 8 && type == typeof(Category) && property == nameof(Category.Purpose)) return "0";

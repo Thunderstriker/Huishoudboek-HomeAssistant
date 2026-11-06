@@ -1,0 +1,14 @@
+.insights-visuals { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 1.2rem; margin: 1.2rem 0; }
+.insights-discoveries, .insights-method, .insights-accounts { margin-bottom: 1.2rem; }
+.discovery { padding: .5rem 0 1rem; border-bottom: 1px solid #718e9928; }
+.discovery:last-child { border-bottom: 0; padding-bottom: 0; }
+.discovery p { margin: .5rem 0; }
+.discovery details { margin-top: .7rem; }
+.reserve-calculation { max-width: 620px; }
+.reserve-calculation div { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-bottom: 1px solid #718e9928; }
+.reserve-calculation dd { margin: 0; font-weight: 650; white-space: nowrap; }
+.insight-account { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .8rem 0; border-bottom: 1px solid #718e9928; }
+.insight-account small { display: block; margin-top: .3rem; }
+caption { text-align: start; font-weight: 650; padding: .8rem 0; }
+@media (max-width: 1250px) { .insights-visuals { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .reserve-calculation { font-size: .85rem; } .insight-account small { font-size: .75rem; } }

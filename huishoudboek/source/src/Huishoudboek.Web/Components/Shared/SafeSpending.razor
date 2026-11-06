@@ -19,7 +19,7 @@
         <div class="table-scroll"><table><thead><tr><th>@L["Account"]</th><th class="money">@L["BalanceToday"]</th><th>@L["NextIncome"]</th><th class="money">@L["Buffer"]</th><th class="money">@L["SpendableUntilIncome"]</th><th class="money">@L["LowestExpectedBalance"]</th><th>@L["LowestBalanceDate"]</th></tr></thead><tbody>
         @foreach (var account in forecast.Accounts)
         {
-            <tr><td>@account.Account.Name @if (account.StaleImports) { <small class="badge">@L["CheckImport"]</small> }</td><td class="money">@Money(account.CurrentBalance)</td><td>@(account.NextIncomeDate?.ToString("dd-MM-yyyy") ?? L["UnknownThirtyDays"].Value)</td><td class="money">@Money(account.Account.MinimumCashBuffer)</td><td class="money">@Money(account.EstimatedSpendable)</td><td class="money @(account.BufferAtRisk ? "negative" : "")">@Money(account.LowestBalance)</td><td>@account.LowestDate.ToString("dd-MM-yyyy")</td></tr>
+            <tr><td>@account.Account.Name @if (account.StaleImports) { <small class="badge">@L["CheckImport"]</small> }</td><td class="money">@Money(account.CurrentBalance)</td><td>@(account.NextIncomeDate?.ToString("dd-MM-yyyy") ?? L["UnknownThirtyDays"].Value)</td><td class="money">@Money(account.Account.MinimumCashBuffer + account.Account.EarmarkedAmount)</td><td class="money">@Money(account.EstimatedSpendable)</td><td class="money @(account.BufferAtRisk ? "negative" : "")">@Money(account.LowestBalance)</td><td>@account.LowestDate.ToString("dd-MM-yyyy")</td></tr>
         }
         </tbody></table></div>
         <div class="fields">
@@ -32,12 +32,14 @@
             var uncertain = selected.HasUncertainty;
             <p class="notice @(!fits || uncertain ? "warning" : "success")" role="status">
                 <strong>@L[!fits ? "PurchaseDoesNotFit" : uncertain ? "PurchaseUncertain" : "PurchaseFits", Money(amount), selected.Account.Name]</strong>
-                @L["PurchaseBalanceNote", Money(selected.LowestBalance - amount), selected.LowestDate.ToString("dd-MM-yyyy"), Money(selected.Account.MinimumCashBuffer)]
+                @L["PurchaseBalanceNote", Money(selected.LowestBalance - amount), selected.LowestDate.ToString("dd-MM-yyyy"), Money(selected.Account.MinimumCashBuffer + selected.Account.EarmarkedAmount)]
                 @L["PurchaseHorizonNote", selected.Days.Last().Date.ToString("dd-MM-yyyy")]
             </p>
         }
         else { <p class="muted">@L["PositiveAmountHint", UiCulture.Culture.NumberFormat.NumberDecimalSeparator]</p> }
         <div class="actions"><button @onclick="() => Draft = EditorDraft.CashBuffer(State, selected.Account)">@L["SetBuffer"] · @selected.Account.Name</button></div>
+        @if (selected.Account.EarmarkedAmount > 0)
+        { <p class="muted">@L["FreedomEarmarked"]: @Money(selected.Account.EarmarkedAmount). <a href="inzichten">@L["FreedomAccounts"] →</a></p> }
         <p class="muted">@L["AccountImportNote", selected.Account.Name, selected.StatementThrough?.ToString("dd-MM-yyyy") ?? L["Unknown"].Value, selected.LastImportDate?.ToString("dd-MM-yyyy") ?? L["None"].Value, Money(selected.DailyVariableEstimate)]</p>
         @if (selected.AwaitingBankDataCount > 0)
         { <p class="notice" role="status">@L["RecurringAwaitingSummary", selected.AwaitingBankDataCount] <a href="importeren">@L["ImportExcelCsv"]</a></p> }
@@ -55,7 +57,7 @@
             <p class="muted">@L["DailyBalanceNote"]</p>
             <div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th class="money">@L["OpeningBalance"]</th><th class="money">@L["Receipts"]</th><th class="money">@L["PaymentsAndReserves"]</th><th class="money">@L["ExtraDaily"]</th><th class="money">@L["LowestBalance"]</th><th class="money">@L["ClosingBalance"]</th></tr></thead><tbody>
             @foreach (var day in selected.Days)
-            { <tr><td>@day.Date.ToString("dd-MM-yyyy")</td><td class="money">@Money(day.OpeningBalance)</td><td class="money">@Money(day.Income)</td><td class="money">@Money(day.Payments)</td><td class="money">@Money(day.VariableSpending)</td><td class="money @(day.LowestBalance < selected.Account.MinimumCashBuffer ? "negative" : "")">@Money(day.LowestBalance)</td><td class="money">@Money(day.ClosingBalance)</td></tr> }
+            { <tr><td>@day.Date.ToString("dd-MM-yyyy")</td><td class="money">@Money(day.OpeningBalance)</td><td class="money">@Money(day.Income)</td><td class="money">@Money(day.Payments)</td><td class="money">@Money(day.VariableSpending)</td><td class="money @(day.LowestBalance < selected.Account.MinimumCashBuffer + selected.Account.EarmarkedAmount ? "negative" : "")">@Money(day.LowestBalance)</td><td class="money">@Money(day.ClosingBalance)</td></tr> }
             </tbody></table></div>
         </details>
     }

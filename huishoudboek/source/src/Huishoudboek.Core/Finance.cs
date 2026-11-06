@@ -20,6 +20,7 @@ public sealed record MonthlyReport(decimal Income, decimal Outflow, decimal Savi
     decimal PrincipalRepaid, IReadOnlyList<CategoryResult> Categories, Forecast Forecast)
 {
     public IReadOnlyList<SavingsResult> SavingsCategories { get; init; } = [];
+    public decimal ExceptionalOutflow { get; init; }
     public decimal BeforeSavings => Income - Outflow;
     public decimal Available => Income - Outflow - Savings;
     public decimal ConsumptionExpense => Outflow - PrincipalRepaid;
@@ -125,16 +126,18 @@ public static class Finance
         var elapsed = cutoff < first ? 0 : cutoff.Day;
         var remainingDays = DateTime.DaysInMonth(year, month) - elapsed;
         var observedVariable = Math.Max(0, lines.Where(l => l.Transaction.Kind != TransactionKind.Mortgage &&
-            l.Transaction.RecurringPaymentId == null).Sum(l => l.Spending));
+            l.Transaction.RecurringPaymentId == null).Sum(l => l.TypicalSpending));
         var estimate = elapsed > 0 && remainingDays > 0
             ? decimal.Round(observedVariable / elapsed * remainingDays, 2) : 0;
         // Future variable entries occupy part of the run-rate estimate, not an extra layer on top.
         var explicitVariable = futureLines.Where(l => l.Amount < 0 && l.Transaction.Kind != TransactionKind.Mortgage &&
-            l.Transaction.RecurringPaymentId == null).Sum(l => l.Spending);
+            l.Transaction.RecurringPaymentId == null).Sum(l => l.TypicalSpending);
         estimate = Math.Max(0, estimate - explicitVariable);
         var forecast = new Forecast(income + plannedIncome, outflow + plannedOutflow + estimate,
             savings + plannedSavings, estimate, overdue, elapsed < 7 || actual.Count < 3);
-        return new(income, outflow, savings, principal, categories, forecast) { SavingsCategories = savingsCategories };
+        return new(income, outflow, savings, principal, categories, forecast) {
+            SavingsCategories = savingsCategories, ExceptionalOutflow = lines.Where(l => l.IsExceptional).Sum(l => l.Spending)
+        };
     }
 
     public static decimal ProjectedCurrentBalance(HouseholdData data, int year, int month, DateOnly today,

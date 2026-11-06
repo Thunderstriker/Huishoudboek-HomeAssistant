@@ -1,6 +1,14 @@
 using Huishoudboek.Service;
 using Microsoft.AspNetCore.Identity;
 
+var localPreview = args.Contains("--preview");
+if (localPreview)
+{
+    if (args.Length != 3 || args[0] != "--preview" || !int.TryParse(args[2], out var port))
+        throw new InvalidOperationException("Gebruik --preview <absoluut pad> <poort> zonder andere startopties.");
+    args = LocalPreviewBootstrap.Arguments(args[1], port);
+}
+
 if (args.Contains("--home-assistant"))
 {
     if (args.Length != 1) throw new InvalidOperationException("--home-assistant kan niet met andere startopties worden gecombineerd.");
@@ -26,5 +34,5 @@ if (args.Contains("--hash-password"))
     return;
 }
 
-await using var app = ServiceApplication.Build(args);
+await using var app = ServiceApplication.Build(args, localPreview);
 await app.RunAsync();

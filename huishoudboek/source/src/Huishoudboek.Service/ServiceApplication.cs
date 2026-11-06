@@ -15,7 +15,7 @@ public static class ServiceApplication
 {
     private sealed record EditorOnly;
 
-    public static WebApplication Build(string[] args)
+    public static WebApplication Build(string[] args, bool localPreview = false)
     {
         var initialize = args.Contains("--initialize");
         var claim = args.Contains("--claim");
@@ -35,9 +35,11 @@ public static class ServiceApplication
         builder.Services.AddSingleton(options);
         var homeAssistant = builder.Configuration.GetSection("HomeAssistant").Get<HomeAssistantOptions>() ?? new HomeAssistantOptions();
         homeAssistant.Validate();
+        if (localPreview && homeAssistant.Enabled) throw new InvalidOperationException("Lokale preview kan niet met Home Assistant-ingress worden gecombineerd.");
         builder.Services.AddSingleton(homeAssistant);
-        builder.Services.AddSingleton(new WebHostSettings(homeAssistant.Enabled));
-        var website = builder.Configuration.GetSection("Website").Get<WebsiteOptions>() ?? new WebsiteOptions();
+        builder.Services.AddSingleton(new WebHostSettings(homeAssistant.Enabled, localPreview));
+        var website = localPreview ? new WebsiteOptions { Enabled = true, PreviewEnabled = true } :
+            builder.Configuration.GetSection("Website").Get<WebsiteOptions>() ?? new WebsiteOptions();
         website.IngressEnabled = homeAssistant.Enabled;
         if (homeAssistant.Enabled && !website.Enabled) throw new InvalidOperationException("Schakel de website in voor Home Assistant.");
         WebsiteAuthentication.Register(builder, website, options);
@@ -58,6 +60,13 @@ public static class ServiceApplication
         // Acquire the lifetime writer lease and validate the administration before accepting requests.
         var coordinator = app.Services.GetRequiredService<AdministrationCoordinator>();
         app.Services.GetRequiredService<ImportWorkspace>();
+        if (website.PreviewEnabled)
+            app.Use(async (context, next) =>
+            {
+                // Check both the peer and Host to reject LAN access and browser DNS rebinding, even over HTTPS.
+                if (!LocalPreviewAuthentication.IsLocalRequest(context)) { context.Response.StatusCode = 403; return; }
+                await next(context);
+            });
         if (homeAssistant.Enabled)
         {
             app.Use((context, next) => HomeAssistantIngress.PrepareAsync(context, homeAssistant, _ => next()));

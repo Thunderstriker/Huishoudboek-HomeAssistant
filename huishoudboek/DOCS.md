@@ -92,6 +92,66 @@ Kleine waarschuwingen bij de bedragen verwijzen naar de volledige maanduitleg op
 **Financiële vooruitblik**. Daar staat ook de bestedingsplanner met aankoopcontrole,
 komende betalingen, buffers en dagelijkse saldoverwachtingen.
 
+### Inzichten: financiële vrijheid en geldvingerafdruk
+
+Open **Inzichten** (`/inzichten`) via de navigatie of de compacte vrijheidskaart op
+het dashboard. De analyse gebruikt de saldi van vandaag en maximaal 12 afgesloten
+maanden, onafhankelijk van de maandkeuze in de werkbalk. Het eigenaarfilter geldt
+wel; gedeelde rekeningen tellen eenmaal en worden niet naar eigenaarsaandeel verdeeld.
+
+1. Kies bij **Budgetten & categorieën → Categorie instellen** voor **Essentiële
+   uitgaven** bij noodzakelijke kosten. Kies **Uitzonderlijk** voor uitgaven die geen
+   normaal leefpatroon zijn, bijvoorbeeld een woningaankoop. Beide tegelijk kan niet.
+   Deze instellingen zijn alleen voor gewone categorieën, niet sparen of eigen
+   rekeningbewegingen. Er zijn geen transactieoverrides: gebruik aparte categorieën
+   voor bijvoorbeeld een woningaankoop en gewone hypotheeklasten.
+2. Uitzonderlijke uitgaven blijven werkelijke uitgaven in saldi, budgetten en
+   maand-/jaarcijfers. Ze verhogen geen dagelijkse uitgavenschatting en komen niet
+   in de gewone kostenbasis of gedragspatronen. Bekende toekomstige uitzonderlijke
+   betalingen blijven wel cash vergen. Wijzigen herberekent ook eerdere analyses;
+   oorspronkelijke bankgegevens veranderen nooit.
+3. Kies onder **Rekeningen en gereserveerd geld** welke betaal- en spaarrekeningen
+   vrij toegankelijk zijn. Beleggingen en woningwaarde zijn nooit liquide reserve.
+   **Extra gereserveerd geld** wordt afgetrokken van het bereik én beschermd in de
+   bestedingsprognose. Geef geen bedrag op dat al als toekomstige uitzonderlijke
+   betaling geregistreerd is: die betalingen over 12 maanden worden apart gereserveerd.
+   Een spaardoel reserveert niet automatisch geld. De minimale cashbuffer telt wel
+   als noodreserve, maar niet als extra bestedingsruimte.
+4. Het midden toont **bruikbare reserves / essentiële maandlasten**. De ringen
+   tonen bescherming tegen het instelbare bufferdoel (standaard 6 maanden),
+   bestedingsruimte, vastgelegd inkomen en het bereik van uw volledige gewone
+   leefstijl. Elke ring heeft een eigen betekenis, geen gedeelde euroverdeling of
+   totaalscore. Exacte waarden blijven zichtbaar, ook boven een volle ring.
+
+Alleen maanden met expliciet bevestigde volledige bankdekking tellen mee voor
+gemiddelden; minimaal 3 afgesloten maanden zijn nodig. Een rekeningopening midden
+in de maand telt niet als volledige maand. Lege bevestigde maanden zijn echte
+waarnemingen; ontbrekende imports zijn geen nul. Actieve maand-, kwartaal- en
+jaarposten worden omgerekend naar maandlasten en vervangen hun expliciet gekoppelde
+historische boekingen. Gesplitste vaste posten behouden hun waargenomen
+categorieverhouding bij het omrekenen naar maandbedragen.
+Koppel ontbrekende herkenningen bij Vaste posten om overlap met ongekoppelde
+uitgaven te voorkomen. Minder dan 12 maanden kan seizoenen en jaarlasten missen.
+
+De **geldvingerafdruk** toont uitgavenregelmaat, uitgavenpieken, spaarritme, vaste
+verplichtingen, uitgavenconcentratie en financiële ruimte. Kies een band voor de
+definitie en exacte waarde. Een grotere waarde is niet automatisch beter; intenties
+zoals impulsiviteit worden niet geraden. Ontdekkingen vereisen 6 opeenvolgende
+bevestigde maanden en minstens 20 verschillende aankopen. Een vergelijking van de
+laatste vijf dagen gebruikt daggemiddelden. Onderliggende boekingen en maandbedragen
+zijn uitklapbaar; bij splitsingen toont bewijs alleen het geanalyseerde uitgavendeel.
+
+Reservegroei sinds vorige maandultimo gebruikt dezelfde huidige essentiële
+kostenbasis. Dit is geen opgeslagen historische score. Onbevestigde actuele saldi
+verbergen de vergelijking. Onbekende essentiële kosten of inkomen leveren een
+streepje op, geen oneindig bereik. Financieel bereik zonder inkomen is geen
+financiële onafhankelijkheid; duurzaam beleggingsinkomen wordt niet verondersteld.
+
+Alle berekeningen en SVG-visualisaties werken lokaal, zonder externe diensten.
+Instellingen blijven behouden in databaseback-ups. Databaseschema 10 maakt vóór
+migratie een veiligheidskopie; bestaande categorieën worden niet automatisch
+essentieel of uitzonderlijk gemarkeerd.
+
 ### Historische uitgaven per categorie
 
 Open **Categorietrends** (`/categorietrends`) vanuit het dashboard of de navigatie.
@@ -450,11 +510,11 @@ niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
   `/data` is de private, permanente app-opslag van de Supervisor, geen Windows-pad.
 - Normale herstarts en updates behouden `/data`. Een bestaande ontbrekende of
   beschadigde database wordt nooit automatisch vervangen door een lege database.
-- Bij een Home Assistant-update worden ondersteunde schema's 1–8 na validatie
-  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 9. Vooraf wordt
-  een SQLite-bewuste `.voor-versie-9-….db`-veiligheidskopie naast de database gemaakt.
+- Bij een Home Assistant-update worden ondersteunde schema's 1–9 na validatie
+  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 10. Vooraf wordt
+  een SQLite-bewuste `.voor-versie-10-….db`-veiligheidskopie naast de database gemaakt.
   Onbekende schema's worden geweigerd. Teruggaan naar een oude appversie vereist
-  herstel van een passende oude back-up; schema-9-back-ups zijn niet leesbaar in
+  herstel van een passende oude back-up; schema-10-back-ups zijn niet leesbaar in
   oudere apps. De normale Windows-service blijft automatische upgrades weigeren.
 - Alleen een werkelijk nieuwe installatie begint met een lege administratie en
   standaardcategorieën, zonder fictieve bedragen. U kunt ook zelf rekeningen aanmaken.

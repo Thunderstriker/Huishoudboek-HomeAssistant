@@ -376,7 +376,7 @@ public sealed class CategoryPurposeTests
         Assert.Throws<InvalidDataException>(() => new SqliteHouseholdStore(files.Path("old.db"), allowCreate: false, allowUpgrade: false));
         var migrated = new SqliteHouseholdStore(files.Path("old.db"), allowCreate: false).Load();
         Assert.Equal(JsonSerializer.Serialize(data), JsonSerializer.Serialize(migrated));
-        var backup = Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-9-*.db"));
+        var backup = Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-10-*.db"));
         Assert.Equal(JsonSerializer.Serialize(data), JsonSerializer.Serialize(SqliteHouseholdStore.ReadBackup(backup)));
         Assert.All(migrated.Categories, c => Assert.Equal(CategoryPurpose.Normal, c.Purpose));
         Assert.Equal(700m, Finance.Report(migrated, 2026, 11, MonthEnd).Savings);

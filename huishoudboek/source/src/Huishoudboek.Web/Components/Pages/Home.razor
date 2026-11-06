@@ -14,6 +14,7 @@
 </div>
 
 <DashboardAccounts Accounts="overview.Accounts" />
+<FreedomMap Overview="insights.Freedom" Compact="true" LimitedHistory="insights.LimitedHistory" />
 
 <section class="dashboard-month" aria-labelledby="dashboard-month-heading">
     <div class="page-heading section-heading">
@@ -26,6 +27,8 @@
         <div class="card"><div class="metric-label">@L["Savings"]</div><div class="metric-value">@Money(overview.Month.Savings)</div><small>@L["NetSavingsInvestments"]</small></div>
         <div class="card result-card"><div class="metric-label">@L["AvailableThisMonth"]</div><div class="metric-value @(overview.Month.Available < 0 ? "negative" : "positive")">@Money(overview.Month.Available)</div><small>@L["AvailableNote"]</small></div>
     </div>
+    @if (overview.Month.ExceptionalOutflow != 0)
+    { <p class="muted">@L["ExceptionalActualNote", Money(overview.Month.ExceptionalOutflow)]</p> }
     <div class="dashboard-columns spending-columns">
         <MonthlyCharts Report="overview.Month" SpendingOnly="true" />
         <section class="card budget-watch" aria-labelledby="dashboard-budget-heading">
@@ -115,6 +118,7 @@
 @code {
     private HomeOverview overview = null!;
     private IReadOnlyList<CategoryResult> budgets = [];
+    private FinancialInsightsReport insights = null!;
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -124,6 +128,7 @@
     private void Rebuild()
     {
         overview = HomeOverview.Create(State.Data, State.Year, State.Month, State.Today, State.OwnerId);
+        insights = FinancialInsights.Create(State.Data, State.Today, State.OwnerId);
         budgets = overview.Month.Categories.Where(c => c.Budget > 0).OrderByDescending(c => c.IsOverBudget)
             .ThenByDescending(c => c.Spent / c.Budget).ThenBy(c => c.Name).Take(4).ToArray();
     }

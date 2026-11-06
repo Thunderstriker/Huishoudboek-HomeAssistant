@@ -415,7 +415,7 @@ public sealed class TransactionAccountingTests
         Assert.Equal(bytes, File.ReadAllBytes(path)); Assert.Empty(legacy.TransactionAllocations); Assert.Empty(legacy.ReimbursementClaims);
         var migrated = new SqliteHouseholdStore(path, allowCreate: false, allowUpgrade: true);
         Assert.Equal(JsonSerializer.Serialize(data), JsonSerializer.Serialize(migrated.Load()));
-        var backup = Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-9-*.db"));
+        var backup = Assert.Single(Directory.GetFiles(files.Directory, "*.voor-versie-10-*.db"));
         Assert.Equal(JsonSerializer.Serialize(data), JsonSerializer.Serialize(SqliteHouseholdStore.ReadBackup(backup)));
     }
 

@@ -483,7 +483,7 @@ public sealed class CashFlowTests
         Assert.Equal(5, read.RecurringPayments[0].MatchWindowDays);
         var store = new SqliteHouseholdStore(files.Database, allowCreate: false, allowUpgrade: true);
         Assert.Equal(JsonSerializer.Serialize(read), JsonSerializer.Serialize(store.Load()));
-        Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-9-*.db"));
+        Assert.Single(System.IO.Directory.GetFiles(files.Directory, "*.voor-versie-10-*.db"));
         Assert.Equal(3002m, Finance.Report(store.Load(), 2026, 11, Today).Income);
         Assert.Equal(3002m, Finance.Report(store.Load(), 2026, 11, Today).Forecast.Income);
     }

@@ -22,7 +22,7 @@
     </aside>
     <div class="workspace">
         <header class="topbar">
-            <div><strong>Huishoudboek · @(HostSettings.HomeAssistant ? "Home Assistant" : "website")</strong><small>@L[State.OwnerId == null ? "HouseholdFilterNote" : "OwnerFilterNote"]</small></div>
+            <div><strong>Huishoudboek · @(HostSettings.LocalPreview ? "demo" : HostSettings.HomeAssistant ? "Home Assistant" : "website")</strong><small>@L[State.OwnerId == null ? "HouseholdFilterNote" : "OwnerFilterNote"]</small></div>
             <div class="toolbar">
                 <button title="@L["RefreshHint"]" disabled="@State.Busy" @onclick="Reload">@L["Refresh"]</button>
                 <button aria-label="@L["PreviousMonth"]" @onclick="() => Shift(-1)">‹</button>
@@ -30,7 +30,7 @@
                 <label class="compact"><span class="sr-only">@L["Year"]</span><input type="number" min="1900" max="2200" value="@State.Year" @onchange="YearChanged" class="year" /></label>
                 <button aria-label="@L["NextMonth"]" @onclick="() => Shift(1)">›</button>
                 <label class="compact"><span class="sr-only">@L["Owner"]</span><select @bind="State.OwnerId" @bind:after="State.Notify"><option value="">@L["AllOwners"]</option>@foreach (var owner in State.Data.Owners) { <option value="@owner.Id">@owner.Name</option> }</select></label>
-                @if (!HostSettings.HomeAssistant) { <a class="button" href="signout" data-enhance-nav="false">@L["SignOut"]</a> }
+                @if (!HostSettings.HomeAssistant && !HostSettings.LocalPreview) { <a class="button" href="signout" data-enhance-nav="false">@L["SignOut"]</a> }
             </div>
         </header>
         <main id="content" aria-busy="@State.Busy">

@@ -25,6 +25,7 @@
             L[report.Savings >= 0 ? "PutAsideSummary" : "WithdrawnSummary", Money(Math.Abs(report.Savings))]
         };
         if (report.SavingsExceedSurplus) parts.Add(L["SavingsAboveSurplusAmount", Money(-report.Available)]);
+        if (report.ExceptionalOutflow != 0) parts.Add(L["ExceptionalActualNote", Money(report.ExceptionalOutflow)]);
         parts.Add(big.Count > 0
             ? string.Join(" · ", big.Select(c => L["OverBudgetAmount", c.Name, Money(c.Overspent)].Value))
             : L["NoBudgetOverrun"].Value);

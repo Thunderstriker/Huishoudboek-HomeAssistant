@@ -39,6 +39,11 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   twee jaren over elkaar en een kalenderheatmap tonen trends en seizoenspatronen.
   Exacte bedragen blijven beschikbaar; onvolledige maanden en onbevestigde bankdekking
   zijn herkenbaar. Open de pagina vanuit het dashboard of klik op een categorietotaal.
+- **Inzichten:** een financiële vrijheidskaart met essentiële maanden zonder inkomen,
+  bufferdoel, bestedingsruimte, vaste verplichtingen en leefstijlbereik. Een geldvingerafdruk
+  toont zes verklaarbare gedragspatronen en onderbouwde ontdekkingen met bronboekingen.
+  Een compacte vrijheidskaart staat op het dashboard. Essentiële en uitzonderlijke
+  categorieën, toegankelijke reserverekeningen en extra gereserveerd geld zijn instelbaar.
 - **Transacties en budgetten:** categorieën, categorisatieregels, maandafwijkingen,
   vaste posten en filters per eigenaar.
 - **Splitsingen, retouren en vergoedingen:** verdeel één bankboeking over categorieën,
@@ -104,6 +109,13 @@ doelapparaat. De huidige Microsoft .NET 10-container-images ondersteunen geen
   huidige maand telt niet mee voor gemiddelden, de hoogste maand of de vergelijking
   van de laatste 12 afgesloten maanden met de vorige 12. Ontbrekende imports kunnen
   lijken op een daling; een lege maand is niet automatisch een bevestigde nul.
+- Inzichten gebruikt de laatste 12 afgesloten maanden en de saldi van vandaag, los
+  van de maandkeuze. Alleen volledige bevestigde afschriftmaanden tellen mee; minimaal
+  3 voor schattingen en 6 opeenvolgende voor gedragsclaims. Markeer essentiële of
+  uitzonderlijke categorieën bij Budgetten & categorieën. Uitzonderlijke uitgaven
+  blijven in werkelijke cijfers en budgetten, maar niet in normale uitgavenramingen.
+  Beleggingen tellen niet mee als direct beschikbare vrijheidsreserve. Het berekende
+  bereik zonder inkomen is geen claim van financiële onafhankelijkheid.
 - Zet bij **Budgetten & categorieën → Categorie instellen → Telt als** een categorie
   op **Sparen & beleggen**. Netto opzijgezet telt alleen op de betaalrekening, op
   de eigen bankdatum; een ontvangst daar verlaagt opzijgezet. Gebruik dezelfde
@@ -150,6 +162,58 @@ Meer informatie over database-import, opslag en veiligheidsbeperkingen:
 
 De app gebruikt .NET 10, Blazor Interactive Server en SQLite. De broncode staat
 onder `huishoudboek/source/src`, verdeeld over Core, Infrastructure, Web en Service.
+
+### Lokaal bekijken zonder GitHub of Home Assistant
+
+Installeer de **.NET 10 SDK** en start vanuit de repository in PowerShell:
+
+```powershell
+.\preview.ps1
+```
+
+Open **http://127.0.0.1:5099**. Er is **geen gebruikersnaam of wachtwoord** nodig.
+De eerste start maakt fictieve demogegevens aan: eigenaren, rekeningen, budgetten,
+vaste posten en twaalf maanden historie plus de huidige maand. De launcher
+gebruikt `dotnet watch`:
+ondersteunde codewijzigingen worden direct toegepast; andere wijzigingen starten
+de app opnieuw. Vernieuw de browser als een wijziging niet meteen zichtbaar is.
+Stop met **Ctrl+C**. De eerste start herstelt ook de benodigde NuGet-pakketten.
+
+Instellingen en een aparte SQLite-administratie staan buiten de
+repository in `%LOCALAPPDATA%\Huishoudboek\Preview\<checkout-id>`. Elke checkout
+of worktree heeft zijn eigen map; dezelfde checkout behoudt zijn gegevens na een
+herstart. De launcher toont het exacte pad. Ontbrekende bestaande gegevens worden
+niet stilzwijgend opnieuw aangemaakt en een niet-lege map zonder previewconfiguratie
+wordt niet overgenomen.
+
+De preview luistert alleen op deze computer en opent direct de app, zonder
+aanmeldscherm. Alleen de expliciete `--preview`-startoptie activeert dit; de normale
+websiteaanmelding en Home Assistant-ingress blijven ongewijzigd. Verzoeken vanaf
+andere computers of met een niet-lokale Host-header worden geweigerd. Gebruik
+geen reverse proxy of tunnel voor deze niet-beveiligde demo. Eventueel kunt u via
+**Beheer & import** een **back-upkopie** uit Home Assistant importeren. Dat vervangt alleen
+de previewadministratie; er is geen synchronisatie met Home Assistant. Behandel
+ook deze lokale kopie en eventuele back-ups als gevoelige financiële gegevens:
+iedereen op uw computer die de preview kan openen heeft volledige toegang.
+Controleer ingress, de Home Assistant-zijbalk en de containerbuild nog op Home Assistant.
+
+Opties:
+
+```powershell
+.\preview.ps1 -Port 5100 # Andere lokale poort
+.\preview.ps1 -NoWatch   # Eenmalig starten zonder bestandsbewaking
+```
+
+Als Windows het lokale script blokkeert, kunt u voor alleen deze PowerShell-sessie
+`Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` gebruiken; wijzig het
+systeembeleid niet. Op andere besturingssystemen kunt u dezelfde preview expliciet
+starten in een lege map buiten de repository:
+
+```text
+DOTNET_ENVIRONMENT=Development dotnet watch --non-interactive --project huishoudboek/source/src/Huishoudboek.Service -- --preview /absolute/path/to/preview 5099
+```
+
+### Bouwen en testen
 
 ```powershell
 dotnet build huishoudboek/source/src/Huishoudboek.Service/Huishoudboek.Service.csproj

@@ -2,11 +2,13 @@ namespace Huishoudboek.Core;
 
 public sealed record AccountingLine(Transaction Transaction, Guid? AllocationId, decimal Amount,
     Guid? CategoryId, AllocationTreatment Treatment, string Note,
-    CategoryPurpose Purpose = CategoryPurpose.Normal, bool IsCurrentAccount = false)
+    CategoryPurpose Purpose = CategoryPurpose.Normal, bool IsCurrentAccount = false,
+    bool IsEssential = false, bool IsExceptional = false)
 {
     public decimal Income => Purpose == CategoryPurpose.Normal && Treatment == AllocationTreatment.Ordinary && Amount > 0 ? Amount : 0;
     public decimal Spending => Purpose == CategoryPurpose.Normal && (Amount < 0 || Treatment != AllocationTreatment.Ordinary) ? -Amount : 0;
     public decimal Savings => Purpose == CategoryPurpose.Savings && IsCurrentAccount ? -Amount : 0;
+    public decimal TypicalSpending => IsExceptional ? 0 : Spending;
 }
 
 /// <summary>One interpretation of bank entries for every budget/report, never for account balances.</summary>
@@ -14,11 +16,13 @@ public static class TransactionAccounting
 {
     public static IEnumerable<AccountingLine> Lines(HouseholdData data, IEnumerable<Transaction> transactions)
     {
-        var purposes = data.Categories.ToDictionary(c => c.Id, c => c.Purpose);
+        var categories = data.Categories.ToDictionary(c => c.Id);
         var current = data.Accounts.Where(a => a.Kind == AccountKind.Current).Select(a => a.Id).ToHashSet();
         AccountingLine Line(Transaction t, Guid? allocationId, decimal amount, Guid? category,
             AllocationTreatment treatment, string note) => new(t, allocationId, amount, category, treatment, note,
-                category is { } id ? purposes.GetValueOrDefault(id) : CategoryPurpose.Normal, current.Contains(t.AccountId));
+                category is { } id ? categories.GetValueOrDefault(id)?.Purpose ?? CategoryPurpose.Normal : CategoryPurpose.Normal,
+                current.Contains(t.AccountId), category is { } essentialId && categories.GetValueOrDefault(essentialId)?.IsEssential == true,
+                category is { } exceptionalId && categories.GetValueOrDefault(exceptionalId)?.IsExceptional == true);
         var allocations = data.TransactionAllocations.ToLookup(a => a.TransactionId);
         Dictionary<Guid, Transaction>? entries = null;
         var splits = data.TransactionAllocations.ToDictionary(a => a.Id);
