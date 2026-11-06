@@ -1,6 +1,6 @@
 # Changelog
 
-## Nog niet uitgebracht
+## 0.1.16
 
 - Bankperioden rechtstreeks per betaal- of spaarrekening bevestigen, ook zonder import
   en voor meerdere maanden of jaren tegelijk. Bevestigingen veranderen geen boekingen
