@@ -1,23 +1,95 @@
 @implements IDisposable
 @inject UiPreferences Preferences
-<nav aria-label="@L["MainNavigation"]">
-    @foreach (var entry in Navigation)
-    {
-        if (entry.Path == "/weekcontrole" && (!Preferences.Loaded || Preferences.HideWeeklyReview)) { continue; }
-        <NavLink href="@entry.Path.TrimStart('/')" Match="@(entry.Path == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)"><span aria-hidden="true">@entry.Symbol</span>@L[entry.Label]</NavLink>
-    }
+@inject NavigationManager NavigationManager
+
+<nav class="primary-navigation" aria-label="@L["MainNavigation"]">
+    <ul class="nav-sections">
+        @foreach (var section in Sections)
+        {
+            <li @key="section.Id" class="nav-section">
+                @if (section.Path is { } path)
+                {
+                    <NavLink class="nav-item" href="@path.TrimStart('/')" Match="@(path == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)" aria-current="@(IsCurrent(path) ? "page" : null)">
+                        <DashboardIcon Name="@section.Icon" /><span class="nav-label">@L[section.Label]</span>
+                    </NavLink>
+                }
+                else
+                {
+                    <button type="button" class="nav-item nav-group @(section.Entries.Any(entry => IsCurrent(entry.Path)) ? "section-current" : null)"
+                            aria-expanded="@(expandedSection == section.Id ? "true" : "false")" aria-controls="@($"nav-{section.Id}")"
+                            @onclick="() => Toggle(section.Id)">
+                        <DashboardIcon Name="@section.Icon" /><span class="nav-label">@L[section.Label]</span>
+                        <svg class="nav-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6" /></svg>
+                    </button>
+                    <ul id="@($"nav-{section.Id}")" class="nav-submenu" hidden="@(expandedSection != section.Id)">
+                        @foreach (var entry in section.Entries)
+                        {
+                            if (entry.Path == "/weekcontrole" && (!Preferences.Loaded || Preferences.HideWeeklyReview)) { continue; }
+                            <li @key="entry.Path">
+                                <NavLink href="@entry.Path.TrimStart('/')" aria-current="@(IsCurrent(entry.Path) ? "page" : null)">@L[entry.Label]</NavLink>
+                            </li>
+                        }
+                    </ul>
+                }
+            </li>
+        }
+    </ul>
 </nav>
 
 @code {
-    private static readonly (string Path, string Symbol, string Label)[] Navigation = [
-        ("/", "⌂", "StartDashboard"), ("/maand", "◷", "MonthlyOverview"),
-        ("/vooruitblik", "◈", "FinancialOutlook"), ("/jaar", "▥", "AnnualOverview"),
-        ("/categorietrends", "⌁", "CategoryTrends"),
-        ("/inzichten", "◎", "FinancialInsights"),
-        ("/weekcontrole", "☑", "WeeklyReviewTitle"), ("/transacties", "⇄", "Transactions"),
-        ("/categoriseren", "✓", "Categorize"), ("/rekeningen", "▣", "Accounts"), ("/budgetten", "◉", "Budgets"),
-        ("/vaste-posten", "↻", "RecurringPayments"), ("/hypotheek", "⌂", "Mortgage"), ("/beheer", "⚙", "AdministrationImport")];
-    protected override void OnInitialized() => Preferences.Changed += Changed;
+    private sealed record NavigationEntry(string Path, string Label);
+    private sealed record NavigationSection(string Id, string Icon, string Label, string? Path, NavigationEntry[] Entries);
+
+    private static readonly NavigationSection[] Sections = [
+        new("dashboard", "activity", "StartDashboard", "/", []),
+        new("overviews", "calendar", "NavigationOverviews", null, [
+            new("/maand", "MonthlyOverview"), new("/jaar", "AnnualOverview"),
+            new("/categorietrends", "CategoryTrends"), new("/inzichten", "FinancialInsights")]),
+        new("transactions", "wallet", "Transactions", null, [
+            new("/transacties", "Transactions"), new("/categoriseren", "Categorize"), new("/weekcontrole", "WeeklyReviewTitle")]),
+        new("planning", "budget", "NavigationPlanning", null, [
+            new("/vooruitblik", "FinancialOutlook"), new("/budgetten", "Budgets"),
+            new("/vaste-posten", "RecurringPayments"), new("/hypotheek", "Mortgage")]),
+        new("accounts", "savings", "Accounts", "/rekeningen", []),
+        new("administration", "sliders", "NavigationAdministration", null, [
+            new("/beheer", "AdministrationImport"), new("/importeren", "ImportExcelCsv"), new("/instellen", "SetupTitle")])];
+
+    private string currentPath = "";
+    private string? expandedSection;
+
+    protected override void OnInitialized()
+    {
+        UpdateLocation(NavigationManager.Uri);
+        Preferences.Changed += Changed;
+        NavigationManager.LocationChanged += LocationChanged;
+    }
+
+    private bool IsCurrent(string path)
+    {
+        var relativePath = path.Trim('/');
+        return currentPath.Equals(relativePath, StringComparison.OrdinalIgnoreCase)
+            || (relativePath.Length > 0 && currentPath.StartsWith(relativePath + "/", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void UpdateLocation(string uri)
+    {
+        currentPath = NavigationManager.ToBaseRelativePath(uri).Split('?', '#')[0].Trim('/');
+        expandedSection = Sections.FirstOrDefault(section => section.Entries.Any(entry => IsCurrent(entry.Path)))?.Id;
+    }
+
+    private void Toggle(string sectionId) => expandedSection = expandedSection == sectionId ? null : sectionId;
+
+    private void LocationChanged(object? sender, LocationChangedEventArgs args) => _ = InvokeAsync(() =>
+    {
+        UpdateLocation(args.Location);
+        StateHasChanged();
+    });
+
     private void Changed() => _ = InvokeAsync(StateHasChanged);
-    public void Dispose() => Preferences.Changed -= Changed;
+
+    public void Dispose()
+    {
+        Preferences.Changed -= Changed;
+        NavigationManager.LocationChanged -= LocationChanged;
+    }
 }

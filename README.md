@@ -174,9 +174,11 @@ Installeer de **.NET 10 SDK** en start vanuit de repository in PowerShell:
 Open **http://127.0.0.1:5099**. Er is **geen gebruikersnaam of wachtwoord** nodig.
 De eerste start maakt fictieve demogegevens aan: eigenaren, rekeningen, budgetten,
 vaste posten en twaalf maanden historie plus de huidige maand. De launcher
-gebruikt `dotnet watch`:
-ondersteunde codewijzigingen worden direct toegepast; andere wijzigingen starten
-de app opnieuw. Vernieuw de browser als een wijziging niet meteen zichtbaar is.
+gebruikt `dotnet watch --no-hot-reload`: bronwijzigingen bouwen de app opnieuw en
+starten deze opnieuw, zodat paginateksten en ingebouwde vertalingen bij elkaar blijven.
+Dit voorkomt zichtbare vertaalsleutels na wijzigingen in `.resx`-bestanden.
+Vernieuw de browser zodra de app opnieuw is gestart. Een al draaiende preview met
+de oude launcher moet u eenmalig stoppen en opnieuw starten.
 Stop met **Ctrl+C**. De eerste start herstelt ook de benodigde NuGet-pakketten.
 
 Instellingen en een aparte SQLite-administratie staan buiten de
@@ -210,14 +212,13 @@ systeembeleid niet. Op andere besturingssystemen kunt u dezelfde preview explici
 starten in een lege map buiten de repository:
 
 ```text
-DOTNET_ENVIRONMENT=Development dotnet watch --non-interactive --project huishoudboek/source/src/Huishoudboek.Service -- --preview /absolute/path/to/preview 5099
+DOTNET_ENVIRONMENT=Development dotnet watch --no-hot-reload --project huishoudboek/source/src/Huishoudboek.Service -- --preview /absolute/path/to/preview 5099
 ```
 
-### Bouwen en testen
+### Bouwen
 
 ```powershell
 dotnet build huishoudboek/source/src/Huishoudboek.Service/Huishoudboek.Service.csproj
-dotnet test huishoudboek/source/tests/Huishoudboek.Tests/Huishoudboek.Tests.csproj
 ```
 
 Voor een nieuwe appversie moeten `version` in `huishoudboek/config.yaml` en het

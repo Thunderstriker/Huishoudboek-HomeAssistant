@@ -69,20 +69,50 @@ naar GitHub of een containerregister. Alleen amd64 is in deze versie opgenomen.
 
 ## Dashboard, maandoverzicht en aparte werkpagina's
 
-De startpagina **Dashboard** (`/`) begint met rekeningkaarten en de geregistreerde
-saldi van vandaag, met de actualiteit van de bankgegevens erbij. Standaard staan de
-betaalrekeningen (zichtrekeningen) aan. Via **Rekeningen kiezen** kunt u ook spaar- en
-beleggingsrekeningen tonen of alle kaarten verbergen. De keuze wordt per browser
+De zijbalk is op elke pagina diepgroen en bevat zes hoofdkeuzes:
+
+- **Dashboard**: direct naar de startpagina.
+- **Overzichten**: maandoverzicht, jaaroverzicht, categorietrends en inzichten.
+- **Transacties**: transacties, categoriseren en wekelijkse controle (tenzij verborgen).
+- **Planning**: financiële vooruitblik, budgetten, vaste posten en hypotheek.
+- **Rekeningen**: direct naar de rekeningen.
+- **Beheer**: beheer & import, Excel/CSV importeren en instellen.
+
+Klik op een groep om het submenu te openen of te sluiten; er staat steeds hoogstens
+één groep open. De groep van de huidige pagina opent automatisch, ook bij een directe
+link of de terugknop van de browser. Op kleine schermen staan de hoofdkeuzes in twee kolommen.
+
+De startpagina **Dashboard** (`/`) begint met een centrale momentopname van de gekozen
+maand en daarnaast compacte geregistreerde rekeningsaldi van vandaag, met de actualiteit
+van de bankgegevens erbij. Standaard staan de betaalrekeningen (zichtrekeningen) aan.
+Er staat geen introductiekop of rij actieknoppen boven de cijfers. Importeren en
+transacties invoeren blijven bereikbaar via de navigatie en de bijbehorende pagina's.
+Via **Aanpassen** (Rekeningen kiezen) kunt u ook spaar- en beleggingsrekeningen tonen
+of alle rekeningsaldi verbergen. De keuze wordt per browser
 bewaard, niet in de financiële database; zonder browseropslag alleen voor de sessie.
 Herstel de standaard via **Betaalrekeningen tonen (standaard)**. Een eigenaarfilter
 verbergt rekeningen buiten die selectie zonder uw rekeningkeuze te wissen.
 
 De maandcijfers, uitgavengrafiek en budgetbewaking volgen de gekozen maand en eigenaar,
-niet de gekozen rekeningkaarten. **Binnenkort** toont bekende betalingen over 7 dagen
+niet de gekozen rekeningsaldi. **Binnenkort** toont bekende betalingen over 7 dagen
 en het volgende inkomen voor alle betaalrekeningen binnen het eigenaarfilter, vanaf
 vandaag. Onzekere reserves krijgen geen verzonnen betaaldatum en tellen niet mee in
 dit 7-dagentotaal. **Recente boekingen** toont de laatste vijf boekingen tot vandaag,
 ongeacht de gekozen maand. Signalen verwijzen naar import, categoriseren of vooruitblik.
+Eén volgende stap krijgt direct onder de momentopname voorrang: eerst verouderde
+bankgegevens, daarna een verwachte cashbufferonderschrijding, nog te categoriseren
+boekingen, een negatief maandresultaat of een budgetoverschrijding. Overige punten zijn
+uitklapbaar. Zonder aandachtspunten vervalt de actiebalk, behalve bij instelhulp voor
+een lege administratie of rekeningselectie. Dit is geen garantie dat de financiën op
+orde zijn; de vooruitblik blijft via **Binnenkort** bereikbaar. Het maandresultaat na
+sparen is geen rekeningsaldo of vrij besteedbaar bedrag. Uitleg over cijfers en planning
+is uitklapbaar.
+De vier grootste positieve uitgavencategorieën staan in een uitgavenring en balken;
+kleinere categorieën zijn samengevoegd. De ring en balken gebruiken dezelfde bedragen
+en kleuren; exacte bedragen en percentages blijven leesbaar naast de ring. Zonder
+positieve categoriebedragen verschijnt geen ring. Negatieve categorieën tellen niet
+mee in deze verdeling, wel in het maandresultaat. Klik op een categorie bij de balken
+of budgetten om de trends te openen.
 
 Het bestaande **Maandoverzicht** blijft ongewijzigd beschikbaar via de navigatie
 op `/maand`. Deze pagina begint direct met de maandcijfers, gevolgd door
@@ -94,8 +124,9 @@ komende betalingen, buffers en dagelijkse saldoverwachtingen.
 
 ### Inzichten: financiële vrijheid en geldvingerafdruk
 
-Open **Inzichten** (`/inzichten`) via de navigatie of de compacte vrijheidskaart op
-het dashboard. De analyse gebruikt de saldi van vandaag en maximaal 12 afgesloten
+Open **Inzichten** (`/inzichten`) via de navigatie of de link onderaan het dashboard.
+De financiële vrijheidskaart staat alleen op Inzichten, niet op het dashboard.
+De analyse gebruikt de saldi van vandaag en maximaal 12 afgesloten
 maanden, onafhankelijk van de maandkeuze in de werkbalk. Het eigenaarfilter geldt
 wel; gedeelde rekeningen tellen eenmaal en worden niet naar eigenaarsaandeel verdeeld.
 
@@ -208,8 +239,9 @@ het eigenaarfilter blijft gelden en gedeelde rekeningen tellen eenmaal.
 Alle grafieken werken lokaal, passen zich aan de schermbreedte aan en respecteren
 de browservoorkeur voor minder animatie.
 
-**Instellen** staat onder **Beheer & import → Instellen & navigatie**. **Wekelijkse
-controle** heeft een eigen pagina in de navigatie. Kies op die pagina of onder
+**Instellen** staat rechtstreeks onder **Beheer → Instellen** en blijft ook bereikbaar
+via **Beheer & import → Instellen & navigatie**. **Wekelijkse controle** staat onder
+**Transacties**. Kies op die pagina of onder
 **Beheer & import → Instellen & navigatie** voor **Wekelijkse controle verbergen in de
 navigatie** om de menulink te verbergen; vink dit daar weer uit om hem te herstellen.
 De voorkeur wordt alleen in deze browser voor deze app bewaard, niet in de financiële

@@ -8,6 +8,9 @@
   <data name="SkipToContent" xml:space="preserve"><value>Naar inhoud</value></data>
   <data name="Tagline" xml:space="preserve"><value>Rust in uw financiën</value></data>
   <data name="MainNavigation" xml:space="preserve"><value>Hoofdnavigatie</value></data>
+  <data name="NavigationOverviews" xml:space="preserve"><value>Overzichten</value></data>
+  <data name="NavigationPlanning" xml:space="preserve"><value>Planning</value></data>
+  <data name="NavigationAdministration" xml:space="preserve"><value>Beheer</value></data>
   <data name="LocalPrivate" xml:space="preserve"><value>Lokaal · EUR · privé</value></data>
   <data name="NoBankConnection" xml:space="preserve"><value>Geen bankverbinding</value></data>
   <data name="HouseholdFilterNote" xml:space="preserve"><value>Hele huishouden · gedeelde rekeningen tellen één keer mee.</value></data>
@@ -27,21 +30,62 @@
   <data name="BackupAdministration" xml:space="preserve"><value>Back-up &amp; beheer</value></data>
   <data name="MonthlyOverview" xml:space="preserve"><value>Maandoverzicht</value></data>
   <data name="StartDashboard" xml:space="preserve"><value>Dashboard</value></data>
-  <data name="DashboardIntro" xml:space="preserve"><value>Uw saldi, uitgaven en de komende week in één oogopslag.</value></data>
+  <data name="DashboardIntro" xml:space="preserve"><value>Wat er is, wat eruit gaat en wat uw aandacht vraagt.</value></data>
+  <data name="DashboardHeadline" xml:space="preserve"><value>Uw geld. Helder in beeld.</value></data>
+  <data name="DashboardAboutFigures" xml:space="preserve"><value>Over deze maandcijfers</value></data>
+  <data name="DashboardNextStep" xml:space="preserve"><value>Uw volgende stap</value></data>
+  <data name="DashboardOtherChecks" xml:space="preserve"><value>Nog {0} aandachtspunt(en)</value></data>
+  <data name="DashboardWeekAhead" xml:space="preserve"><value>Vanaf vandaag</value></data>
+  <data name="DashboardMorePayments" xml:space="preserve"><value>Bekijk nog {0} betaling(en)</value></data>
+  <data name="DashboardPlanningDetails" xml:space="preserve"><value>Wat telt mee in deze planning?</value></data>
+  <data name="DashboardBudgetDetails" xml:space="preserve"><value>Over deze budgetten</value></data>
+  <data name="DashboardLatestEntries" xml:space="preserve"><value>Uw laatste geldbewegingen</value></data>
+  <data name="DashboardActivityDetails" xml:space="preserve"><value>Over deze boekingen</value></data>
+  <data name="DashboardUpdateBankTitle" xml:space="preserve"><value>Maak uw overzicht weer actueel</value></data>
+  <data name="DashboardUpdateBankAction" xml:space="preserve"><value>Bankgegevens bijwerken</value></data>
+  <data name="DashboardStaleAccountNote" xml:space="preserve"><value>{0} · bankgegevens t/m {1}</value></data>
+  <data name="DashboardReviewCashTitle" xml:space="preserve"><value>Bekijk uw komende cashbuffer</value></data>
+  <data name="DashboardViewPlan" xml:space="preserve"><value>Bekijk vooruitblik</value></data>
+  <data name="DashboardCategorizeTitle" xml:space="preserve"><value>Geef uw uitgaven een plek</value></data>
+  <data name="DashboardCategorizeAction" xml:space="preserve"><value>Categoriseren</value></data>
+  <data name="DashboardReviewMonthTitle" xml:space="preserve"><value>Bekijk uw negatieve maandresultaat</value></data>
+  <data name="DashboardReviewMonthNote" xml:space="preserve"><value>{0}: {1} na uitgaven en opzijgezet geld; bekijk de uitleg.</value></data>
+  <data name="DashboardReviewBudgetsTitle" xml:space="preserve"><value>Een budget verdient uw aandacht</value></data>
+  <data name="DashboardOverBudgetCount" xml:space="preserve"><value>{0} uitgavencategorie(ën) boven het budget van de gekozen maand.</value></data>
+  <data name="DashboardStartTitle" xml:space="preserve"><value>Hier begint uw overzicht</value></data>
+  <data name="DashboardStartNote" xml:space="preserve"><value>Voeg uw eerste rekening toe en breng uw geld in beeld.</value></data>
+  <data name="DashboardChooseScopeTitle" xml:space="preserve"><value>Kies de rekeningen die u wilt volgen</value></data>
+  <data name="DashboardLookAheadTitle" xml:space="preserve"><value>Kijk alvast een stap vooruit</value></data>
+  <data name="DashboardLookAheadNote" xml:space="preserve"><value>Bekijk de planning na deze week, met verwachte saldi en uw cashbuffer.</value></data>
+  <data name="DashboardToday" xml:space="preserve"><value>Vandaag</value></data>
+  <data name="DashboardAdjustAccounts" xml:space="preserve"><value>Aanpassen</value></data>
+  <data name="DashboardAboutBalances" xml:space="preserve"><value>Over deze saldi</value></data>
+  <data name="DashboardSpendingEyebrow" xml:space="preserve"><value>De gekozen maand</value></data>
+  <data name="DashboardViewTrends" xml:space="preserve"><value>Bekijk trends</value></data>
+  <data name="DashboardPositiveSpending" xml:space="preserve"><value>in uitgavencategorieën</value></data>
+  <data name="DashboardSpendingRecoveryNote" xml:space="preserve"><value>Er zijn ook negatieve categoriebedragen door retouren of vergoedingen. Die tellen niet mee in deze balken of hun totaal; het maandresultaat verwerkt ze wel.</value></data>
+  <data name="DashboardSpendingDetails" xml:space="preserve"><value>Over deze verdeling</value></data>
+  <data name="DashboardCategoryBarsNote" xml:space="preserve"><value>De vier grootste positieve categoriebedragen van de gekozen maand; kleinere categorieën zijn samengevoegd. Percentages gebruiken het totaal van alle positieve categoriebedragen. Het maandoverzicht toont alle bedragen, inclusief negatieve categorieën.</value></data>
+  <data name="DashboardEyebrow" xml:space="preserve"><value>Grip op uw geld</value></data>
+  <data name="DashboardMonthlySnapshot" xml:space="preserve"><value>De maand in beeld</value></data>
+  <data name="DashboardSpendingEmptyTitle" xml:space="preserve"><value>Breng uw uitgaven in beeld</value></data>
+  <data name="DashboardExplore" xml:space="preserve"><value>Meer inzicht</value></data>
+  <data name="DashboardTrendsHint" xml:space="preserve"><value>Ontdek waar uw uitgaven naartoe bewegen.</value></data>
+  <data name="DashboardInsightsHint" xml:space="preserve"><value>Leer uw financiële patronen kennen.</value></data>
   <data name="DashboardYourAccounts" xml:space="preserve"><value>Uw rekeningen</value></data>
   <data name="DashboardBalancesToday" xml:space="preserve"><value>Geregistreerde saldi op {0} · geen live bankkoppeling.</value></data>
   <data name="DashboardChooseAccounts" xml:space="preserve"><value>Rekeningen kiezen</value></data>
   <data name="DashboardDefaultAccounts" xml:space="preserve"><value>Betaalrekeningen tonen (standaard)</value></data>
-  <data name="DashboardAccountPreferenceNote" xml:space="preserve"><value>Onthouden in deze browser. Alleen deze rekeningkaarten veranderen; overzichten blijven het eigenaar- en maandfilter volgen.</value></data>
+  <data name="DashboardAccountPreferenceNote" xml:space="preserve"><value>Onthouden in deze browser. Alleen deze zichtbare rekeningsaldi veranderen; overzichten blijven het eigenaar- en maandfilter volgen.</value></data>
   <data name="DashboardPreferenceSessionOnly" xml:space="preserve"><value>Browseropslag is niet beschikbaar. Uw rekeningkeuze geldt alleen voor deze sessie; overzichten veranderen niet.</value></data>
   <data name="DashboardNoAccounts" xml:space="preserve"><value>Geen vandaag geopende rekeningen binnen dit eigenaarfilter. Voeg een rekening toe of wijzig het filter.</value></data>
-  <data name="DashboardNoSelectedAccounts" xml:space="preserve"><value>Geen rekeningkaarten gekozen binnen dit eigenaarfilter. Gebruik Rekeningen kiezen of herstel de standaardkeuze.</value></data>
+  <data name="DashboardNoSelectedAccounts" xml:space="preserve"><value>Geen rekeningsaldi gekozen binnen dit eigenaarfilter. Gebruik Aanpassen of herstel de standaardkeuze.</value></data>
   <data name="DashboardLoadingAccounts" xml:space="preserve"><value>Uw rekeningkeuze laden…</value></data>
   <data name="DashboardRecordedValue" xml:space="preserve"><value>Geregistreerde rekeningwaarde</value></data>
   <data name="DashboardRecordedBalance" xml:space="preserve"><value>Geregistreerd saldo</value></data>
   <data name="DashboardRecentImport" xml:space="preserve"><value>Recente bankgegevens</value></data>
   <data name="DashboardImportedThrough" xml:space="preserve"><value>Bankgegevens t/m {0}</value></data>
-  <data name="DashboardMonthlyNote" xml:space="preserve"><value>Werkelijke bedragen voor de gekozen maand, tot en met vandaag. De rekeningkaarten hierboven tonen altijd de saldi van vandaag.</value></data>
+  <data name="DashboardMonthlyNote" xml:space="preserve"><value>Werkelijke bedragen voor de gekozen maand, tot en met vandaag. De rekeningsaldi blijven de saldi van vandaag, ongeacht de maandkeuze.</value></data>
   <data name="DashboardFullMonth" xml:space="preserve"><value>Volledig maandoverzicht</value></data>
   <data name="DashboardBudgetWatch" xml:space="preserve"><value>Budgetten in het oog</value></data>
   <data name="DashboardLargestCategoriesNote" xml:space="preserve"><value>De vijf grootste uitgavencategorieën; kleinere categorieën zijn samengevoegd. Alle bedragen staan in het volledige maandoverzicht.</value></data>

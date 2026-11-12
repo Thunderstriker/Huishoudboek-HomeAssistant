@@ -50,8 +50,9 @@ try {
         & dotnet run --project $project --no-launch-profile -- --preview $previewRoot $Port
     }
     else {
-        # Leave console input with the app; unsupported hot edits restart it automatically.
-        & dotnet watch --non-interactive --project $project --no-launch-profile -- --preview $previewRoot $Port
+        # Embedded .resx resources cannot be replaced reliably by Hot Reload.
+        # Rebuild and restart together so Razor markup and translations stay in sync.
+        & dotnet watch --no-hot-reload --project $project --no-launch-profile -- --preview $previewRoot $Port
     }
     if ($LASTEXITCODE -ne 0) { throw "Preview stopped with exit code $LASTEXITCODE." }
 }

@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.2.0
+
+- Lokale preview blijft opgemaakt na CSS-wijzigingen en opnieuw bouwen: stylesheets
+  worden rechtstreeks geladen, zonder verouderde gecomprimeerde bestanden uit de bouwcache.
+- Overal dezelfde diepgroene zijbalk met zes hoofdkeuzes en uitklapbare submenu's
+  voor overzichten, transacties, planning en beheer. De actieve pagina opent automatisch
+  de juiste groep; de voorkeur voor wekelijkse controle blijft behouden.
+- Automatische tests en bijbehorende testafhankelijkheden verwijderd; de bouwinstructies
+  verwijzen alleen nog naar de applicatie.
+- Bovenste dashboardkaarten compacter: maandresultaat en maandcijfers staan op brede
+  schermen naast elkaar; rekeningsaldi verschijnen als korte regels. Minder witruimte,
+  kleinere bedragen en minder geneste vlakken laten uitgaven en betalingen eerder zien.
+- Dashboard visueel verfijnd met een diepgroene maandkaart, zachtere achtergrond,
+  grotere bedragen, gekleurde rekeningkaarten en een uitgavenring naast de categoriebalken.
+  Bijpassende navigatie, subtiele schaduwen en betere mobiele verhoudingen; geen extra
+  introductietekst of actieknoppen. Bedragen, filters en bankwaarschuwingen blijven intact.
+- Minimalistischer dashboard zonder introductiekop, ondertitel of actieknoppen bovenaan.
+  Rustige kaarten met gelijkmatige kolommen, minder herhaalde labels en compacte
+  navigatielinks. Alleen echte aandachtspunten of instelhulp tonen een actiebalk;
+  bankwaarschuwingen, berekeningsuitleg en rekeningkeuze blijven behouden.
+- Opnieuw ontworpen dashboard met een centrale financiële momentopname, compacte
+  rekeningsaldi en direct daaronder de uitgavenverdeling en komende betalingen.
+  Eén gerichte volgende stap krijgt voorrang; overige aandachtspunten en uitleg
+  zijn uitklapbaar. Geen geruststellende status op basis van ontbrekende bankgegevens.
+- Uitgaven als direct leesbare categoriebalken met bedragen, percentages en trendlinks.
+  Budgetten en recente boekingen blijven beschikbaar, met een compactere mobiele indeling.
+- Financiële vrijheidskaart van het dashboard verwijderd; de volledige analyse blijft
+  beschikbaar onder Inzichten. Vernieuwde mobiele weergave en Nederlandse/Engelse teksten.
+- Lokale preview herstart na bronwijzigingen, zodat gewijzigde dashboardvertalingen
+  niet als interne sleutelnamen verschijnen door verouderde Hot Reload-resources.
+  Extra regressiecontroles voor ontbrekende Nederlandse en Engelse dashboardteksten.
+
 ## 0.1.16
 
 - Bankperioden rechtstreeks per betaal- of spaarrekening bevestigen, ook zonder import

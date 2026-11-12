@@ -25,6 +25,8 @@ public static class ServiceApplication
         var hostArgs = args.Where((a, i) => a != "--initialize" && a != "--claim" && i != configIndex && (configIndex < 0 || i != configIndex + 1)).ToArray();
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = hostArgs, ContentRootPath = AppContext.BaseDirectory,
             ApplicationName = typeof(ServiceApplication).Assembly.GetName().Name });
+        // The preview also needs the referenced Web library's files when launched outside Development.
+        if (localPreview) builder.WebHost.UseStaticWebAssets();
         if (config != null) builder.Configuration.AddJsonFile(Path.GetFullPath(config), optional: false, reloadOnChange: false);
         builder.Services.AddWindowsService(o => o.ServiceName = "Huishoudboek");
         builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
@@ -65,6 +67,9 @@ public static class ServiceApplication
             {
                 // Check both the peer and Host to reject LAN access and browser DNS rebinding, even over HTTPS.
                 if (!LocalPreviewAuthentication.IsLocalRequest(context)) { context.Response.StatusCode = 403; return; }
+                // A rebuild can replace compressed files without restarting the preview's asset manifest.
+                // Use the live, original files; keep normal compression and asset aliases outside previews.
+                context.Request.Headers.AcceptEncoding = "identity";
                 await next(context);
             });
         if (homeAssistant.Enabled)

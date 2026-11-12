@@ -6,9 +6,10 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
 
 ## Inzicht in Uw Financiën
 
-- **Dashboard:** nieuwe startpagina met saldi van vandaag per rekening, compacte
-  maandcijfers, uitgaven per categorie, budgetbewaking, komende betalingen en recente
-  boekingen. Via **Rekeningen kiezen** bepaalt u welke rekeningkaarten zichtbaar zijn;
+- **Dashboard:** financiële momentopname met een centraal maandresultaat, compacte
+  rekeningsaldi van vandaag en één gerichte volgende stap. Uitgaven staan in leesbare
+  categoriebalken naast de komende betalingen; budgetten en recente boekingen volgen eronder.
+  Via **Aanpassen** bij de rekeningen bepaalt u welke rekeningsaldi zichtbaar zijn;
   standaard de betaalrekeningen (zichtrekeningen). De keuze blijft in deze browser
   en verandert geen rapportfilters. Het volledige maandoverzicht blijft een aparte pagina.
 - **Maandoverzicht:** compacte doughnutgrafiek met de grootste uitgavencategorieën
@@ -33,7 +34,7 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
   Open vanuit het dashboard of klik op een categorietotaal in het maand-/jaaroverzicht.
   Het eigenaarfilter blijft gelden; de pagina heeft een eigen periodekeuze.
 - **Inzichten:** financiële vrijheidskaart met maanden essentiële uitgaven zonder
-  inkomen, bestedingsruimte, bufferdoel en leefstijlbereik; compact op het dashboard.
+  inkomen, bestedingsruimte, bufferdoel en leefstijlbereik, alleen op de pagina Inzichten.
   De geldvingerafdruk toont zes verklaarbare patronen en ontdekkingen met bronboekingen.
   Markeer categorieën als essentieel of uitzonderlijk en kies toegankelijke reserves
   en extra gereserveerd geld. Uitzonderlijke uitgaven blijven echte uitgaven, maar

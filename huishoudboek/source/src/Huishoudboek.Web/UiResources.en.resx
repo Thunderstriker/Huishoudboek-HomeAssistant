@@ -8,6 +8,9 @@
   <data name="SkipToContent" xml:space="preserve"><value>Skip to content</value></data>
   <data name="Tagline" xml:space="preserve"><value>Peace of mind about your finances</value></data>
   <data name="MainNavigation" xml:space="preserve"><value>Main navigation</value></data>
+  <data name="NavigationOverviews" xml:space="preserve"><value>Overviews</value></data>
+  <data name="NavigationPlanning" xml:space="preserve"><value>Planning</value></data>
+  <data name="NavigationAdministration" xml:space="preserve"><value>Administration</value></data>
   <data name="LocalPrivate" xml:space="preserve"><value>Local · EUR · private</value></data>
   <data name="NoBankConnection" xml:space="preserve"><value>No bank connection</value></data>
   <data name="HouseholdFilterNote" xml:space="preserve"><value>Whole household · shared accounts are counted once.</value></data>
@@ -27,21 +30,62 @@
   <data name="BackupAdministration" xml:space="preserve"><value>Backup &amp; administration</value></data>
   <data name="MonthlyOverview" xml:space="preserve"><value>Monthly overview</value></data>
   <data name="StartDashboard" xml:space="preserve"><value>Dashboard</value></data>
-  <data name="DashboardIntro" xml:space="preserve"><value>Your balances, spending and the week ahead.</value></data>
+  <data name="DashboardIntro" xml:space="preserve"><value>What you have, what’s going out, and what needs your attention.</value></data>
+  <data name="DashboardHeadline" xml:space="preserve"><value>Your money. Made clear.</value></data>
+  <data name="DashboardAboutFigures" xml:space="preserve"><value>About these monthly figures</value></data>
+  <data name="DashboardNextStep" xml:space="preserve"><value>Your next step</value></data>
+  <data name="DashboardOtherChecks" xml:space="preserve"><value>{0} more item(s) to review</value></data>
+  <data name="DashboardWeekAhead" xml:space="preserve"><value>From today</value></data>
+  <data name="DashboardMorePayments" xml:space="preserve"><value>View {0} more payment(s)</value></data>
+  <data name="DashboardPlanningDetails" xml:space="preserve"><value>What does this plan include?</value></data>
+  <data name="DashboardBudgetDetails" xml:space="preserve"><value>About these budgets</value></data>
+  <data name="DashboardLatestEntries" xml:space="preserve"><value>Your latest money movements</value></data>
+  <data name="DashboardActivityDetails" xml:space="preserve"><value>About these entries</value></data>
+  <data name="DashboardUpdateBankTitle" xml:space="preserve"><value>Bring your picture up to date</value></data>
+  <data name="DashboardUpdateBankAction" xml:space="preserve"><value>Update bank data</value></data>
+  <data name="DashboardStaleAccountNote" xml:space="preserve"><value>{0} · bank data through {1}</value></data>
+  <data name="DashboardReviewCashTitle" xml:space="preserve"><value>Review your upcoming cash buffer</value></data>
+  <data name="DashboardViewPlan" xml:space="preserve"><value>View outlook</value></data>
+  <data name="DashboardCategorizeTitle" xml:space="preserve"><value>Give your spending a home</value></data>
+  <data name="DashboardCategorizeAction" xml:space="preserve"><value>Categorize entries</value></data>
+  <data name="DashboardReviewMonthTitle" xml:space="preserve"><value>Review your negative monthly result</value></data>
+  <data name="DashboardReviewMonthNote" xml:space="preserve"><value>{0}: {1} after spending and money set aside; see the breakdown.</value></data>
+  <data name="DashboardReviewBudgetsTitle" xml:space="preserve"><value>A budget needs your attention</value></data>
+  <data name="DashboardOverBudgetCount" xml:space="preserve"><value>{0} spending category/categories over budget for the selected month.</value></data>
+  <data name="DashboardStartTitle" xml:space="preserve"><value>Your clearer picture starts here</value></data>
+  <data name="DashboardStartNote" xml:space="preserve"><value>Add your first account and bring your money into focus.</value></data>
+  <data name="DashboardChooseScopeTitle" xml:space="preserve"><value>Choose the accounts you want to follow</value></data>
+  <data name="DashboardLookAheadTitle" xml:space="preserve"><value>See what’s around the corner</value></data>
+  <data name="DashboardLookAheadNote" xml:space="preserve"><value>Look beyond this week at planned payments, projected balances and your cash buffer.</value></data>
+  <data name="DashboardToday" xml:space="preserve"><value>Today</value></data>
+  <data name="DashboardAdjustAccounts" xml:space="preserve"><value>Customize</value></data>
+  <data name="DashboardAboutBalances" xml:space="preserve"><value>About these balances</value></data>
+  <data name="DashboardSpendingEyebrow" xml:space="preserve"><value>The selected month</value></data>
+  <data name="DashboardViewTrends" xml:space="preserve"><value>View trends</value></data>
+  <data name="DashboardPositiveSpending" xml:space="preserve"><value>across spending categories</value></data>
+  <data name="DashboardSpendingRecoveryNote" xml:space="preserve"><value>Some categories are negative due to refunds or reimbursements. They are excluded from these bars and their total, but included in your monthly result.</value></data>
+  <data name="DashboardSpendingDetails" xml:space="preserve"><value>About this breakdown</value></data>
+  <data name="DashboardCategoryBarsNote" xml:space="preserve"><value>The four largest positive category amounts for the selected month; smaller categories are grouped together. Percentages use the total of all positive category amounts. The monthly overview includes every amount, including negative categories.</value></data>
+  <data name="DashboardEyebrow" xml:space="preserve"><value>Your money, in focus</value></data>
+  <data name="DashboardMonthlySnapshot" xml:space="preserve"><value>Monthly snapshot</value></data>
+  <data name="DashboardSpendingEmptyTitle" xml:space="preserve"><value>Bring your spending into focus</value></data>
+  <data name="DashboardExplore" xml:space="preserve"><value>Explore your finances</value></data>
+  <data name="DashboardTrendsHint" xml:space="preserve"><value>See how your spending is evolving.</value></data>
+  <data name="DashboardInsightsHint" xml:space="preserve"><value>Get to know your financial patterns.</value></data>
   <data name="DashboardYourAccounts" xml:space="preserve"><value>Your accounts</value></data>
   <data name="DashboardBalancesToday" xml:space="preserve"><value>Recorded balances as of {0} · not a live bank connection.</value></data>
   <data name="DashboardChooseAccounts" xml:space="preserve"><value>Choose accounts</value></data>
   <data name="DashboardDefaultAccounts" xml:space="preserve"><value>Show current accounts (default)</value></data>
-  <data name="DashboardAccountPreferenceNote" xml:space="preserve"><value>Remembered in this browser. Only these account cards change; reports still follow the owner and month filters.</value></data>
+  <data name="DashboardAccountPreferenceNote" xml:space="preserve"><value>Remembered in this browser. Only these visible account balances change; reports still follow the owner and month filters.</value></data>
   <data name="DashboardPreferenceSessionOnly" xml:space="preserve"><value>Browser storage is unavailable. Your account selection lasts only for this session; reports are unchanged.</value></data>
   <data name="DashboardNoAccounts" xml:space="preserve"><value>No accounts open today within this owner filter. Add an account or change the filter.</value></data>
-  <data name="DashboardNoSelectedAccounts" xml:space="preserve"><value>No account cards selected within this owner filter. Use Choose accounts or restore the default.</value></data>
+  <data name="DashboardNoSelectedAccounts" xml:space="preserve"><value>No account balances selected within this owner filter. Use Customize or restore the default.</value></data>
   <data name="DashboardLoadingAccounts" xml:space="preserve"><value>Loading your account selection…</value></data>
   <data name="DashboardRecordedValue" xml:space="preserve"><value>Recorded account value</value></data>
   <data name="DashboardRecordedBalance" xml:space="preserve"><value>Recorded balance</value></data>
   <data name="DashboardRecentImport" xml:space="preserve"><value>Recent bank data</value></data>
   <data name="DashboardImportedThrough" xml:space="preserve"><value>Bank data through {0}</value></data>
-  <data name="DashboardMonthlyNote" xml:space="preserve"><value>Actual amounts for the selected month, up to today. Account cards above always show today's balances.</value></data>
+  <data name="DashboardMonthlyNote" xml:space="preserve"><value>Actual amounts for the selected month, up to today. Account balances always use today, regardless of the month selected.</value></data>
   <data name="DashboardFullMonth" xml:space="preserve"><value>Full monthly overview</value></data>
   <data name="DashboardBudgetWatch" xml:space="preserve"><value>Budget watch</value></data>
   <data name="DashboardLargestCategoriesNote" xml:space="preserve"><value>The five largest spending categories; smaller categories are grouped together. See the full monthly overview for all amounts.</value></data>
