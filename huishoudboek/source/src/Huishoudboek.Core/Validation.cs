@@ -30,6 +30,9 @@ public static class Validation
         Unique(data.Rules.Select(x => x.Id), "regels");
         Unique(data.AccountReviews.Select(x => x.Id), "rekeningcontroles");
         Unique(data.AccountStatementPeriods.Select(x => x.Id), "rekeningperioden");
+        Unique(data.PurchaseReceipts.Select(x => x.Id), "aankoopbonnen");
+        Unique(data.PurchaseReceiptItems.Select(x => x.Id), "bonregels");
+        PurchaseReceipts.Validate(data);
         var owners = data.Owners.Select(o => o.Id).ToHashSet();
         var accounts = data.Accounts.Select(a => a.Id).ToHashSet();
         var categories = data.Categories.Select(c => c.Id).ToHashSet();

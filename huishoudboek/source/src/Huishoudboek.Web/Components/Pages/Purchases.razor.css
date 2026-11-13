@@ -1,0 +1,23 @@
+.receipt-workspace { display: grid; grid-template-columns: minmax(210px, .75fr) minmax(0, 1.65fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+.receipt-source { min-width: 0; padding: 1rem; border-radius: 12px; background: var(--surface-alt, #f3f6f2); }
+.receipt-source label, .receipt-fields label, .receipt-item-grid label { display: grid; gap: .3rem; }
+.receipt-source .check { display: flex; margin-top: 1rem; }
+.receipt-source input[type=file], .receipt-source textarea, .receipt-fields select { width: 100%; max-width: 100%; }
+.receipt-preview { display: block; width: 100%; max-height: 550px; object-fit: contain; margin: .75rem 0; }
+.receipt-fields { min-width: 0; }
+.receipt-fields details { margin: 1rem 0; }
+.receipt-reconciliation { display: grid; gap: .35rem; }
+.receipt-line { padding: 1rem 0; border-top: 1px solid var(--border, #dce5df); }
+.receipt-item-grid { display: grid; grid-template-columns: minmax(140px, 2fr) repeat(4, minmax(65px, .7fr)) minmax(120px, 1.2fr); gap: .65rem; align-items: end; }
+.receipt-item-grid input, .receipt-item-grid select { width: 100%; min-width: 0; }
+.receipt-line details { margin-top: .75rem; }
+.receipt-original { white-space: pre-wrap; overflow-wrap: anywhere; }
+.receipt-line-actions { justify-content: flex-end; margin-top: .5rem; }
+.receipt-save { margin-top: 1rem; }
+.purchase-summary { padding: 1rem 0; border-bottom: 1px solid var(--border, #dce5df); }
+.purchase-summary summary { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; cursor: pointer; }
+.purchase-summary summary::before { content: '▸'; }
+.purchase-summary[open] summary::before { content: '▾'; }
+.purchase-summary ul { padding-left: 1.25rem; overflow-wrap: anywhere; }
+@media (max-width: 1100px) { .receipt-item-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } .receipt-item-name { grid-column: span 2; } }
+@media (max-width: 700px) { .receipt-workspace { grid-template-columns: minmax(0, 1fr); } .receipt-item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .receipt-item-name { grid-column: 1 / -1; } .receipt-line-actions { justify-content: flex-start; } }

@@ -76,6 +76,32 @@ public sealed class AdministrationCoordinator : IDisposable
         candidate.Rules = data.Rules; candidate.Mortgage = data.Mortgage;
     });
 
+    public AdministrationSnapshot SaveReceipt(string revision, PurchaseReceipt receipt, IReadOnlyList<PurchaseReceiptItem> items,
+        bool keepDocument, ReceiptDocument? document)
+    {
+        lock (_gate)
+        {
+            CheckRevision(revision);
+            var candidate = Clone(_data);
+            var stored = candidate.PurchaseReceipts.FirstOrDefault(r => r.Id == receipt.Id);
+            receipt = receipt with { DocumentName = keepDocument ? document?.Name ?? stored?.DocumentName ?? "" : "",
+                DocumentContentType = keepDocument ? document?.ContentType ?? stored?.DocumentContentType ?? "" : "" };
+            if (keepDocument && receipt.DocumentName.Length == 0) throw new InvalidOperationException("Upload eerst een bonbestand of zet Bonbestand bewaren uit.");
+            PurchaseReceipts.Save(candidate, receipt, items);
+            Validation.Validate(candidate);
+            var isolated = Clone(candidate);
+            _store.Save(isolated, keepDocument ? document : null);
+            _data = isolated;
+            _revision = NewRevision();
+            return new(_revision, Clone(_data));
+        }
+    }
+
+    public ReceiptDocument? ReceiptDocument(Guid id)
+    {
+        lock (_gate) return _data.PurchaseReceipts.Any(r => r.Id == id && r.DocumentName.Length > 0) ? _store.ReadReceiptDocument(id) : null;
+    }
+
     private void CheckRevision(string? expected)
     {
         if (string.IsNullOrWhiteSpace(expected)) throw new MissingRevisionException();
@@ -84,11 +110,24 @@ public sealed class AdministrationCoordinator : IDisposable
 
     public byte[] Backup()
     {
+        using var source = OpenBackup();
+        using var result = new MemoryStream();
+        source.CopyTo(result);
+        return result.ToArray();
+    }
+
+    public Stream OpenBackup()
+    {
         lock (_gate)
         {
             var path = Path.Combine(DirectoryPath, $"download-{Guid.NewGuid():N}.db");
-            try { _store.Backup(path); return File.ReadAllBytes(path); }
-            finally { File.Delete(path); }
+            try
+            {
+                _store.Backup(path);
+                return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete, 81920,
+                    FileOptions.Asynchronous | FileOptions.DeleteOnClose);
+            }
+            catch { File.Delete(path); throw; }
         }
     }
 
@@ -102,7 +141,7 @@ public sealed class AdministrationCoordinator : IDisposable
             var revision = NewRevision();
             var safety = Path.Combine(DirectoryPath, $"voor-herstel-{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.db");
             _store.Backup(safety);
-            _store.Save(restored);
+            _store.Restore(uploadPath);
             _data = restored;
             _revision = revision;
             return _revision;

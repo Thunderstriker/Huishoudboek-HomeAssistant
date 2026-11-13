@@ -60,8 +60,8 @@
         if (restoreFile == null) return;
         if (await State.RunAsync(async () =>
         {
-            if (restoreFile.Size > 64L * 1024 * 1024) throw new InvalidDataException(L["BackupTooLarge"]);
-            await using var stream = restoreFile.OpenReadStream(64L * 1024 * 1024);
+            if (restoreFile.Size > SqliteHouseholdStore.MaximumRestoreBytes) throw new InvalidDataException(L["BackupTooLarge"]);
+            await using var stream = restoreFile.OpenReadStream(SqliteHouseholdStore.MaximumRestoreBytes);
             await Backend.RestoreAsync(stream, restoreRevision, CancellationToken.None);
             State.OwnerId = null; State.ReviewBatchId = null; await State.LoadAsync();
         }, L["DatabaseImported"]))

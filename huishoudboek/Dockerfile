@@ -17,6 +17,9 @@ RUN case "$TARGETARCH" in \
     -p:DebugType=None -p:DebugSymbols=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tesseract-ocr tesseract-ocr-nld tesseract-ocr-eng poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
 LABEL io.hass.name="Huishoudboek" \
       io.hass.description="Lokaal huishoudboek met volledige webinterface" \
       io.hass.version="0.2.0" \

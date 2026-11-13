@@ -30,7 +30,7 @@ public static class ServiceApplication
         if (config != null) builder.Configuration.AddJsonFile(Path.GetFullPath(config), optional: false, reloadOnChange: false);
         builder.Services.AddWindowsService(o => o.ServiceName = "Huishoudboek");
         builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
-        builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = 64L * 1024 * 1024);
+        builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = SqliteHouseholdStore.MaximumRestoreBytes);
         var options = builder.Configuration.GetSection("Huishoudboek").Get<ServiceOptions>()
             ?? throw new InvalidOperationException("Stel Huishoudboek:DataDirectory, EditorToken en ReaderToken in.");
         options.Validate();
@@ -48,6 +48,8 @@ public static class ServiceApplication
         builder.Services.AddRazorComponents().AddInteractiveServerComponents();
         WebsiteLanguage.Register(builder.Services);
         builder.Services.AddScoped<IWebAdministration, WebAdministration>();
+        builder.Services.AddSingleton<ReceiptRecognition>();
+        builder.Services.AddScoped<IReceiptAdministration, ReceiptAdministration>();
         builder.Services.AddScoped<WebState>();
         builder.Services.AddScoped<UiPreferences>();
         builder.Services.AddSingleton(_ => new AdministrationCoordinator(options.DataDirectory, initialize, claim, allowUpgrade: homeAssistant.Enabled));
@@ -93,7 +95,7 @@ public static class ServiceApplication
             context.Response.Headers["Referrer-Policy"] = "no-referrer";
             context.Response.Headers.ContentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors " +
                 (homeAssistant.Enabled || website.PreviewEnabled && context.GetEndpoint()?.Metadata.GetMetadata<DashboardCards.FrameEndpoint>() != null
-                    ? "'self'" : "'none'") + "; base-uri 'self'; form-action 'self'; object-src 'none'";
+                    ? "'self'" : "'none'") + "; img-src 'self' blob:; base-uri 'self'; form-action 'self'; object-src 'none'";
             if ((context.Request.Path == "/login" || context.Request.Path == "/logout") && HttpMethods.IsPost(context.Request.Method))
             {
                 if (context.Request.ContentLength > 16 * 1024) { context.Response.StatusCode = 413; return; }
@@ -145,7 +147,11 @@ public static class ServiceApplication
         WebsiteAuthentication.Map(app, website);
         WebsiteLanguage.Map(app);
         DashboardCards.Map(app, homeAssistant, website);
-        app.MapGet("/website/backup", () => Results.File(coordinator.Backup(), "application/octet-stream", $"huishoudboek-backup-{DateTime.Now:yyyyMMdd-HHmmss}.db")).RequireAuthorization();
+        app.MapGet("/website/receipts/{id:guid}/document", (Guid id) =>
+            coordinator.ReceiptDocument(id) is { } document
+                ? Results.File(document.Content, document.ContentType, document.Name)
+                : Results.NotFound()).RequireAuthorization();
+        app.MapGet("/website/backup", () => Results.File(coordinator.OpenBackup(), "application/octet-stream", $"huishoudboek-backup-{DateTime.Now:yyyyMMdd-HHmmss}.db")).RequireAuthorization();
         app.MapGet("/website/export", () =>
         {
             var path = Path.Combine(coordinator.DirectoryPath, $"export-{Guid.NewGuid():N}.csv");
@@ -201,7 +207,7 @@ public static class ServiceApplication
             var snapshot = coordinator.Update(Revision(c), data => HouseholdEdits.UndoImport(data, id));
             return new { revision = snapshot.Revision };
         });
-        edit.MapGet("/backup", () => Results.File(coordinator.Backup(), "application/octet-stream", "huishoudboek-backup.db"));
+        edit.MapGet("/backup", () => Results.File(coordinator.OpenBackup(), "application/octet-stream", "huishoudboek-backup.db"));
         edit.MapPost("/restore", async (HttpContext c) =>
         {
             var path = Path.Combine(coordinator.DirectoryPath, $"restore-{Guid.NewGuid():N}.db");

@@ -336,7 +336,7 @@
   <data name="ImportRestoreDatabase" xml:space="preserve"><value>Import existing database / restore backup</value></data>
   <data name="DatabasePreservesNote" xml:space="preserve"><value>Import your existing Huishoudboek database or database backup (.db). Transactions, custom descriptions, accounts, owners, budgets, rules, recurring payments, valuations, mortgage and import history are preserved. Your source file is not changed.</value></data>
   <data name="HomeAssistantStorageNote" xml:space="preserve"><value>After importing, your records run entirely in persistent Home Assistant storage. No Windows computer with the financial app or shared network folder is needed.</value></data>
-  <data name="DatabaseRestoreWarning" xml:space="preserve"><value>Prefer a backup from the app. Otherwise close both the Windows app and financial service before copying the database: copying only an active .db may miss recent changes. Import replaces all records for ALL users. File format, supported version, SQLite integrity and financial references are checked first; then a safety copy of the current records is made. The file is uploaded only after explicit confirmation. Maximum 64 MB.</value></data>
+  <data name="DatabaseRestoreWarning" xml:space="preserve"><value>Prefer a backup from the app. Otherwise close both the Windows app and financial service before copying the database: copying only an active .db may miss recent changes. Import replaces all records for ALL users, including purchases and retained receipt files. File format, supported version, SQLite integrity and references are checked first; then a safety copy of the current records is made. The file is uploaded only after explicit confirmation. Maximum 256 MB.</value></data>
   <data name="DatabaseFile" xml:space="preserve"><value>Huishoudboek database or backup (.db)</value></data>
   <data name="ImportHistory" xml:space="preserve"><value>Import history</value></data>
   <data name="File" xml:space="preserve"><value>File</value></data>
@@ -358,7 +358,7 @@
   <data name="DeleteRuleQuestion" xml:space="preserve"><value>Delete this rule? Existing category assignments are preserved.</value></data>
   <data name="ApplyRules" xml:space="preserve"><value>Apply rules</value></data>
   <data name="ApplyRulesQuestion" xml:space="preserve"><value>Apply rules to all existing uncategorized, non-internal payments? Existing categories are preserved; recognised recurring payments may be matched.</value></data>
-  <data name="BackupTooLarge" xml:space="preserve"><value>The backup exceeds 64 MB.</value></data>
+  <data name="BackupTooLarge" xml:space="preserve"><value>The backup exceeds 256 MB.</value></data>
   <data name="DatabaseImported" xml:space="preserve"><value>Database imported. A safety copy of the previous records was saved. Your source file was not changed.</value></data>
   <data name="WhereMoneyGoes" xml:space="preserve"><value>Where does the money go?</value></data>
   <data name="NoMonthlySpending" xml:space="preserve"><value>No spending this month yet.</value></data>
@@ -1043,4 +1043,106 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="FreedomIncomeNeeded" xml:space="preserve"><value>No ordinary income</value></data>
   <data name="FreedomSpendingNeeded" xml:space="preserve"><value>No ordinary spending</value></data>
   <data name="FreedomNoIncomeHelp" xml:space="preserve"><value>No positive ordinary monthly income is available from confirmed history and active recurring payments. The committed-income percentage cannot be calculated yet.</value></data>
+  <data name="PurchasesTitle" xml:space="preserve"><value>Purchases &amp; warranties</value></data>
+  <data name="PurchasesHelp" xml:space="preserve"><value>Read a receipt item by item, review the amounts and keep purchase details. Keeping the original file is optional.</value></data>
+  <data name="PurchaseNew" xml:space="preserve"><value>Add receipt</value></data>
+  <data name="PurchaseReview" xml:space="preserve"><value>Review receipt and products</value></data>
+  <data name="PurchaseNoAccounting" xml:space="preserve"><value>These are purchase details, not new bank entries. Balances, budgets and existing transactions do not change. Applying category splits will follow later.</value></data>
+  <data name="PurchaseStaleDraft" xml:space="preserve"><value>The administration has changed. This draft cannot overwrite newer data. Copy any corrections and reopen the receipt.</value></data>
+  <data name="PurchaseUpload" xml:space="preserve"><value>Receipt photo or PDF</value></data>
+  <data name="PurchaseUploadHelp" xml:space="preserve"><value>JPEG, PNG or PDF; up to 8 MB, 30 megapixels and five PDF pages. Local recognition, no cloud. The temporary upload expires after 15 minutes.</value></data>
+  <data name="PurchaseRecognizing" xml:space="preserve"><value>Reading receipt locally… This may take up to 90 seconds. Leave the page to stop processing.</value></data>
+  <data name="PurchaseRecognitionRecognized" xml:space="preserve"><value>Text recognised. Shop, date, items and amounts are suggestions: always review them.</value></data>
+  <data name="PurchaseRecognitionNoText" xml:space="preserve"><value>No text found. Enter the items manually or paste receipt text.</value></data>
+  <data name="PurchaseRecognitionUnavailable" xml:space="preserve"><value>Local recognition is unavailable here. The Home Assistant container includes Tesseract and Poppler; install them separately for a local computer preview. Manual entry remains available.</value></data>
+  <data name="PurchaseRecognitionFailed" xml:space="preserve"><value>This document could not be read locally. Try a clearer photo or enter the details manually.</value></data>
+  <data name="PurchaseRecognitionTimedOut" xml:space="preserve"><value>Recognition took too long and was stopped. Try a smaller document or enter the details manually.</value></data>
+  <data name="PurchaseRecognitionBusy" xml:space="preserve"><value>Local recognition is busy. Try again later or enter the details manually.</value></data>
+  <data name="PurchasePreviewAlt" xml:space="preserve"><value>Temporary preview of the uploaded receipt</value></data>
+  <data name="PurchaseOpenUpload" xml:space="preserve"><value>Download temporary original</value></data>
+  <data name="PurchaseDownload" xml:space="preserve"><value>Download receipt file</value></data>
+  <data name="PurchaseKeepDocument" xml:space="preserve"><value>Keep receipt file</value></data>
+  <data name="PurchaseKeepHelp" xml:space="preserve"><value>The original is kept with the receipt in the private database and included in full database backups. Useful for electronics and warranties.</value></data>
+  <data name="PurchaseDiscardHelp" xml:space="preserve"><value>Only the entered purchase details and item rows are retained. The upload and preview are released after saving or cancelling; no image or PDF in the database. Useful for groceries.</value></data>
+  <data name="PurchaseRemoveDocumentWarning" xml:space="preserve"><value>Saving will remove the existing attachment from the active administration. Older backups may still contain it.</value></data>
+  <data name="PurchaseSourceText" xml:space="preserve"><value>View or paste receipt text</value></data>
+  <data name="PurchaseSourceTextHelp" xml:space="preserve"><value>For example, paste text from a digital invoice. Re-reading replaces current items after confirmation. The complete text is not stored separately; original item lines are retained.</value></data>
+  <data name="PurchaseParseText" xml:space="preserve"><value>Read items from text</value></data>
+  <data name="PurchaseMerchant" xml:space="preserve"><value>Shop / supplier</value></data>
+  <data name="PurchaseDate" xml:space="preserve"><value>Purchase date</value></data>
+  <data name="PurchaseInvoice" xml:space="preserve"><value>Receipt or invoice number</value></data>
+  <data name="PurchaseTotal" xml:space="preserve"><value>Receipt total (EUR)</value></data>
+  <data name="PurchaseNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="PurchaseNoAccount" xml:space="preserve"><value>No account yet — whole household only</value></data>
+  <data name="PurchaseBankLink" xml:space="preserve"><value>Link bank transaction (optional)</value></data>
+  <data name="PurchaseBankLinkHelp" xml:space="preserve"><value>Suggestions have the same total and a bank date within seven days. You confirm each link. Search bank text or date; up to 80 entries are shown.</value></data>
+  <data name="PurchaseNoTransaction" xml:space="preserve"><value>No bank transaction yet</value></data>
+  <data name="PurchaseLinkSuggestion" xml:space="preserve"><value>Link suggestion</value></data>
+  <data name="PurchaseBankMismatch" xml:space="preserve"><value>Bank amount {0} differs from receipt total {1}. Check for vouchers or mixed payments. Linking does not change either amount.</value></data>
+  <data name="PurchaseItemTotal" xml:space="preserve"><value>Items and adjustments</value></data>
+  <data name="PurchaseDifference" xml:space="preserve"><value>Difference</value></data>
+  <data name="PurchaseReconciled" xml:space="preserve"><value>Every item has a name and amount, and the total matches. Review the content as well.</value></data>
+  <data name="PurchaseNeedsReview" xml:space="preserve"><value>Review required. Missing amounts or differences are never filled automatically. You can save a draft as long as entered fields are valid.</value></data>
+  <data name="PurchaseItems" xml:space="preserve"><value>Receipt items</value></data>
+  <data name="PurchaseAddItem" xml:space="preserve"><value>Add item</value></data>
+  <data name="PurchaseCategoriesHelp" xml:space="preserve"><value>Categories currently apply only to these receipt items. They do not change bank categorisation or budgets. Gift chocolates can have a different category from ordinary groceries.</value></data>
+  <data name="PurchaseItemName" xml:space="preserve"><value>Product / description</value></data>
+  <data name="PurchaseQuantity" xml:space="preserve"><value>Quantity / weight</value></data>
+  <data name="PurchaseUnit" xml:space="preserve"><value>Unit</value></data>
+  <data name="PurchaseUnitPrice" xml:space="preserve"><value>Unit price</value></data>
+  <data name="PurchaseLineAmount" xml:space="preserve"><value>Line amount</value></data>
+  <data name="PurchaseInheritCategory" xml:space="preserve"><value>Category of linked product</value></data>
+  <data name="PurchaseItemDetails" xml:space="preserve"><value>Line type, discount, returns &amp; warranty</value></data>
+  <data name="PurchaseOriginalText" xml:space="preserve"><value>Originally recognised line</value></data>
+  <data name="PurchaseLineKind" xml:space="preserve"><value>Line type</value></data>
+  <data name="PurchaseKindProduct" xml:space="preserve"><value>Product</value></data>
+  <data name="PurchaseKindDiscount" xml:space="preserve"><value>Discount (negative amount)</value></data>
+  <data name="PurchaseKindDeposit" xml:space="preserve"><value>Deposit / returnable packaging</value></data>
+  <data name="PurchaseKindAdjustment" xml:space="preserve"><value>Other adjustment</value></data>
+  <data name="PurchaseDiscountFor" xml:space="preserve"><value>Discount for</value></data>
+  <data name="PurchaseWholeReceiptDiscount" xml:space="preserve"><value>Whole receipt / not assigned yet</value></data>
+  <data name="PurchaseModel" xml:space="preserve"><value>Brand / model</value></data>
+  <data name="PurchaseSerial" xml:space="preserve"><value>Serial number</value></data>
+  <data name="PurchaseLocation" xml:space="preserve"><value>Location at home</value></data>
+  <data name="PurchaseReturnBy" xml:space="preserve"><value>Return by</value></data>
+  <data name="PurchaseWarrantyUntil" xml:space="preserve"><value>Recorded warranty end date</value></data>
+  <data name="PurchaseStatusKept" xml:space="preserve"><value>Kept</value></data>
+  <data name="PurchaseStatusReturned" xml:space="preserve"><value>Returned</value></data>
+  <data name="PurchaseStatusRefundExpected" xml:space="preserve"><value>Refund expected</value></data>
+  <data name="PurchaseStatusRefunded" xml:space="preserve"><value>Refunded</value></data>
+  <data name="PurchaseRefundExpectation" xml:space="preserve"><value>Existing reimbursement expectation</value></data>
+  <data name="PurchaseNoExpectation" xml:space="preserve"><value>Not linked</value></data>
+  <data name="PurchaseDatesHelp" xml:space="preserve"><value>Enter return and warranty dates yourself using the purchase terms. This does not automatically determine your legal rights. A status or link does not book a refund.</value></data>
+  <data name="PurchaseMoveUp" xml:space="preserve"><value>Move item up</value></data>
+  <data name="PurchaseMoveDown" xml:space="preserve"><value>Move item down</value></data>
+  <data name="PurchaseMerge" xml:space="preserve"><value>Merge with previous item</value></data>
+  <data name="PurchaseMergeUnsafe" xml:space="preserve"><value>Only merge items of the same type and category, without product links, warranty or return details. Adjust these manually first.</value></data>
+  <data name="PurchaseMergeTooLong" xml:space="preserve"><value>The merged description is too long. Shorten it first.</value></data>
+  <data name="PurchaseNoItems" xml:space="preserve"><value>No items yet. Read a document, paste text or add items manually.</value></data>
+  <data name="PurchaseCategoryPreview" xml:space="preserve"><value>Provisional category breakdown</value></data>
+  <data name="PurchaseConfirmReview" xml:space="preserve"><value>I have checked the shop, date, items and matching receipt total</value></data>
+  <data name="PurchaseSaveReviewed" xml:space="preserve"><value>Save reviewed receipt</value></data>
+  <data name="PurchaseSaveDraft" xml:space="preserve"><value>Save receipt as draft</value></data>
+  <data name="PurchaseSavedMessage" xml:space="preserve"><value>Purchase details saved. Bank entries and budgets are unchanged.</value></data>
+  <data name="PurchaseReplaceTitle" xml:space="preserve"><value>Replace current receipt items?</value></data>
+  <data name="PurchaseReplaceText" xml:space="preserve"><value>Re-reading replaces the shop, purchase date, total, invoice number and all current items, including corrections, categories and warranty details. Account, bank link and notes are retained.</value></data>
+  <data name="PurchaseDelete" xml:space="preserve"><value>Delete receipt</value></data>
+  <data name="PurchaseDeleteHelp" xml:space="preserve"><value>Remove these purchase details, items and any attachment from the active administration? Bank entries and reimbursement expectations remain unchanged. Older backups are not changed.</value></data>
+  <data name="PurchaseDeleted" xml:space="preserve"><value>Purchase details deleted; bank entries are unchanged.</value></data>
+  <data name="PurchaseDeadlines" xml:space="preserve"><value>Returns &amp; warranties within 30 days</value></data>
+  <data name="PurchaseDeadlinesHelp" xml:space="preserve"><value>Based on dates you recorded, for products still kept. No automatic notifications outside this page.</value></data>
+  <data name="PurchaseSaved" xml:space="preserve"><value>Saved purchase details</value></data>
+  <data name="PurchaseSearchHint" xml:space="preserve"><value>Shop, product, category, invoice number, model or serial number</value></data>
+  <data name="PurchasePeriodHelp" xml:space="preserve"><value>All purchase dates, independent of the month selection. The owner filter follows the account. Receipts without an account appear only for the whole household. Filters are not access controls.</value></data>
+  <data name="PurchaseUnnamed" xml:space="preserve"><value>Shop not known yet</value></data>
+  <data name="PurchaseReviewed" xml:space="preserve"><value>Reviewed</value></data>
+  <data name="PurchaseDraft" xml:space="preserve"><value>Draft</value></data>
+  <data name="PurchaseDocumentStored" xml:space="preserve"><value>With receipt file</value></data>
+  <data name="PurchaseDataOnly" xml:space="preserve"><value>Details only</value></data>
+  <data name="PurchaseEmpty" xml:space="preserve"><value>No purchases for this selection. Add a receipt to get started.</value></data>
+  <data name="PurchaseTooLarge" xml:space="preserve"><value>Choose a receipt file up to 8 MB.</value></data>
+  <data name="PurchaseLeaveWarning" xml:space="preserve"><value>This receipt may have unsaved changes. Leave this page and release the temporary upload?</value></data>
+  <data name="PurchaseViewForTransaction" xml:space="preserve"><value>View receipts</value></data>
+  <data name="PurchaseViewAll" xml:space="preserve"><value>View all purchase details</value></data>
+  <data name="PurchaseFinishEditing" xml:space="preserve"><value>Save or cancel this receipt before changing the owner filter. The previous filter has been restored; your entries are retained.</value></data>
 </root>

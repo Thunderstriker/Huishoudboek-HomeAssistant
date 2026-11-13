@@ -210,6 +210,8 @@ public sealed class HouseholdData
     public List<InvestmentValuation> Valuations { get; set; } = [];
     public List<ImportBatch> ImportBatches { get; set; } = [];
     public List<AccountStatementPeriod> AccountStatementPeriods { get; set; } = [];
+    public List<PurchaseReceipt> PurchaseReceipts { get; set; } = [];
+    public List<PurchaseReceiptItem> PurchaseReceiptItems { get; set; } = [];
     public List<ImportProfile> ImportProfiles { get; set; } = [];
     public List<AccountReview> AccountReviews { get; set; } = [];
     public Mortgage? Mortgage { get; set; }

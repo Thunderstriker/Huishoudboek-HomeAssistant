@@ -336,7 +336,7 @@
   <data name="ImportRestoreDatabase" xml:space="preserve"><value>Bestaande database importeren / back-up herstellen</value></data>
   <data name="DatabasePreservesNote" xml:space="preserve"><value>Importeer uw bestaande Huishoudboek-database of databaseback-up (.db). Transacties, eigen omschrijvingen, rekeningen, eigenaren, budgetten, regels, vaste posten, waarderingen, hypotheek en importgeschiedenis blijven behouden. Uw bronbestand wordt niet gewijzigd.</value></data>
   <data name="HomeAssistantStorageNote" xml:space="preserve"><value>Na import draait de administratie volledig in de permanente Home Assistant-opslag. Een Windows-computer met de financiële app of een gedeelde netwerkmap is niet nodig.</value></data>
-  <data name="DatabaseRestoreWarning" xml:space="preserve"><value>Gebruik bij voorkeur een back-up uit de app. Sluit anders de Windows-app én financiële service voordat u de database kopieert: een kopie van alleen een actieve .db kan recente wijzigingen missen. Import vervangt de hele administratie voor ALLE gebruikers. Eerst worden bestandsformaat, ondersteunde versie, SQLite-integriteit en financiële verwijzingen gecontroleerd; daarna wordt een veiligheidskopie van de huidige administratie gemaakt. Het bestand wordt pas na expliciete bevestiging geüpload. Maximaal 64 MB.</value></data>
+  <data name="DatabaseRestoreWarning" xml:space="preserve"><value>Gebruik bij voorkeur een back-up uit de app. Sluit anders de Windows-app én financiële service voordat u de database kopieert: een kopie van alleen een actieve .db kan recente wijzigingen missen. Import vervangt de hele administratie voor ALLE gebruikers, inclusief aankoopgegevens en bewaarde bonbestanden. Eerst worden bestandsformaat, ondersteunde versie, SQLite-integriteit en verwijzingen gecontroleerd; daarna wordt een veiligheidskopie van de huidige administratie gemaakt. Het bestand wordt pas na expliciete bevestiging geüpload. Maximaal 256 MB.</value></data>
   <data name="DatabaseFile" xml:space="preserve"><value>Huishoudboek-database of back-up (.db)</value></data>
   <data name="ImportHistory" xml:space="preserve"><value>Importgeschiedenis</value></data>
   <data name="File" xml:space="preserve"><value>Bestand</value></data>
@@ -358,7 +358,7 @@
   <data name="DeleteRuleQuestion" xml:space="preserve"><value>Deze regel verwijderen? Bestaande categorie-toewijzingen blijven behouden.</value></data>
   <data name="ApplyRules" xml:space="preserve"><value>Regels toepassen</value></data>
   <data name="ApplyRulesQuestion" xml:space="preserve"><value>Regels toepassen op alle bestaande ongecategoriseerde, niet-interne betalingen? Bestaande categorieën blijven behouden; herkende vaste posten kunnen worden gekoppeld.</value></data>
-  <data name="BackupTooLarge" xml:space="preserve"><value>De back-up is groter dan 64 MB.</value></data>
+  <data name="BackupTooLarge" xml:space="preserve"><value>De back-up is groter dan 256 MB.</value></data>
   <data name="DatabaseImported" xml:space="preserve"><value>Database geïmporteerd. De vorige administratie is als veiligheidskopie bewaard. Uw bronbestand is niet gewijzigd.</value></data>
   <data name="WhereMoneyGoes" xml:space="preserve"><value>Waar gaat het geld naartoe?</value></data>
   <data name="NoMonthlySpending" xml:space="preserve"><value>Nog geen uitgaven in deze maand.</value></data>
@@ -1043,4 +1043,106 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="FreedomIncomeNeeded" xml:space="preserve"><value>Geen gewoon inkomen</value></data>
   <data name="FreedomSpendingNeeded" xml:space="preserve"><value>Geen gewone uitgaven</value></data>
   <data name="FreedomNoIncomeHelp" xml:space="preserve"><value>Er is geen positief gewoon maandinkomen in de bevestigde historie en actieve vaste posten. Daarom kan het vastgelegde inkomenspercentage nog niet worden berekend.</value></data>
+  <data name="PurchasesTitle" xml:space="preserve"><value>Aankopen &amp; garanties</value></data>
+  <data name="PurchasesHelp" xml:space="preserve"><value>Lees een bon regel voor regel, controleer de bedragen en bewaar aankoopgegevens. Een bonbestand bewaren is optioneel.</value></data>
+  <data name="PurchaseNew" xml:space="preserve"><value>Bon toevoegen</value></data>
+  <data name="PurchaseReview" xml:space="preserve"><value>Bon en producten controleren</value></data>
+  <data name="PurchaseNoAccounting" xml:space="preserve"><value>Dit zijn aankoopgegevens, geen nieuwe boekingen. Saldi, budgetten en bestaande transacties veranderen niet. Categoriesplitsingen toepassen volgt later.</value></data>
+  <data name="PurchaseStaleDraft" xml:space="preserve"><value>De administratie is intussen gewijzigd. Dit concept kan niet over nieuwere gegevens worden opgeslagen. Kopieer eventuele correcties en open de bon opnieuw.</value></data>
+  <data name="PurchaseUpload" xml:space="preserve"><value>Foto of PDF van de bon</value></data>
+  <data name="PurchaseUploadHelp" xml:space="preserve"><value>JPEG, PNG of PDF; maximaal 8 MB, 30 megapixels en vijf PDF-pagina's. Lokale herkenning, zonder cloud. De tijdelijke upload vervalt na 15 minuten.</value></data>
+  <data name="PurchaseRecognizing" xml:space="preserve"><value>Bon lokaal lezen… Dit kan tot anderhalve minuut duren. U kunt de pagina verlaten om te stoppen.</value></data>
+  <data name="PurchaseRecognitionRecognized" xml:space="preserve"><value>Tekst herkend. Winkel, datum, regels en bedragen zijn voorstellen: controleer ze altijd.</value></data>
+  <data name="PurchaseRecognitionNoText" xml:space="preserve"><value>Geen tekst gevonden. Vul de regels handmatig in of plak bontekst.</value></data>
+  <data name="PurchaseRecognitionUnavailable" xml:space="preserve"><value>Lokale tekstherkenning is hier niet beschikbaar. De Home Assistant-container bevat Tesseract en Poppler; installeer deze apart voor een lokale computerpreview. Handmatige invoer blijft mogelijk.</value></data>
+  <data name="PurchaseRecognitionFailed" xml:space="preserve"><value>Dit document kon niet lokaal worden gelezen. Probeer een scherpere foto of vul de gegevens handmatig in.</value></data>
+  <data name="PurchaseRecognitionTimedOut" xml:space="preserve"><value>De herkenning duurde te lang en is gestopt. Probeer een kleiner document of vul de gegevens handmatig in.</value></data>
+  <data name="PurchaseRecognitionBusy" xml:space="preserve"><value>De lokale herkenning is bezet. Probeer later opnieuw of voer de gegevens handmatig in.</value></data>
+  <data name="PurchasePreviewAlt" xml:space="preserve"><value>Tijdelijk voorbeeld van de geüploade bon</value></data>
+  <data name="PurchaseOpenUpload" xml:space="preserve"><value>Tijdelijk origineel downloaden</value></data>
+  <data name="PurchaseDownload" xml:space="preserve"><value>Bonbestand downloaden</value></data>
+  <data name="PurchaseKeepDocument" xml:space="preserve"><value>Bonbestand bewaren</value></data>
+  <data name="PurchaseKeepHelp" xml:space="preserve"><value>Het origineel wordt samen met de bon in de private database bewaard en gaat mee in volledige databaseback-ups. Bijvoorbeeld voor elektronica of garantie.</value></data>
+  <data name="PurchaseDiscardHelp" xml:space="preserve"><value>Alleen de ingevulde aankoopgegevens en productregels blijven bewaard. De upload en het voorbeeld worden na opslaan of annuleren vrijgegeven; geen afbeelding of PDF in de database. Handig voor boodschappen.</value></data>
+  <data name="PurchaseRemoveDocumentWarning" xml:space="preserve"><value>Bij opslaan wordt de bestaande bijlage uit de actieve administratie verwijderd. Oudere back-ups kunnen deze nog bevatten.</value></data>
+  <data name="PurchaseSourceText" xml:space="preserve"><value>Bontekst bekijken of plakken</value></data>
+  <data name="PurchaseSourceTextHelp" xml:space="preserve"><value>Plak bijvoorbeeld tekst uit een digitale factuur. Opnieuw lezen vervangt de huidige productregels na bevestiging. De volledige tekst wordt niet apart bewaard; oorspronkelijke productregels wel.</value></data>
+  <data name="PurchaseParseText" xml:space="preserve"><value>Productregels uit tekst lezen</value></data>
+  <data name="PurchaseMerchant" xml:space="preserve"><value>Winkel / leverancier</value></data>
+  <data name="PurchaseDate" xml:space="preserve"><value>Aankoopdatum</value></data>
+  <data name="PurchaseInvoice" xml:space="preserve"><value>Bon- of factuurnummer</value></data>
+  <data name="PurchaseTotal" xml:space="preserve"><value>Bontotaal (EUR)</value></data>
+  <data name="PurchaseNotes" xml:space="preserve"><value>Notities</value></data>
+  <data name="PurchaseNoAccount" xml:space="preserve"><value>Nog geen rekening — alleen bij heel huishouden</value></data>
+  <data name="PurchaseBankLink" xml:space="preserve"><value>Bankboeking koppelen (optioneel)</value></data>
+  <data name="PurchaseBankLinkHelp" xml:space="preserve"><value>Voorstellen hebben hetzelfde totaal en een bankdatum binnen zeven dagen. U bevestigt de koppeling zelf. Zoek op banktekst of datum; maximaal 80 boekingen zichtbaar.</value></data>
+  <data name="PurchaseNoTransaction" xml:space="preserve"><value>Nog geen bankboeking</value></data>
+  <data name="PurchaseLinkSuggestion" xml:space="preserve"><value>Koppel voorstel</value></data>
+  <data name="PurchaseBankMismatch" xml:space="preserve"><value>Bankbedrag {0} en bontotaal {1} verschillen. Controleer bijvoorbeeld een waardebon of gemengde betaling. De koppeling past geen bedragen aan.</value></data>
+  <data name="PurchaseItemTotal" xml:space="preserve"><value>Regels en correcties samen</value></data>
+  <data name="PurchaseDifference" xml:space="preserve"><value>Verschil</value></data>
+  <data name="PurchaseReconciled" xml:space="preserve"><value>Alle regels hebben een naam en bedrag; het totaal sluit aan. Controleer ook de inhoud.</value></data>
+  <data name="PurchaseNeedsReview" xml:space="preserve"><value>Controle nodig. Ontbrekende bedragen of verschillen worden niet automatisch aangevuld. Opslaan als concept kan altijd als de ingevulde velden geldig zijn.</value></data>
+  <data name="PurchaseItems" xml:space="preserve"><value>Productregels</value></data>
+  <data name="PurchaseAddItem" xml:space="preserve"><value>Regel toevoegen</value></data>
+  <data name="PurchaseCategoriesHelp" xml:space="preserve"><value>Categorieën gelden voorlopig alleen voor deze bonregels. Ze veranderen de bankcategorisatie of budgetten niet. Cadeauchocolade mag bijvoorbeeld een andere categorie hebben dan gewone boodschappen.</value></data>
+  <data name="PurchaseItemName" xml:space="preserve"><value>Product / omschrijving</value></data>
+  <data name="PurchaseQuantity" xml:space="preserve"><value>Aantal / gewicht</value></data>
+  <data name="PurchaseUnit" xml:space="preserve"><value>Eenheid</value></data>
+  <data name="PurchaseUnitPrice" xml:space="preserve"><value>Eenheidsprijs</value></data>
+  <data name="PurchaseLineAmount" xml:space="preserve"><value>Regelbedrag</value></data>
+  <data name="PurchaseInheritCategory" xml:space="preserve"><value>Categorie van gekoppeld product</value></data>
+  <data name="PurchaseItemDetails" xml:space="preserve"><value>Regeltype, korting, retour &amp; garantie</value></data>
+  <data name="PurchaseOriginalText" xml:space="preserve"><value>Oorspronkelijk gelezen regel</value></data>
+  <data name="PurchaseLineKind" xml:space="preserve"><value>Regeltype</value></data>
+  <data name="PurchaseKindProduct" xml:space="preserve"><value>Product</value></data>
+  <data name="PurchaseKindDiscount" xml:space="preserve"><value>Korting (negatief bedrag)</value></data>
+  <data name="PurchaseKindDeposit" xml:space="preserve"><value>Statiegeld / leeggoed</value></data>
+  <data name="PurchaseKindAdjustment" xml:space="preserve"><value>Overige correctie</value></data>
+  <data name="PurchaseDiscountFor" xml:space="preserve"><value>Korting voor</value></data>
+  <data name="PurchaseWholeReceiptDiscount" xml:space="preserve"><value>Hele bon / nog toe te wijzen</value></data>
+  <data name="PurchaseModel" xml:space="preserve"><value>Merk / model</value></data>
+  <data name="PurchaseSerial" xml:space="preserve"><value>Serienummer</value></data>
+  <data name="PurchaseLocation" xml:space="preserve"><value>Locatie in huis</value></data>
+  <data name="PurchaseReturnBy" xml:space="preserve"><value>Retour uiterlijk</value></data>
+  <data name="PurchaseWarrantyUntil" xml:space="preserve"><value>Garantie volgens eigen registratie tot</value></data>
+  <data name="PurchaseStatusKept" xml:space="preserve"><value>In bezit</value></data>
+  <data name="PurchaseStatusReturned" xml:space="preserve"><value>Geretourneerd</value></data>
+  <data name="PurchaseStatusRefundExpected" xml:space="preserve"><value>Terugbetaling verwacht</value></data>
+  <data name="PurchaseStatusRefunded" xml:space="preserve"><value>Terugbetaald</value></data>
+  <data name="PurchaseRefundExpectation" xml:space="preserve"><value>Bestaande vergoedingsverwachting</value></data>
+  <data name="PurchaseNoExpectation" xml:space="preserve"><value>Niet gekoppeld</value></data>
+  <data name="PurchaseDatesHelp" xml:space="preserve"><value>Vul retour- en garantiedatums zelf in volgens de aankoopvoorwaarden. Dit is geen automatische bepaling van wettelijke rechten. Een status of koppeling boekt geen terugbetaling.</value></data>
+  <data name="PurchaseMoveUp" xml:space="preserve"><value>Regel omhoog</value></data>
+  <data name="PurchaseMoveDown" xml:space="preserve"><value>Regel omlaag</value></data>
+  <data name="PurchaseMerge" xml:space="preserve"><value>Met vorige regel samenvoegen</value></data>
+  <data name="PurchaseMergeUnsafe" xml:space="preserve"><value>Voeg alleen regels van hetzelfde type en dezelfde categorie samen, zonder productkoppeling, garantie- of retourgegevens. Pas deze eerst handmatig aan.</value></data>
+  <data name="PurchaseMergeTooLong" xml:space="preserve"><value>De samengevoegde omschrijving is te lang. Kort de tekst eerst in.</value></data>
+  <data name="PurchaseNoItems" xml:space="preserve"><value>Nog geen productregels. Lees een bestand, plak tekst of voeg handmatig regels toe.</value></data>
+  <data name="PurchaseCategoryPreview" xml:space="preserve"><value>Voorlopige verdeling per categorie</value></data>
+  <data name="PurchaseConfirmReview" xml:space="preserve"><value>Ik heb de winkel, datum, productregels en het aansluitende bontotaal gecontroleerd</value></data>
+  <data name="PurchaseSaveReviewed" xml:space="preserve"><value>Gecontroleerde bon opslaan</value></data>
+  <data name="PurchaseSaveDraft" xml:space="preserve"><value>Bon als concept opslaan</value></data>
+  <data name="PurchaseSavedMessage" xml:space="preserve"><value>Aankoopgegevens opgeslagen. Bankboekingen en budgetten zijn ongewijzigd.</value></data>
+  <data name="PurchaseReplaceTitle" xml:space="preserve"><value>Huidige bonregels vervangen?</value></data>
+  <data name="PurchaseReplaceText" xml:space="preserve"><value>Opnieuw lezen vervangt winkel, aankoopdatum, totaal, factuurnummer en alle huidige productregels, inclusief correcties, categorieën en garantiegegevens. Rekening, bankkoppeling en notities blijven staan.</value></data>
+  <data name="PurchaseDelete" xml:space="preserve"><value>Bon verwijderen</value></data>
+  <data name="PurchaseDeleteHelp" xml:space="preserve"><value>Verwijder deze aankoopgegevens, productregels en eventuele bijlage uit de actieve administratie? Bankboekingen en vergoedingsverwachtingen blijven behouden. Oudere back-ups veranderen niet.</value></data>
+  <data name="PurchaseDeleted" xml:space="preserve"><value>Aankoopgegevens verwijderd; bankboekingen zijn ongewijzigd.</value></data>
+  <data name="PurchaseDeadlines" xml:space="preserve"><value>Retour &amp; garantie binnen 30 dagen</value></data>
+  <data name="PurchaseDeadlinesHelp" xml:space="preserve"><value>Volgens de datums die u zelf hebt vastgelegd, voor producten die nog in bezit zijn. Geen automatische melding buiten deze pagina.</value></data>
+  <data name="PurchaseSaved" xml:space="preserve"><value>Bewaarde aankoopgegevens</value></data>
+  <data name="PurchaseSearchHint" xml:space="preserve"><value>Winkel, product, categorie, factuurnummer, model of serienummer</value></data>
+  <data name="PurchasePeriodHelp" xml:space="preserve"><value>Alle aankoopdatums, onafhankelijk van de maandkeuze. Het eigenaarfilter volgt de rekening. Bonnen zonder rekening ziet u alleen bij heel huishouden. Filters zijn geen toegangsrechten.</value></data>
+  <data name="PurchaseUnnamed" xml:space="preserve"><value>Winkel nog onbekend</value></data>
+  <data name="PurchaseReviewed" xml:space="preserve"><value>Gecontroleerd</value></data>
+  <data name="PurchaseDraft" xml:space="preserve"><value>Concept</value></data>
+  <data name="PurchaseDocumentStored" xml:space="preserve"><value>Met bonbestand</value></data>
+  <data name="PurchaseDataOnly" xml:space="preserve"><value>Alleen gegevens</value></data>
+  <data name="PurchaseEmpty" xml:space="preserve"><value>Geen aankoopgegevens voor deze selectie. Voeg een bon toe om te beginnen.</value></data>
+  <data name="PurchaseTooLarge" xml:space="preserve"><value>Kies een bonbestand van maximaal 8 MB.</value></data>
+  <data name="PurchaseLeaveWarning" xml:space="preserve"><value>Deze bon heeft mogelijk niet-opgeslagen wijzigingen. Pagina verlaten en de tijdelijke upload vrijgeven?</value></data>
+  <data name="PurchaseViewForTransaction" xml:space="preserve"><value>Bonnen bekijken</value></data>
+  <data name="PurchaseViewAll" xml:space="preserve"><value>Alle aankoopgegevens bekijken</value></data>
+  <data name="PurchaseFinishEditing" xml:space="preserve"><value>Sla de bon eerst op of annuleer het bewerken voordat u van eigenaarfilter wisselt. Het vorige filter is hersteld; uw invoer blijft staan.</value></data>
 </root>

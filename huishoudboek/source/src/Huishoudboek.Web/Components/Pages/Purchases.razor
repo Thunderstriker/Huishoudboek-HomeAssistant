@@ -1,0 +1,337 @@
+@page "/aankopen"
+@attribute [Authorize]
+@inherits PageBase
+@implements IAsyncDisposable
+@inject IReceiptAdministration Receipts
+@inject IJSRuntime JS
+
+<PageTitle>@L["PurchasesTitle"] · Huishoudboek</PageTitle>
+<h1>@L["PurchasesTitle"]</h1>
+<p class="muted">@L["PurchasesHelp"]</p>
+<div class="actions"><button class="primary" @onclick="NewReceipt" disabled="@(draft != null)">+ @L["PurchaseNew"]</button></div>
+@if (InitialTransaction != null) { <p><a href="aankopen">@L["PurchaseViewAll"]</a></p> }
+
+@if (draft is { } receipt)
+{
+    <NavigationLock ConfirmExternalNavigation="true" OnBeforeInternalNavigation="BeforeNavigate" />
+    <section class="card receipt-editor" aria-labelledby="receipt-editor-title">
+        <div class="page-heading"><h2 id="receipt-editor-title">@L["PurchaseReview"]</h2><button @onclick="CloseDraft">@L["Cancel"]</button></div>
+        <p class="notice">@L["PurchaseNoAccounting"]</p>
+        @if (ownerChangeBlocked) { <p class="notice warning">@L["PurchaseFinishEditing"]</p> }
+        @if (draftRevision != State.Revision) { <p class="notice warning">@L["PurchaseStaleDraft"]</p> }
+        <div class="receipt-workspace">
+            <aside class="receipt-source">
+                <label for="receipt-upload">@L["PurchaseUpload"]</label>
+                <InputFile id="receipt-upload" OnChange="Upload" accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf" />
+                <p class="muted">@L["PurchaseUploadHelp"]</p>
+                @if (State.Busy) { <p role="status">@L["PurchaseRecognizing"]</p> }
+                @if (scan != null)
+                {
+                    <p class="notice @(scan.State == ReceiptRecognitionState.Recognized ? "" : "warning")">@L[$"PurchaseRecognition{scan.State}"]</p>
+                    <p>@scan.FileName</p>
+                    @if (previewUrl != null && scan.ContentType.StartsWith("image/", StringComparison.Ordinal))
+                    { <img class="receipt-preview" src="@previewUrl" alt="@L["PurchasePreviewAlt"]" /> }
+                    @if (previewUrl != null)
+                    { <a href="@previewUrl" download="@scan.FileName">@L["PurchaseOpenUpload"]</a> }
+                }
+                @if (receipt.DocumentName.Length > 0)
+                { <p><a href="@DocumentUrl(receipt.Id)" data-enhance-nav="false">@L["PurchaseDownload"]: @receipt.DocumentName</a></p> }
+                <label class="check"><input id="receipt-keep" type="checkbox" @bind="keepDocument" />@L["PurchaseKeepDocument"]</label>
+                <p class="muted">@L[keepDocument ? "PurchaseKeepHelp" : "PurchaseDiscardHelp"]</p>
+                @if (!keepDocument && receipt.DocumentName.Length > 0)
+                { <p class="notice warning">@L["PurchaseRemoveDocumentWarning"]</p> }
+                <details>
+                    <summary>@L["PurchaseSourceText"]</summary>
+                    <p class="muted">@L["PurchaseSourceTextHelp"]</p>
+                    <textarea id="receipt-text" rows="12" maxlength="128000" @bind="sourceText" aria-label="@L["PurchaseSourceText"]"></textarea>
+                    <button @onclick="RequestParse" disabled="@(string.IsNullOrWhiteSpace(sourceText))">@L["PurchaseParseText"]</button>
+                </details>
+            </aside>
+            <div class="receipt-fields">
+                <div class="fields">
+                    <label>@L["PurchaseMerchant"]<input id="receipt-merchant" maxlength="200" @bind="receipt.Merchant" @bind:after="Unreview" /></label>
+                    <label>@L["PurchaseDate"]<input id="receipt-date" type="date" @bind="receipt.PurchaseDate" @bind:after="Unreview" /></label>
+                    <label>@L["PurchaseInvoice"]<input maxlength="200" @bind="receipt.InvoiceNumber" @bind:after="Unreview" /></label>
+                    <label>@L["PurchaseTotal"]<input id="receipt-total" type="number" step="0.01" min="0" @bind="receipt.Total" @bind:after="Unreview" /></label>
+                    <label>@L["Account"]<select @bind="receipt.AccountId" @bind:after="AccountChanged"><option value="">@L["PurchaseNoAccount"]</option>@foreach (var account in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@account.Id">@account.Name</option> }</select></label>
+                    <label>@L["PurchaseNotes"]<textarea rows="2" maxlength="4000" @bind="receipt.Notes"></textarea></label>
+                </div>
+                <details open="@(receipt.TransactionId != null)">
+                    <summary>@L["PurchaseBankLink"]</summary>
+                    <p class="muted">@L["PurchaseBankLinkHelp"]</p>
+                    <label>@L["Search"]<input type="search" @bind="bankSearch" @bind:event="oninput" /></label>
+                    <label>@L["BankEntry"]<select @bind="receipt.TransactionId" @bind:after="TransactionChanged"><option value="">@L["PurchaseNoTransaction"]</option>@foreach (var entry in BankChoices) { <option value="@entry.Id">@BankLabel(entry)</option> }</select></label>
+                    @foreach (var entry in BankSuggestions)
+                    { <p><button @onclick="() => LinkTransaction(entry)">@L["PurchaseLinkSuggestion"]: @BankLabel(entry)</button></p> }
+                    @if (LinkedTransaction is { } linked && receipt.Total is { } total && -linked.Amount != total)
+                    { <p class="notice warning">@L["PurchaseBankMismatch", Money(-linked.Amount), Money(total)]</p> }
+                </details>
+                <div class="receipt-reconciliation notice @(IsReconciled ? "success" : "warning")" role="status">
+                    <strong>@L["PurchaseItemTotal"]: @Money(PurchaseReceipts.ItemTotal(items))</strong>
+                    <span>@L["PurchaseTotal"]: @(receipt.Total is { } value ? Money(value) : L["Unknown"].Value)</span>
+                    @if (receipt.Total is { } expected) { <span>@L["PurchaseDifference"]: @Money(expected - PurchaseReceipts.ItemTotal(items))</span> }
+                    <small>@L[IsReconciled ? "PurchaseReconciled" : "PurchaseNeedsReview"]</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-heading"><h3>@L["PurchaseItems"] (@items.Count)</h3><button @onclick="AddItem" disabled="@(items.Count >= PurchaseReceipts.MaximumItems)">+ @L["PurchaseAddItem"]</button></div>
+        <p class="muted">@L["PurchaseCategoriesHelp"]</p>
+        @foreach (var item in items)
+        {
+            <article class="receipt-line" data-item-id="@item.Id" @key="item.Id">
+                <div class="receipt-item-grid">
+                    <label class="receipt-item-name">@L["PurchaseItemName"]<input maxlength="300" @bind="item.Name" @bind:after="Unreview" /></label>
+                    <label>@L["PurchaseQuantity"]<input type="number" step="0.0001" min="0.0001" @bind="item.Quantity" @bind:after="Unreview" /></label>
+                    <label>@L["PurchaseUnit"]<input maxlength="30" @bind="item.Unit" @bind:after="Unreview" /></label>
+                    <label>@L["PurchaseUnitPrice"]<input type="number" step="0.0001" min="0" @bind="item.UnitPrice" @bind:after="Unreview" /></label>
+                    <label>@L["PurchaseLineAmount"]<input type="number" step="0.01" @bind="item.Amount" @bind:after="Unreview" /></label>
+                    <label>@L["Category"]<select @bind="item.CategoryId" @bind:after="Unreview" disabled="@(item.RelatedItemId != null)"><option value="">@L[item.RelatedItemId != null ? "PurchaseInheritCategory" : "Uncategorized"]</option>@foreach (var category in ExpenseCategories) { <option value="@category.Id">@category.Name</option> }</select></label>
+                </div>
+                <details>
+                    <summary>@L["PurchaseItemDetails"]</summary>
+                    @if (item.OriginalDescription.Length > 0) { <p class="receipt-original"><strong>@L["PurchaseOriginalText"]:</strong> @item.OriginalDescription</p> }
+                    <div class="fields">
+                        <label>@L["PurchaseLineKind"]<select @bind="item.Kind" @bind:after="() => KindChanged(item)">@foreach (var kind in Enum.GetValues<ReceiptLineKind>()) { <option value="@kind">@L[$"PurchaseKind{kind}"]</option> }</select></label>
+                        @if (item.Kind == ReceiptLineKind.Discount)
+                        { <label>@L["PurchaseDiscountFor"]<select @bind="item.RelatedItemId" @bind:after="() => DiscountChanged(item)"><option value="">@L["PurchaseWholeReceiptDiscount"]</option>@foreach (var product in items.Where(i => i.Kind == ReceiptLineKind.Product)) { <option value="@product.Id">@product.Name</option> }</select></label> }
+                        <label>@L["PurchaseModel"]<input maxlength="200" @bind="item.Model" /></label>
+                        <label>@L["PurchaseSerial"]<input maxlength="200" @bind="item.SerialNumber" /></label>
+                        <label>@L["PurchaseLocation"]<input maxlength="200" @bind="item.Location" /></label>
+                        <label>@L["PurchaseReturnBy"]<input type="date" @bind="item.ReturnBy" @bind:after="Unreview" /></label>
+                        <label>@L["PurchaseWarrantyUntil"]<input type="date" @bind="item.WarrantyUntil" @bind:after="Unreview" /></label>
+                        <label>@L["Status"]<select @bind="item.Status">@foreach (var status in Enum.GetValues<PurchaseItemStatus>()) { <option value="@status">@L[$"PurchaseStatus{status}"]</option> }</select></label>
+                        @if (receipt.TransactionId != null)
+                        { <label>@L["PurchaseRefundExpectation"]<select @bind="item.ReimbursementClaimId"><option value="">@L["PurchaseNoExpectation"]</option>@foreach (var claim in State.Data.ReimbursementClaims.Where(c => c.ExpenseTransactionId == receipt.TransactionId)) { <option value="@claim.Id">@claim.Counterparty · @Money(claim.ExpectedAmount)</option> }</select></label> }
+                    </div>
+                    <p class="muted">@L["PurchaseDatesHelp"]</p>
+                </details>
+                <div class="actions receipt-line-actions">
+                    <button @onclick="() => Move(item, -1)" disabled="@(items.IndexOf(item) == 0)" aria-label="@L["PurchaseMoveUp"]">↑</button>
+                    <button @onclick="() => Move(item, 1)" disabled="@(items.IndexOf(item) == items.Count - 1)" aria-label="@L["PurchaseMoveDown"]">↓</button>
+                    <button @onclick="() => Merge(item)" disabled="@(items.IndexOf(item) == 0)">@L["PurchaseMerge"]</button>
+                    <button @onclick="() => Remove(item)">@L["Delete"]</button>
+                </div>
+            </article>
+        }
+        @if (items.Count == 0) { <p class="empty">@L["PurchaseNoItems"]</p> }
+        @if (items.Count > 0)
+        {
+            <details><summary>@L["PurchaseCategoryPreview"]</summary><p class="muted">@L["PurchaseCategoriesHelp"]</p><ul>@foreach (var group in items.GroupBy(CategoryFor)) { <li>@State.CategoryName(group.Key): @Money(group.Sum(i => i.Amount ?? 0))</li> }</ul></details>
+        }
+        <label class="check"><input id="receipt-reviewed" type="checkbox" @bind="receipt.IsReviewed" disabled="@(!IsReconciled || string.IsNullOrWhiteSpace(receipt.Merchant) || receipt.PurchaseDate == null)" />@L["PurchaseConfirmReview"]</label>
+        <div class="actions receipt-save"><button class="primary" @onclick="Save">@L[receipt.IsReviewed ? "PurchaseSaveReviewed" : "PurchaseSaveDraft"]</button><button @onclick="CloseDraft">@L["Cancel"]</button></div>
+    </section>
+}
+
+@if (replaceTextConfirm)
+{ <Confirm Title="@L["PurchaseReplaceTitle"]" Text="@L["PurchaseReplaceText"]" ActionLabel="@L["PurchaseParseText"]" Cancel="() => replaceTextConfirm = false" Accept="ApplyText" /> }
+@if (deleteId is { } deleting)
+{ <Confirm Title="@L["PurchaseDelete"]" Text="@L["PurchaseDeleteHelp"]" ActionLabel="@L["Delete"]" Cancel="() => deleteId = null" Accept="() => Delete(deleting)" /> }
+
+@{ var visible = VisibleReceipts.ToList(); var visibleIds = visible.Select(r => r.Id).ToHashSet(); var attention = State.Data.PurchaseReceiptItems.Where(i => visibleIds.Contains(i.ReceiptId) && i.Status == PurchaseItemStatus.Kept && (DueSoon(i.ReturnBy) || DueSoon(i.WarrantyUntil))).OrderBy(i => EarliestDue(i)).ToList(); }
+@if (attention.Count > 0)
+{
+    <section class="card"><h2>@L["PurchaseDeadlines"]</h2><p class="muted">@L["PurchaseDeadlinesHelp"]</p><ul>
+    @foreach (var item in attention.Take(20))
+    { <li><button @onclick="() => Edit(State.Data.PurchaseReceipts.Single(r => r.Id == item.ReceiptId))" disabled="@(draft != null)">@item.Name</button> @if (DueSoon(item.ReturnBy)) { <span>@L["PurchaseReturnBy"]: @item.ReturnBy?.ToString("dd-MM-yyyy")</span> } @if (DueSoon(item.WarrantyUntil)) { <span> · @L["PurchaseWarrantyUntil"]: @item.WarrantyUntil?.ToString("dd-MM-yyyy")</span> }</li> }
+    </ul></section>
+}
+<section class="card">
+    <div class="page-heading"><h2>@L["PurchaseSaved"]</h2><span>@visible.Count</span></div>
+    <label>@L["Search"]<input type="search" placeholder="@L["PurchaseSearchHint"]" @bind="search" @bind:event="oninput" @bind:after="() => page = 0" /></label>
+    <p class="muted">@L["PurchasePeriodHelp"]</p>
+    @{ page = Math.Min(page, Math.Max(0, (visible.Count - 1) / 20)); }
+    @foreach (var saved in visible.Skip(page * 20).Take(20))
+    {
+        var savedItems = State.Data.PurchaseReceiptItems.Where(i => i.ReceiptId == saved.Id).OrderBy(i => i.Position).ToList();
+        <details class="purchase-summary" @key="saved.Id">
+            <summary><strong>@(saved.Merchant.Length > 0 ? saved.Merchant : L["PurchaseUnnamed"].Value)</strong><span>@saved.PurchaseDate?.ToString("dd-MM-yyyy")</span><strong>@(saved.Total is { } total ? Money(total) : "—")</strong><span class="badge">@L[saved.IsReviewed ? "PurchaseReviewed" : "PurchaseDraft"]</span><span class="badge">@L[saved.DocumentName.Length > 0 ? "PurchaseDocumentStored" : "PurchaseDataOnly"]</span></summary>
+            <p>@State.AccountName(saved.AccountId) · @L["PurchaseItems"]: @savedItems.Count</p>
+            @if (saved.Notes.Length > 0) { <p>@saved.Notes</p> }
+            <ul>@foreach (var item in savedItems) { <li>@item.Name · @(item.Amount is { } amount ? Money(amount) : "—") · @State.CategoryName(item.CategoryId) @if (item.Model.Length > 0) { <span> · @item.Model</span> } @if (item.SerialNumber.Length > 0) { <span> · @L["PurchaseSerial"]: @item.SerialNumber</span> } @if (item.ReturnBy != null) { <span> · @L["PurchaseReturnBy"]: @item.ReturnBy?.ToString("dd-MM-yyyy")</span> } @if (item.WarrantyUntil != null) { <span> · @L["PurchaseWarrantyUntil"]: @item.WarrantyUntil?.ToString("dd-MM-yyyy")</span> } @if (item.Status != PurchaseItemStatus.Kept) { <span class="badge">@L[$"PurchaseStatus{item.Status}"]</span> }</li> }</ul>
+            <div class="actions"><button @onclick="() => Edit(saved)" disabled="@(draft != null)">@L["Edit"]</button>@if (saved.DocumentName.Length > 0) { <a class="button" href="@DocumentUrl(saved.Id)" data-enhance-nav="false">@L["PurchaseDownload"]</a> }<button @onclick="() => deleteId = saved.Id" disabled="@(draft != null)">@L["Delete"]</button></div>
+        </details>
+    }
+    @if (visible.Count == 0) { <p class="empty">@L["PurchaseEmpty"]</p> }
+    <Pager Count="visible.Count" Size="20" @bind-Page="page" />
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "transaction")] public Guid? InitialTransaction { get; set; }
+    private PurchaseReceipt? draft;
+    private List<PurchaseReceiptItem> items = [];
+    private string draftRevision = "", search = "", bankSearch = "", sourceText = "";
+    private bool keepDocument, replaceTextConfirm, allowNavigation, ownerChangeBlocked;
+    private Guid? deleteId, ownerAtEdit;
+    private int page;
+    private ReceiptScan? scan;
+    private string? previewUrl;
+    private IJSObjectReference? module;
+    private readonly CancellationTokenSource cancellation = new();
+    private bool disposed;
+
+    private IEnumerable<Category> ExpenseCategories => State.Data.Categories.Where(c => c.Purpose == CategoryPurpose.Normal).OrderBy(c => c.Name);
+    private bool IsReconciled => draft != null && PurchaseReceipts.Reconciles(draft, items);
+    private Transaction? LinkedTransaction => State.Data.Transactions.FirstOrDefault(t => t.Id == draft?.TransactionId);
+    private static string DocumentUrl(Guid id) => $"website/receipts/{id:D}/document";
+    private string BankLabel(Transaction entry) => $"{entry.Date:dd-MM-yyyy} · {State.AccountName(entry.AccountId)} · {entry.Description} · {Money(entry.Amount)}";
+    private IEnumerable<Transaction> EligibleTransactions => State.Data.Transactions.Where(t => t.Kind == TransactionKind.Normal && t.Amount < 0 && State.Scope.Contains(t.AccountId) && (draft?.AccountId == null || t.AccountId == draft.AccountId));
+    private IEnumerable<Transaction> BankChoices => EligibleTransactions.Where(t => t.Id == draft?.TransactionId || string.IsNullOrWhiteSpace(bankSearch) || $"{t.Description} {t.Date:dd-MM-yyyy} {t.Amount}".Contains(bankSearch, StringComparison.OrdinalIgnoreCase)).OrderByDescending(t => t.Id == draft?.TransactionId).ThenByDescending(t => t.Date).Take(80);
+    private IEnumerable<Transaction> BankSuggestions => draft?.Total is { } total && draft.PurchaseDate is { } date && draft.TransactionId == null
+        ? EligibleTransactions.Where(t => -t.Amount == total && Math.Abs(t.Date.DayNumber - date.DayNumber) <= 7).OrderBy(t => Math.Abs(t.Date.DayNumber - date.DayNumber)).Take(3) : [];
+    private IEnumerable<PurchaseReceipt> VisibleReceipts => State.Data.PurchaseReceipts.Where(r => (InitialTransaction == null || r.TransactionId == InitialTransaction) && (State.OwnerId == null || r.AccountId is { } account && State.Scope.Contains(account)) &&
+        (string.IsNullOrWhiteSpace(search) || $"{r.Merchant} {r.InvoiceNumber} {r.Notes} {r.PurchaseDate:dd-MM-yyyy} {string.Join(' ', State.Data.PurchaseReceiptItems.Where(i => i.ReceiptId == r.Id).Select(i => $"{i.Name} {i.OriginalDescription} {i.Model} {i.SerialNumber} {i.Location} {State.CategoryName(i.CategoryId)}"))}".Contains(search, StringComparison.OrdinalIgnoreCase)))
+        .OrderByDescending(r => r.PurchaseDate).ThenBy(r => r.Id);
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (InitialTransaction is { } id && State.Data.Transactions.Any(t => t.Id == id && State.Scope.Contains(t.AccountId)) && !State.Data.PurchaseReceipts.Any(r => r.TransactionId == id)) NewReceipt();
+    }
+    private void NewReceipt()
+    {
+        draft = new() { AccountId = State.OwnerId != null ? State.Data.Accounts.FirstOrDefault(a => State.Scope.Contains(a.Id))?.Id : null };
+        items = []; draftRevision = State.Revision; ownerAtEdit = State.OwnerId; keepDocument = false; allowNavigation = false; ownerChangeBlocked = false;
+        if (InitialTransaction is { } id && State.Data.Transactions.FirstOrDefault(t => t.Id == id && t.Kind == TransactionKind.Normal && t.Amount < 0 && State.Scope.Contains(t.AccountId)) is { } transaction)
+            LinkTransaction(transaction);
+    }
+    private void Edit(PurchaseReceipt receipt)
+    {
+        draft = receipt with { }; items = State.Data.PurchaseReceiptItems.Where(i => i.ReceiptId == receipt.Id).OrderBy(i => i.Position).Select(i => i with { }).ToList();
+        draftRevision = State.Revision; ownerAtEdit = State.OwnerId; keepDocument = receipt.DocumentName.Length > 0; allowNavigation = false; ownerChangeBlocked = false;
+    }
+    private async Task Upload(InputFileChangeEventArgs args)
+    {
+        await State.RunAsync(async () =>
+        {
+            if (scan != null) Receipts.DiscardUpload(scan.UploadId);
+            scan = null;
+            await ReleasePreview();
+            var file = args.File;
+            if (file.Size > PurchaseReceipts.MaximumDocumentBytes) throw new InvalidDataException(L["PurchaseTooLarge"]);
+            await using var stream = file.OpenReadStream(PurchaseReceipts.MaximumDocumentBytes, cancellation.Token);
+            scan = await Receipts.RecognizeAsync(stream, file.Name, cancellation.Token);
+            if (disposed) { Receipts.DiscardUpload(scan.UploadId); return; }
+            try
+            {
+                module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Huishoudboek.Web/purchase-receipts.js");
+                previewUrl = await module.InvokeAsync<string?>("preview", "receipt-upload");
+            }
+            catch (Exception ex) when (ex is JSException or JSDisconnectedException or ObjectDisposedException)
+            { /* Recognition/review works without a browser preview. */ }
+            sourceText = scan.Text;
+            if (items.Count == 0 && string.IsNullOrWhiteSpace(draft?.Merchant) && draft?.Total == null) ParseText();
+            else if (sourceText.Length > 0) replaceTextConfirm = true;
+        });
+    }
+    private async Task RequestParse() { if (items.Count > 0 || !string.IsNullOrWhiteSpace(draft?.Merchant) || draft?.Total != null) replaceTextConfirm = true; else await ApplyText(); }
+    private async Task ApplyText() { await State.RunAsync(() => { ParseText(); replaceTextConfirm = false; return Task.CompletedTask; }); }
+    private void ParseText()
+    {
+        if (draft == null) return;
+        var parsed = ReceiptTextParser.Parse(sourceText);
+        draft.Merchant = parsed.Receipt.Merchant; draft.PurchaseDate = parsed.Receipt.PurchaseDate; draft.Total = parsed.Receipt.Total; draft.InvoiceNumber = parsed.Receipt.InvoiceNumber;
+        items = parsed.Items.Select(i => i with { ReceiptId = draft.Id }).ToList(); Unreview();
+    }
+    private void AddItem() { if (draft != null && items.Count < PurchaseReceipts.MaximumItems) items.Add(new() { ReceiptId = draft.Id, Position = items.Count }); Unreview(); }
+    private void Remove(PurchaseReceiptItem item)
+    {
+        items.Remove(item);
+        foreach (var discount in items.Where(i => i.RelatedItemId == item.Id)) discount.RelatedItemId = null;
+        Unreview();
+    }
+    private void Move(PurchaseReceiptItem item, int direction)
+    {
+        var index = items.IndexOf(item); var target = index + direction;
+        if (index >= 0 && target >= 0 && target < items.Count) (items[index], items[target]) = (items[target], items[index]);
+        Unreview();
+    }
+    private async Task Merge(PurchaseReceiptItem item)
+    {
+        await State.RunAsync(() =>
+        {
+            var index = items.IndexOf(item); if (index <= 0) return Task.CompletedTask;
+            var previous = items[index - 1];
+            if (previous.Kind != item.Kind || previous.CategoryId != item.CategoryId || item.RelatedItemId != null || previous.RelatedItemId != null ||
+                new[] { item, previous }.Any(i => i.Model.Length > 0 || i.SerialNumber.Length > 0 || i.Location.Length > 0 || i.ReturnBy != null || i.WarrantyUntil != null || i.ReimbursementClaimId != null || i.Status != PurchaseItemStatus.Kept))
+                throw new InvalidOperationException(L["PurchaseMergeUnsafe"]);
+            if (previous.Name.Length + item.Name.Length + 1 > 300 || previous.OriginalDescription.Length + item.OriginalDescription.Length + 1 > 2000)
+                throw new InvalidOperationException(L["PurchaseMergeTooLong"]);
+            previous.Name += " " + item.Name; previous.OriginalDescription += "\n" + item.OriginalDescription;
+            previous.Amount = previous.Amount != null && item.Amount != null ? previous.Amount + item.Amount : null;
+            previous.Quantity = null; previous.UnitPrice = null; previous.Unit = "";
+            foreach (var discount in items.Where(i => i.RelatedItemId == item.Id)) discount.RelatedItemId = previous.Id;
+            items.Remove(item); Unreview(); return Task.CompletedTask;
+        });
+    }
+    private void KindChanged(PurchaseReceiptItem item)
+    {
+        if (item.Kind != ReceiptLineKind.Discount) item.RelatedItemId = null;
+        if (item.Kind != ReceiptLineKind.Product) foreach (var discount in items.Where(i => i.RelatedItemId == item.Id)) discount.RelatedItemId = null;
+        Unreview();
+    }
+    private void DiscountChanged(PurchaseReceiptItem item) { if (item.RelatedItemId != null) item.CategoryId = null; Unreview(); }
+    private Guid? CategoryFor(PurchaseReceiptItem item) => item.RelatedItemId is { } id ? items.FirstOrDefault(i => i.Id == id)?.CategoryId : item.CategoryId;
+    private void Unreview() { if (draft != null) draft.IsReviewed = false; }
+    private void AccountChanged() { if (draft != null) { draft.TransactionId = null; foreach (var item in items) item.ReimbursementClaimId = null; Unreview(); } }
+    private void TransactionChanged()
+    {
+        if (draft == null) return;
+        if (LinkedTransaction is { } linked) draft.AccountId = linked.AccountId;
+        foreach (var item in items) item.ReimbursementClaimId = null;
+        Unreview();
+    }
+    private void LinkTransaction(Transaction transaction) { if (draft != null) { draft.TransactionId = transaction.Id; TransactionChanged(); } }
+    private async Task Save()
+    {
+        if (draft == null) return;
+        await State.RunAsync(async () =>
+        {
+            await Receipts.SaveAsync(draftRevision, draft, items, keepDocument, scan?.UploadId, cancellation.Token);
+            await CloseDraft(); await State.LoadAsync();
+        }, L["PurchaseSavedMessage"]);
+    }
+    private async Task Delete(Guid id)
+    {
+        await State.RunAsync(async () => { await State.SaveAsync(d => PurchaseReceipts.Delete(d, id)); deleteId = null; }, L["PurchaseDeleted"]);
+    }
+    private bool DueSoon(DateOnly? date) => date is { } value && value >= State.Today && value <= State.Today.AddDays(30);
+    private DateOnly EarliestDue(PurchaseReceiptItem item) => new[] { item.ReturnBy, item.WarrantyUntil }.Where(DueSoon).Min() ?? DateOnly.MaxValue;
+    private async Task CloseDraft()
+    {
+        if (scan != null) Receipts.DiscardUpload(scan.UploadId);
+        scan = null; draft = null; items = []; sourceText = ""; bankSearch = ""; replaceTextConfirm = false;
+        await ReleasePreview();
+    }
+    private async Task ReleasePreview()
+    {
+        if (previewUrl != null && module != null)
+            try { await module.InvokeVoidAsync("release", previewUrl); }
+            catch (Exception ex) when (ex is JSException or JSDisconnectedException or ObjectDisposedException) { }
+        previewUrl = null;
+    }
+    private async Task BeforeNavigate(LocationChangingContext context)
+    {
+        if (draft != null && !allowNavigation && !await JS.InvokeAsync<bool>("confirm", L["PurchaseLeaveWarning"].Value)) context.PreventNavigation();
+        else allowNavigation = true;
+    }
+    protected override void OnStateChanged()
+    {
+        // Do not discard an unsaved draft or leave it presented under another owner's context.
+        if (draft != null && ownerAtEdit != State.OwnerId)
+        { State.OwnerId = ownerAtEdit; ownerChangeBlocked = true; State.Notify(); }
+    }
+    public override void Dispose() => _ = DisposeAsync();
+    public async ValueTask DisposeAsync()
+    {
+        if (disposed) return;
+        disposed = true; base.Dispose(); cancellation.Cancel();
+        if (scan != null) Receipts.DiscardUpload(scan.UploadId);
+        await ReleasePreview();
+        if (module != null)
+            try { await module.DisposeAsync(); }
+            catch (Exception ex) when (ex is JSException or JSDisconnectedException or ObjectDisposedException) { }
+        cancellation.Dispose();
+    }
+}

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.2
+
+- Nieuwe pagina Aankopen & garanties met lokale bonherkenning uit foto's en PDF's:
+  productregels, aantallen/gewichten, prijzen, kortingen en statiegeld controleren,
+  aanvullen en per regel een bestaande uitgavencategorie kiezen. Verschillen blijven
+  zichtbaar; categoriesplitsingen worden nog niet op bankboekingen toegepast.
+- Bonbestand bewaren is optioneel en staat bij nieuwe bonnen uit. Zonder vinkje
+  blijven alleen aankoopgegevens en productregels bewaard, zonder afbeelding of PDF.
+  Bewaarde originelen gaan mee in volledige databaseback-ups.
+- Aankopen aan bankboekingen koppelen zonder bedragen te wijzigen; producten zoeken,
+  serienummers, retour- en garantiedatums vastleggen en komende termijnen bekijken.
+  Bestaande vergoedingsverwachtingen zijn koppelbaar; datums worden niet geraden.
+- Databaseschema 12 met veiligheidskopie vóór migratie, behoud van oudere database-imports
+  en bonbijlagen buiten gewone gegevensmomentopnamen. Back-updownloads worden gestreamd;
+  databaseherstel ondersteunt bestanden tot 256 MB.
+
 ## 0.2.1
 
 - Extra Home Assistant-kaarten voor budgetbewaking, komende betalingen en volgende

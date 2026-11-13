@@ -13,7 +13,8 @@ namespace Huishoudboek.Infrastructure;
 /// </summary>
 public sealed class SqliteHouseholdStore : IAdministrationStore
 {
-    private const int SchemaVersion = 11;
+    public const long MaximumRestoreBytes = 256L * 1024 * 1024;
+    private const int SchemaVersion = 12;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -40,6 +41,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             Execute(connection, transaction, "CREATE TABLE app_metadata (id INTEGER PRIMARY KEY CHECK(id=1), application TEXT NOT NULL, mortgage TEXT NULL, insights TEXT NULL)");
             Execute(connection, transaction, "INSERT INTO app_metadata(id,application) VALUES(1,'Huishoudboek')");
             foreach (var type in EntityTypes) CreateTable(connection, transaction, type);
+            CreateReceiptDocuments(connection, transaction);
             Execute(connection, transaction, "CREATE INDEX ix_transactions_date_account ON [Transaction] ([Date], [AccountId])");
             Execute(connection, transaction, $"PRAGMA user_version={SchemaVersion}");
             transaction.Commit();
@@ -55,7 +57,8 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
     private static readonly Type[] EntityTypes = [typeof(Owner), typeof(Account), typeof(Category),
         typeof(BudgetOverride), typeof(Transaction), typeof(RecurringPayment), typeof(CategorizationRule),
         typeof(InvestmentValuation), typeof(ImportBatch), typeof(ImportProfile), typeof(TransferMatch),
-        typeof(TransactionAllocation), typeof(ReimbursementClaim), typeof(AccountReview), typeof(AccountStatementPeriod)];
+        typeof(TransactionAllocation), typeof(ReimbursementClaim), typeof(AccountReview), typeof(AccountStatementPeriod),
+        typeof(PurchaseReceipt), typeof(PurchaseReceiptItem)];
 
     private static SqliteConnection Open(string path, bool readOnly = false)
     {
@@ -148,6 +151,12 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             Execute(connection, tx, "ALTER TABLE app_metadata ADD COLUMN insights TEXT NULL");
         }
         if (version < 11) CreateTable(connection, tx, typeof(AccountStatementPeriod));
+        if (version < 12)
+        {
+            CreateTable(connection, tx, typeof(PurchaseReceipt));
+            CreateTable(connection, tx, typeof(PurchaseReceiptItem));
+            CreateReceiptDocuments(connection, tx);
+        }
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -158,6 +167,9 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         var columns = type.GetProperties().Select(p => $"[{p.Name}] {(IsInteger(p.PropertyType) ? "INTEGER" : "TEXT")}{(p.Name == "Id" ? " PRIMARY KEY NOT NULL" : "")}");
         Execute(c, tx, $"CREATE TABLE [{type.Name}] ({string.Join(",", columns)})");
     }
+
+    private static void CreateReceiptDocuments(SqliteConnection c, SqliteTransaction tx) => Execute(c, tx,
+        "CREATE TABLE receipt_documents (receipt_id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, content_type TEXT NOT NULL, content BLOB NOT NULL)");
 
     private static bool IsInteger(Type type)
     {
@@ -186,7 +198,9 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             TransactionAllocations = version >= 6 ? Read<TransactionAllocation>(connection, tx) : [],
             ReimbursementClaims = version >= 6 ? Read<ReimbursementClaim>(connection, tx) : [],
             AccountReviews = version >= 7 ? Read<AccountReview>(connection, tx) : [],
-            AccountStatementPeriods = version >= 11 ? Read<AccountStatementPeriod>(connection, tx) : []
+            AccountStatementPeriods = version >= 11 ? Read<AccountStatementPeriod>(connection, tx) : [],
+            PurchaseReceipts = version >= 12 ? Read<PurchaseReceipt>(connection, tx) : [],
+            PurchaseReceiptItems = version >= 12 ? Read<PurchaseReceiptItem>(connection, tx) : []
         };
         using var command = connection.CreateCommand();
         command.Transaction = tx;
@@ -200,12 +214,17 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
                     data.InsightSettings = JsonSerializer.Deserialize<InsightSettings>(reader.GetString(1)) ?? new();
             }
         }
+        if (version >= 12) CheckReceiptDocuments(connection, tx, data);
         tx.Commit();
         Validation.Validate(data);
         return data;
     }
 
-    public void Save(HouseholdData data)
+    public void Save(HouseholdData data) => SaveCore(data, null, null);
+
+    public void Save(HouseholdData data, ReceiptDocument? document) => SaveCore(data, document, null);
+
+    private void SaveCore(HouseholdData data, ReceiptDocument? document, SqliteConnection? restoreFrom)
     {
         Validation.Validate(data);
         using var connection = Open(_path);
@@ -219,6 +238,21 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         Write(connection, tx, data.TransactionAllocations); Write(connection, tx, data.ReimbursementClaims);
         Write(connection, tx, data.AccountReviews);
         Write(connection, tx, data.AccountStatementPeriods);
+        Write(connection, tx, data.PurchaseReceipts); Write(connection, tx, data.PurchaseReceiptItems);
+        if (restoreFrom != null)
+        {
+            Execute(connection, tx, "DELETE FROM receipt_documents");
+            if (Version(restoreFrom) >= 12)
+            {
+                using var source = restoreFrom.CreateCommand();
+                source.CommandText = "SELECT receipt_id, name, content_type, content FROM receipt_documents";
+                using var reader = source.ExecuteReader();
+                while (reader.Read()) WriteReceiptDocument(connection, tx, new(Guid.Parse(reader.GetString(0)), reader.GetString(1), reader.GetString(2), (byte[])reader[3]));
+            }
+        }
+        if (document != null) WriteReceiptDocument(connection, tx, document);
+        Execute(connection, tx, "DELETE FROM receipt_documents WHERE receipt_id NOT IN (SELECT Id FROM PurchaseReceipt WHERE DocumentName <> '')");
+        CheckReceiptDocuments(connection, tx, data);
         using var command = connection.CreateCommand();
         command.Transaction = tx;
         command.CommandText = "UPDATE app_metadata SET mortgage=$mortgage, insights=$insights WHERE id=1";
@@ -331,7 +365,51 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
     public void Restore(string source)
     {
         CheckDifferentPath(source);
-        Save(ReadBackup(source));
+        var data = ReadBackup(source);
+        using var candidate = Open(source, true);
+        SaveCore(data, null, candidate);
+    }
+
+    public ReceiptDocument? ReadReceiptDocument(Guid receiptId)
+    {
+        using var connection = Open(_path, true);
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT name, content_type, content FROM receipt_documents WHERE receipt_id=$id";
+        command.Parameters.AddWithValue("$id", receiptId.ToString());
+        using var reader = command.ExecuteReader();
+        return reader.Read() ? new(receiptId, reader.GetString(0), reader.GetString(1), (byte[])reader[2]) : null;
+    }
+
+    private static void WriteReceiptDocument(SqliteConnection connection, SqliteTransaction tx, ReceiptDocument document)
+    {
+        var checkedDocument = ReceiptDocuments.Create(document.ReceiptId, document.Name, document.Content);
+        if (checkedDocument.Name != document.Name || checkedDocument.ContentType != document.ContentType)
+            throw new InvalidDataException("Ongeldige metadata van een bonbijlage.");
+        using var command = connection.CreateCommand();
+        command.Transaction = tx;
+        command.CommandText = "INSERT OR REPLACE INTO receipt_documents(receipt_id,name,content_type,content) VALUES($id,$name,$type,$content)";
+        command.Parameters.AddWithValue("$id", document.ReceiptId.ToString());
+        command.Parameters.AddWithValue("$name", document.Name);
+        command.Parameters.AddWithValue("$type", document.ContentType);
+        command.Parameters.AddWithValue("$content", document.Content);
+        command.ExecuteNonQuery();
+    }
+
+    private static void CheckReceiptDocuments(SqliteConnection connection, SqliteTransaction tx, HouseholdData data)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = tx;
+        command.CommandText = "SELECT receipt_id, name, content_type, length(content) FROM receipt_documents";
+        using var reader = command.ExecuteReader();
+        var receipts = data.PurchaseReceipts.Where(r => r.DocumentName.Length > 0).ToDictionary(r => r.Id);
+        while (reader.Read())
+        {
+            if (!Guid.TryParse(reader.GetString(0), out var id) || !receipts.Remove(id, out var receipt) ||
+                receipt.DocumentName != reader.GetString(1) || receipt.DocumentContentType != reader.GetString(2) ||
+                reader.GetInt64(3) is <= 0 or > PurchaseReceipts.MaximumDocumentBytes)
+                throw new InvalidDataException("Een bonbijlage ontbreekt of hoort niet bij de bongegevens.");
+        }
+        if (receipts.Count != 0) throw new InvalidDataException("Een bewaarde bonbijlage ontbreekt in de database.");
     }
 
     public static HouseholdData ReadBackup(string source)

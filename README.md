@@ -54,6 +54,12 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
 - **Splitsingen, retouren en vergoedingen:** verdeel één bankboeking over categorieën,
   verwerk ontvangsten als vermindering van uitgaven en volg verwachte terugbetalingen
   voor werkgeverskosten of gedeelde aankopen. Oorspronkelijke bankboekingen blijven intact.
+- **Aankopen & garanties:** lees foto's en PDF-bonnen lokaal, controleer individuele
+  producten, kortingen en het bontotaal en kies alvast categorieën per regel.
+  Bewaar het originele bonbestand alleen als u dat aanvinkt, bijvoorbeeld voor garantie;
+  bij boodschappen kunnen alleen de productgegevens blijven staan. Retour- en
+  garantiedatums, serienummers en bankkoppelingen zijn optioneel. Het toepassen van
+  de categorieën als transactiesplitsing volgt later; bankbedragen blijven ongewijzigd.
 - **Rekeningen en vermogen:** betaal- en spaarrekeningen, beleggen, eigenaren en hypotheek.
 - **Import en export:** Excel/CSV-import, automatische herkenning van Argenta-exports,
   kant-en-klare profielen voor ING (NL), Rabobank en KBC/CBC, CSV-export en volledige databaseback-ups met herstel.

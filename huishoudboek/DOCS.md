@@ -73,7 +73,7 @@ De zijbalk is op elke pagina diepgroen en bevat zes hoofdkeuzes:
 
 - **Dashboard**: direct naar de startpagina.
 - **Overzichten**: maandoverzicht, jaaroverzicht, categorietrends en inzichten.
-- **Transacties**: transacties, categoriseren en wekelijkse controle (tenzij verborgen).
+- **Transacties**: transacties, aankopen & garanties, categoriseren en wekelijkse controle (tenzij verborgen).
 - **Planning**: financiële vooruitblik, budgetten, vaste posten en hypotheek.
 - **Rekeningen**: direct naar de rekeningen.
 - **Beheer**: beheer & import, Excel/CSV importeren en instellen.
@@ -549,7 +549,7 @@ zonder ingestelde planning is dit geen bevestiging dat er niets te betalen is.
    niet achteraf herkennen of terughalen.
 2. Open in de Home Assistant-app **Instellen → Bestaande database importeren**,
    of **Beheer & import → Bestaande database importeren / back-up herstellen**.
-3. Selecteer uw `.db`-bestand (maximaal **64 MB**) en kies
+3. Selecteer uw `.db`-bestand (maximaal **256 MB**) en kies
    **Bestaande database importeren…**. Selecteren alleen slaat niets op.
 4. Controleer de waarschuwing en bevestig expliciet met **Database importeren**.
    Annuleren wijzigt niets. Een import vervangt de volledige administratie;
@@ -805,6 +805,81 @@ koppelingen zonder het bankbedrag te herhalen. **Categorie telt als** en
 Bankimport herstelt deze metagegevens
 niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
 
+## Aankopen, bonregels en garanties
+
+Open **Transacties → Aankopen & garanties** (`/aankopen`), of kies **Bon toevoegen**
+bij een gewone afschrijving. De pagina gebruikt alle aankoopdatums, los van de maandkeuze.
+Het eigenaarfilter volgt de gekozen rekening; bonnen zonder rekening staan alleen bij
+het hele huishouden. Dit zijn weergavefilters, geen toegangsbeperking voor documenten.
+
+1. Voeg een JPEG/PNG-foto of PDF toe, of begin met handmatige invoer. U kunt ook tekst
+   uit een digitale factuur plakken. Bestanden zijn maximaal **8 MB**; afbeeldingen
+   maximaal 30 megapixels/20.000 pixels per zijde en PDF's maximaal vijf pagina's.
+2. De app leest lokaal tekst en stelt productregels, aantallen/gewichten, eenheidsprijzen,
+   regelbedragen, kortingen en statiegeld voor. Controleer de winkel en aankoopdatum ook.
+   Slechte foto's, afwijkende winkelindelingen en acties vragen vaak om correcties.
+3. Corrigeer, voeg toe, verwijder of combineer regels. Onbekende bedragen blijven leeg.
+   De regels en correcties moeten exact aansluiten op het bontotaal voordat u de bon
+   als gecontroleerd kunt markeren. Een verschil wordt nooit automatisch weggeboekt;
+   opslaan als concept blijft mogelijk.
+4. Kies optioneel bestaande uitgavencategorieën per product, bijvoorbeeld voeding,
+   schoonmaak, persoonlijke verzorging of cadeaus. Een korting kan aan een product worden
+   gekoppeld en volgt dan diens categorie. Een algemene korting blijft apart totdat u
+   deze zelf toewijst. Btw die al in de prijzen zit, is geen extra productregel.
+5. Koppel optioneel een bankboeking. Voorstellen hebben hetzelfde totaal en een datum
+   binnen zeven dagen; u bevestigt ze zelf. Bij waardebonnen of gemengde betalingen mag
+   het bankbedrag afwijken, maar dat verschil blijft zichtbaar.
+
+### Het bonbestand wel of niet bewaren
+
+**Bonbestand bewaren** staat bij een nieuwe bon standaard **uit**. Zonder vinkje bewaart
+de app alleen aankoopgegevens en productregels, inclusief de oorspronkelijk herkende
+producttekst. De volledige OCR-tekst, afbeelding en PDF worden niet in de database
+opgeslagen. Herkenning gebruikt geheugen en procespijpen, geen tijdelijke bonbestanden
+op schijf. Uploads blijven maximaal 15 minuten beschikbaar voor beoordeling, en worden
+bij opslaan, annuleren of verlaten van de pagina vrijgegeven. Een verlopen upload kunt
+u opnieuw toevoegen; gegevens zonder document blijven ook dan als concept opslaanbaar.
+Het oorspronkelijke bestand op uw telefoon of computer wordt uiteraard niet verwijderd.
+
+Zet het vinkje **aan** voor een garantiebewijs, elektronica of een andere aankoop waarvan
+u het origineel wilt behouden. Het bestand staat dan als bijlage in dezelfde private
+SQLite-database en gaat mee in volledige `.db`-back-ups en herstel. Gewone pagina's laden
+alleen metadata en productregels, niet alle afbeeldingen. Downloads vereisen dezelfde
+aanmelding als de app. Opnieuw uitvinken verwijdert de bijlage bij opslaan uit de actieve
+administratie; eerdere back-ups en reeds gedownloade kopieën veranderen niet. De app
+versleutelt de database of bijlagen niet. CSV-export bevat geen bonregels of documenten;
+gebruik daarvoor altijd een volledige databaseback-up. Database-import ondersteunt
+bestanden tot 256 MB; bewaarde foto's vergroten de back-up.
+
+### Retour, garantie en de vervolgstap voor boodschappen
+
+Per product kunt u merk/model, serienummer, locatie, status, retourdatum en garantiedatum
+vastleggen. Datums worden niet afgeleid uit algemene wettelijke aannames: controleer de
+voorwaarden van de aankoop zelf. De pagina toont komende termijnen binnen 30 dagen,
+maar verstuurt nog geen Home Assistant-pushmeldingen. Een bestaande vergoedingsverwachting
+van de gekoppelde aankoop is selecteerbaar; een productstatus boekt geen terugbetaling.
+
+Deze eerste versie wijzigt **geen** bankbedragen, transactiecategorieën, splitsingen,
+budgetten of saldi. De categorieën op bonregels zijn voorbereiding op een latere functie
+om een boodschappenbetaling over categorieën te verdelen. Persoonsverrekening is niet
+onderdeel van deze functie. Het verwijderen van een bankboeking of terugdraaien van een
+import ontkoppelt de bon, maar bewaart de aankoopgegevens en eventuele bijlage.
+
+### Lokale herkenning en computerpreview
+
+De Home Assistant-container bevat **Tesseract** met Nederlandse/Engelse taalbestanden
+en **Poppler** (`pdfinfo`, `pdftotext`, `pdftoppm`). Een digitale PDF gebruikt bestaande
+tekst waar mogelijk; foto's en gescande pagina's gebruiken OCR. Er is geen cloud-API,
+API-sleutel of groot taalmodel nodig. Er draait maximaal één herkenning tegelijk;
+verwerking heeft invoer-/uitvoerlimieten en een tijdslimiet. Internet is alleen nodig
+bij het bouwen/installeren van de containerpakketten, niet bij het lezen van bonnen.
+
+Voor de lokale Windows-/computerpreview zijn deze programma's niet automatisch aanwezig.
+Installeer Tesseract met `nld` en `eng` en de genoemde Poppler-programma's zelf, en zorg
+dat ze op `PATH` staan wanneer de preview start. Anders meldt de pagina dat herkenning
+niet beschikbaar is; tekst plakken, regels bewerken en documenten bewaren werken wel.
+Controleer de herkenningskwaliteit met uw eigen winkelbonnen voordat u daarop vertrouwt.
+
 ## Opslag, back-ups en updates
 
 - Actieve administratie: `/data/administration/huishoudboek.db`, met bijbehorende
@@ -868,5 +943,5 @@ niet automatisch: gebruik een volledige databaseback-up voor compleet herstel.
 - Verbindingsmelding na herstart: open de app opnieuw vanuit Home Assistant.
 - Opstart weigert bestaande data: bewaar de map en logs zonder persoonlijke data;
   herstel een geldige back-up. Verwijder geen database of service-marker om dit te omzeilen.
-- Grote database: de huidige uploadgrens is 64 MB. Niet verkleinen door transacties
+- Grote database: de huidige uploadgrens is 256 MB. Niet verkleinen door transacties
   uit uw echte administratie te verwijderen; deze versie ondersteunt grotere imports niet.

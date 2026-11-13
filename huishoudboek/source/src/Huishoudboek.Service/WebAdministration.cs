@@ -43,7 +43,7 @@ public sealed class WebAdministration(AdministrationCoordinator coordinator, Imp
                 while ((count = await source.ReadAsync(buffer, cancellationToken)) > 0)
                 {
                     size += count;
-                    if (size > 64L * 1024 * 1024) throw new InvalidDataException("De back-up is groter dan 64 MB.");
+                    if (size > SqliteHouseholdStore.MaximumRestoreBytes) throw new InvalidDataException("De back-up is groter dan 256 MB.");
                     await target.WriteAsync(buffer.AsMemory(0, count), cancellationToken);
                 }
             }

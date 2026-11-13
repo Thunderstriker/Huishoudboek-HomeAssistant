@@ -61,6 +61,7 @@ public static class HouseholdEdits
 
     public static void DeleteTransaction(HouseholdData data, Guid id)
     {
+        PurchaseReceipts.DetachTransactions(data, new HashSet<Guid> { id });
         TransactionAccounting.RemoveForTransactions(data, new HashSet<Guid> { id });
         TransferMatching.RemoveForTransactions(data, new HashSet<Guid> { id });
         BankImportCoverage.Invalidate(data, data.Transactions.FirstOrDefault(t => t.Id == id)?.ImportBatchId);
@@ -92,6 +93,7 @@ public static class HouseholdEdits
         var batch = data.ImportBatches.FirstOrDefault(b => b.Id == id && !b.Undone)
             ?? throw new InvalidOperationException("Deze import bestaat niet of is al teruggedraaid.");
         var removed = data.Transactions.Where(t => t.ImportBatchId == id).Select(t => t.Id).ToHashSet();
+        PurchaseReceipts.DetachTransactions(data, removed);
         TransactionAccounting.RemoveForTransactions(data, removed);
         TransferMatching.RemoveForTransactions(data, removed);
         data.Transactions.RemoveAll(t => t.ImportBatchId == id);
