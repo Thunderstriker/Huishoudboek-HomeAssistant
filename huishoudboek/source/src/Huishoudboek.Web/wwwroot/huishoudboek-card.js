@@ -2,8 +2,10 @@
 // Uses HA's authenticated ingress WebSocket commands; never an app/API bearer token.
 const ingressConnections = new WeakMap();
 const widgetNames = {
-    nl: { "month-overview": "Maandoverzicht", spending: "Waar gaat mijn geld naartoe?", "freedom-map": "Financiële vrijheid" },
-    en: { "month-overview": "Monthly overview", spending: "Where does my money go?", "freedom-map": "Financial freedom" }
+    nl: { "month-overview": "Maandoverzicht", spending: "Waar gaat mijn geld naartoe?", "freedom-map": "Financiële vrijheid",
+        "budget-watch": "Budgetbewaking", upcoming: "Komende betalingen", "data-status": "Gegevens & aandacht", "category-trend": "Categorietrend", "import-status": "Import betaalrekeningen" },
+    en: { "month-overview": "Monthly overview", spending: "Where does my money go?", "freedom-map": "Financial freedom",
+        "budget-watch": "Budget watch", upcoming: "Upcoming payments", "data-status": "Data & attention", "category-trend": "Category trend", "import-status": "Current account imports" }
 };
 const messages = {
     nl: {
@@ -111,22 +113,29 @@ class HuishoudboekCard extends HTMLElement {
     }
 
     setConfig(config) {
+        // Invalid replacement settings must not retain the previous scope's financial frame.
+        this._config = null;
+        this._reset();
         if (!/^[a-z0-9]+_huishoudboek$/.test(config.addon || ""))
             throw new Error("Set addon to the full installed app slug, e.g. local_huishoudboek or <repository-id>_huishoudboek.");
         if (!Object.hasOwn(widgetNames.en, config.widget))
-            throw new Error("widget must be month-overview, spending or freedom-map.");
+            throw new Error(`widget must be one of: ${Object.keys(widgetNames.en).join(", ")}.`);
         const period = config.period ?? "current";
         if (period !== "current" && (typeof period !== "string" || !/^(19\d{2}|20\d{2}|21\d{2}|2200)-(0[1-9]|1[0-2])$/.test(period)))
             throw new Error("period must be current or a quoted YYYY-MM month (1900–2200).");
         if (config.owner !== undefined && (typeof config.owner !== "string" || !/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(config.owner)))
             throw new Error("owner must be an owner UUID from Huishoudboek; omit it for the whole household.");
+        if (config.widget === "category-trend" && (typeof config.category !== "string" || !/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(config.category)))
+            throw new Error("category-trend requires a category UUID from Huishoudboek (all-zero UUID for uncategorized).");
+        const historyMonths = config.history_months ?? 12;
+        if (![6, 12, 24].includes(historyMonths)) throw new Error("history_months must be 6, 12 or 24.");
         if (!["auto", "light", "dark"].includes(config.theme ?? "auto")) throw new Error("theme must be auto, light or dark.");
         if (!["auto", "nl", "en"].includes(config.language ?? "auto")) throw new Error("language must be auto, nl or en.");
         const interval = config.refresh_interval ?? 300;
         if (!Number.isInteger(interval) || interval < 60 || interval > 3600) throw new Error("refresh_interval must be 60–3600 seconds.");
         this._config = { addon: config.addon, widget: config.widget, period, owner: config.owner,
-            theme: config.theme ?? "auto", language: config.language ?? "auto", refresh_interval: interval };
-        this._reset();
+            theme: config.theme ?? "auto", language: config.language ?? "auto", refresh_interval: interval,
+            category: config.widget === "category-trend" ? config.category : undefined, history_months: historyMonths };
         this._tick();
     }
 
@@ -258,6 +267,10 @@ class HuishoudboekCard extends HTMLElement {
         url.searchParams.set("theme", this._theme());
         url.searchParams.set("language", this._language());
         if (this._config.owner) url.searchParams.set("owner", this._config.owner);
+        if (this._config.widget === "category-trend") {
+            url.searchParams.set("category", this._config.category);
+            url.searchParams.set("history_months", this._config.history_months);
+        }
         const frame = document.createElement("iframe");
         frame.title = widgetNames[this._language()][this._config.widget];
         // Widgets are static HTML/CSS. No scripts, forms, top navigation or Blazor circuits.

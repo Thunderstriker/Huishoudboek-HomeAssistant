@@ -23,6 +23,8 @@
             <label>@L["CardGalleryPeriod"]<select name="period"><option value="current">@L["CardGalleryCurrent"]</option><option value="fixed">@L["CardGalleryFixed"]</option></select></label>
             <label>@L["Month"]<input name="month" type="month" min="1900-01" max="2200-12" value="@Today.ToString("yyyy-MM", CultureInfo.InvariantCulture)" disabled /></label>
             <label>@L["Owner"]<select name="owner"><option value="">@L["AllOwners"]</option>@foreach (var owner in Owners) { <option value="@owner.Id">@owner.Name</option> }</select></label>
+            <label>@L["CardTrendCategory"]<select name="category">@foreach (var category in Categories) { <option value="@category.Id">@category.Name</option> }<option value="@Guid.Empty">@L["Uncategorized"]</option></select></label>
+            <label>@L["CardTrendMonths"]<select name="history_months"><option value="6">6</option><option value="12" selected>12</option><option value="24">24</option></select></label>
             <button type="submit">@L["Refresh"]</button>
         </form>
         <p class="gallery-help">@L["CardGalleryControlsNote"]</p>
@@ -45,5 +47,6 @@
 
 @code {
     [Parameter] public IReadOnlyList<Owner> Owners { get; set; } = [];
+    [Parameter] public IReadOnlyList<Category> Categories { get; set; } = [];
     [Parameter] public DateOnly Today { get; set; }
 }

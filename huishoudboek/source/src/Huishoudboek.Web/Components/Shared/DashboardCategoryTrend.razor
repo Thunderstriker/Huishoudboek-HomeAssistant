@@ -1,0 +1,64 @@
+<section class="widget-panel trend-card" aria-labelledby="category-trend-heading">
+    <header class="widget-heading"><h2 id="category-trend-heading">@L["CardCategoryTrend"]</h2><a href="categorietrends?categorie=@Overview.CategoryId">@L["DashboardViewTrends"] ↗</a></header>
+    <h3>@CategoryName</h3>
+    <p class="trend-period">@Overview.From.ToString("MMM yyyy", UiCulture.Culture) — @Overview.Through.ToString("MMM yyyy", UiCulture.Culture)</p>
+    <div class="status-totals"><div><strong>@Money(Overview.Total)</strong><span>@L["HistoryNetSpending"]</span></div><div><strong>@(Overview.MonthlyAverage is { } average ? Money(average) : "—")</strong><span>@L["HistoryMonthlyAverage"]</span></div></div>
+    @if (Overview.UnconfirmedMonths > 0)
+    { <p class="widget-warning">@L["HistoryCoverageNote", Overview.UnconfirmedMonths]</p> }
+    @if (!Overview.HasActivity)
+    { <p>@L["HistoryEmptyNote"]</p> }
+    else
+    {
+        <svg class="trend-chart" viewBox="0 0 600 220" role="img" aria-labelledby="trend-chart-title trend-chart-description">
+            <title id="trend-chart-title">@L["HistoryTrendChart", CategoryName]</title>
+            <desc id="trend-chart-description">@L["CardTrendAccessible"]</desc>
+            <defs><pattern id="unconfirmed-pattern" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6L6 0" class="trend-hatch" /></pattern></defs>
+            <line x1="10" y1="@N(Y(0))" x2="590" y2="@N(Y(0))" class="trend-zero" />
+            @for (var index = 0; index < Overview.Months.Count; index++)
+            {
+                var cell = Overview.Months[index];
+                var x = X(index) - BarWidth / 2;
+                var y = Math.Min(Y(0), Y(cell.Spent));
+                var height = Math.Max(1, Math.Abs(Y(cell.Spent) - Y(0)));
+                <g>
+                    <title>@cell.Month.ToString("MMMM yyyy", UiCulture.Culture) · @Money(cell.Spent) · @L[cell.CoverageConfirmed ? "HistoryCoverageConfirmed" : "HistoryCoverageUnknown"]</title>
+                    <rect x="@N(x)" y="@N(y)" width="@N(BarWidth)" height="@N(height)" rx="2" class="trend-bar @(cell.Spent < 0 ? "recovery" : "")" />
+                    @if (!cell.CoverageConfirmed)
+                    { <rect x="@N(x)" y="@N(y)" width="@N(BarWidth)" height="@N(height)" fill="url(#unconfirmed-pattern)" /> }
+                </g>
+            }
+            @if (averagePoints.Length > 0)
+            { <polyline points="@averagePoints" class="trend-average" /> }
+        </svg>
+        <p class="trend-axis">@L["CardTrendRange", Money(minimum), Money(maximum)]</p>
+        <div class="trend-months" aria-hidden="true"><span>@Overview.Months[0].Month.ToString("MMM yy", UiCulture.Culture)</span><span>@Overview.Months[Overview.Months.Count / 2].Month.ToString("MMM yy", UiCulture.Culture)</span><span>@Overview.Months[^1].Month.ToString("MMM yy", UiCulture.Culture)</span></div>
+        <p class="trend-key"><span><i class="bar-key"></i>@L["HistoryNetSpending"]</span><span><i class="line-key"></i>@L["HistoryMovingAverage"]</span><span>▨ @L["HistoryCoverageUnknown"]</span></p>
+    }
+    <details class="widget-details"><summary>@L["CardTrendExactValues"]</summary>
+        <p>@L["CardTrendMethod"]</p>
+        <div class="table-scroll"><table class="trend-values"><caption>@CategoryName · @L["HistoryNetSpending"]</caption>
+            <thead><tr><th scope="col">@L["Month"]</th><th scope="col">@L["HistoryNetSpending"]</th><th scope="col">@L["HistoryMovingAverage"]</th><th scope="col">@L["StatementCoverage"]</th></tr></thead>
+            <tbody>@foreach (var cell in Overview.Months)
+            { <tr><th scope="row">@cell.Month.ToString("MMM yyyy", UiCulture.Culture)</th><td>@Money(cell.Spent)</td><td>@(cell.MovingAverage is { } moving ? Money(moving) : "—")</td><td>@L[cell.CoverageConfirmed ? "HistoryCoverageConfirmed" : "HistoryCoverageUnknown"]</td></tr> }</tbody>
+        </table></div>
+    </details>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public CategoryHistoryOverview Overview { get; set; } = null!;
+    [Parameter, EditorRequired] public string CategoryName { get; set; } = "";
+    private decimal minimum, maximum;
+    private string averagePoints = "";
+    private decimal BarWidth => 580m / Overview.Months.Count * .65m;
+    private decimal X(int index) => 10 + (index + .5m) * 580m / Overview.Months.Count;
+    private decimal Y(decimal amount) => 200 - (amount - minimum) / (maximum - minimum) * 180;
+    private static string N(decimal value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+    protected override void OnParametersSet()
+    {
+        var values = Overview.Months.SelectMany(m => new[] { m.Spent, m.MovingAverage ?? 0 }).Append(0).ToArray();
+        minimum = values.Min(); maximum = values.Max();
+        if (maximum == minimum) maximum = minimum + 1;
+        averagePoints = string.Join(" ", Overview.Months.Select((m, i) => (Month: m, Index: i))
+            .Where(p => p.Month.MovingAverage != null).Select(p => $"{N(X(p.Index))},{N(Y(p.Month.MovingAverage!.Value))}"));
+    }
+}

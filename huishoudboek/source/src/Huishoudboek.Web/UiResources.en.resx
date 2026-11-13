@@ -4,7 +4,7 @@
   <resheader name="version"><value>2.0</value></resheader>
   <data name="Language" xml:space="preserve"><value>Language</value></data>
   <data name="CardSetupTitle" xml:space="preserve"><value>Home Assistant dashboard cards · preview</value></data>
-  <data name="CardSetupHelp" xml:space="preserve"><value>Place the monthly overview, spending breakdown and compact freedom map separately on a Home Assistant dashboard. Download the card file, save it as /config/www/huishoudboek-card.js and follow the dashboard card instructions in the app documentation.</value></data>
+  <data name="CardSetupHelp" xml:space="preserve"><value>Place monthly overview, spending breakdown, freedom map, budget watch, upcoming payments, data status, category trend and import status separately on a Home Assistant dashboard. Download the card file, save it as /config/www/huishoudboek-card.js and follow the dashboard card instructions in the app documentation.</value></data>
   <data name="CardDownload" xml:space="preserve"><value>Download card file</value></data>
   <data name="CardSetupResource" xml:space="preserve"><value>Add a dashboard resource in Home Assistant with type JavaScript module:</value></data>
   <data name="CardAccessNote" xml:space="preserve"><value>For trusted Home Assistant administrators only. The cards have no editing controls, but do not grant separate read-only permissions. Updating the app does not automatically replace the copied card file.</value></data>
@@ -26,13 +26,48 @@
   <data name="CardGalleryPeriod" xml:space="preserve"><value>Month selection</value></data>
   <data name="CardGalleryCurrent" xml:space="preserve"><value>Follow current month</value></data>
   <data name="CardGalleryFixed" xml:space="preserve"><value>Choose a fixed month</value></data>
-  <data name="CardGalleryControlsNote" xml:space="preserve"><value>Theme and screen size update immediately; a smaller browser window limits the selected width. Month and owner reload card data. Changing language reloads the gallery. The freedom map continues to show the current historical analysis.</value></data>
-  <data name="CardGalleryLoadError" xml:space="preserve"><value>The card settings are invalid. Check the month and owner; the previous data has been hidden.</value></data>
+  <data name="CardGalleryControlsNote" xml:space="preserve"><value>Theme and screen size update immediately; a smaller browser window limits the selected width. Month and owner reload card data. Category and history apply only to the trend card. Trends end in the last completed month, or the selected earlier month. Payments, imports and the freedom map remain current. Changing language reloads the gallery.</value></data>
+  <data name="CardGalleryLoadError" xml:space="preserve"><value>The card settings are invalid. Check month, owner, category and history; the previous data has been hidden.</value></data>
   <data name="CardGalleryDashboard" xml:space="preserve"><value>Finances</value></data>
   <data name="CardGallerySimulation" xml:space="preserve"><value>Local dashboard simulation · no Home Assistant session</value></data>
   <data name="CardGalleryYamlTitle" xml:space="preserve"><value>Examples for real Home Assistant cards</value></data>
   <data name="CardGalleryYamlNote" xml:space="preserve"><value>Each block is one manual card. Replace abcdef12_huishoudboek with your full installed app ID. Owner IDs and data in this local preview are not automatically the same as those in Home Assistant. Theme auto follows your real Home Assistant theme there.</value></data>
   <data name="CardGalleryLimits" xml:space="preserve"><value>This gallery tests card appearance, filters, height and refresh. Home Assistant sign-in, ingress sessions, actual dashboard layout and the mobile companion app still need to be tested in Home Assistant.</value></data>
+  <data name="CardCategoryIds" xml:space="preserve"><value>Category IDs for the trend card</value></data>
+  <data name="CardDataStatus" xml:space="preserve"><value>Data &amp; attention</value></data>
+  <data name="CardDataStatusCaution" xml:space="preserve"><value>These checks do not confirm complete bank history; missing transactions are not visible.</value></data>
+  <data name="CardBankStatusAt" xml:space="preserve"><value>Bank data and planning on {0}; monthly checks for</value></data>
+  <data name="CardTrendRange" xml:space="preserve"><value>Chart scale: {0} to {1}</value></data>
+  <data name="CardBankChecks" xml:space="preserve"><value>Accounts: check bank data</value></data>
+  <data name="CardNoAdditionalChecks" xml:space="preserve"><value>No additional issues found in the recorded data.</value></data>
+  <data name="CardDataStatusDetails" xml:space="preserve"><value>Bank data and what this check means</value></data>
+  <data name="CardDataStatusNote" xml:space="preserve"><value>No issues does not confirm complete bank history or financial health. Missing transactions are not visible. Freshness and planning apply to today; month result and budgets follow the selected month. Uncategorized transactions are counted through today.</value></data>
+  <data name="CardPlanningAt" xml:space="preserve"><value>Planning from {0}; expected payments are not established arrears.</value></data>
+  <data name="CardStatusAt" xml:space="preserve"><value>Status on {0}, independent of the month selection.</value></data>
+  <data name="CardUpcomingUncertain" xml:space="preserve"><value>Bank data is missing or stale, or recurring payments need review. Uncertain reserves are not counted as dated payments.</value></data>
+  <data name="CardNoCurrentAccounts" xml:space="preserve"><value>No current accounts within this owner selection that are already open today.</value></data>
+  <data name="CardImportStatus" xml:space="preserve"><value>Current account imports</value></data>
+  <data name="ImportStatusOldest" xml:space="preserve"><value>Import cadence · oldest or unknown import first</value></data>
+  <data name="ImportStatusFresh" xml:space="preserve"><value>Recently imported</value></data>
+  <data name="ImportStatusDue" xml:space="preserve"><value>Weekly import due</value></data>
+  <data name="ImportStatusLate" xml:space="preserve"><value>Import overdue</value></data>
+  <data name="ImportStatusOld" xml:space="preserve"><value>Import significantly overdue</value></data>
+  <data name="ImportStatusVeryOld" xml:space="preserve"><value>More than 30 days ago</value></data>
+  <data name="ImportStatusUnknown" xml:space="preserve"><value>Import date unknown</value></data>
+  <data name="ImportStatusDaysAgo" xml:space="preserve"><value>{0} day(s) ago</value></data>
+  <data name="ImportStatusWeeklyTarget" xml:space="preserve"><value>Aim to import once a week, for every current account.</value></data>
+  <data name="ImportStatusBankWarning" xml:space="preserve"><value>Note: bank data for at least one current account is stale or unknown. Recently importing an old file does not make that data current.</value></data>
+  <data name="ImportStatusLastImport" xml:space="preserve"><value>Last import</value></data>
+  <data name="ImportStatusNever" xml:space="preserve"><value>No active import recorded</value></data>
+  <data name="ImportStatusUnknownDate" xml:space="preserve"><value>No usable import date; check the import history.</value></data>
+  <data name="ImportStatusLegend" xml:space="preserve"><value>Colours in days and explanation</value></data>
+  <data name="ImportStatusMethod" xml:space="preserve"><value>Colour measures calendar days since the last non-undone import, not since the last bank transaction. Green: 0–7 days; yellow-green: 8–14; amber: 15–21; red-orange: 22–30; dark red: more than 30. No import or a future import date remains unknown. The headline shows the oldest or unknown import, not the newest. Savings and investments are excluded. Bank-data freshness is separate and does not confirm complete statement coverage.</value></data>
+  <data name="CardCategoryTrend" xml:space="preserve"><value>Category trend</value></data>
+  <data name="CardTrendCategory" xml:space="preserve"><value>Trend category</value></data>
+  <data name="CardTrendMonths" xml:space="preserve"><value>Trend history (months)</value></data>
+  <data name="CardTrendAccessible" xml:space="preserve"><value>Monthly net-spending bars, negative amounts below zero, and a three-month moving-average line. Hatched bars have unconfirmed statement coverage. Exact amounts and monthly coverage are in the expandable table.</value></data>
+  <data name="CardTrendExactValues" xml:space="preserve"><value>Exact monthly amounts and calculation details</value></data>
+  <data name="CardTrendMethod" xml:space="preserve"><value>Completed months and recorded transactions only; refunds and recoveries reduce net spending. The average follows existing category trends and can be distorted by missing imports. No transactions does not prove no spending. The current month selection uses the last completed month; an earlier fixed month becomes the final month.</value></data>
   <data name="ApplyLanguage" xml:space="preserve"><value>Apply language</value></data>
   <data name="LanguageReloadWarning" xml:space="preserve"><value>Changing language reloads the page. Save your changes first.</value></data>
   <data name="SkipToContent" xml:space="preserve"><value>Skip to content</value></data>

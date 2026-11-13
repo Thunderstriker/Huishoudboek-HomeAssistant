@@ -1,0 +1,37 @@
+<section class="surface upcoming-card" aria-labelledby="dashboard-upcoming-heading">
+    <div class="panel-heading"><div class="panel-title"><span class="panel-icon"><DashboardIcon Name="calendar" /></span><h2 id="dashboard-upcoming-heading">@L["DashboardComingUp"]</h2></div><a class="text-link" href="vooruitblik">@L["FinancialOutlook"] <span aria-hidden="true">↗</span></a></div>
+    @if (Overview.CashFlow.Accounts.Count == 0)
+    { <p class="empty-note">@L["CardNoCurrentAccounts"]</p> }
+    else
+    {
+        <div class="upcoming-total"><span>@L["BillsNextDays", 7]</span><strong>@Money(Overview.CashFlow.Bills7Days)</strong></div>
+        @if (Overview.Upcoming.Count == 0)
+        { <p class="empty-note">@L["DashboardNoUpcoming"]</p> }
+        else
+        {
+            <ul class="dashboard-list upcoming-list">
+                @foreach (var payment in Overview.Upcoming.Take(3))
+                {
+                    <li class="activity-row">
+                        <time class="payment-date" datetime="@payment.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)"><span>@payment.Date.ToString("MMM", UiCulture.Culture)</span><strong>@payment.Date.Day</strong></time>
+                        <div class="activity-copy"><strong>@payment.Name</strong><small>@AccountName(payment.AccountId) · @L[payment.TransactionId != null ? "RecordedEntry" : "RecurringEstimate"]</small></div>
+                        <strong class="activity-amount">@Money(-payment.Amount)</strong>
+                    </li>
+                }
+            </ul>
+            @if (Overview.Upcoming.Count > 3) { <a class="text-link more-payments" href="vooruitblik">@L["DashboardMorePayments", Overview.Upcoming.Count - 3] →</a> }
+        }
+        <div class="next-income"><h3><DashboardIcon Name="arrow-down" />@L["NextIncome"]</h3>
+            @foreach (var account in Overview.CashFlow.Accounts)
+            { <div class="list-heading"><span>@account.Account.Name</span><strong>@(account.NextIncomeDate?.ToString("dd MMM yyyy", UiCulture.Culture) ?? L["DashboardIncomeUnknown"].Value)</strong></div> }
+        </div>
+        @if (Overview.CashFlow.Accounts.Any(a => a.StaleImports || a.AwaitingBankDataCount > 0 || a.PaymentsToReviewCount > 0))
+        { <p class="planning-warning">@L["CardUpcomingUncertain"] <a href="vooruitblik">@L["DashboardViewPlan"] →</a></p> }
+    }
+    <details class="panel-details"><summary>@L["DashboardPlanningDetails"]</summary><p>@L["DashboardUpcomingNote", Overview.Today.ToString("dd-MM-yyyy")]</p></details>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public HomeOverview Overview { get; set; } = null!;
+    private string AccountName(Guid id) => Overview.Accounts.FirstOrDefault(a => a.Account.Id == id)?.Account.Name ?? L["Unknown"].Value;
+}

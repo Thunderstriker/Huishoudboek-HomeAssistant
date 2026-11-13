@@ -4,7 +4,7 @@
   <resheader name="version"><value>2.0</value></resheader>
   <data name="Language" xml:space="preserve"><value>Taal</value></data>
   <data name="CardSetupTitle" xml:space="preserve"><value>Home Assistant-dashboardkaarten · proefversie</value></data>
-  <data name="CardSetupHelp" xml:space="preserve"><value>Plaats het maandoverzicht, de uitgavenverdeling en de compacte vrijheidskaart los op een Home Assistant-dashboard. Download het kaartbestand, bewaar het als /config/www/huishoudboek-card.js en volg de dashboardkaarten-instructies in de appdocumentatie.</value></data>
+  <data name="CardSetupHelp" xml:space="preserve"><value>Plaats maandoverzicht, uitgavenverdeling, vrijheidskaart, budgetbewaking, komende betalingen, gegevensstatus, categorietrend en importstatus los op een Home Assistant-dashboard. Download het kaartbestand, bewaar het als /config/www/huishoudboek-card.js en volg de dashboardkaarten-instructies in de appdocumentatie.</value></data>
   <data name="CardDownload" xml:space="preserve"><value>Kaartbestand downloaden</value></data>
   <data name="CardSetupResource" xml:space="preserve"><value>Voeg in Home Assistant een dashboardbron van het type JavaScript-module toe:</value></data>
   <data name="CardAccessNote" xml:space="preserve"><value>Alleen voor vertrouwde Home Assistant-beheerders. De kaarten hebben geen bewerkknoppen, maar geven geen afzonderlijke leesrechten. Bijwerken van de app vervangt het gekopieerde kaartbestand niet automatisch.</value></data>
@@ -26,13 +26,48 @@
   <data name="CardGalleryPeriod" xml:space="preserve"><value>Maandkeuze</value></data>
   <data name="CardGalleryCurrent" xml:space="preserve"><value>Huidige maand volgen</value></data>
   <data name="CardGalleryFixed" xml:space="preserve"><value>Vaste maand kiezen</value></data>
-  <data name="CardGalleryControlsNote" xml:space="preserve"><value>Thema en schermformaat wijzigen direct; een smaller browservenster begrenst de gekozen breedte. Maand en eigenaar laden nieuwe kaartgegevens. Taal wijzigen herlaadt de galerij. De vrijheidskaart blijft de actuele historische analyse tonen.</value></data>
-  <data name="CardGalleryLoadError" xml:space="preserve"><value>De kaartinstellingen zijn ongeldig. Controleer de maand en eigenaar; de vorige gegevens zijn verborgen.</value></data>
+  <data name="CardGalleryControlsNote" xml:space="preserve"><value>Thema en schermformaat wijzigen direct; een smaller browservenster begrenst de gekozen breedte. Maand en eigenaar laden nieuwe kaartgegevens. Categorie en historie gelden alleen voor de trendkaart. Trends eindigen in de laatste afgesloten maand, of de gekozen eerdere maand. Betalingen, imports en de vrijheidskaart blijven actueel. Taal wijzigen herlaadt de galerij.</value></data>
+  <data name="CardGalleryLoadError" xml:space="preserve"><value>De kaartinstellingen zijn ongeldig. Controleer maand, eigenaar, categorie en historie; de vorige gegevens zijn verborgen.</value></data>
   <data name="CardGalleryDashboard" xml:space="preserve"><value>Financiën</value></data>
   <data name="CardGallerySimulation" xml:space="preserve"><value>Lokale dashboardnabootsing · geen Home Assistant-sessie</value></data>
   <data name="CardGalleryYamlTitle" xml:space="preserve"><value>Voorbeelden voor echte Home Assistant-kaarten</value></data>
   <data name="CardGalleryYamlNote" xml:space="preserve"><value>Elk blok is één handmatige kaart. Vervang abcdef12_huishoudboek door uw volledige geïnstalleerde app-id. Eigenaar-id's en gegevens van deze lokale preview zijn niet automatisch gelijk aan die in Home Assistant. Thema auto volgt daar uw echte Home Assistant-thema.</value></data>
   <data name="CardGalleryLimits" xml:space="preserve"><value>Deze galerij test de kaartvormgeving, filters, hoogte en verversing. Home Assistant-aanmelding, ingress-sessies, werkelijke dashboardindeling en de mobiele companion-app moeten nog in Home Assistant worden getest.</value></data>
+  <data name="CardCategoryIds" xml:space="preserve"><value>Categorie-id's voor de trendkaart</value></data>
+  <data name="CardDataStatus" xml:space="preserve"><value>Gegevens &amp; aandacht</value></data>
+  <data name="CardDataStatusCaution" xml:space="preserve"><value>Deze controles bevestigen geen complete bankhistorie; ontbrekende boekingen zijn niet zichtbaar.</value></data>
+  <data name="CardBankStatusAt" xml:space="preserve"><value>Bankgegevens en planning op {0}; maandcontroles voor</value></data>
+  <data name="CardTrendRange" xml:space="preserve"><value>Grafiekschaal: {0} tot {1}</value></data>
+  <data name="CardBankChecks" xml:space="preserve"><value>Rekeningen: bankgegevens controleren</value></data>
+  <data name="CardNoAdditionalChecks" xml:space="preserve"><value>Geen aanvullende aandachtspunten gevonden in de vastgelegde gegevens.</value></data>
+  <data name="CardDataStatusDetails" xml:space="preserve"><value>Bankgegevens en betekenis van deze controle</value></data>
+  <data name="CardDataStatusNote" xml:space="preserve"><value>Geen aandachtspunten is geen bevestiging van complete bankhistorie of financiële gezondheid. Ontbrekende boekingen zijn niet zichtbaar. Actualiteit en planning gelden voor vandaag; maandresultaat en budgetten volgen de gekozen maand. Ongecategoriseerde boekingen tellen tot vandaag.</value></data>
+  <data name="CardPlanningAt" xml:space="preserve"><value>Planning vanaf {0}; verwachte betalingen zijn geen vastgestelde achterstanden.</value></data>
+  <data name="CardStatusAt" xml:space="preserve"><value>Status op {0}, onafhankelijk van de maandkeuze.</value></data>
+  <data name="CardUpcomingUncertain" xml:space="preserve"><value>Bankgegevens ontbreken of zijn verouderd, of vaste posten vragen controle. Onzekere reserveringen tellen niet mee als gedateerde betalingen.</value></data>
+  <data name="CardNoCurrentAccounts" xml:space="preserve"><value>Geen betaalrekeningen binnen deze eigenaarselectie die vandaag al geopend zijn.</value></data>
+  <data name="CardImportStatus" xml:space="preserve"><value>Import betaalrekeningen</value></data>
+  <data name="ImportStatusOldest" xml:space="preserve"><value>Importritme · oudste of onbekende import eerst</value></data>
+  <data name="ImportStatusFresh" xml:space="preserve"><value>Recent geïmporteerd</value></data>
+  <data name="ImportStatusDue" xml:space="preserve"><value>Wekelijkse import gewenst</value></data>
+  <data name="ImportStatusLate" xml:space="preserve"><value>Import achterstallig</value></data>
+  <data name="ImportStatusOld" xml:space="preserve"><value>Import sterk verouderd</value></data>
+  <data name="ImportStatusVeryOld" xml:space="preserve"><value>Langer dan 30 dagen geleden</value></data>
+  <data name="ImportStatusUnknown" xml:space="preserve"><value>Importdatum onbekend</value></data>
+  <data name="ImportStatusDaysAgo" xml:space="preserve"><value>{0} dag(en) geleden</value></data>
+  <data name="ImportStatusWeeklyTarget" xml:space="preserve"><value>Streef naar eenmaal per week importeren, voor elke betaalrekening.</value></data>
+  <data name="ImportStatusBankWarning" xml:space="preserve"><value>Let op: bankgegevens zijn bij minstens één betaalrekening verouderd of onbekend. Een recente import van een oud bestand maakt die gegevens niet actueel.</value></data>
+  <data name="ImportStatusLastImport" xml:space="preserve"><value>Laatste import</value></data>
+  <data name="ImportStatusNever" xml:space="preserve"><value>Geen actieve import vastgelegd</value></data>
+  <data name="ImportStatusUnknownDate" xml:space="preserve"><value>Geen bruikbare importdatum; controleer de importgeschiedenis.</value></data>
+  <data name="ImportStatusLegend" xml:space="preserve"><value>Kleuren in dagen en uitleg</value></data>
+  <data name="ImportStatusMethod" xml:space="preserve"><value>De kleur meet kalenderdagen sinds de laatste niet-ongedaan-gemaakte import, niet sinds de laatste bankboeking. Groen: 0–7 dagen; geelgroen: 8–14; amber: 15–21; roodoranje: 22–30; donkerrood: meer dan 30. Zonder import of met een toekomstige importdatum blijft de status onbekend. De kop toont de oudste of onbekende import, niet de nieuwste. Sparen en beleggen tellen niet mee. Bankactualiteit staat apart en bevestigt geen volledige afschriftdekking.</value></data>
+  <data name="CardCategoryTrend" xml:space="preserve"><value>Categorietrend</value></data>
+  <data name="CardTrendCategory" xml:space="preserve"><value>Trendcategorie</value></data>
+  <data name="CardTrendMonths" xml:space="preserve"><value>Trendhistorie (maanden)</value></data>
+  <data name="CardTrendAccessible" xml:space="preserve"><value>Maandstaven met netto-uitgaven, negatieve bedragen onder de nullijn en een lijn voor het driemaandsgemiddelde. Gearceerde staven hebben onbevestigde afschriftdekking. Exacte bedragen en dekking per maand staan in de uitklapbare tabel.</value></data>
+  <data name="CardTrendExactValues" xml:space="preserve"><value>Exacte maandbedragen en berekeningsuitleg</value></data>
+  <data name="CardTrendMethod" xml:space="preserve"><value>Alleen afgesloten maanden en werkelijke boekingen; retouren en vergoedingen verlagen de netto-uitgaven. Het gemiddelde volgt de bestaande categorietrends en kan door ontbrekende imports vertekend zijn. Geen boekingen bewijst niet dat er niets is uitgegeven. De huidige maandkeuze gebruikt de laatste afgesloten maand; een eerdere vaste maand wordt de eindmaand.</value></data>
   <data name="ApplyLanguage" xml:space="preserve"><value>Taal toepassen</value></data>
   <data name="LanguageReloadWarning" xml:space="preserve"><value>Taal wijzigen herlaadt de pagina. Sla uw wijzigingen eerst op.</value></data>
   <data name="SkipToContent" xml:space="preserve"><value>Naar inhoud</value></data>

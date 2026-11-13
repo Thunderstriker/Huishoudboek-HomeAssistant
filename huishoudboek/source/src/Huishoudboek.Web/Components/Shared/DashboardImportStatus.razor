@@ -1,0 +1,49 @@
+<section class="widget-panel" aria-labelledby="import-status-heading">
+    <header class="widget-heading"><h2 id="import-status-heading">@L["CardImportStatus"]</h2><a href="importeren">@L["ImportExcelCsv"] ↗</a></header>
+    @if (accounts.Count == 0)
+    { <p>@L["CardNoCurrentAccounts"]</p><a href="rekeningen">@L["Accounts"] →</a> }
+    else
+    {
+        var oldest = accounts[0];
+        <div class="import-summary" data-import-band="@oldest.Band">
+            <span>@L["ImportStatusOldest"]</span>
+            <strong>@L[oldest.LabelKey]</strong>
+            <span>@oldest.Account.Account.Name · @(oldest.AgeDays is { } age ? L["ImportStatusDaysAgo", age].Value : L["ImportStatusUnknown"].Value)</span>
+        </div>
+        <p class="import-target">@L["ImportStatusWeeklyTarget"]</p>
+        @if (accounts.Any(a => a.Account.StaleImports))
+        { <p class="widget-warning">@L["ImportStatusBankWarning"]</p> }
+        <ul class="widget-items import-accounts">
+            @foreach (var item in accounts)
+            {
+                <li data-account-id="@item.Account.Account.Id" data-import-band="@item.Band">
+                    <div class="import-account-heading"><strong>@item.Account.Account.Name</strong><span class="import-badge">@L[item.LabelKey]</span></div>
+                    <p>@L["ImportStatusLastImport"]:
+                        @if (item.Account.LastImportedAt is { } at)
+                        { <time datetime="@at.ToString("s", CultureInfo.InvariantCulture)">@at.ToString("dd-MM-yyyy HH:mm", UiCulture.Culture)</time> }
+                        else { @L["ImportStatusNever"] }
+                    </p>
+                    <p>@(item.AgeDays is { } days ? L["ImportStatusDaysAgo", days].Value : L["ImportStatusUnknownDate"].Value)</p>
+                    <p class="@(item.Account.StaleImports ? "widget-warning" : "")">@L["DashboardImportedThrough", item.Account.ImportedThrough?.ToString("dd-MM-yyyy") ?? L["Unknown"].Value]</p>
+                </li>
+            }
+        </ul>
+        <details class="widget-details"><summary>@L["ImportStatusLegend"]</summary>
+            <ul class="import-legend">
+                <li data-import-band="fresh"><i aria-hidden="true"></i>0–7 · @L["ImportStatusFresh"]</li>
+                <li data-import-band="due"><i aria-hidden="true"></i>8–14 · @L["ImportStatusDue"]</li>
+                <li data-import-band="late"><i aria-hidden="true"></i>15–21 · @L["ImportStatusLate"]</li>
+                <li data-import-band="old"><i aria-hidden="true"></i>22–30 · @L["ImportStatusOld"]</li>
+                <li data-import-band="very-old"><i aria-hidden="true"></i>&gt;30 · @L["ImportStatusVeryOld"]</li>
+                <li data-import-band="unknown"><i aria-hidden="true"></i>@L["ImportStatusUnknown"]</li>
+            </ul>
+            <p>@L["ImportStatusMethod"]</p>
+        </details>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public HomeOverview Overview { get; set; } = null!;
+    private IReadOnlyList<CurrentAccountImport> accounts = [];
+    protected override void OnParametersSet() => accounts = CurrentAccountImport.Create(Overview);
+}

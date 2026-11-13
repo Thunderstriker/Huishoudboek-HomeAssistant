@@ -1,0 +1,31 @@
+<section class="widget-panel" aria-labelledby="data-status-heading">
+    <header class="widget-heading"><h2 id="data-status-heading">@L["CardDataStatus"]</h2><a href="weekcontrole">@L["WeeklyReviewTitle"] ↗</a></header>
+    <div class="status-totals">
+        <div><strong>@Overview.Accounts.Count(a => a.StaleImports)</strong><span>@L["CardBankChecks"]</span></div>
+        <div><strong>@Overview.UncategorizedCount</strong><span>@L["Uncategorized"]</span></div>
+    </div>
+    @if (attention.Count > 0)
+    {
+        <ul class="widget-items attention-items">
+            @foreach (var item in attention)
+            { <li><strong>@item.Title</strong><p>@item.Detail</p><a href="@item.Url">@item.Label →</a></li> }
+        </ul>
+    }
+    else { <p>@L["CardNoAdditionalChecks"]</p> }
+    <p class="status-caution">@L["CardDataStatusCaution"]</p>
+    <details class="widget-details"><summary>@L["CardDataStatusDetails"]</summary>
+        <p>@L["CardDataStatusNote"]</p>
+        <ul class="widget-items">
+            @foreach (var account in Overview.Accounts)
+            { <li><strong>@account.Account.Name</strong><p class="@(account.StaleImports ? "widget-warning" : "")">@L["DashboardImportedThrough", account.ImportedThrough?.ToString("dd-MM-yyyy") ?? L["Unknown"].Value]</p></li> }
+        </ul>
+    </details>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public HomeOverview Overview { get; set; } = null!;
+    [Parameter] public int Year { get; set; }
+    [Parameter] public int Month { get; set; }
+    private IReadOnlyList<HomeAttentionItem> attention = [];
+    protected override void OnParametersSet() => attention = HomeAttention.Create(Overview, Year, Month, L, UiCulture.Culture);
+}

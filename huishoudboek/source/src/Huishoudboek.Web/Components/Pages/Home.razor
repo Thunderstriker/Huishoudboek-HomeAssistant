@@ -32,56 +32,11 @@
 
     <div class="dashboard-board">
         <DashboardSpending Report="overview.Month" />
-        <section class="surface upcoming-card" aria-labelledby="dashboard-upcoming-heading">
-            <div class="panel-heading"><div class="panel-title"><span class="panel-icon"><DashboardIcon Name="calendar" /></span><h2 id="dashboard-upcoming-heading">@L["DashboardComingUp"]</h2></div><a class="text-link" href="vooruitblik">@L["FinancialOutlook"] <span aria-hidden="true">↗</span></a></div>
-            <div class="upcoming-total"><span>@L["BillsNextDays", 7]</span><strong>@Money(overview.CashFlow.Bills7Days)</strong></div>
-            @if (overview.Upcoming.Count == 0)
-            { <p class="empty-note">@L["DashboardNoUpcoming"]</p> }
-            else
-            {
-                <ul class="dashboard-list upcoming-list">
-                    @foreach (var payment in overview.Upcoming.Take(3))
-                    {
-                        <li class="activity-row">
-                            <time class="payment-date" datetime="@payment.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)"><span>@payment.Date.ToString("MMM", UiCulture.Culture)</span><strong>@payment.Date.Day</strong></time>
-                            <div class="activity-copy"><strong>@payment.Name</strong><small>@State.AccountName(payment.AccountId) · @L[payment.TransactionId != null ? "RecordedEntry" : "RecurringEstimate"]</small></div>
-                            <strong class="activity-amount">@Money(-payment.Amount)</strong>
-                        </li>
-                    }
-                </ul>
-                @if (overview.Upcoming.Count > 3) { <a class="text-link more-payments" href="vooruitblik">@L["DashboardMorePayments", overview.Upcoming.Count - 3] →</a> }
-            }
-            @if (overview.CashFlow.Accounts.Count > 0)
-            {
-                <div class="next-income"><h3><DashboardIcon Name="arrow-down" />@L["NextIncome"]</h3>
-                    @foreach (var account in overview.CashFlow.Accounts)
-                    { <div class="list-heading"><span>@account.Account.Name</span><strong>@(account.NextIncomeDate?.ToString("dd MMM yyyy", UiCulture.Culture) ?? L["DashboardIncomeUnknown"].Value)</strong></div> }
-                </div>
-            }
-            <details class="panel-details"><summary>@L["DashboardPlanningDetails"]</summary><p>@L["DashboardUpcomingNote", State.Today.ToString("dd-MM-yyyy")]</p></details>
-        </section>
+        <DashboardUpcoming Overview="overview" />
     </div>
 
     <div class="dashboard-secondary">
-        <section class="surface budget-watch" aria-labelledby="dashboard-budget-heading">
-            <div class="panel-heading"><div class="panel-title"><span class="panel-icon"><DashboardIcon Name="budget" /></span><h2 id="dashboard-budget-heading">@L["DashboardBudgetWatch"]</h2></div><a class="text-link" href="budgetten">@L["Budgets"] <span aria-hidden="true">↗</span></a></div>
-            @if (budgets.Count == 0)
-            { <div class="empty-state"><DashboardIcon Name="budget" /><p>@L["DashboardNoBudgets"]</p><a class="button" href="budgetten">@L["DashboardSetBudgets"]</a></div> }
-            else
-            {
-                <ul class="dashboard-list budget-list">
-                    @foreach (var category in budgets)
-                    {
-                        <li>
-                            <div class="list-heading"><a class="category-link" href="categorietrends?categorie=@category.Id">@State.CategoryName(category.Id)</a><strong>@Money(category.Spent) <small>/ @Money(category.Budget)</small></strong></div>
-                            <progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@L["CategoryUsage", State.CategoryName(category.Id)]" class="@(category.IsOverBudget ? "over-budget" : category.Progress >= 80 ? "near-budget" : "")"></progress>
-                            <small class="budget-remaining @(category.IsOverBudget ? "negative" : "")">@L[category.IsOverBudget ? "DashboardBudgetOver" : "DashboardBudgetRemaining", Money(category.IsOverBudget ? category.Overspent : category.Remaining)]</small>
-                        </li>
-                    }
-                </ul>
-                <details class="panel-details"><summary>@L["DashboardBudgetDetails"]</summary><p>@L["HouseholdBudgetNote"]</p></details>
-            }
-        </section>
+        <DashboardBudgetWatch Report="overview.Month" />
         <section class="surface recent-card" aria-labelledby="dashboard-recent-heading">
             <div class="panel-heading"><div class="panel-title"><span class="panel-icon"><DashboardIcon Name="activity" /></span><h2 id="dashboard-recent-heading">@L["DashboardRecentActivity"]</h2></div><a class="text-link" href="transacties?allDates=true">@L["Transactions"] <span aria-hidden="true">↗</span></a></div>
             @if (overview.Recent.Count == 0)
@@ -112,10 +67,8 @@
 
 @code {
     private HomeOverview overview = null!;
-    private IReadOnlyList<CategoryResult> budgets = [];
-    private readonly List<NextAction> attention = [];
-    private NextAction? nextAction;
-    private sealed record NextAction(string Title, string Detail, string Url, string Label, string Icon);
+    private IReadOnlyList<HomeAttentionItem> attention = [];
+    private HomeAttentionItem? nextAction;
 
     protected override void OnInitialized()
     {
@@ -126,23 +79,7 @@
     private void Rebuild()
     {
         overview = HomeOverview.Create(State.Data, State.Year, State.Month, State.Today, State.OwnerId);
-        budgets = overview.Month.Categories.Where(c => c.Budget > 0).OrderByDescending(c => c.IsOverBudget)
-            .ThenByDescending(c => c.Spent / c.Budget).ThenBy(c => c.Name).Take(4).ToArray();
-        attention.Clear();
-        var stale = overview.Accounts.Where(a => a.StaleImports).ToArray();
-        if (stale.Length > 0)
-            attention.Add(new(L["DashboardUpdateBankTitle"], stale.Length == 1
-                ? L["DashboardStaleAccountNote", stale[0].Account.Name, stale[0].ImportedThrough?.ToString("dd-MM-yyyy") ?? L["Unknown"].Value]
-                : L["DashboardStaleCount", stale.Length], "importeren", L["DashboardUpdateBankAction"], "import"));
-        foreach (var account in overview.CashFlow.Accounts.Where(a => a.BufferAtRisk))
-            attention.Add(new(L["DashboardReviewCashTitle"], L["DashboardBufferRisk", account.Account.Name, Money(account.LowestBalance), account.LowestDate.ToString("dd-MM-yyyy")], "vooruitblik#bestedingsruimte", L["DashboardViewPlan"], "alert"));
-        if (overview.UncategorizedCount > 0)
-            attention.Add(new(L["DashboardCategorizeTitle"], L["DashboardUncategorizedCount", overview.UncategorizedCount], "categoriseren", L["DashboardCategorizeAction"], "sliders"));
-        if (overview.Month.Available < 0)
-            attention.Add(new(L["DashboardReviewMonthTitle"], L["DashboardReviewMonthNote", new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture), Money(overview.Month.Available)], "vooruitblik#maandstatus", L["DashboardViewPlan"], "alert"));
-        var overBudget = overview.Month.Categories.Count(c => c.IsOverBudget);
-        if (overBudget > 0)
-            attention.Add(new(L["DashboardReviewBudgetsTitle"], L["DashboardOverBudgetCount", overBudget], "budgetten", L["Budgets"], "budget"));
+        attention = HomeAttention.Create(overview, State.Year, State.Month, L, UiCulture.Culture);
 
         nextAction = attention.FirstOrDefault() ?? (State.Data.Accounts.Count == 0
             ? new(L["DashboardStartTitle"], L["DashboardStartNote"], "instellen", L["GetStarted"], "plus")

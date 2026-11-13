@@ -12,13 +12,18 @@ dashboard cards. Users should be able to create a dedicated **Financiën** dashb
 or put one or two financial cards alongside their existing household cards, without
 embedding the entire application with its navigation and toolbar.
 
-Implemented proof of concept:
+Implemented cards (all independently placeable):
 
 | Widget value | Card | Contents |
 | --- | --- | --- |
 | `month-overview` | Monthly overview | Month result after savings, income, expenses including housing, and net savings contributions |
 | `spending` | Where does my money go? | Spending ring, the four largest positive spending categories, other categories grouped together, amounts and percentages |
 | `freedom-map` | Compact financial freedom map | Essential months covered, buffer target, spending room, income commitments, and lifestyle coverage |
+| `budget-watch` | Budget watch | Four categories with highest budget overspend/utilization, progress and remaining amounts |
+| `upcoming` | Upcoming payments / next income | Known next-seven-day payments, next income dates and explicit planning uncertainty |
+| `data-status` | Data / attention | Stale or missing bank data, uncategorized counts and existing prioritized dashboard checks |
+| `category-trend` | Selected category trend | 6/12/24 completed months, net-spending bars, moving average, coverage warnings and exact values |
+| `import-status` | Current account imports | Last active import per current account, weekly cadence colours and separate bank-data freshness |
 
 These are real application calculations and visuals, not sample graphs created by
 the card frontend. Cards also show their load time, bank-data freshness, owner context,
@@ -38,6 +43,8 @@ Also implemented:
 `huishoudboek/CHANGELOG.md`. The user explicitly chose **release notes only** for this
 work. The application version fields remain `0.2.0`; this is not an oversight to fix
 automatically. Do not bump them without a new request.
+The five additional cards also belong to `0.2.1`, explicitly selected by the user.
+The new resource cache key is `0.2.1-cards2`; this is not an application version bump.
 
 ## 2. Try the realistic local gallery
 
@@ -79,6 +86,8 @@ app URL and the card gallery URL. The gallery is also linked from the local app'
 5. Expand an explanation and watch the card height adjust.
 6. Refresh one card, or use the gallery's refresh button for all cards.
 7. Expand the YAML examples. Replace the sample installed app ID before using them in HA.
+8. Choose a trend category and 6/12/24 months; check coverage warnings and expand exact values.
+9. Inspect import cadence separately from bank-data freshness; expand the colour legend.
 
 Appearance controls update immediately. Period/owner changes load new snapshots;
 changing language reloads the gallery. The URL preserves gallery settings, so a
@@ -88,7 +97,7 @@ are not necessarily those in the Home Assistant administration.
 
 ### What the gallery does and does not simulate
 
-The gallery subclasses the production card element and reuses configuration,
+The gallery displays all eight cards. It subclasses the production card element and reuses configuration,
 frame rendering, resizing, theme handling, refresh controls, and lifecycle cleanup.
 The subclass replaces only loading/session maintenance with direct local widget
 requests. A small `ha-card` surface and responsive dashboard grid simulate the
@@ -121,6 +130,11 @@ These are also useful for styling and inspecting the rendered HTML:
 - `/kaarten/month-overview`
 - `/kaarten/spending`
 - `/kaarten/freedom-map`
+- `/kaarten/budget-watch`
+- `/kaarten/upcoming`
+- `/kaarten/data-status`
+- `/kaarten/import-status`
+- `/kaarten/category-trend?category=<UUID>&history_months=12`
 
 For example:
 
@@ -128,6 +142,8 @@ For example:
 
 Direct widget pages accept `theme=light|dark`, `language=nl|en`,
 `period=current|YYYY-MM`, and an optional `owner=<UUID>`.
+Category trend additionally requires `category=<UUID>` (all-zero UUID means
+uncategorized) and accepts `history_months=6|12|24` (default 12).
 
 ## 3. Install on actual Home Assistant
 
@@ -140,7 +156,7 @@ changes alone do not advertise a new add-on store update.
 2. Download `huishoudboek-card.js` and save it as
    `/config/www/huishoudboek-card.js` in Home Assistant.
 3. Add a dashboard resource with type **JavaScript module**:
-   `/local/huishoudboek-card.js?v=0.2.1`.
+   `/local/huishoudboek-card.js?v=0.2.1-cards2`.
 4. Find the full installed app slug, including the repository ID, for example
    `abcdef12_huishoudboek`. A local add-on installation uses `local_huishoudboek`.
 5. Add a Manual card:
@@ -151,8 +167,18 @@ addon: abcdef12_huishoudboek # replace with your actual installed app ID
 widget: month-overview
 ```
 
-Use `spending` or `freedom-map` for the other widgets. The Dutch installation guide
-and a complete three-section dashboard example are in
+Use any widget value from the table above. Category trend requires a category UUID
+from **Beheer & import → Home Assistant-dashboardkaarten → Categorie-id's**; for example:
+
+```yaml
+type: custom:huishoudboek-card
+addon: abcdef12_huishoudboek
+widget: category-trend
+category: "00000000-0000-0000-0000-000000000000" # replace; all-zero = uncategorized
+history_months: 12
+```
+
+The Dutch installation guide and a complete three-section dashboard example are in
 [`huishoudboek/DOCS.md`](huishoudboek/DOCS.md#losse-home-assistant-dashboardkaarten-proefversie).
 
 ### Supported card options
@@ -160,16 +186,49 @@ and a complete three-section dashboard example are in
 | Option | Values | Default |
 | --- | --- | --- |
 | `addon` | Full installed app slug | required |
-| `widget` | `month-overview`, `spending`, `freedom-map` | required |
+| `widget` | One of the eight values above | required |
 | `period` | `current` or quoted `"YYYY-MM"`, years 1900–2200 | `current` |
 | `owner` | Owner UUID shown in Administration | whole household when omitted |
 | `theme` | `auto`, `light`, `dark` | `auto`, following HA |
 | `language` | `auto`, `nl`, `en` | `auto`; non-Dutch HA languages use English |
 | `refresh_interval` | Integer seconds, 60–3600 | `300` |
+| `category` | Normal category UUID; all-zero UUID = uncategorized | required for `category-trend` |
+| `history_months` | Numeric `6`, `12`, `24` | `12`; category trend only |
 
 The current month follows the app's time zone. The freedom map always uses today's
 balances and its historical analysis period, independent of `period`. Fixed months
 and owners are display filters, not permissions.
+
+Upcoming payments and import status also use today regardless of `period`.
+Category trend ends in the last completed month when following current (or selecting
+the current month explicitly); an earlier fixed month becomes the final month.
+Future trend months and windows extending before 1900 are rejected. An invalid/deleted
+category fails, never silently substitutes another category. The gallery preserves
+category/history in its URL and provides YAML for all eight cards.
+Data status combines today's freshness/planning and uncategorized counts through
+today with budget/month-result checks for the selected month; it is not an all-clear.
+
+### Current-account import cadence
+
+`import-status` considers only current accounts already open today within the owner
+scope. It ignores undone batches and shows the latest remaining import timestamp
+per account. The oldest or missing/invalid import determines the headline; a new
+upload for one account cannot hide a stale account. No current accounts is explanatory,
+not green. Text labels accompany every colour:
+
+| Calendar days since import | Colour |
+| --- | --- |
+| 0–7 | Green `#23734c` |
+| 8–14 | Yellow-green `#b6cc65` |
+| 15–21 | Amber `#efbd54` |
+| 22–30 | Red-orange `#bc4e32` |
+| More than 30 | Dark red `#730e25` |
+| Missing/future import date | Neutral grey `#56636d`, unknown |
+
+The target is one import per week per current account. A recent upload of old data
+can be green for **upload cadence** while a separate visible warning says its
+**bank data is stale/unknown**. Neither timestamp proves complete statement coverage.
+Refresh only reloads the card; it does not fetch transactions from a bank.
 
 Cards refresh periodically and on return from the background; their refresh button
 loads a new snapshot immediately. Background pages do not poll. Links open the full
@@ -223,12 +282,24 @@ Relevant files, relative to the repository root:
 | `huishoudboek/source/src/Huishoudboek.Web/Components/Shared/DashboardSpending.razor` | Pure spending ring/category component |
 | `huishoudboek/source/src/Huishoudboek.Web/Components/Shared/FreedomMap.razor` | Full/compact freedom visualization |
 | `huishoudboek/source/src/Huishoudboek.Web/HomeOverview.cs` | Existing dashboard reports, account freshness and scope |
+| `huishoudboek/source/src/Huishoudboek.Web/HomeAttention.cs` | Shared prioritized dashboard/status checks |
+| `huishoudboek/source/src/Huishoudboek.Web/CurrentAccountImports.cs` | Current-account upload age bands and oldest/unknown-first ordering |
+| `huishoudboek/source/src/Huishoudboek.Web/Components/Shared/DashboardBudgetWatch.razor` | Pure budget view reused by dashboard and widget |
+| `huishoudboek/source/src/Huishoudboek.Web/Components/Shared/DashboardUpcoming.razor` | Pure payment/income view reused by dashboard and widget |
+| `huishoudboek/source/src/Huishoudboek.Web/Components/Shared/DashboardDataStatus.razor` | Read-only attention/status view |
+| `huishoudboek/source/src/Huishoudboek.Web/Components/Shared/DashboardImportStatus.razor` | Weekly import cadence, per-account dates and separate freshness warnings |
+| `huishoudboek/source/src/Huishoudboek.Web/Components/Shared/DashboardCategoryTrend.razor` | Static SVG trend and accessible exact-value table, using `CategoryHistory` |
 | `huishoudboek/source/src/Huishoudboek.Core/FinancialInsights.cs` | Existing financial freedom/fingerprint calculations and history rules |
 | `huishoudboek/source/src/Huishoudboek.Web/UiResources*.resx` | Dutch/English application and gallery strings |
 
 `DashboardMonth` and its scoped CSS were extracted from `Pages/Home.razor` so the full
 dashboard and card do not drift. `DashboardSpending` now uses its report's category
 names rather than depending on editable/circuit-scoped `WebState`.
+Budget and upcoming-payment sections were also extracted from `Home.razor`; their
+scoped CSS travels with the shared components. Category trend deliberately uses
+static SVG instead of Chart.js, retaining the script-free iframe sandbox and no
+Blazor circuit. It reuses existing net amounts, coverage and moving-average results;
+negative values stay below zero, and unconfirmed coverage is visible and hatched.
 
 The gallery adapter overrides the production element's `_load` and `_heartbeat`.
 If those internal methods or `_renderFrame` change, review the adapter for parity
@@ -263,14 +334,14 @@ into normal card configuration or relax ingress checks to make local viewing wor
 - A freedom ring reaching its target is not a claim of financial independence.
   Each ring has a separate meaning, not a shared euro breakdown or overall score.
 
-## 6. Possible future cards — not implemented or automatically authorized
+## 6. Remaining possible cards — not implemented or automatically authorized
+
+The four formerly high-priority candidates (budget watch, upcoming payments, data
+status and category trend), plus current-account import status, are now implemented
+as described above. The remaining candidates are not approved merely by listing them.
 
 | Candidate | Priority/use | Existing starting point | Work/constraints |
 | --- | --- | --- | --- |
-| Budget watch | High: categories near/over limit, amount left | Budget section in `Pages/Home.razor` | Extract pure component; preserve household-budget and owner-scope notes |
-| Upcoming payments / next income | High: useful on the household landing page | Upcoming section in `Pages/Home.razor`, `HomeOverview`, `CashFlow` | Extract list/summary; unknown dates and missing bank data are not overdue payments |
-| Data status / attention | High: compact freshness and uncategorized counts | `HomeOverview`, existing next-action logic | Prioritize real issues; no reassuring status from missing data |
-| Category trend | High: groceries, energy, transport over 6/12/24 months | `CategoryHistoryCharts.razor`, `CategoryHistory.cs` | Split main bar/moving-average chart; local Chart.js initialization without Blazor required |
 | Selected account balance | Optional: one account or chosen set | `DashboardAccounts.razor` | Use per-card selection, not full-app browser preferences; show import/valuation dates; sensitive balances |
 | Money fingerprint | Medium: dedicated finance page | `MoneyFingerprint.razor` | Existing legend uses Blazor click handlers; provide local interaction or an appropriate static compact variant |
 | Annual income vs expenses | Medium: longer-term overview | First chart in `YearCharts.razor` | Split grouped component and chart initialization; preserve actual-only/incomplete-year semantics |
@@ -294,18 +365,18 @@ remain useful companions on a dedicated finance page.
 
 ### Suggested dedicated dashboard
 
-For a future expanded set:
+For the implemented expanded set:
 
 ```text
 Monthly overview            Upcoming payments / next income
 Where does my money go?     Budget watch
 Financial freedom          Selected category trend
-Data freshness             Open full Huishoudboek
+Current account imports    Data / attention
 ```
 
 For a general household landing page, use only monthly overview and upcoming payments.
-Fingerprint and longer-term graphs fit better on the finance page. None of the future
-widgets above exist merely because they appear in this document or mock layout.
+Fingerprint and longer-term graphs fit better on the finance page. None of the
+remaining candidate widgets exist merely because they appear in this document.
 
 ### Visual cards versus HA entities
 
@@ -335,7 +406,7 @@ intentional removal of the earlier automated test infrastructure.
 
 Local checks:
 
-- Three cards load in the gallery without HA or app tokens; no ingress requests/cookies.
+- Eight cards load in the gallery without HA or app tokens; no ingress requests/cookies or child scripts.
 - Desktop/tablet/phone, actual narrow viewport, both themes/languages, no horizontal overflow.
 - Expand/collapse explanations; heights adjust and no previous iframe sizes leak after filters change.
 - Owner/month filtering, fixed/current period, and freedom's independent historical period.
@@ -345,6 +416,11 @@ Local checks:
 - Gallery/full app reject framing; widget pages allow only same-origin framing.
 - Nonlocal Host/peer remains rejected. Gallery route is absent outside explicit preview mode.
 - Full dashboard still shows the extracted monthly component correctly.
+- Full dashboard also retains extracted budget and upcoming-payment views and shared attention ordering.
+- Import ages: 0/7/8/14/15/21/22/30/31 days, absent/future timestamps, undone imports,
+  old statements uploaded today, multiple current accounts and no current accounts.
+- Trend: 6/12/24 completed months, earlier fixed month, future/before-1900 rejection,
+  invalid/deleted category, owner scope, negative recoveries, missing coverage and exact-value table.
 
 Actual HA checks:
 
@@ -355,6 +431,23 @@ Actual HA checks:
 - Resource reload after copying an updated card file; clear errors for unsupported commands.
 - Real Sections/Masonry layouts, custom themes, companion app sleep/resume and external HA URL.
 - No desktop/editor API exposure, extra ports, or new financial Recorder history.
+
+### Expanded-card validation record (2026-11-13)
+
+- Service build and Release publish succeeded; both card JavaScript files passed `node --check`.
+- Temporary, dependency-free .NET assertions and HTTP checks used a separate fictional
+  administration outside Git, including all import-age boundaries above, undo, missing/future
+  dates, old bank data uploaded today, savings-only/empty owner scopes, and negative refunds.
+- Chrome checks covered all eight gallery cards, both languages/themes, desktop/tablet/phone
+  down to 320 px, disclosure resizing, category/history/month/owner filters, YAML, refresh,
+  fail-closed invalid/deleted selections and the full dashboard's extracted panels.
+- Widget/gallery GETs and browser filter/refresh operations preserved the administration revision.
+- The published app, running with a Production environment, served the stable asset aliases
+  (including the fingerprinted RCL CSS) and all eight gallery cards. HTTP smoke checks in
+  HA hosting mode retained ingress identity/path requirements, hid the gallery and blocked `/api`.
+- These are local/simulated-host checks, **not** a real Home Assistant session or companion-app
+  validation. The actual HA checklist above remains necessary. No new test framework or
+  dependency was added to the repository; the checkout's existing preview data was not used.
 
 ## 8. Continue in a new session
 
@@ -369,10 +462,13 @@ Read AGENTS.md and HOME-ASSISTANT-CARDS.md in full, then inspect the current Git
 status and relevant card code. Treat the guide's future-card table as possibilities,
 not approval to implement all of them.
 
-The current scope includes three ingress-only cards and a realistic loopback-only
+The current scope includes eight ingress-only cards and a realistic loopback-only
 gallery at /kaarten/preview. Preserve the existing financial calculations, access
 restrictions, and preview isolation. The 0.2.1 record was release-notes-only; do not
-bump application versions automatically.
+bump application versions automatically. The added budget, upcoming, data-status,
+category-trend and import-status cards also belong to 0.2.1. The frontend resource
+cache key is 0.2.1-cards2. Preserve the script-free SVG trend and separate import-cadence
+versus bank-freshness meanings.
 
 My next goal is: [describe the card, improvement, or investigation you want].
 

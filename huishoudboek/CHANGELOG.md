@@ -2,6 +2,20 @@
 
 ## 0.2.1
 
+- Extra Home Assistant-kaarten voor budgetbewaking, komende betalingen en volgende
+  inkomensdatums, gegevensstatus en categorietrends. Budgetten, onzekerheden en
+  eigenaarfilters volgen de bestaande berekeningen; dashboard en kaarten delen de weergave.
+- Importkaart voor betaalrekeningen met laatste actieve import, ouderdom per rekening
+  en een wekelijks streefritme. Groen tot zeven dagen, via geelgroen, amber en roodoranje
+  naar donkerrood na dertig dagen; onbekende importdatums blijven expliciet onbekend.
+  De oudste of ontbrekende import bepaalt de kop; bankactualiteit staat apart.
+- Categorietrendkaart met 6, 12 of 24 afgesloten maanden, driemaandsgemiddelde,
+  negatieve bedragen onder nul en exacte maandwaarden. Statische SVG zonder scripts
+  in de kaart; ontbrekende afschriftdekking blijft zichtbaar en is geen nuluitgave.
+- Lokale galerij en installatiehulp uitgebreid voor alle acht kaarten, met categorie-id's,
+  trendinstellingen en YAML-voorbeelden. Applicatieversies blijven ongewijzigd.
+- Ongeldige vervangende kaartinstellingen verbergen direct de vorige financiële
+  weergave; een oude eigenaar- of categoriecontext blijft niet in beeld.
 - Proefversie van losse Home Assistant-dashboardkaarten voor het maandoverzicht,
   de uitgavenverdeling en de compacte financiële vrijheidskaart. Hergebruikt de
   bestaande berekeningen via ingress, zonder extra poort, API-token of bewerkknoppen.

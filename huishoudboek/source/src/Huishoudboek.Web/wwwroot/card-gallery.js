@@ -47,14 +47,14 @@ const field = name => controls.elements.namedItem(name);
 const stage = document.querySelector("#preview-stage");
 const error = document.querySelector("#gallery-error");
 const parameters = new URL(location.href).searchParams;
-for (const name of ["theme", "viewport", "period", "month", "owner"]) {
+for (const name of ["theme", "viewport", "period", "month", "owner", "category", "history_months"]) {
     const value = parameters.get(name);
     if (value !== null) {
         const element = field(name);
         if (element instanceof HTMLSelectElement) {
             if ([...element.options].some(option => option.value === value)) element.value = value;
             // Do not widen a previously selected, now-deleted owner to the whole household.
-            else if (name === "owner" && value !== "") {
+            else if ((name === "owner" || name === "category" || name === "history_months") && value !== "") {
                 const unavailable = new Option(value, value, true, true);
                 element.add(unavailable);
             }
@@ -66,7 +66,7 @@ const hass = {
     connection: { connected: true }, user: { id: "local-demo", is_admin: true },
     locale: { language: field("language").value }, themes: { darkMode: false }
 };
-const widgets = ["month-overview", "spending", "freedom-map"];
+const widgets = ["month-overview", "upcoming", "import-status", "spending", "budget-watch", "data-status", "freedom-map", "category-trend"];
 const cards = widgets.map(widget => {
     const card = document.createElement("huishoudboek-preview-card");
     card.dataset.widget = widget;
@@ -76,7 +76,7 @@ const cards = widgets.map(widget => {
 
 function saveControls() {
     const url = new URL(location.href);
-    for (const name of ["theme", "viewport", "language", "period", "month", "owner"]) {
+    for (const name of ["theme", "viewport", "language", "period", "month", "owner", "category", "history_months"]) {
         if (field(name).value) url.searchParams.set(name, field(name).value);
         else url.searchParams.delete(name);
     }
@@ -97,12 +97,15 @@ function updateCards() {
         const period = field("period").value === "current" ? "current" : field("month").value;
         for (const [index, card] of cards.entries()) {
             card.setConfig({ addon: "local_huishoudboek", widget: widgets[index], period,
-                owner: field("owner").value || undefined, language: field("language").value, theme: "auto" });
+                owner: field("owner").value || undefined, language: field("language").value, theme: "auto",
+                category: widgets[index] === "category-trend" ? field("category").value : undefined,
+                history_months: Number(field("history_months").value) });
             card.hass = hass;
         }
         document.querySelector("#gallery-yaml").textContent = widgets.map(widget =>
             `type: custom:huishoudboek-card\naddon: abcdef12_huishoudboek\nwidget: ${widget}\nperiod: "${period}"\n` +
             (field("owner").value ? `owner: "${field("owner").value}"\n` : "") +
+            (widget === "category-trend" ? `category: "${field("category").value}"\nhistory_months: ${field("history_months").value}\n` : "") +
             `theme: auto\nlanguage: ${field("language").value}`).join("\n\n# ---\n\n");
     } catch {
         // A bad filter must not leave the previous owner's financial data on screen.

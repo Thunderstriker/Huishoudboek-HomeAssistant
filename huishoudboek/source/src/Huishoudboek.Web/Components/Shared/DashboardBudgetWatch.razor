@@ -1,0 +1,26 @@
+<section class="surface budget-watch" aria-labelledby="dashboard-budget-heading">
+    <div class="panel-heading"><div class="panel-title"><span class="panel-icon"><DashboardIcon Name="budget" /></span><h2 id="dashboard-budget-heading">@L["DashboardBudgetWatch"]</h2></div><a class="text-link" href="budgetten">@L["Budgets"] <span aria-hidden="true">↗</span></a></div>
+    @if (budgets.Count == 0)
+    { <div class="empty-state"><DashboardIcon Name="budget" /><p>@L["DashboardNoBudgets"]</p><a class="button" href="budgetten">@L["DashboardSetBudgets"]</a></div> }
+    else
+    {
+        <ul class="dashboard-list budget-list">
+            @foreach (var category in budgets)
+            {
+                <li>
+                    <div class="list-heading"><a class="category-link" href="categorietrends?categorie=@category.Id">@category.Name</a><strong>@Money(category.Spent) <small>/ @Money(category.Budget)</small></strong></div>
+                    <progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@L["CategoryUsage", category.Name]" class="@(category.IsOverBudget ? "over-budget" : category.Progress >= 80 ? "near-budget" : "")"></progress>
+                    <small class="budget-remaining @(category.IsOverBudget ? "negative" : "")">@L[category.IsOverBudget ? "DashboardBudgetOver" : "DashboardBudgetRemaining", Money(category.IsOverBudget ? category.Overspent : category.Remaining)]</small>
+                </li>
+            }
+        </ul>
+        <details class="panel-details"><summary>@L["DashboardBudgetDetails"]</summary><p>@L["HouseholdBudgetNote"]</p></details>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public MonthlyReport Report { get; set; } = null!;
+    private IReadOnlyList<CategoryResult> budgets = [];
+    protected override void OnParametersSet() => budgets = Report.Categories.Where(c => c.Budget > 0)
+        .OrderByDescending(c => c.IsOverBudget).ThenByDescending(c => c.Spent / c.Budget).ThenBy(c => c.Name).Take(4).ToArray();
+}

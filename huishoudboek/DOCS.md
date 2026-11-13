@@ -124,10 +124,18 @@ komende betalingen, buffers en dagelijkse saldoverwachtingen.
 
 ### Losse Home Assistant-dashboardkaarten (proefversie)
 
-De eerste drie kaarten zijn **Maandoverzicht** (`month-overview`), **Waar gaat mijn
-geld naartoe?** (`spending`) en de **compacte financiële vrijheidskaart** (`freedom-map`).
-Plaats ze onafhankelijk op een eigen dashboard, naast andere Home Assistant-kaarten.
-Budgetbewaking, komende betalingen en andere grafieken zijn nog niet als kaart beschikbaar.
+Er zijn acht kaarten die onafhankelijk naast andere Home Assistant-kaarten passen:
+
+| `widget` | Inhoud |
+| --- | --- |
+| `month-overview` | Maandoverzicht: inkomsten, uitgaven en maandresultaat na sparen |
+| `spending` | Waar gaat mijn geld naartoe? Uitgavenring en grootste categorieën |
+| `freedom-map` | Compacte financiële vrijheidskaart |
+| `budget-watch` | Vier budgetten met de hoogste overschrijding of benutting |
+| `upcoming` | Komende betalingen binnen zeven dagen en volgende inkomensdatums |
+| `data-status` | Bankactualiteit, ongecategoriseerde boekingen en aandachtspunten |
+| `category-trend` | Gekozen categorie over 6, 12 of 24 afgesloten maanden |
+| `import-status` | Laatste import per betaalrekening met wekelijkse kleurindicatie |
 
 #### Installeren
 
@@ -139,7 +147,7 @@ Budgetbewaking, komende betalingen en andere grafieken zijn nog niet als kaart b
    `/config/www/huishoudboek-card.js`. Maak de map `www` zo nodig aan met uw bestaande
    bestandseditor of Samba. Herstart Home Assistant als u `www` voor het eerst aanmaakt.
 4. Voeg bij **Instellingen → Dashboards → ⋮ → Bronnen** een bron toe:
-   URL `/local/huishoudboek-card.js?v=0.2.1`, type **JavaScript-module**.
+   URL `/local/huishoudboek-card.js?v=0.2.1-cards2`, type **JavaScript-module**.
    Schakel zo nodig de geavanceerde modus in uw gebruikersprofiel in om Bronnen te zien.
    Bij YAML-beheer gebruikt u dezelfde URL met `type: module` onder uw Lovelace-bronnen.
 5. Zoek de **volledige app-id** in de URL van de Huishoudboek-appbeheerpagina,
@@ -154,7 +162,26 @@ addon: abcdef12_huishoudboek # vervangen door uw volledige app-id
 widget: month-overview
 ```
 
-Gebruik `widget: spending` of `widget: freedom-map` voor de andere twee kaarten.
+Gebruik een van de andere `widget`-waarden uit de tabel voor een andere kaart.
+Voor alleen de importcontrole:
+
+```yaml
+type: custom:huishoudboek-card
+addon: abcdef12_huishoudboek
+widget: import-status
+```
+
+De categorietrend vereist ook een categorie-id (te vinden bij **Beheer & import →
+Home Assistant-dashboardkaarten → Categorie-id's**):
+
+```yaml
+type: custom:huishoudboek-card
+addon: abcdef12_huishoudboek
+widget: category-trend
+category: "00000000-0000-0000-0000-000000000000" # vervangen; lege UUID = ongecategoriseerd
+history_months: 12
+```
+
 Er is in deze proefversie geen visuele kaarteditor of automatische HACS-installatie.
 Een app-update vervangt het gekopieerde JavaScript-bestand niet: download het opnieuw
 als de kaartcode wijzigt en wijzig de `?v=` in de bron-URL om de browsercache te vernieuwen.
@@ -164,7 +191,7 @@ ingress-sessie nodig. De lokaal geïnstalleerde kaart regelt die sessie vóór h
 #### Een aparte pagina Financiën
 
 Dit voorbeeld is een volledige dashboardconfiguratie voor de ruwe configuratie-editor.
-Vervang **alle drie** de app-id's. Op smallere schermen stapelen de secties.
+Vervang **alle** app-id's en de categorie-id. Op smallere schermen stapelen de secties.
 
 ```yaml
 views:
@@ -179,16 +206,33 @@ views:
           - type: custom:huishoudboek-card
             addon: abcdef12_huishoudboek
             widget: month-overview
+          - type: custom:huishoudboek-card
+            addon: abcdef12_huishoudboek
+            widget: upcoming
+          - type: custom:huishoudboek-card
+            addon: abcdef12_huishoudboek
+            widget: import-status
       - type: grid
         cards:
           - type: custom:huishoudboek-card
             addon: abcdef12_huishoudboek
             widget: spending
+          - type: custom:huishoudboek-card
+            addon: abcdef12_huishoudboek
+            widget: budget-watch
+          - type: custom:huishoudboek-card
+            addon: abcdef12_huishoudboek
+            widget: data-status
       - type: grid
         cards:
           - type: custom:huishoudboek-card
             addon: abcdef12_huishoudboek
             widget: freedom-map
+          - type: custom:huishoudboek-card
+            addon: abcdef12_huishoudboek
+            widget: category-trend
+            category: "00000000-0000-0000-0000-000000000000"
+            history_months: 12
 ```
 
 #### Instellingen per kaart
@@ -196,16 +240,24 @@ views:
 | Instelling | Waarden | Standaard |
 | --- | --- | --- |
 | `addon` | Volledige app-id, inclusief repository-id | verplicht |
-| `widget` | `month-overview`, `spending`, `freedom-map` | verplicht |
+| `widget` | Een van de acht waarden hierboven | verplicht |
 | `period` | `current` of een aangehaalde maand, bijvoorbeeld `"2026-10"` (1900–2200) | `current` |
 | `owner` | Een eigenaar-UUID uit **Beheer & import → Eigenaar-id's** | hele huishouden |
 | `theme` | `auto`, `light`, `dark` | Home Assistant-thema |
 | `language` | `auto`, `nl`, `en` | Home Assistant-taal; niet-Nederlands wordt Engels |
 | `refresh_interval` | Geheel aantal seconden, 60–3600 | `300` |
+| `category` | UUID van een gewone categorie; lege UUID = ongecategoriseerd | verplicht bij `category-trend` |
+| `history_months` | `6`, `12`, `24` (getal) | `12`; alleen categorietrend |
 
 `current` volgt de maand in de ingestelde **app-tijdzone**, niet die van de telefoon.
-De vrijheidskaart volgt altijd vandaag en de afgesloten historiemaanden; `period`
-verandert die analyse niet. Een onbekende/verwijderde eigenaar geeft een foutmelding,
+De vrijheidskaart, komende betalingen en importstatus volgen altijd vandaag; `period`
+verandert die niet. Categorietrends eindigen bij `current` of de huidige vaste maand
+in de laatste afgesloten maand; een eerdere vaste maand wordt de eindmaand.
+Toekomstige trendmaanden en perioden vóór 1900 zijn ongeldig. Onbekende/verwijderde
+categorieën geven een foutmelding, geen andere categorie als vervanging.
+De gegevensstatus combineert actuele bankgegevens/planning met maandresultaat en
+budgetten voor de gekozen maand; ongecategoriseerde boekingen tellen tot vandaag.
+Een onbekende/verwijderde eigenaar geeft een foutmelding,
 nooit stilzwijgend het hele huishouden. Het filter is geen beveiligingsgrens en
 huishoudbudgetten worden niet naar eigenaarsaandeel verdeeld.
 
@@ -215,6 +267,34 @@ verandert uiterlijk bij de volgende verversing. Verborgen pagina's verversen nie
 Ingestelde themawijzigingen volgen direct; de hoogte volgt ook het uitklappen van uitleg.
 Links openen de volledige app in een nieuw tabblad. De app heeft daar zijn eigen
 maand-/eigenaarfilter; het kaartfilter wordt niet automatisch overgenomen.
+
+#### Importkleuren voor betaalrekeningen
+
+De importkaart toont **per betaalrekening** de laatste niet-ongedaan-gemaakte import,
+inclusief datum/tijd, ouderdom in kalenderdagen en afzonderlijk de bankgegevensdatum.
+Sparen, beleggen en rekeningen die pas later openen tellen niet mee. De kop volgt
+de oudste of onbekende import binnen het eigenaarfilter, zodat één nieuwe import
+geen andere verouderde rekening verbergt.
+
+| Dagen sinds import | Kleur | Betekenis |
+| --- | --- | --- |
+| 0–7 | Groen | Binnen het wekelijkse streefritme |
+| 8–14 | Geelgroen | Wekelijkse import gewenst |
+| 15–21 | Amber | Achterstallig |
+| 22–30 | Roodoranje | Sterk verouderd |
+| Meer dan 30 | Donkerrood | Langer dan dertig dagen geleden |
+| Ontbrekende/toekomstige datum | Grijs | Onbekend; controleer importgeschiedenis |
+
+Kleuren hebben altijd een tekstlabel. Een recent geïmporteerd oud bestand kan groen
+zijn voor **importritme**, maar blijft een waarschuwing voor **oude bankgegevens**
+tonen. Geen van beide bevestigt volledige afschriftdekking. Streef naar wekelijks
+importeren van alle betaalrekeningen; alleen de kaart vernieuwen importeert niets.
+
+Budgetbewaking behoudt huishoudbudgetten bij eigenaarfilters. Komende betalingen
+zijn geen bewijs van achterstand; onzekere reserveringen hebben geen verzonnen
+betaaldatum en tellen niet mee in het zevendagentotaal. De trend gebruikt dezelfde
+netto-uitgaven en gemiddelden als Categorietrends, met negatieve bedragen onder nul,
+gearceerde onbevestigde dekking en een uitklapbare tabel met exacte bedragen.
 
 #### Toegang, actualiteit en beperkingen
 
@@ -227,7 +307,7 @@ maand-/eigenaarfilter; het kaartfilter wordt niet automatisch overgenomen.
 - Het zijn weergavekaarten, **geen afzonderlijke leesrechten**. Gebruikers die de
   app mogen openen behouden daar hun volledige rechten. Kaartinstellingen en filters
   worden niet in de financiële database opgeslagen.
-- Elke verversing levert alleen HTML en CSS op: geen Blazor-circuit per kaart,
+- Elke verversing levert alleen statische HTML/CSS (inclusief SVG) op: geen scripts of Blazor-circuit per kaart,
   ruwe transactiedatabase of blijvende WebSocket naar de app. De Home Assistant-
   verbinding blijft nodig voor ingress-sessies. Er worden geen sensorentiteiten of
   extra financiële histories in Home Assistant Recorder aangemaakt.
@@ -246,7 +326,7 @@ maand-/eigenaarfilter; het kaartfilter wordt niet automatisch overgenomen.
 
 #### Controle na installatie
 
-Controleer de drie kaarten op een nieuw geopend dashboard zonder eerst de app te openen,
+Controleer de acht kaarten op een nieuw geopend dashboard zonder eerst de app te openen,
 in licht/donker thema, op telefoonbreedte en na slaapstand. Klap uitleg open en controleer
 dat de hoogte meeverandert. Importeer of categoriseer in een tweede tabblad en gebruik
 Vernieuwen. Controleer ook een vaste maand, een eigenaarfilter, een ongeldige eigenaar,
@@ -263,7 +343,8 @@ De galerij gebruikt de echte kaartcode voor de kaartweergave, hoogte, thema's, f
 en verversknoppen, met een lokale adapter in plaats van ingress. Alleen de omliggende
 Home Assistant-kaartvlakken en dashboardindeling zijn nagebootst. Kies desktop
 (maximaal 1280 px), tablet (820 px) of telefoon (390 px), licht/donker, Nederlands/Engels,
-een maand en een eigenaar. De breedte past zich ook aan een smaller browservenster aan.
+een maand, een eigenaar en een trendcategorie met 6/12/24 maanden historie.
+De breedte past zich ook aan een smaller browservenster aan.
 Instellingen blijven in de galerij-URL staan; de financiële database verandert niet.
 Onder de kaarten staan YAML-voorbeelden. Vervang de app-id en gebruik eigenaar-id's
 uit uw Home Assistant-administratie, niet zomaar die uit de demodata.
@@ -280,8 +361,10 @@ handleiding, mogelijke vervolgkaarten en instructies voor een nieuwe werksessie 
 [`HOME-ASSISTANT-CARDS.md`](../HOME-ASSISTANT-CARDS.md).
 
 Dezelfde losse pagina's zijn direct in de loopback-preview te bekijken:
-`/kaarten/month-overview`, `/kaarten/spending` en `/kaarten/freedom-map`, bijvoorbeeld
-met `?theme=dark&language=en&period=2026-10`. De kaartpagina's zijn niet ingeschakeld voor
+`/kaarten/<widget>` met elk van de acht widgetnamen, bijvoorbeeld
+`/kaarten/import-status?theme=dark&language=en` of
+`/kaarten/category-trend?category=00000000-0000-0000-0000-000000000000&history_months=12`.
+De kaartpagina's zijn niet ingeschakeld voor
 een gewone losstaande website-installatie.
 
 ### Inzichten: financiële vrijheid en geldvingerafdruk
