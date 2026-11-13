@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="@UiCulture.Language" data-theme="@Model.Theme">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <base href="@Model.AppBase" target="_blank" />
+    <title>@L[Model.Widget == "month-overview" ? "MonthlyOverview" : Model.Widget == "spending" ? "WhereMoneyGoes" : "FreedomTitle"] · Huishoudboek</title>
+    <link rel="stylesheet" href="_content/Huishoudboek.Web/site.css" />
+    <link rel="stylesheet" href="_content/Huishoudboek.Web/Huishoudboek.Web.bundle.scp.css" />
+    <link rel="stylesheet" href="_content/Huishoudboek.Web/dashboard-cards.css" />
+</head>
+<body>
+    <main class="widget-root" data-huishoudboek-widget="@Model.Widget" data-card-protocol="1">
+        @if (Model.Overview.Accounts.Count == 0)
+        {
+            <section class="card"><h1>@L[Model.Widget == "month-overview" ? "MonthlyOverview" : Model.Widget == "spending" ? "WhereMoneyGoes" : "FreedomTitle"]</h1><p>@L["DashboardNoAccounts"]</p><a href="instellen" rel="noopener noreferrer">@L["GetStarted"] →</a></section>
+        }
+        else if (Model.Widget == "month-overview")
+        { <DashboardMonth Report="Model.Overview.Month" Year="Model.Year" Month="Model.Month" /> }
+        else if (Model.Widget == "spending")
+        { <DashboardSpending Report="Model.Overview.Month" /> }
+        else if (Model.Insights is { } insights)
+        {
+            <FreedomMap Overview="insights.Freedom" LimitedHistory="insights.LimitedHistory" Compact="true" />
+        }
+        <div class="widget-context">
+            @if (Model.Widget == "freedom-map" && Model.Insights is { } analysis)
+            { <p>@L["InsightsPeriodNote", Model.Overview.Today.ToString("dd-MM-yyyy"), analysis.CoveredMonths]</p><p>@L["FreedomNotIndependence"]</p> }
+            else
+            { <p>@(new DateTime(Model.Year, Model.Month, 1).ToString("MMMM yyyy", UiCulture.Culture)) · @L["CardActualOnly"]</p> }
+            <p>@(Model.OwnerName ?? L["AllOwners"].Value) · @L["CardSnapshotAt", DateTime.Now.ToString("dd-MM-yyyy HH:mm", UiCulture.Culture)]</p>
+            @if (Model.Overview.Accounts.Count > 0)
+            {
+                var through = Model.Overview.Accounts.Any(a => a.ImportedThrough == null) ? null : Model.Overview.Accounts.Min(a => a.ImportedThrough);
+                var stale = Model.Overview.Accounts.Count(a => a.StaleImports);
+                <p class="@(stale > 0 ? "widget-warning" : "")">@L["DashboardImportedThrough", through?.ToString("dd-MM-yyyy") ?? L["Unknown"].Value]
+                    @if (stale > 0) { <span> · @L["CardStaleAccounts", stale]</span> }
+                </p>
+            }
+            @if (Model.OwnerName != null) { <p>@L["OwnerFilterNote"]</p> }
+            <p><a href="@(Model.Widget == "freedom-map" ? "inzichten" : "maand")" rel="noopener noreferrer">@L["CardOpenApp"] ↗</a></p>
+        </div>
+    </main>
+</body>
+</html>
+
+@code {
+    [Parameter, EditorRequired] public DashboardCardModel Model { get; set; } = null!;
+}

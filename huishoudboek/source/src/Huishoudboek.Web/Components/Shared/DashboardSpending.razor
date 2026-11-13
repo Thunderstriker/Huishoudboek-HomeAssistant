@@ -1,5 +1,3 @@
-@inherits PageBase
-
 <section class="dashboard-spending" aria-labelledby="dashboard-spending-heading">
     <div class="spending-heading"><div class="spending-title"><span class="spending-icon"><DashboardIcon Name="budget" /></span><h2 id="dashboard-spending-heading">@L["WhereMoneyGoes"]</h2></div><a href="categorietrends">@L["DashboardViewTrends"] <span aria-hidden="true">↗</span></a></div>
     @if (categories.Count == 0)
@@ -20,7 +18,7 @@
                     var share = item.Spent / total;
                     <li style="--category-color:@Colors[index]" data-category-id="@item.Id">
                         <div class="category-heading">
-                            @if (item.Id != Guid.Empty) { <a href="categorietrends?categorie=@item.Id">@State.CategoryName(item.Id)</a> }
+                            @if (item.Id != Guid.Empty) { <a href="categorietrends?categorie=@item.Id">@item.Name</a> }
                             else { <span>@item.Name</span> }
                             <strong>@Money(item.Spent)</strong><small>@share.ToString("P0", UiCulture.Culture)</small>
                         </div>

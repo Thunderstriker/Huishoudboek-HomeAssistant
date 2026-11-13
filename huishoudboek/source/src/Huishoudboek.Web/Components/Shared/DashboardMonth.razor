@@ -1,0 +1,32 @@
+<section class="dashboard-month" aria-labelledby="dashboard-month-heading">
+    <div class="snapshot-heading">
+        <h2 id="dashboard-month-heading"><DashboardIcon Name="calendar" />@(new DateTime(Year, Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
+        <a href="maand">@L["DashboardFullMonth"] <span aria-hidden="true">↗</span></a>
+    </div>
+    <div id="dashboard-monthly-figures">
+        <div class="result-card @(Report.Available < 0 ? "result-negative" : "")">
+            <div class="metric-label">@L["AvailableThisMonth"]</div>
+            <div class="metric-value @(Report.Available < 0 ? "negative" : "positive")">@Money(Report.Available)</div>
+            <p class="result-note">@L["AvailableNote"]</p>
+        </div>
+        <dl class="snapshot-breakdown">
+            <div class="income-card"><dt><i aria-hidden="true"></i>@L["Income"]</dt><dd>@Money(Report.Income)</dd></div>
+            <div class="outflow-card"><dt><i aria-hidden="true"></i>@L["OutflowHousing"]</dt><dd>@Money(Report.Outflow)</dd></div>
+            <div class="savings-card"><dt><i aria-hidden="true"></i>@L["Savings"]</dt><dd>@Money(Report.Savings)</dd></div>
+        </dl>
+    </div>
+    <details class="snapshot-details">
+        <summary>@L["DashboardAboutFigures"]</summary>
+        <p>@L["DashboardMonthlyNote"]</p>
+        <p>@L["ActuallyReceived"] · @L["IncludesPrincipal"] · @L["NetSavingsInvestments"]</p>
+        @if (Report.BeforeSavings < 0) { <a href="vooruitblik#maandstatus">@L["SpendingAboveIncomeBadge"] →</a> }
+        @if (Report.SavingsExceedSurplus) { <a href="vooruitblik#maandstatus">@L["SavingsAboveSurplusBadge"] →</a> }
+        @if (Report.ExceptionalOutflow != 0) { <p>@L["ExceptionalActualNote", Money(Report.ExceptionalOutflow)]</p> }
+    </details>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public MonthlyReport Report { get; set; } = null!;
+    [Parameter] public int Year { get; set; }
+    [Parameter] public int Month { get; set; }
+}

@@ -1,0 +1,43 @@
+.dashboard-month { display: flex; flex-direction: column; min-width: 0; border: 1px solid #244c3c; border-radius: 16px; padding: 18px 22px 14px; color: #f7fbef; background: linear-gradient(125deg, #1d4334, #2b5341); box-shadow: var(--dash-shadow); }
+.snapshot-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 16px; }
+.snapshot-heading h2 { display: inline-flex; align-items: center; gap: 8px; font-size: .93rem; font-weight: 500; text-transform: capitalize; margin: 0; letter-spacing: -.015em; }
+.snapshot-heading h2 ::deep svg { width: 17px; height: 17px; color: #b6d2b4; }
+.snapshot-heading > a { display: inline-flex; gap: 8px; align-items: center; color: #d3e2d0; font-size: .78rem; text-decoration: none; }
+.snapshot-heading > a:hover { color: white; text-decoration: underline; }
+#dashboard-monthly-figures { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: center; padding-bottom: 14px; }
+.result-card { min-width: 0; }
+.result-card .metric-label { font-size: .86rem; text-transform: none; letter-spacing: 0; color: #d6e5d5; }
+.result-card .metric-value { font-size: clamp(2rem, 2.7vw, 2.8rem); font-weight: 550; letter-spacing: -.045em; line-height: 1.12; margin: 7px 0 8px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.result-card .positive { color: #e0f0b5; }
+.result-card .negative { color: #ffc0ae; }
+.result-note { color: #c1d4c0; font-size: .73rem; margin: 0; }
+.snapshot-breakdown { display: grid; gap: 10px; min-width: 0; margin: 0; border-left: 1px solid #ffffff20; padding-left: 18px; }
+.snapshot-breakdown > div { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; min-width: 0; }
+.snapshot-breakdown dt { display: flex; align-items: center; gap: 6px; color: #d3e1cf; font-size: .73rem; }
+.snapshot-breakdown dd { min-width: 0; margin: 0; font-size: 1.02rem; font-weight: 550; letter-spacing: -.02em; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.snapshot-breakdown i { width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: #c6dfa0; }
+.outflow-card i { background: #e7bb85; }
+.savings-card i { background: #adc5ea; }
+.snapshot-details { border-top: 1px solid #ffffff18; padding-top: 10px; font-size: .73rem; color: #c1d4c0; }
+.snapshot-details summary { width: fit-content; cursor: pointer; padding: 0; font-weight: 400; }
+.snapshot-details p { margin: 10px 0; }
+.snapshot-details a { color: #ffdaab; display: block; margin: 6px 0; }
+.dashboard-month a:focus-visible, .dashboard-month summary:focus-visible { outline: 3px solid #e0f0b5; outline-offset: 4px; }
+@media (max-width: 1150px) {
+    #dashboard-monthly-figures { gap: 16px; }
+    .snapshot-breakdown { padding-left: 14px; }
+}
+@media (max-width: 600px) {
+    .dashboard-month { padding: 16px 18px 12px; }
+    .snapshot-heading { margin-bottom: 14px; }
+    .snapshot-heading > a { font-size: .72rem; }
+    #dashboard-monthly-figures { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .result-card .metric-value { font-size: 2.35rem; }
+    .snapshot-breakdown { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; border-left: 0; border-top: 1px solid #ffffff18; padding: 12px 0 0; }
+    .snapshot-breakdown > div { display: block; }
+    .snapshot-breakdown dt { gap: 4px; font-size: .7rem; }
+    .snapshot-breakdown dd { font-size: 1rem; margin-top: 4px; text-align: left; }
+    .snapshot-breakdown i { width: 4px; height: 4px; }
+    .result-note { font-size: .7rem; }
+    .snapshot-details { font-size: .71rem; }
+}

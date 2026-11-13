@@ -7,32 +7,7 @@
     <h1 class="sr-only">@L["StartDashboard"]</h1>
 
     <div class="dashboard-overview">
-        <section class="dashboard-month" aria-labelledby="dashboard-month-heading">
-            <div class="snapshot-heading">
-                <h2 id="dashboard-month-heading"><DashboardIcon Name="calendar" />@(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
-                <a href="maand">@L["DashboardFullMonth"] <span aria-hidden="true">↗</span></a>
-            </div>
-            <div id="dashboard-monthly-figures">
-                <div class="result-card @(overview.Month.Available < 0 ? "result-negative" : "")">
-                    <div class="metric-label">@L["AvailableThisMonth"]</div>
-                    <div class="metric-value @(overview.Month.Available < 0 ? "negative" : "positive")">@Money(overview.Month.Available)</div>
-                    <p class="result-note">@L["AvailableNote"]</p>
-                </div>
-                <dl class="snapshot-breakdown">
-                    <div class="income-card"><dt><i aria-hidden="true"></i>@L["Income"]</dt><dd>@Money(overview.Month.Income)</dd></div>
-                    <div class="outflow-card"><dt><i aria-hidden="true"></i>@L["OutflowHousing"]</dt><dd>@Money(overview.Month.Outflow)</dd></div>
-                    <div class="savings-card"><dt><i aria-hidden="true"></i>@L["Savings"]</dt><dd>@Money(overview.Month.Savings)</dd></div>
-                </dl>
-            </div>
-            <details class="snapshot-details">
-                <summary>@L["DashboardAboutFigures"]</summary>
-                <p>@L["DashboardMonthlyNote"]</p>
-                <p>@L["ActuallyReceived"] · @L["IncludesPrincipal"] · @L["NetSavingsInvestments"]</p>
-                @if (overview.Month.BeforeSavings < 0) { <a href="vooruitblik#maandstatus">@L["SpendingAboveIncomeBadge"] →</a> }
-                @if (overview.Month.SavingsExceedSurplus) { <a href="vooruitblik#maandstatus">@L["SavingsAboveSurplusBadge"] →</a> }
-                @if (overview.Month.ExceptionalOutflow != 0) { <p>@L["ExceptionalActualNote", Money(overview.Month.ExceptionalOutflow)]</p> }
-            </details>
-        </section>
+        <DashboardMonth Report="overview.Month" Year="State.Year" Month="State.Month" />
         <DashboardAccounts Accounts="overview.Accounts" />
     </div>
 

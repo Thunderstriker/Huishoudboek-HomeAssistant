@@ -11,8 +11,17 @@ public static class WebsiteLanguage
         services.Configure<RequestLocalizationOptions>(options =>
         {
             options.SetDefaultCulture("nl-NL").AddSupportedCultures("nl-NL", "en-GB").AddSupportedUICultures("nl-NL", "en-GB");
-            // An explicit browser preference only; browser headers must not change the Dutch default.
-            options.RequestCultureProviders = [new CookieRequestCultureProvider()];
+            // Only explicit preferences; browser headers must not change the Dutch default.
+            options.RequestCultureProviders = [new CustomRequestCultureProvider(context =>
+            {
+                // A card may follow the HA language without changing the app's browser preference.
+                var language = context.Request.Path.StartsWithSegments("/kaarten") && context.Request.Query["language"].Count == 1
+                    ? context.Request.Query["language"].ToString() : "";
+                return Task.FromResult<ProviderCultureResult?>(language switch
+                {
+                    "nl" => new("nl-NL"), "en" => new("en-GB"), _ => null
+                });
+            }), new CookieRequestCultureProvider()];
         });
     }
 

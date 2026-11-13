@@ -3,6 +3,36 @@
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
   <data name="Language" xml:space="preserve"><value>Taal</value></data>
+  <data name="CardSetupTitle" xml:space="preserve"><value>Home Assistant-dashboardkaarten · proefversie</value></data>
+  <data name="CardSetupHelp" xml:space="preserve"><value>Plaats het maandoverzicht, de uitgavenverdeling en de compacte vrijheidskaart los op een Home Assistant-dashboard. Download het kaartbestand, bewaar het als /config/www/huishoudboek-card.js en volg de dashboardkaarten-instructies in de appdocumentatie.</value></data>
+  <data name="CardDownload" xml:space="preserve"><value>Kaartbestand downloaden</value></data>
+  <data name="CardSetupResource" xml:space="preserve"><value>Voeg in Home Assistant een dashboardbron van het type JavaScript-module toe:</value></data>
+  <data name="CardAccessNote" xml:space="preserve"><value>Alleen voor vertrouwde Home Assistant-beheerders. De kaarten hebben geen bewerkknoppen, maar geven geen afzonderlijke leesrechten. Bijwerken van de app vervangt het gekopieerde kaartbestand niet automatisch.</value></data>
+  <data name="CardOwnerIds" xml:space="preserve"><value>Eigenaar-id's voor het optionele kaartfilter</value></data>
+  <data name="CardActualOnly" xml:space="preserve"><value>Werkelijke boekingen, geen prognose of vrij besteedbaar saldo.</value></data>
+  <data name="CardSnapshotAt" xml:space="preserve"><value>Overzicht geladen op {0}</value></data>
+  <data name="CardStaleAccounts" xml:space="preserve"><value>{0} rekening(en) met verouderde of onbekende bankgegevens; controleer de imports.</value></data>
+  <data name="CardOpenApp" xml:space="preserve"><value>Open Huishoudboek</value></data>
+  <data name="CardGalleryTitle" xml:space="preserve"><value>Home Assistant-kaarten lokaal bekijken</value></data>
+  <data name="CardGalleryIntro" xml:space="preserve"><value>De echte kaartweergave en kaartbediening in een nagebootst dashboard, zonder Home Assistant te installeren.</value></data>
+  <data name="CardGalleryPrivacy" xml:space="preserve"><value>Alleen lokaal. Dit is de previewadministratie van deze checkout: op de eerste start fictief, maar mogelijk met door u geïmporteerde financiële gegevens. Er wordt niets naar Home Assistant gestuurd. Deel deze pagina niet via een proxy of tunnel.</value></data>
+  <data name="CardGalleryTheme" xml:space="preserve"><value>Thema</value></data>
+  <data name="CardGalleryLight" xml:space="preserve"><value>Licht</value></data>
+  <data name="CardGalleryDark" xml:space="preserve"><value>Donker</value></data>
+  <data name="CardGalleryViewport" xml:space="preserve"><value>Schermformaat</value></data>
+  <data name="CardGalleryDesktop" xml:space="preserve"><value>Desktop</value></data>
+  <data name="CardGalleryTablet" xml:space="preserve"><value>Tablet</value></data>
+  <data name="CardGalleryMobile" xml:space="preserve"><value>Telefoon</value></data>
+  <data name="CardGalleryPeriod" xml:space="preserve"><value>Maandkeuze</value></data>
+  <data name="CardGalleryCurrent" xml:space="preserve"><value>Huidige maand volgen</value></data>
+  <data name="CardGalleryFixed" xml:space="preserve"><value>Vaste maand kiezen</value></data>
+  <data name="CardGalleryControlsNote" xml:space="preserve"><value>Thema en schermformaat wijzigen direct; een smaller browservenster begrenst de gekozen breedte. Maand en eigenaar laden nieuwe kaartgegevens. Taal wijzigen herlaadt de galerij. De vrijheidskaart blijft de actuele historische analyse tonen.</value></data>
+  <data name="CardGalleryLoadError" xml:space="preserve"><value>De kaartinstellingen zijn ongeldig. Controleer de maand en eigenaar; de vorige gegevens zijn verborgen.</value></data>
+  <data name="CardGalleryDashboard" xml:space="preserve"><value>Financiën</value></data>
+  <data name="CardGallerySimulation" xml:space="preserve"><value>Lokale dashboardnabootsing · geen Home Assistant-sessie</value></data>
+  <data name="CardGalleryYamlTitle" xml:space="preserve"><value>Voorbeelden voor echte Home Assistant-kaarten</value></data>
+  <data name="CardGalleryYamlNote" xml:space="preserve"><value>Elk blok is één handmatige kaart. Vervang abcdef12_huishoudboek door uw volledige geïnstalleerde app-id. Eigenaar-id's en gegevens van deze lokale preview zijn niet automatisch gelijk aan die in Home Assistant. Thema auto volgt daar uw echte Home Assistant-thema.</value></data>
+  <data name="CardGalleryLimits" xml:space="preserve"><value>Deze galerij test de kaartvormgeving, filters, hoogte en verversing. Home Assistant-aanmelding, ingress-sessies, werkelijke dashboardindeling en de mobiele companion-app moeten nog in Home Assistant worden getest.</value></data>
   <data name="ApplyLanguage" xml:space="preserve"><value>Taal toepassen</value></data>
   <data name="LanguageReloadWarning" xml:space="preserve"><value>Taal wijzigen herlaadt de pagina. Sla uw wijzigingen eerst op.</value></data>
   <data name="SkipToContent" xml:space="preserve"><value>Naar inhoud</value></data>

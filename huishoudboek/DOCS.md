@@ -122,6 +122,168 @@ Kleine waarschuwingen bij de bedragen verwijzen naar de volledige maanduitleg op
 **Financiële vooruitblik**. Daar staat ook de bestedingsplanner met aankoopcontrole,
 komende betalingen, buffers en dagelijkse saldoverwachtingen.
 
+### Losse Home Assistant-dashboardkaarten (proefversie)
+
+De eerste drie kaarten zijn **Maandoverzicht** (`month-overview`), **Waar gaat mijn
+geld naartoe?** (`spending`) en de **compacte financiële vrijheidskaart** (`freedom-map`).
+Plaats ze onafhankelijk op een eigen dashboard, naast andere Home Assistant-kaarten.
+Budgetbewaking, komende betalingen en andere grafieken zijn nog niet als kaart beschikbaar.
+
+#### Installeren
+
+1. Gebruik Home Assistant OS met Supervisor en **Home Assistant Core 2026.11 of nieuwer**.
+   Deze proefversie gebruikt de `supervisor/ingress/...`-WebSocket-opdrachten.
+2. Open Huishoudboek als Home Assistant-beheerder en ga naar **Beheer & import →
+   Home Assistant-dashboardkaarten**. Download `huishoudboek-card.js`.
+3. Bewaar dit bestand in de Home Assistant-configuratiemap als
+   `/config/www/huishoudboek-card.js`. Maak de map `www` zo nodig aan met uw bestaande
+   bestandseditor of Samba. Herstart Home Assistant als u `www` voor het eerst aanmaakt.
+4. Voeg bij **Instellingen → Dashboards → ⋮ → Bronnen** een bron toe:
+   URL `/local/huishoudboek-card.js?v=0.2.1`, type **JavaScript-module**.
+   Schakel zo nodig de geavanceerde modus in uw gebruikersprofiel in om Bronnen te zien.
+   Bij YAML-beheer gebruikt u dezelfde URL met `type: module` onder uw Lovelace-bronnen.
+5. Zoek de **volledige app-id** in de URL van de Huishoudboek-appbeheerpagina,
+   bijvoorbeeld `abcdef12_huishoudboek`. Een lokale installatie gebruikt
+   `local_huishoudboek`. Alleen `huishoudboek` is niet voldoende; de repository-id verschilt
+   per repository-URL. Gebruik de id van uw eigen installatie, niet die uit dit voorbeeld.
+6. Voeg een **Handmatige kaart** toe en plak bijvoorbeeld:
+
+```yaml
+type: custom:huishoudboek-card
+addon: abcdef12_huishoudboek # vervangen door uw volledige app-id
+widget: month-overview
+```
+
+Gebruik `widget: spending` of `widget: freedom-map` voor de andere twee kaarten.
+Er is in deze proefversie geen visuele kaarteditor of automatische HACS-installatie.
+Een app-update vervangt het gekopieerde JavaScript-bestand niet: download het opnieuw
+als de kaartcode wijzigt en wijzig de `?v=` in de bron-URL om de browsercache te vernieuwen.
+Registreer de bron niet rechtstreeks via een ingress-URL: die heeft zelf eerst een
+ingress-sessie nodig. De lokaal geïnstalleerde kaart regelt die sessie vóór het laden.
+
+#### Een aparte pagina Financiën
+
+Dit voorbeeld is een volledige dashboardconfiguratie voor de ruwe configuratie-editor.
+Vervang **alle drie** de app-id's. Op smallere schermen stapelen de secties.
+
+```yaml
+views:
+  - title: Financiën
+    path: financien
+    icon: mdi:finance
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:huishoudboek-card
+            addon: abcdef12_huishoudboek
+            widget: month-overview
+      - type: grid
+        cards:
+          - type: custom:huishoudboek-card
+            addon: abcdef12_huishoudboek
+            widget: spending
+      - type: grid
+        cards:
+          - type: custom:huishoudboek-card
+            addon: abcdef12_huishoudboek
+            widget: freedom-map
+```
+
+#### Instellingen per kaart
+
+| Instelling | Waarden | Standaard |
+| --- | --- | --- |
+| `addon` | Volledige app-id, inclusief repository-id | verplicht |
+| `widget` | `month-overview`, `spending`, `freedom-map` | verplicht |
+| `period` | `current` of een aangehaalde maand, bijvoorbeeld `"2026-10"` (1900–2200) | `current` |
+| `owner` | Een eigenaar-UUID uit **Beheer & import → Eigenaar-id's** | hele huishouden |
+| `theme` | `auto`, `light`, `dark` | Home Assistant-thema |
+| `language` | `auto`, `nl`, `en` | Home Assistant-taal; niet-Nederlands wordt Engels |
+| `refresh_interval` | Geheel aantal seconden, 60–3600 | `300` |
+
+`current` volgt de maand in de ingestelde **app-tijdzone**, niet die van de telefoon.
+De vrijheidskaart volgt altijd vandaag en de afgesloten historiemaanden; `period`
+verandert die analyse niet. Een onbekende/verwijderde eigenaar geeft een foutmelding,
+nooit stilzwijgend het hele huishouden. Het filter is geen beveiligingsgrens en
+huishoudbudgetten worden niet naar eigenaarsaandeel verdeeld.
+
+De kaarten vernieuwen hun gegevens periodiek en bij terugkeer uit de achtergrond;
+de knop **Vernieuwen** haalt direct een nieuwe momentopname op. De huidige maand
+verandert uiterlijk bij de volgende verversing. Verborgen pagina's verversen niet.
+Ingestelde themawijzigingen volgen direct; de hoogte volgt ook het uitklappen van uitleg.
+Links openen de volledige app in een nieuw tabblad. De app heeft daar zijn eigen
+maand-/eigenaarfilter; het kaartfilter wordt niet automatisch overgenomen.
+
+#### Toegang, actualiteit en beperkingen
+
+- Alleen voor **vertrouwde Home Assistant-beheerders**, overeenkomstig de bestaande
+  `panel_admin: true`-instelling. Een dashboard verbergen is geen toegangsbeveiliging.
+  Deze kaarten maken de app niet geschikt voor gasten of een onbeveiligde wandtablet.
+- De kaart maakt en verlengt een ingress-sessie namens de ingelogde gebruiker.
+  Geen aparte app-token, externe poort, MQTT, cloud of Home Assistant-integratie nodig.
+  De bestaande desktop-/editor-API blijft uitgeschakeld in Home Assistant-modus.
+- Het zijn weergavekaarten, **geen afzonderlijke leesrechten**. Gebruikers die de
+  app mogen openen behouden daar hun volledige rechten. Kaartinstellingen en filters
+  worden niet in de financiële database opgeslagen.
+- Elke verversing levert alleen HTML en CSS op: geen Blazor-circuit per kaart,
+  ruwe transactiedatabase of blijvende WebSocket naar de app. De Home Assistant-
+  verbinding blijft nodig voor ingress-sessies. Er worden geen sensorentiteiten of
+  extra financiële histories in Home Assistant Recorder aangemaakt.
+- De kaarten gebruiken dezelfde boekhoudregels als de app: maandresultaat na sparen
+  is geen rekeningsaldo of vrij besteedbaar bedrag. De uitgavenring toont positieve
+  categoriebedragen; netto retouren kunnen het maandresultaat wel verlagen.
+- Laden, een gestopte app, geweigerde toegang en verbindingsproblemen tonen een melding,
+  geen nulbedragen. Er blijft bij een mislukte verversing geen oude financiële kaart staan.
+  Bij netwerkverlies of ingetrokken rechten kan dit pas worden vastgesteld zodra de
+  browser/ingress dat bij een nieuwe controle meldt; eerder getoonde gegevens zijn
+  daardoor niet op afstand terug te halen.
+- Bankactualiteit wordt apart van de laadtijd getoond, met de oudste bankdatum van
+  de geselecteerde rekeningen (onbekend als een rekening geen datum heeft).
+  Herhaald verversen haalt geen nieuwe bankgegevens op: daarvoor blijft import nodig.
+  De vrijheidskaart behoudt waarschuwingen voor ontbrekende historie en voorlopige bedragen.
+
+#### Controle na installatie
+
+Controleer de drie kaarten op een nieuw geopend dashboard zonder eerst de app te openen,
+in licht/donker thema, op telefoonbreedte en na slaapstand. Klap uitleg open en controleer
+dat de hoogte meeverandert. Importeer of categoriseer in een tweede tabblad en gebruik
+Vernieuwen. Controleer ook een vaste maand, een eigenaarfilter, een ongeldige eigenaar,
+onvoldoende inzichtenhistorie, een app-herstart en een niet-beheerdersaccount.
+
+#### Realistische lokale galerij
+
+Start vanuit de repository `./preview.ps1` en open
+**http://127.0.0.1:5099/kaarten/preview**, of kies de galerij bij **Beheer & import →
+Home Assistant-dashboardkaarten** in de lokale preview. Bij een andere `-Port` gebruikt
+u die poort. Er is geen Home Assistant-installatie of aanmelding nodig.
+
+De galerij gebruikt de echte kaartcode voor de kaartweergave, hoogte, thema's, filters
+en verversknoppen, met een lokale adapter in plaats van ingress. Alleen de omliggende
+Home Assistant-kaartvlakken en dashboardindeling zijn nagebootst. Kies desktop
+(maximaal 1280 px), tablet (820 px) of telefoon (390 px), licht/donker, Nederlands/Engels,
+een maand en een eigenaar. De breedte past zich ook aan een smaller browservenster aan.
+Instellingen blijven in de galerij-URL staan; de financiële database verandert niet.
+Onder de kaarten staan YAML-voorbeelden. Vervang de app-id en gebruik eigenaar-id's
+uit uw Home Assistant-administratie, niet zomaar die uit de demodata.
+
+Deze galerij bestaat alleen in de expliciete loopback-preview. Alleen de afzonderlijke
+kaartpagina's mogen daar in frames van dezelfde oorsprong worden getoond; de galerij en
+overige apppagina's blijven tegen framing beschermd. Peer- en Host-controles blijven
+actief. Publiceer of tunnel deze preview niet. De administratie kan naast fictieve
+gegevens ook echte financiële gegevens bevatten die u zelf in de preview importeerde.
+
+De galerij test geen echte Home Assistant-authenticatie, ingress-sessieverlenging of
+companion-app. Controleer die op Home Assistant vóór gebruik. De volledige technische
+handleiding, mogelijke vervolgkaarten en instructies voor een nieuwe werksessie staan in
+[`HOME-ASSISTANT-CARDS.md`](../HOME-ASSISTANT-CARDS.md).
+
+Dezelfde losse pagina's zijn direct in de loopback-preview te bekijken:
+`/kaarten/month-overview`, `/kaarten/spending` en `/kaarten/freedom-map`, bijvoorbeeld
+met `?theme=dark&language=en&period=2026-10`. De kaartpagina's zijn niet ingeschakeld voor
+een gewone losstaande website-installatie.
+
 ### Inzichten: financiële vrijheid en geldvingerafdruk
 
 Open **Inzichten** (`/inzichten`) via de navigatie of de link onderaan het dashboard.

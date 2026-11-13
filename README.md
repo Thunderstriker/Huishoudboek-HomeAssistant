@@ -13,6 +13,11 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   Kies zelf rekeningkaarten; standaard staan de betaalrekeningen (zichtrekeningen) aan.
   De keuze wordt per browser bewaard en verandert geen overzichten of financiële gegevens.
   Het volledige maandoverzicht blijft apart beschikbaar via **Maandoverzicht**.
+- **Losse Home Assistant-dashboardkaarten (proefversie):** plaats het maandoverzicht,
+  de uitgavenverdeling en de compacte financiële vrijheidskaart op een eigen dashboard.
+  Via ingress, zonder extra poort of app-token; alleen voor vertrouwde beheerders.
+  Het kaartbestand is apart te installeren via **Beheer & import**. Zie de
+  [installatie-instructies](huishoudboek/DOCS.md#losse-home-assistant-dashboardkaarten-proefversie).
 - **Instellen en wekelijkse controle:** aparte pagina's met een checklist voor rekeningen, beginsaldi,
   imports, banksaldocontrole, categorisatie en budgetten/vaste posten. Daarna een compacte
   review voor recente imports, uitzonderingen en betalingen over 7 dagen. Instellen staat
@@ -172,6 +177,12 @@ Installeer de **.NET 10 SDK** en start vanuit de repository in PowerShell:
 ```
 
 Open **http://127.0.0.1:5099**. Er is **geen gebruikersnaam of wachtwoord** nodig.
+Voor een realistische Home Assistant-kaartpreview opent u
+**http://127.0.0.1:5099/kaarten/preview**. De galerij toont de drie kaarten naast
+elkaar, met telefoon-/tabletweergave, licht/donker thema, taal-, maand- en eigenaarfilters.
+Deze nabootsing gebruikt de lokale previewadministratie, niet uw Home Assistant-aanmelding.
+Alle achtergrondinformatie, mogelijke vervolgkaarten en een overdrachtsprompt staan in
+[HOME-ASSISTANT-CARDS.md](HOME-ASSISTANT-CARDS.md).
 De eerste start maakt fictieve demogegevens aan: eigenaren, rekeningen, budgetten,
 vaste posten en twaalf maanden historie plus de huidige maand. De launcher
 gebruikt `dotnet watch --no-hot-reload`: bronwijzigingen bouwen de app opnieuw en

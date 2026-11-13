@@ -3,6 +3,36 @@
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
   <data name="Language" xml:space="preserve"><value>Language</value></data>
+  <data name="CardSetupTitle" xml:space="preserve"><value>Home Assistant dashboard cards · preview</value></data>
+  <data name="CardSetupHelp" xml:space="preserve"><value>Place the monthly overview, spending breakdown and compact freedom map separately on a Home Assistant dashboard. Download the card file, save it as /config/www/huishoudboek-card.js and follow the dashboard card instructions in the app documentation.</value></data>
+  <data name="CardDownload" xml:space="preserve"><value>Download card file</value></data>
+  <data name="CardSetupResource" xml:space="preserve"><value>Add a dashboard resource in Home Assistant with type JavaScript module:</value></data>
+  <data name="CardAccessNote" xml:space="preserve"><value>For trusted Home Assistant administrators only. The cards have no editing controls, but do not grant separate read-only permissions. Updating the app does not automatically replace the copied card file.</value></data>
+  <data name="CardOwnerIds" xml:space="preserve"><value>Owner IDs for the optional card filter</value></data>
+  <data name="CardActualOnly" xml:space="preserve"><value>Recorded transactions, not a forecast or safely spendable balance.</value></data>
+  <data name="CardSnapshotAt" xml:space="preserve"><value>Snapshot loaded at {0}</value></data>
+  <data name="CardStaleAccounts" xml:space="preserve"><value>{0} account(s) with stale or unknown bank data; check the imports.</value></data>
+  <data name="CardOpenApp" xml:space="preserve"><value>Open Huishoudboek</value></data>
+  <data name="CardGalleryTitle" xml:space="preserve"><value>Preview Home Assistant cards locally</value></data>
+  <data name="CardGalleryIntro" xml:space="preserve"><value>The real card views and controls in a simulated dashboard, without installing Home Assistant.</value></data>
+  <data name="CardGalleryPrivacy" xml:space="preserve"><value>Local only. This uses this checkout's preview administration: fictional on first launch, but it may contain financial data you imported. Nothing is sent to Home Assistant. Do not share this page through a proxy or tunnel.</value></data>
+  <data name="CardGalleryTheme" xml:space="preserve"><value>Theme</value></data>
+  <data name="CardGalleryLight" xml:space="preserve"><value>Light</value></data>
+  <data name="CardGalleryDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="CardGalleryViewport" xml:space="preserve"><value>Screen size</value></data>
+  <data name="CardGalleryDesktop" xml:space="preserve"><value>Desktop</value></data>
+  <data name="CardGalleryTablet" xml:space="preserve"><value>Tablet</value></data>
+  <data name="CardGalleryMobile" xml:space="preserve"><value>Phone</value></data>
+  <data name="CardGalleryPeriod" xml:space="preserve"><value>Month selection</value></data>
+  <data name="CardGalleryCurrent" xml:space="preserve"><value>Follow current month</value></data>
+  <data name="CardGalleryFixed" xml:space="preserve"><value>Choose a fixed month</value></data>
+  <data name="CardGalleryControlsNote" xml:space="preserve"><value>Theme and screen size update immediately; a smaller browser window limits the selected width. Month and owner reload card data. Changing language reloads the gallery. The freedom map continues to show the current historical analysis.</value></data>
+  <data name="CardGalleryLoadError" xml:space="preserve"><value>The card settings are invalid. Check the month and owner; the previous data has been hidden.</value></data>
+  <data name="CardGalleryDashboard" xml:space="preserve"><value>Finances</value></data>
+  <data name="CardGallerySimulation" xml:space="preserve"><value>Local dashboard simulation · no Home Assistant session</value></data>
+  <data name="CardGalleryYamlTitle" xml:space="preserve"><value>Examples for real Home Assistant cards</value></data>
+  <data name="CardGalleryYamlNote" xml:space="preserve"><value>Each block is one manual card. Replace abcdef12_huishoudboek with your full installed app ID. Owner IDs and data in this local preview are not automatically the same as those in Home Assistant. Theme auto follows your real Home Assistant theme there.</value></data>
+  <data name="CardGalleryLimits" xml:space="preserve"><value>This gallery tests card appearance, filters, height and refresh. Home Assistant sign-in, ingress sessions, actual dashboard layout and the mobile companion app still need to be tested in Home Assistant.</value></data>
   <data name="ApplyLanguage" xml:space="preserve"><value>Apply language</value></data>
   <data name="LanguageReloadWarning" xml:space="preserve"><value>Changing language reloads the page. Save your changes first.</value></data>
   <data name="SkipToContent" xml:space="preserve"><value>Skip to content</value></data>

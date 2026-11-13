@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.1
+
+- Proefversie van losse Home Assistant-dashboardkaarten voor het maandoverzicht,
+  de uitgavenverdeling en de compacte financiële vrijheidskaart. Hergebruikt de
+  bestaande berekeningen via ingress, zonder extra poort, API-token of bewerkknoppen.
+- Lichtgewicht kaartpagina's zonder Blazor-verbinding per kaart, met automatisch
+  vernieuwen, passende hoogte, lichte/donkere weergave en Nederlandse/Engelse teksten.
+  Bankactualiteit en ontbrekende historie blijven zichtbaar; eigenaarfilters geven
+  geen extra toegangsrechten. Kaartbestand en installatiehulp staan bij Beheer & import.
+- Realistische lokale kaartgalerij met desktop-, tablet- en telefoonindeling,
+  lichte/donkere weergave, taal-, maand- en eigenaarkeuze en YAML-voorbeelden.
+  Alleen in de loopback-preview; de echte Home Assistant-aanmelding blijft ongewijzigd.
+- Uitleg binnen de uitgavenring benut de beschikbare ruimte, zonder onnodige
+  woordafbreking op smalle Home Assistant-kaarten.
+- Aparte handleiding `HOME-ASSISTANT-CARDS.md` met installatie, architectuur,
+  beveiligingsgrenzen, mogelijke vervolgkaarten en overdracht naar een nieuwe werksessie.
+
 ## 0.2.0
 
 - Lokale preview blijft opgemaakt na CSS-wijzigingen en opnieuw bouwen: stylesheets

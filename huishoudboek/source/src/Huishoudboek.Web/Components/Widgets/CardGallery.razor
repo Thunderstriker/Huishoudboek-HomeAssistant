@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="@UiCulture.Language" data-local-card-preview="true" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <base href="/" />
+    <title>@L["CardGalleryTitle"] · Huishoudboek</title>
+    <link rel="stylesheet" href="_content/Huishoudboek.Web/card-gallery.css" />
+    <script type="module" src="_content/Huishoudboek.Web/card-gallery.js"></script>
+</head>
+<body>
+    <header class="gallery-header">
+        <a class="back-link" href="beheer#dashboardkaarten">← @L["CardOpenApp"]</a>
+        <h1>@L["CardGalleryTitle"]</h1>
+        <p>@L["CardGalleryIntro"]</p>
+    </header>
+    <main>
+        <p class="preview-notice">@L["CardGalleryPrivacy"]</p>
+        <form id="gallery-controls" class="controls">
+            <label>@L["CardGalleryTheme"]<select name="theme"><option value="light">@L["CardGalleryLight"]</option><option value="dark">@L["CardGalleryDark"]</option></select></label>
+            <label>@L["CardGalleryViewport"]<select name="viewport"><option value="desktop">@L["CardGalleryDesktop"] · 1280 px</option><option value="tablet">@L["CardGalleryTablet"] · 820 px</option><option value="mobile">@L["CardGalleryMobile"] · 390 px</option></select></label>
+            <label>@L["Language"]<select name="language"><option value="nl" selected="@(UiCulture.Language == "nl")">Nederlands</option><option value="en" selected="@(UiCulture.Language == "en")">English</option></select></label>
+            <label>@L["CardGalleryPeriod"]<select name="period"><option value="current">@L["CardGalleryCurrent"]</option><option value="fixed">@L["CardGalleryFixed"]</option></select></label>
+            <label>@L["Month"]<input name="month" type="month" min="1900-01" max="2200-12" value="@Today.ToString("yyyy-MM", CultureInfo.InvariantCulture)" disabled /></label>
+            <label>@L["Owner"]<select name="owner"><option value="">@L["AllOwners"]</option>@foreach (var owner in Owners) { <option value="@owner.Id">@owner.Name</option> }</select></label>
+            <button type="submit">@L["Refresh"]</button>
+        </form>
+        <p class="gallery-help">@L["CardGalleryControlsNote"]</p>
+        <p id="gallery-error" class="preview-notice" role="alert" hidden>@L["CardGalleryLoadError"]</p>
+        <div class="stage-scroll">
+            <section id="preview-stage" class="preview-stage" data-viewport="desktop" aria-label="@L["CardGalleryDashboard"]">
+                <div class="ha-toolbar"><span class="ha-mark" aria-hidden="true">⌂</span><div><strong>@L["CardGalleryDashboard"]</strong><small>@L["CardGallerySimulation"]</small></div><span class="local-badge">LOCAL</span></div>
+                <div class="ha-grid" id="preview-cards"></div>
+            </section>
+        </div>
+        <details class="yaml-help">
+            <summary>@L["CardGalleryYamlTitle"]</summary>
+            <p>@L["CardGalleryYamlNote"]</p>
+            <pre id="gallery-yaml" tabindex="0"></pre>
+        </details>
+        <p class="gallery-help">@L["CardGalleryLimits"]</p>
+    </main>
+</body>
+</html>
+
+@code {
+    [Parameter] public IReadOnlyList<Owner> Owners { get; set; } = [];
+    [Parameter] public DateOnly Today { get; set; }
+}

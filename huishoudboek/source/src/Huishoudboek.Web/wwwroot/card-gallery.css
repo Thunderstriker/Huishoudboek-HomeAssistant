@@ -1,0 +1,36 @@
+:root { font: 14px/1.5 system-ui, sans-serif; color-scheme: light; --page-bg: #f3f6fa; --panel-bg: #fff; --text: #213247; --muted: #607188; --line: #dce4ed; --accent: #087f75; --notice-bg: #fff8e7; --notice-ink: #795b27; }
+:root[data-theme="dark"] { color-scheme: dark; --page-bg: #111b20; --panel-bg: #1c282e; --text: #e2ecf0; --muted: #a4b7c1; --line: #34464e; --accent: #80d5c4; --notice-bg: #332c1e; --notice-ink: #ecd39e; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page-bg); color: var(--text); }
+a { color: var(--accent); }
+.gallery-header { padding: 22px max(20px, calc((100% - 1400px) / 2)); background: var(--panel-bg); border-bottom: 1px solid var(--line); }
+.back-link { font-size: .85rem; text-decoration: none; }
+h1 { margin: 12px 0 6px; font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.3; }
+.gallery-header p { color: var(--muted); margin: 0; max-width: 90ch; }
+main { max-width: 1440px; margin: auto; padding: 20px; }
+.preview-notice { padding: 12px 16px; background: var(--notice-bg); color: var(--notice-ink); border: 1px solid var(--line); border-radius: 10px; margin: 0 0 18px; }
+.controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; background: var(--panel-bg); padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+label { display: flex; flex-direction: column; gap: 5px; font-size: .82rem; font-weight: 600; min-width: 120px; flex: 1; }
+button, select, input { font: inherit; color: var(--text); background: var(--panel-bg); border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; min-height: 40px; min-width: 0; max-width: 100%; }
+button { cursor: pointer; color: var(--accent); }
+input:disabled { opacity: .5; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, pre:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.gallery-help { color: var(--muted); font-size: .83rem; }
+.stage-scroll { min-width: 0; }
+.preview-stage { width: 100%; max-width: 1280px; margin: 22px auto; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--page-bg); --primary-text-color: var(--text); --secondary-text-color: var(--muted); --primary-color: var(--accent); --divider-color: var(--line); --ha-card-background: var(--panel-bg); container-type: inline-size; }
+.preview-stage[data-viewport="tablet"] { max-width: 820px; }
+.preview-stage[data-viewport="mobile"] { max-width: 390px; }
+.ha-toolbar { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid var(--line); background: var(--panel-bg); }
+.ha-toolbar strong { font-size: 1.1rem; font-weight: 550; }
+.ha-toolbar small { display: block; color: var(--muted); font-size: .75rem; }
+.ha-mark { font-size: 28px; color: var(--accent); }
+.local-badge { margin-left: auto; padding: 3px 7px; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); font-size: .67rem; letter-spacing: .08em; }
+.ha-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 20px; align-items: start; }
+huishoudboek-preview-card { min-width: 0; }
+@container (max-width: 1000px) { .ha-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (max-width: 600px) { .ha-grid { grid-template-columns: minmax(0, 1fr); padding: 12px; gap: 14px; } .ha-toolbar { padding: 12px; } }
+.yaml-help { background: var(--panel-bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+summary { cursor: pointer; font-weight: 600; }
+pre { overflow-x: auto; white-space: pre; font-size: .8rem; padding: 12px; border-radius: 6px; background: var(--page-bg); }
+[hidden] { display: none !important; }
+@media (max-width: 600px) { main { padding: 12px; } .gallery-header { padding: 16px; } .controls { gap: 10px; padding: 12px; } label { min-width: 125px; } }

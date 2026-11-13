@@ -17,6 +17,18 @@
     <div class="actions"><a class="button" href="instellen">@L["SetupTitle"]</a><a class="button" href="weekcontrole">@L["WeeklyReviewTitle"]</a></div>
     <WeeklyReviewVisibility />
 </section>
+@if (HostSettings.HomeAssistant || HostSettings.LocalPreview)
+{
+    <section class="card" id="dashboardkaarten">
+        <h2>@L["CardSetupTitle"]</h2>
+        <p>@L["CardSetupHelp"]</p>
+        <div class="actions"><a class="button" href="_content/Huishoudboek.Web/huishoudboek-card.js" download="huishoudboek-card.js" data-enhance-nav="false">@L["CardDownload"]</a></div>
+        @if (HostSettings.LocalPreview) { <p><a class="button" href="kaarten/preview" data-enhance-nav="false">@L["CardGalleryTitle"] →</a></p> }
+        <p class="muted">@L["CardSetupResource"] <code>/local/huishoudboek-card.js?v=0.2.1</code></p>
+        <p class="muted">@L["CardAccessNote"]</p>
+        <details><summary>@L["CardOwnerIds"]</summary><ul>@foreach (var owner in State.Data.Owners) { <li>@owner.Name: <code>@owner.Id</code></li> }</ul></details>
+    </section>
+}
 <section class="card" id="importgeschiedenis"><h2>@L["ImportHistory"]</h2><p class="muted">@L["ExistingImportCoverageHelp"] <a href="rekeningen#statement-periods">@L["ConfirmWithoutImport"] →</a></p><div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th>@L["File"]</th><th>@L["Account"]</th><th>@L["Rows"]</th><th>@L["Status"]</th><th>@L["StatementCoverage"]</th><th></th></tr></thead><tbody>
 @foreach (var b in State.Data.ImportBatches.OrderByDescending(b => b.ImportedAt))
 {

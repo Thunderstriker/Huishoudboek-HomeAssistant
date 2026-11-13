@@ -92,7 +92,8 @@ public static class ServiceApplication
             context.Response.Headers.XContentTypeOptions = "nosniff";
             context.Response.Headers["Referrer-Policy"] = "no-referrer";
             context.Response.Headers.ContentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors " +
-                (homeAssistant.Enabled ? "'self'" : "'none'") + "; base-uri 'self'; form-action 'self'; object-src 'none'";
+                (homeAssistant.Enabled || website.PreviewEnabled && context.GetEndpoint()?.Metadata.GetMetadata<DashboardCards.FrameEndpoint>() != null
+                    ? "'self'" : "'none'") + "; base-uri 'self'; form-action 'self'; object-src 'none'";
             if ((context.Request.Path == "/login" || context.Request.Path == "/logout") && HttpMethods.IsPost(context.Request.Method))
             {
                 if (context.Request.ContentLength > 16 * 1024) { context.Response.StatusCode = 413; return; }
@@ -143,6 +144,7 @@ public static class ServiceApplication
         if (homeAssistant.Enabled) app.MapGet("/health", () => Results.Text("ok"));
         WebsiteAuthentication.Map(app, website);
         WebsiteLanguage.Map(app);
+        DashboardCards.Map(app, homeAssistant, website);
         app.MapGet("/website/backup", () => Results.File(coordinator.Backup(), "application/octet-stream", $"huishoudboek-backup-{DateTime.Now:yyyyMMdd-HHmmss}.db")).RequireAuthorization();
         app.MapGet("/website/export", () =>
         {

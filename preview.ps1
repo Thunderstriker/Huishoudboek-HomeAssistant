@@ -42,6 +42,7 @@ try {
     $env:ASPNETCORE_ENVIRONMENT = 'Development'
     $env:DOTNET_ENVIRONMENT = 'Development'
     Write-Host "Preview: http://127.0.0.1:$Port"
+    Write-Host "Home Assistant card gallery: http://127.0.0.1:$Port/kaarten/preview"
     Write-Host "Private preview settings and data: $previewRoot"
     Write-Host 'No login required. First start creates fictional demo data.'
     Write-Host 'Home Assistant data is not connected. Stop the preview with Ctrl+C.'
