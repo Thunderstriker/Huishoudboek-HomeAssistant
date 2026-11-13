@@ -15,6 +15,7 @@
 - Databaseschema 12 met veiligheidskopie vóór migratie, behoud van oudere database-imports
   en bonbijlagen buiten gewone gegevensmomentopnamen. Back-updownloads worden gestreamd;
   databaseherstel ondersteunt bestanden tot 256 MB.
+- App- en containerversie bijgewerkt naar 0.2.2 voor installatie en updates via Home Assistant.
 
 ## 0.2.1
 

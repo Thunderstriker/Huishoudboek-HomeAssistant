@@ -40,9 +40,10 @@ Also implemented:
 - A download link and installation help under **Beheer & import**.
 
 **Release record:** these changes are listed under `0.2.1` in
-`huishoudboek/CHANGELOG.md`. The user explicitly chose **release notes only** for this
-work. The application version fields remain `0.2.0`; this is not an oversight to fix
-automatically. Do not bump them without a new request.
+`huishoudboek/CHANGELOG.md`. The user initially chose **release notes only** for this
+work, leaving the application version at `0.2.0`. A subsequent explicit request bumps
+both application version fields to **`0.2.2`**, which includes these cards and the new
+receipt/warranty feature. Do not bump them again without a new request.
 The five additional cards also belong to `0.2.1`, explicitly selected by the user.
 The new resource cache key is `0.2.1-cards2`; this is not an application version bump.
 
@@ -148,9 +149,9 @@ uncategorized) and accepts `history_months=6|12|24` (default 12).
 ## 3. Install on actual Home Assistant
 
 Use Home Assistant OS with Supervisor, **Core 2026.11 or newer**, and a trusted
-administrator account. The installed Huishoudboek app must include the card feature.
-Because application version metadata was intentionally not bumped, these source
-changes alone do not advertise a new add-on store update.
+administrator account. These cards are included in Huishoudboek app release **0.2.2**.
+Updating the app does not replace the separately copied dashboard JavaScript resource;
+download that file again when upgrading from the initial three-card implementation.
 
 1. In Huishoudboek, open **Beheer & import → Home Assistant-dashboardkaarten**.
 2. Download `huishoudboek-card.js` and save it as
