@@ -10,6 +10,44 @@ using Microsoft.Data.Sqlite;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Receipt bank search keeps initial choices bounded but searches all older matches", () =>
+    {
+        var entries = Enumerable.Range(0, 100).Select(i => new Transaction
+        {
+            Date = new DateOnly(2026, 1, 1).AddDays(i), Description = "Shop", Amount = -12.34m
+        }).ToList();
+        foreach (var query in new[] { "", "  \t " })
+        {
+            var initial = ReceiptBankSearch.Find(entries, query, null).ToList();
+            Equal(80, initial.Count); Equal(entries[^1].Id, initial[0].Id);
+            True(initial.All(t => t.Id != entries[0].Id));
+        }
+        var matches = ReceiptBankSearch.Find(entries, "shop", null).ToList();
+        Equal(100, matches.Count); Equal(entries[0].Id, matches[^1].Id);
+        Equal(entries[0].Id, ReceiptBankSearch.Find(entries, "01-01-2026", null).Single().Id);
+        Equal(80, ReceiptBankSearch.Find(entries, "", null).Count());
+    }),
+    ("Receipt bank search combines text, month, year and culture-independent amounts", () =>
+    {
+        var january = new Transaction { Date = new(2026, 1, 15), Description = "My Shop", Amount = -12.34m };
+        var entries = new[] { january, january with { Id = Guid.NewGuid(), Date = new(2025, 1, 15) },
+            january with { Id = Guid.NewGuid(), Date = new(2026, 2, 15) } };
+        foreach (var query in new[] { "  SHOP januari 2026 12,34 ", "January shop 2026 12.34", "15-01-2026", "2026-01-15" })
+            Equal(january.Id, ReceiptBankSearch.Find(entries, query, null).Single().Id);
+        Equal(0, ReceiptBankSearch.Find(entries, "unknown", null).Count());
+    }),
+    ("Receipt bank search preserves the selected older entry without widening eligibility", () =>
+    {
+        var selected = new Transaction { Date = new(2026, 1, 1), Description = "Old shop", Amount = -10 };
+        var recent = Enumerable.Range(0, 90).Select(i => new Transaction
+        { Date = new DateOnly(2026, 6, 1).AddDays(i), Description = "Recent", Amount = -20 }).ToList();
+        var eligible = recent.Append(selected).ToList();
+        var initial = ReceiptBankSearch.Find(eligible, "", selected.Id).ToList();
+        Equal(80, initial.Count); Equal(selected.Id, initial[0].Id);
+        var matches = ReceiptBankSearch.Find(eligible, "Recent", selected.Id).ToList();
+        Equal(91, matches.Count); Equal(selected.Id, matches[0].Id);
+        True(!ReceiptBankSearch.Find(recent, "", selected.Id).Any(t => t.Id == selected.Id));
+    }),
     ("Receipt decimals preserve each keystroke and update totals immediately", () =>
     {
         var input = new ReceiptNumberDraft(null, CultureInfo.GetCultureInfo("nl-NL"));
@@ -305,6 +343,44 @@ var tests = new (string Name, Action Run)[]
         csv.Read(); csv.ReadHeader(); decimal income = 0, spending = 0; var count = 0;
         while (csv.Read()) { var amount = csv.GetField<decimal>("Bedrag"); income += Math.Max(0, amount); spending += Math.Max(0, -amount); count++; }
         Equal(3, count); Equal(160m, income); Equal(100m, spending);
+    })),
+    ("Historical voucher credit can be saved before an unfinished purchase", () => WithDirectory(directory =>
+    {
+        using var coordinator = new AdministrationCoordinator(directory, initialize: true);
+        var f = new Fixture(); f.Receipt.PurchaseDate = new(2026, 1, 15); f.Bank.Date = f.Receipt.PurchaseDate.Value;
+        var start = coordinator.Read();
+        var purchaseRevision = coordinator.Update(start.Revision, d =>
+        { d.Owners = f.Data.Owners; d.Accounts = f.Data.Accounts; d.Categories = f.Data.Categories; d.Transactions = f.Data.Transactions; }).Revision;
+        var credit = new MealVoucherCredit { Date = new(2026, 1, 1), Quantity = 20, UnitValue = 8 };
+        var credited = coordinator.Update(purchaseRevision, d => MealVouchers.SaveCredit(d, credit));
+        Equal(0, credited.Data.PurchaseReceipts.Count);
+        Equal(160m, MealVouchers.Balance(credited.Data, f.Receipt.PurchaseDate.Value));
+        Throws(() => coordinator.SaveReceipt(purchaseRevision, f.Receipt, f.Items, false, null));
+        purchaseRevision = credited.Revision;
+        f.Receipt.IsApplied = true;
+        var saved = coordinator.SaveReceipt(purchaseRevision, f.Receipt, f.Items, false, null);
+        Equal(100m, MealVouchers.Balance(saved.Data, f.Receipt.PurchaseDate.Value));
+        Equal(credit.Id, saved.Data.MealVoucherCredits.Single().Id);
+    })),
+    ("Inline voucher saves preserve conflict protection and remain separate from purchases", () => WithDirectory(directory =>
+    {
+        using var coordinator = new AdministrationCoordinator(directory, initialize: true);
+        var f = new Fixture(); var start = coordinator.Read();
+        var snapshot = coordinator.Update(start.Revision, d =>
+        { d.Owners = f.Data.Owners; d.Accounts = f.Data.Accounts; d.Categories = f.Data.Categories; d.Transactions = f.Data.Transactions; });
+        var credit = new MealVoucherCredit { Date = new(2026, 1, 1), Quantity = 20, UnitValue = 8, IsOpeningBalance = true };
+        var credited = coordinator.Update(snapshot.Revision, d => MealVouchers.SaveCredit(d, credit));
+        Throws(() => coordinator.Update(snapshot.Revision, d => MealVouchers.SaveCredit(d, credit with { Id = Guid.NewGuid(), IsOpeningBalance = false })));
+        Equal(credited.Revision, coordinator.Read().Revision);
+        Equal(1, coordinator.Read().Data.MealVoucherCredits.Count); Equal(0, coordinator.Read().Data.PurchaseReceipts.Count);
+        Throws(() => coordinator.Update(credited.Revision, d => MealVouchers.SaveCredit(d, credit with { Id = Guid.NewGuid() })));
+        Equal(credited.Revision, coordinator.Read().Revision);
+        coordinator.Update(credited.Revision, d => MealVouchers.SaveCredit(d, new() { Date = new(2026, 12, 1), UnitValue = 8 }));
+        Throws(() => coordinator.SaveReceipt(credited.Revision, f.Receipt, f.Items, false, null));
+        var current = coordinator.Read();
+        Equal(0, current.Data.PurchaseReceipts.Count);
+        Equal(160m, MealVouchers.Balance(current.Data, f.Receipt.PurchaseDate!.Value));
+        Equal(0m, Finance.Report(current.Data, 2026, 1, Fixture.Today).Income);
     })),
     ("Coordinator rejects stale and invalid receipt changes atomically", () => WithDirectory(directory =>
     {

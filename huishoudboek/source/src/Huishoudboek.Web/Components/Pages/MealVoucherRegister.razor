@@ -24,18 +24,8 @@
     <NavigationLock ConfirmExternalNavigation="true" OnBeforeInternalNavigation="BeforeNavigate" />
     <section class="card">
         <h2>@L[credit.IsOpeningBalance ? "MealVouchersOpening" : "MealVouchersAdd"]</h2>
-        <p class="muted">@L[credit.IsOpeningBalance ? "MealVouchersOpeningHelp" : "MealVouchersContributionHelp"]</p>
         @if (revision != State.Revision) { <p class="notice warning">@L["PurchaseStaleDraft"]</p> }
-        <form @onsubmit="Save" @onsubmit:preventDefault>
-            <div class="fields">
-                <label>@L["Date"]<input id="voucher-date" type="date" @bind="credit.Date" required /></label>
-                <label>@L["MealVouchersQuantity"]<input id="voucher-quantity" type="number" min="1" max="100000" step="1" @bind="credit.Quantity" required /></label>
-                <label>@L["MealVouchersUnitValue"]<input id="voucher-value" type="number" min="0.01" max="1000000" step="0.01" @bind="credit.UnitValue" required /></label>
-                <label>@L["PurchaseNotes"]<input maxlength="2000" @bind="credit.Note" /></label>
-            </div>
-            <p>@L["Total"]: <strong>@(credit.Quantity is > 0 and <= 100_000 && credit.UnitValue is > 0 and <= 1_000_000 ? Money(MealVouchers.Value(credit)) : L["Unknown"].Value)</strong></p>
-            <div class="actions"><button class="primary" type="submit">@L["Save"]</button><button type="button" @onclick="() => draft = null">@L["Cancel"]</button></div>
-        </form>
+        <MealVoucherCreditForm Credit="credit" Busy="State.Busy" OnSave="Save" OnCancel="() => draft = null" />
     </section>
 }
 <section class="card">

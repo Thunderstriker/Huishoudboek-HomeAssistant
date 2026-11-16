@@ -1083,7 +1083,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="PurchaseNotes" xml:space="preserve"><value>Notities</value></data>
   <data name="PurchaseNoAccount" xml:space="preserve"><value>Nog geen rekening — alleen bij heel huishouden</value></data>
   <data name="PurchaseBankLink" xml:space="preserve"><value>Bankboeking koppelen (optioneel)</value></data>
-  <data name="PurchaseBankLinkHelp" xml:space="preserve"><value>Voorstellen sluiten aan op de resterende betaling na maaltijdcheques en hebben een bankdatum binnen zeven dagen. U bevestigt de koppeling zelf. Zoek op banktekst of datum; maximaal 80 boekingen zichtbaar.</value></data>
+  <data name="PurchaseBankLinkHelp" xml:space="preserve"><value>Voorstellen sluiten aan op de resterende betaling na maaltijdcheques en hebben een bankdatum binnen zeven dagen. U bevestigt de koppeling zelf. Zonder zoekopdracht ziet u de 80 recentste boekingen. Zoek in de volledige historie van de gekozen rekening(en) op banktekst, datum, maandnaam of bedrag; combineer bijvoorbeeld winkelnaam en januari 2026. Alle overeenkomsten worden getoond.</value></data>
   <data name="PurchaseNoTransaction" xml:space="preserve"><value>Nog geen bankboeking</value></data>
   <data name="PurchaseLinkSuggestion" xml:space="preserve"><value>Koppel voorstel</value></data>
   <data name="PurchaseBankMismatch" xml:space="preserve"><value>Bankbedrag {0} en de resterende betaling van {1} na maaltijdcheques verschillen. Controleer het bedrag aan maaltijdcheques of andere betaalwijzen. De koppeling past geen bedragen aan.</value></data>
@@ -1180,4 +1180,6 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="MealVouchersAvailableForReceipt" xml:space="preserve"><value>Maaltijdchequesaldo vóór deze bon, op de aankoopdatum</value></data>
   <data name="MealVouchersReportHelp" xml:space="preserve"><value>Inkomsten bevatten geregistreerde maaltijdchequeontvangsten; kosten bevatten het volledige bedrag van toegepaste bonnen. Ongebruikte cheques zijn beperkt bruikbaar tegoed, geen vrij bankgeld. Banksaldi en de cashprognose bevatten dit tegoed niet.</value></data>
   <data name="MealVouchersLeaveWarning" xml:space="preserve"><value>Deze pagina verlaten en de niet-opgeslagen maaltijdcheque-invoer verwerpen?</value></data>
+  <data name="PurchaseVoucherCreditHelp" xml:space="preserve"><value>Vul de werkelijke ontvangstdatum in; de aankoopdatum is alvast ingevuld. Opslaan werkt het gezamenlijke maaltijdchequeregister direct bij, zonder uw boninvoer te verliezen. Deze ontvangst of dit beginsaldo blijft bewaard als u de bon daarna annuleert. Sla de cheque-invoer op of annuleer deze voordat u de bon opslaat.</value></data>
+  <data name="PurchaseVoucherCreditSaved" xml:space="preserve"><value>Maaltijdcheques opgeslagen. U kunt verder met de aankoopbon.</value></data>
 </root>

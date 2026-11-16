@@ -1083,7 +1083,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="PurchaseNotes" xml:space="preserve"><value>Notes</value></data>
   <data name="PurchaseNoAccount" xml:space="preserve"><value>No account yet — whole household only</value></data>
   <data name="PurchaseBankLink" xml:space="preserve"><value>Link bank transaction (optional)</value></data>
-  <data name="PurchaseBankLinkHelp" xml:space="preserve"><value>Suggestions match the remaining payment after meal vouchers and have a bank date within seven days. You confirm each link. Search bank text or date; up to 80 entries are shown.</value></data>
+  <data name="PurchaseBankLinkHelp" xml:space="preserve"><value>Suggestions match the remaining payment after meal vouchers and have a bank date within seven days. You confirm each link. Without a search, the 80 most recent entries are shown. Search the full history of the selected account(s) by bank text, date, month name or amount; for example, combine a shop name and January 2026. All matches are shown.</value></data>
   <data name="PurchaseNoTransaction" xml:space="preserve"><value>No bank transaction yet</value></data>
   <data name="PurchaseLinkSuggestion" xml:space="preserve"><value>Link suggestion</value></data>
   <data name="PurchaseBankMismatch" xml:space="preserve"><value>Bank amount {0} differs from the remaining payment of {1} after meal vouchers. Check the voucher amount or other payment methods. Linking does not change either amount.</value></data>
@@ -1180,4 +1180,6 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="MealVouchersAvailableForReceipt" xml:space="preserve"><value>Voucher balance before this receipt, on the purchase date</value></data>
   <data name="MealVouchersReportHelp" xml:space="preserve"><value>Income includes recorded meal-voucher credits; costs include the full amount of applied receipts. Unspent vouchers are restricted credit, not available bank cash. Bank balances and cash forecasts exclude this credit.</value></data>
   <data name="MealVouchersLeaveWarning" xml:space="preserve"><value>Leave this page and discard the unsaved voucher entry?</value></data>
+  <data name="PurchaseVoucherCreditHelp" xml:space="preserve"><value>Enter the actual date received; the purchase date is prefilled. Saving updates the shared meal voucher register immediately without losing your purchase edits. This credit or opening balance remains saved if you later cancel the purchase. Save or cancel the voucher entry before saving the purchase.</value></data>
+  <data name="PurchaseVoucherCreditSaved" xml:space="preserve"><value>Meal vouchers saved. You can continue editing the purchase.</value></data>
 </root>

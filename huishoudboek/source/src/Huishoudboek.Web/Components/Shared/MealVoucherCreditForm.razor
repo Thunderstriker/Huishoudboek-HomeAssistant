@@ -1,0 +1,18 @@
+<p class="muted">@L[Credit.IsOpeningBalance ? "MealVouchersOpeningHelp" : "MealVouchersContributionHelp"]</p>
+<form @onsubmit="OnSave" @onsubmit:preventDefault>
+    <div class="fields">
+        <label>@L["Date"]<input id="voucher-date" type="date" @bind="Credit.Date" required disabled="@Busy" /></label>
+        <label>@L["MealVouchersQuantity"]<input id="voucher-quantity" type="number" min="1" max="100000" step="1" @bind="Credit.Quantity" required disabled="@Busy" /></label>
+        <label>@L["MealVouchersUnitValue"]<input id="voucher-value" type="number" min="0.01" max="1000000" step="0.01" @bind="Credit.UnitValue" required disabled="@Busy" /></label>
+        <label>@L["PurchaseNotes"]<input maxlength="2000" @bind="Credit.Note" disabled="@Busy" /></label>
+    </div>
+    <p>@L["Total"]: <strong>@(Credit.Quantity is > 0 and <= 100_000 && Credit.UnitValue is > 0 and <= 1_000_000 ? Money(MealVouchers.Value(Credit)) : L["Unknown"].Value)</strong></p>
+    <div class="actions"><button class="primary" type="submit" disabled="@Busy">@L["Save"]</button><button type="button" @onclick="OnCancel" disabled="@Busy">@L["Cancel"]</button></div>
+</form>
+
+@code {
+    [Parameter, EditorRequired] public MealVoucherCredit Credit { get; set; } = default!;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnSave { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+}

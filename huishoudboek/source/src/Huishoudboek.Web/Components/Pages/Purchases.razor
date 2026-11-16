@@ -73,6 +73,19 @@
                         <p>@L["MealVouchersAvailableForReceipt"]: @Money(VoucherAvailable) · <a href="maaltijdcheques" target="_blank" rel="noopener">@L["MealVouchersTitle"] →</a></p>
                         @if (receipt.MealVoucherAmount > VoucherAvailable) { <p class="notice warning">@L["MealVouchersNegative"]</p> }
                     }
+                    <div class="actions">
+                        <button type="button" @onclick="() => NewVoucherCredit(false)" disabled="@(voucherCredit != null || State.Busy)">+ @L["MealVouchersAdd"]</button>
+                        @if (!State.Data.MealVoucherCredits.Any(c => c.IsOpeningBalance))
+                        { <button type="button" @onclick="() => NewVoucherCredit(true)" disabled="@(voucherCredit != null || State.Busy)">@L["MealVouchersOpening"]</button> }
+                    </div>
+                    @if (voucherCredit is { } credit)
+                    {
+                        <section class="receipt-voucher-credit" aria-labelledby="receipt-voucher-title">
+                            <h3 id="receipt-voucher-title">@L[credit.IsOpeningBalance ? "MealVouchersOpening" : "MealVouchersAdd"]</h3>
+                            <p class="notice">@L["PurchaseVoucherCreditHelp"]</p>
+                            <MealVoucherCreditForm Credit="credit" Busy="State.Busy" OnSave="SaveVoucherCredit" OnCancel="() => voucherCredit = null" />
+                        </section>
+                    }
                     <strong>@L["PurchaseAmountDue"]: @(!hasInvalidNumbers && PurchaseReceipts.AmountDue(receipt) is { } due ? Money(due) : L["Unknown"].Value)</strong>
                     @if (!PurchaseReceipts.HasValidMealVoucherAmount(receipt))
                     { <p class="notice warning" role="alert">@L["PurchaseInvalidMealVouchers"]</p> }
@@ -150,7 +163,7 @@
         <label class="check"><input id="receipt-applied" type="checkbox" @bind="receipt.IsApplied" disabled="@(!receipt.IsReviewed && !receipt.IsApplied)" />@L["PurchaseApplyReports"]</label>
         <p class="muted">@L["PurchaseApplyReportsHelp"]</p>
         @if (State.OwnerId != null) { <p class="muted">@L["MealVouchersSharedHelp"]</p> }
-        <div class="actions receipt-save"><button class="primary" @onclick="Save" disabled="@hasInvalidNumbers">@L[receipt.IsReviewed ? "PurchaseSaveReviewed" : "PurchaseSaveDraft"]</button><button @onclick="CloseDraft">@L["Cancel"]</button></div>
+        <div class="actions receipt-save"><button class="primary" @onclick="Save" disabled="@(hasInvalidNumbers || voucherCredit != null || State.Busy)">@L[receipt.IsReviewed ? "PurchaseSaveReviewed" : "PurchaseSaveDraft"]</button><button @onclick="CloseDraft" disabled="@State.Busy">@L["Cancel"]</button></div>
     </section>
 }
 
@@ -193,6 +206,7 @@
     [SupplyParameterFromQuery(Name = "transaction")] public Guid? InitialTransaction { get; set; }
     [SupplyParameterFromQuery(Name = "receipt")] public Guid? InitialReceipt { get; set; }
     private PurchaseReceipt? draft;
+    private MealVoucherCredit? voucherCredit;
     private List<PurchaseReceiptItem> items = [];
     private readonly Dictionary<(Guid Id, string Field), ReceiptNumberDraft> numbers = [];
     private string draftRevision = "", search = "", bankSearch = "", sourceText = "";
@@ -232,7 +246,7 @@
     private static string DocumentUrl(Guid id) => $"website/receipts/{id:D}/document";
     private string BankLabel(Transaction entry) => $"{entry.Date:dd-MM-yyyy} · {State.AccountName(entry.AccountId)} · {entry.Description} · {Money(entry.Amount)}";
     private IEnumerable<Transaction> EligibleTransactions => State.Data.Transactions.Where(t => t.Kind == TransactionKind.Normal && t.Amount < 0 && State.Scope.Contains(t.AccountId) && (draft?.AccountId == null || t.AccountId == draft.AccountId));
-    private IEnumerable<Transaction> BankChoices => EligibleTransactions.Where(t => t.Id == draft?.TransactionId || string.IsNullOrWhiteSpace(bankSearch) || $"{t.Description} {t.Date:dd-MM-yyyy} {t.Amount}".Contains(bankSearch, StringComparison.OrdinalIgnoreCase)).OrderByDescending(t => t.Id == draft?.TransactionId).ThenByDescending(t => t.Date).Take(80);
+    private IEnumerable<Transaction> BankChoices => ReceiptBankSearch.Find(EligibleTransactions, bankSearch, draft?.TransactionId);
     private IEnumerable<Transaction> BankSuggestions => !HasInvalidNumbers && draft is { } receipt && PurchaseReceipts.HasValidMealVoucherAmount(receipt) && PurchaseReceipts.AmountDue(receipt) is { } due && due > 0 && receipt.PurchaseDate is { } date && receipt.TransactionId == null
         ? EligibleTransactions.Where(t => -t.Amount == due && Math.Abs(t.Date.DayNumber - date.DayNumber) <= 7).OrderBy(t => Math.Abs(t.Date.DayNumber - date.DayNumber)).Take(3) : [];
     private IEnumerable<PurchaseReceipt> VisibleReceipts => State.Data.PurchaseReceipts.Where(r => (InitialTransaction == null || r.TransactionId == InitialTransaction) && (State.OwnerId == null || r.AccountId is { } account && State.Scope.Contains(account)) &&
@@ -347,9 +361,24 @@
         Unreview();
     }
     private void LinkTransaction(Transaction transaction) { if (draft != null) { draft.TransactionId = transaction.Id; TransactionChanged(); } }
+    private void NewVoucherCredit(bool opening) => voucherCredit = new()
+    { Date = draft?.PurchaseDate ?? State.Today, IsOpeningBalance = opening };
+    private async Task SaveVoucherCredit()
+    {
+        if (draft is not { } receipt || voucherCredit is not { } credit) return;
+        var savedCredit = credit with { };
+        var revision = draftRevision;
+        await State.RunAsync(async () =>
+        {
+            await State.SaveAsync(d => MealVouchers.SaveCredit(d, savedCredit), revision);
+            // Only our own successful credit save may advance the unsaved purchase's revision.
+            if (ReferenceEquals(draft, receipt))
+            { draftRevision = State.Revision; voucherCredit = null; }
+        }, L["PurchaseVoucherCreditSaved"]);
+    }
     private async Task Save()
     {
-        if (draft == null) return;
+        if (draft == null || voucherCredit != null) return;
         await State.RunAsync(async () =>
         {
             if (HasInvalidNumbers) throw new InvalidOperationException(L["PurchaseInvalidNumbers"]);
@@ -366,7 +395,7 @@
     private async Task CloseDraft()
     {
         if (scan != null) Receipts.DiscardUpload(scan.UploadId);
-        scan = null; draft = null; items = []; numbers.Clear(); sourceText = ""; bankSearch = ""; replaceTextConfirm = false;
+        scan = null; draft = null; voucherCredit = null; items = []; numbers.Clear(); sourceText = ""; bankSearch = ""; replaceTextConfirm = false;
         await ReleasePreview();
     }
     private async Task ReleasePreview()

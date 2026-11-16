@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.3.2
+
+- Bankboekingen zoeken bij Aankopen & garanties toont alle overeenkomsten uit de
+  volledige historie van de gekozen rekening(en), ook buiten de 80 recentste boekingen.
+  Combineer banktekst, datum, Nederlandse of Engelse maandnaam en bedrag met komma of punt.
+- Historische maaltijdchequeontvangsten en een eventueel beginsaldo direct bij een
+  aankoopbon vastleggen, met de aankoopdatum als voorstel. Het gezamenlijke saldo wordt
+  meteen bijgewerkt zonder boninvoer te verliezen; de cheque-invoer blijft apart bewaard.
+- App- en containerversie bijgewerkt naar 0.2.3.2 voor installatie en updates via Home Assistant.
+
 ## 0.2.3.1
 
 - Bedragvelden bij Aankopen & garanties werken totalen direct tijdens het typen bij,

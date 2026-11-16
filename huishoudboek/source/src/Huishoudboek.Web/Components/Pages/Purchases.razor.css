@@ -8,6 +8,12 @@
 .receipt-editor input[aria-invalid=true] { border-color: var(--danger, #b42318); }
 .receipt-payments { display: grid; gap: .5rem; margin-top: 1rem; }
 .receipt-payments p { margin: 0; }
+.receipt-voucher-credit { min-width: 0; padding: 1rem; border: 1px solid var(--border, #dce5df); border-radius: 12px; }
+.receipt-voucher-credit h3 { margin-top: 0; }
+.receipt-voucher-credit ::deep label { display: grid; gap: .3rem; }
+.receipt-voucher-credit ::deep .fields { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+.receipt-voucher-credit ::deep input { width: 100%; min-width: 0; }
+.receipt-voucher-credit ::deep form { margin-top: .75rem; }
 .receipt-fields details { margin: 1rem 0; }
 .receipt-reconciliation { display: grid; gap: .35rem; }
 .receipt-line { padding: 1rem 0; border-top: 1px solid var(--border, #dce5df); }
