@@ -10,6 +10,64 @@ using Microsoft.Data.Sqlite;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Receipt decimals preserve each keystroke and update totals immediately", () =>
+    {
+        var input = new ReceiptNumberDraft(null, CultureInfo.GetCultureInfo("nl-NL"));
+        var item = new PurchaseReceiptItem { Name = "Product" };
+        foreach (var (text, expected) in new (string, decimal)[] { ("1", 1), ("12", 12), ("12,", 12), ("12,3", 12.3m), ("12,34", 12.34m) })
+        {
+            input.Text = text; item.Amount = input.Value;
+            True(input.IsValid); Equal(text, input.Text); Equal(expected, PurchaseReceipts.ItemTotal([item]));
+        }
+        foreach (var text in new[] { "-", "-,", "not a number", "12,345" })
+        {
+            input.Text = text; item.Amount = input.Value;
+            True(!input.IsValid); Equal(text, input.Text); Equal<decimal?>(null, item.Amount);
+        }
+        input.Text = "-1,25"; item.Amount = input.Value;
+        True(input.IsValid); Equal(-1.25m, PurchaseReceipts.ItemTotal([item]));
+    }),
+    ("Receipt decimals accept comma or dot independently of the display language", () =>
+    {
+        foreach (var language in new[] { "nl-NL", "en-GB" })
+        {
+            var culture = CultureInfo.GetCultureInfo(language);
+            var input = new ReceiptNumberDraft(12.34m, culture);
+            Equal(12.34m.ToString(culture), input.Text);
+            foreach (var (text, expected) in new (string, decimal)[] { ("12,34", 12.34m), ("12.34", 12.34m), (" 12,34 ", 12.34m), (".5", .5m), (",5", .5m) })
+            {
+                input.Text = text; True(input.IsValid); Equal(expected, input.Value!.Value);
+            }
+            foreach (var text in new[] { "1.234,56", "1,234.56", "1 234,56", "1e2", "EUR 12", "1,2,3", "1000000000.01", "999999999999999999999999999999" })
+            { input.Text = text; True(!input.IsValid); Equal<decimal?>(null, input.Value); }
+        }
+    }),
+    ("Receipt number ranges and precision match monetary and weight fields", () =>
+    {
+        var culture = CultureInfo.InvariantCulture;
+        var quantity = new ReceiptNumberDraft(null, culture, decimalPlaces: 4, minimum: .0001m, maximum: 1_000_000m);
+        var price = new ReceiptNumberDraft(null, culture, decimalPlaces: 4, minimum: 0);
+        var total = new ReceiptNumberDraft(null, culture, minimum: 0);
+        foreach (var text in new[] { "0.0001", "1,2345", "1000000" }) { quantity.Text = text; True(quantity.IsValid); }
+        foreach (var text in new[] { "0", "-1", "0.00001", "1000000.0001" }) { quantity.Text = text; True(!quantity.IsValid); }
+        foreach (var text in new[] { "0", "1.2345", "1000000000" }) { price.Text = text; True(price.IsValid); }
+        foreach (var text in new[] { "-0.01", "1.23456", "1000000000.0001" }) { price.Text = text; True(!price.IsValid); }
+        foreach (var text in new[] { "0", "1.23", "1000000000" }) { total.Text = text; True(total.IsValid); }
+        foreach (var text in new[] { "-0.01", "1.234", "1000000000.01" }) { total.Text = text; True(!total.IsValid); }
+    }),
+    ("Cleared receipt numbers remain optional and cleared voucher payment means zero", () =>
+    {
+        var amount = new ReceiptNumberDraft(25, CultureInfo.InvariantCulture) { Text = "" };
+        var vouchers = new ReceiptNumberDraft(10, CultureInfo.InvariantCulture, minimum: 0, emptyAsZero: true) { Text = "" };
+        True(amount.IsValid); Equal<decimal?>(null, amount.Value);
+        True(vouchers.IsValid); Equal<decimal?>(0m, vouchers.Value);
+        vouchers.Text = "-"; True(!vouchers.IsValid); Equal<decimal?>(null, vouchers.Value);
+        vouchers.Text = "5,25"; True(vouchers.IsValid); Equal<decimal?>(5.25m, vouchers.Value);
+        var receipt = new PurchaseReceipt { Total = 25, MealVoucherAmount = vouchers.Value!.Value };
+        Equal<decimal?>(19.75m, PurchaseReceipts.AmountDue(receipt));
+        amount.Text = "26.50"; receipt.Total = amount.Value;
+        Equal<decimal?>(21.25m, PurchaseReceipts.AmountDue(receipt));
+    }),
     ("Receipt metadata does not change financial totals", () =>
     {
         var f = new Fixture(); f.Save(false);

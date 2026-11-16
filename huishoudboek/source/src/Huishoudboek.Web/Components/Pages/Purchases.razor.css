@@ -5,6 +5,7 @@
 .receipt-source input[type=file], .receipt-source textarea, .receipt-fields select { width: 100%; max-width: 100%; }
 .receipt-preview { display: block; width: 100%; max-height: 550px; object-fit: contain; margin: .75rem 0; }
 .receipt-fields { min-width: 0; }
+.receipt-editor input[aria-invalid=true] { border-color: var(--danger, #b42318); }
 .receipt-payments { display: grid; gap: .5rem; margin-top: 1rem; }
 .receipt-payments p { margin: 0; }
 .receipt-fields details { margin: 1rem 0; }

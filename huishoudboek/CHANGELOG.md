@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.3.1
+
+- Bedragvelden bij Aankopen & garanties werken totalen direct tijdens het typen bij,
+  met komma of punt als decimaalteken. Geen pijltjesknoppen of onbedoelde wijzigingen
+  door scrollen; ongeldige invoer blijft zichtbaar en blokkeert opslaan.
+- App- en containerversie bijgewerkt naar 0.2.3.1 voor installatie en updates via Home Assistant.
+
 ## 0.2.3
 
 - Standaardcategorie per aankoopbon, met afwijkende categorieën per productregel.

@@ -13,6 +13,13 @@
 
 @if (draft is { } receipt)
 {
+    var totalInput = Number(receipt.Id, nameof(receipt.Total), receipt.Total, minimum: 0);
+    var voucherInput = Number(receipt.Id, nameof(receipt.MealVoucherAmount), receipt.MealVoucherAmount, minimum: 0, emptyAsZero: true);
+    var itemInputs = items.ToDictionary(i => i.Id, i => (
+        Quantity: Number(i.Id, nameof(i.Quantity), i.Quantity, decimalPlaces: 4, minimum: .0001m, maximum: 1_000_000m),
+        Price: Number(i.Id, nameof(i.UnitPrice), i.UnitPrice, decimalPlaces: 4, minimum: 0),
+        Amount: Number(i.Id, nameof(i.Amount), i.Amount)));
+    var hasInvalidNumbers = HasInvalidNumbers;
     <NavigationLock ConfirmExternalNavigation="true" OnBeforeInternalNavigation="BeforeNavigate" />
     <section class="card receipt-editor" aria-labelledby="receipt-editor-title">
         <div class="page-heading"><h2 id="receipt-editor-title">@L["PurchaseReview"]</h2><button @onclick="CloseDraft">@L["Cancel"]</button></div>
@@ -52,21 +59,21 @@
                     <label>@L["PurchaseMerchant"]<input id="receipt-merchant" maxlength="200" @bind="receipt.Merchant" @bind:after="Unreview" /></label>
                     <label>@L["PurchaseDate"]<input id="receipt-date" type="date" @bind="receipt.PurchaseDate" @bind:after="Unreview" /></label>
                     <label>@L["PurchaseInvoice"]<input maxlength="200" @bind="receipt.InvoiceNumber" @bind:after="Unreview" /></label>
-                    <label>@L["PurchaseTotal"]<input id="receipt-total" type="number" step="0.01" min="0" @bind="receipt.Total" @bind:after="Unreview" /></label>
+                    <label>@L["PurchaseTotal"]<input id="receipt-total" type="text" inputmode="decimal" @bind="totalInput.Text" @bind:event="oninput" @bind:after="() => { receipt.Total = totalInput.Value; Unreview(); }" aria-invalid="@(!totalInput.IsValid ? "true" : null)" /></label>
                     <label>@L["PurchaseDefaultCategory"]<select id="receipt-default-category" @bind="receipt.DefaultCategoryId" @bind:after="Unreview"><option value="">@L["Uncategorized"]</option>@foreach (var category in ExpenseCategories) { <option value="@category.Id">@category.Name</option> }</select></label>
                     <label>@L["Account"]<select @bind="receipt.AccountId" @bind:after="AccountChanged"><option value="">@L["PurchaseNoAccount"]</option>@foreach (var account in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@account.Id">@account.Name</option> }</select></label>
                     <label>@L["PurchaseNotes"]<textarea rows="2" maxlength="4000" @bind="receipt.Notes"></textarea></label>
                 </div>
                 <p class="muted">@L["PurchaseDefaultCategoryHelp"]</p>
                 <div class="receipt-payments">
-                    <label>@L["PurchaseMealVouchers"]<input id="receipt-meal-vouchers" type="number" step="0.01" min="0" max="@(receipt.Total?.ToString(CultureInfo.InvariantCulture))" @bind="receipt.MealVoucherAmount" @bind:after="Unreview" /></label>
+                    <label>@L["PurchaseMealVouchers"]<input id="receipt-meal-vouchers" type="text" inputmode="decimal" @bind="voucherInput.Text" @bind:event="oninput" @bind:after="() => { receipt.MealVoucherAmount = voucherInput.Value ?? 0; Unreview(); }" aria-invalid="@(!voucherInput.IsValid ? "true" : null)" /></label>
                     <p class="muted">@L["PurchaseMealVouchersHelp"]</p>
                     @if (receipt.MealVoucherAmount > 0)
                     {
                         <p>@L["MealVouchersAvailableForReceipt"]: @Money(VoucherAvailable) · <a href="maaltijdcheques" target="_blank" rel="noopener">@L["MealVouchersTitle"] →</a></p>
                         @if (receipt.MealVoucherAmount > VoucherAvailable) { <p class="notice warning">@L["MealVouchersNegative"]</p> }
                     }
-                    <strong>@L["PurchaseAmountDue"]: @(PurchaseReceipts.AmountDue(receipt) is { } due ? Money(due) : L["Unknown"].Value)</strong>
+                    <strong>@L["PurchaseAmountDue"]: @(!hasInvalidNumbers && PurchaseReceipts.AmountDue(receipt) is { } due ? Money(due) : L["Unknown"].Value)</strong>
                     @if (!PurchaseReceipts.HasValidMealVoucherAmount(receipt))
                     { <p class="notice warning" role="alert">@L["PurchaseInvalidMealVouchers"]</p> }
                 </div>
@@ -77,14 +84,19 @@
                     <label>@L["BankEntry"]<select @bind="receipt.TransactionId" @bind:after="TransactionChanged"><option value="">@L["PurchaseNoTransaction"]</option>@foreach (var entry in BankChoices) { <option value="@entry.Id">@BankLabel(entry)</option> }</select></label>
                     @foreach (var entry in BankSuggestions)
                     { <p><button @onclick="() => LinkTransaction(entry)">@L["PurchaseLinkSuggestion"]: @BankLabel(entry)</button></p> }
-                    @if (LinkedTransaction is { } linked && PurchaseReceipts.AmountDue(receipt) is { } amountDue && -linked.Amount != amountDue)
+                    @if (!hasInvalidNumbers && LinkedTransaction is { } linked && PurchaseReceipts.AmountDue(receipt) is { } amountDue && -linked.Amount != amountDue)
                     { <p class="notice warning">@L["PurchaseBankMismatch", Money(-linked.Amount), Money(amountDue)]</p> }
                 </details>
                 <div class="receipt-reconciliation notice @(IsReconciled ? "success" : "warning")" role="status">
-                    <strong>@L["PurchaseItemTotal"]: @Money(PurchaseReceipts.ItemTotal(items))</strong>
-                    <span>@L["PurchaseTotal"]: @(receipt.Total is { } value ? Money(value) : L["Unknown"].Value)</span>
-                    @if (receipt.Total is { } expected) { <span>@L["PurchaseDifference"]: @Money(expected - PurchaseReceipts.ItemTotal(items))</span> }
-                    <small>@L[IsReconciled ? "PurchaseReconciled" : "PurchaseNeedsReview"]</small>
+                    @if (hasInvalidNumbers)
+                    { <strong role="alert">@L["PurchaseInvalidNumbers"]</strong> }
+                    else
+                    {
+                        <strong>@L["PurchaseItemTotal"]: @Money(PurchaseReceipts.ItemTotal(items))</strong>
+                        <span>@L["PurchaseTotal"]: @(receipt.Total is { } value ? Money(value) : L["Unknown"].Value)</span>
+                        @if (receipt.Total is { } expected) { <span>@L["PurchaseDifference"]: @Money(expected - PurchaseReceipts.ItemTotal(items))</span> }
+                        <small>@L[IsReconciled ? "PurchaseReconciled" : "PurchaseNeedsReview"]</small>
+                    }
                 </div>
             </div>
         </div>
@@ -93,13 +105,14 @@
         <p class="muted">@L["PurchaseCategoriesHelp"]</p>
         @foreach (var item in items)
         {
+            var (quantityInput, priceInput, amountInput) = itemInputs[item.Id];
             <article class="receipt-line" data-item-id="@item.Id" @key="item.Id">
                 <div class="receipt-item-grid">
                     <label class="receipt-item-name">@L["PurchaseItemName"]<input maxlength="300" @bind="item.Name" @bind:after="Unreview" /></label>
-                    <label>@L["PurchaseQuantity"]<input type="number" step="0.0001" min="0.0001" @bind="item.Quantity" @bind:after="Unreview" /></label>
+                    <label>@L["PurchaseQuantity"]<input type="text" inputmode="decimal" @bind="quantityInput.Text" @bind:event="oninput" @bind:after="() => { item.Quantity = quantityInput.Value; Unreview(); }" aria-invalid="@(!quantityInput.IsValid ? "true" : null)" /></label>
                     <label>@L["PurchaseUnit"]<input maxlength="30" @bind="item.Unit" @bind:after="Unreview" /></label>
-                    <label>@L["PurchaseUnitPrice"]<input type="number" step="0.0001" min="0" @bind="item.UnitPrice" @bind:after="Unreview" /></label>
-                    <label>@L["PurchaseLineAmount"]<input type="number" step="0.01" @bind="item.Amount" @bind:after="Unreview" /></label>
+                    <label>@L["PurchaseUnitPrice"]<input type="text" inputmode="decimal" @bind="priceInput.Text" @bind:event="oninput" @bind:after="() => { item.UnitPrice = priceInput.Value; Unreview(); }" aria-invalid="@(!priceInput.IsValid ? "true" : null)" /></label>
+                    <label>@L["PurchaseLineAmount"]<input type="text" inputmode="decimal" @bind="amountInput.Text" @bind:event="oninput" @bind:after="() => { item.Amount = amountInput.Value; Unreview(); }" aria-invalid="@(!amountInput.IsValid ? "true" : null)" /></label>
                     <label>@L["Category"]<select @bind="item.CategoryId" @bind:after="Unreview" disabled="@(item.RelatedItemId != null)"><option value="">@(item.RelatedItemId != null ? L["PurchaseInheritCategory"].Value : receipt.DefaultCategoryId != null ? L["PurchaseUseDefaultCategory", State.CategoryName(receipt.DefaultCategoryId)].Value : L["Uncategorized"].Value)</option>@foreach (var category in ExpenseCategories) { <option value="@category.Id">@category.Name</option> }</select></label>
                 </div>
                 <details>
@@ -123,13 +136,13 @@
                 <div class="actions receipt-line-actions">
                     <button @onclick="() => Move(item, -1)" disabled="@(items.IndexOf(item) == 0)" aria-label="@L["PurchaseMoveUp"]">↑</button>
                     <button @onclick="() => Move(item, 1)" disabled="@(items.IndexOf(item) == items.Count - 1)" aria-label="@L["PurchaseMoveDown"]">↓</button>
-                    <button @onclick="() => Merge(item)" disabled="@(items.IndexOf(item) == 0)">@L["PurchaseMerge"]</button>
+                    <button @onclick="() => Merge(item)" disabled="@(items.IndexOf(item) == 0 || hasInvalidNumbers)">@L["PurchaseMerge"]</button>
                     <button @onclick="() => Remove(item)">@L["Delete"]</button>
                 </div>
             </article>
         }
         @if (items.Count == 0) { <p class="empty">@L["PurchaseNoItems"]</p> }
-        @if (items.Count > 0)
+        @if (items.Count > 0 && !hasInvalidNumbers)
         {
             <details><summary>@L["PurchaseCategoryPreview"]</summary><p class="muted">@L["PurchaseCategoriesHelp"]</p><ul>@foreach (var group in items.GroupBy(CategoryFor)) { <li>@State.CategoryName(group.Key): @Money(group.Sum(i => i.Amount ?? 0))</li> }</ul></details>
         }
@@ -137,7 +150,7 @@
         <label class="check"><input id="receipt-applied" type="checkbox" @bind="receipt.IsApplied" disabled="@(!receipt.IsReviewed && !receipt.IsApplied)" />@L["PurchaseApplyReports"]</label>
         <p class="muted">@L["PurchaseApplyReportsHelp"]</p>
         @if (State.OwnerId != null) { <p class="muted">@L["MealVouchersSharedHelp"]</p> }
-        <div class="actions receipt-save"><button class="primary" @onclick="Save">@L[receipt.IsReviewed ? "PurchaseSaveReviewed" : "PurchaseSaveDraft"]</button><button @onclick="CloseDraft">@L["Cancel"]</button></div>
+        <div class="actions receipt-save"><button class="primary" @onclick="Save" disabled="@hasInvalidNumbers">@L[receipt.IsReviewed ? "PurchaseSaveReviewed" : "PurchaseSaveDraft"]</button><button @onclick="CloseDraft">@L["Cancel"]</button></div>
     </section>
 }
 
@@ -181,6 +194,7 @@
     [SupplyParameterFromQuery(Name = "receipt")] public Guid? InitialReceipt { get; set; }
     private PurchaseReceipt? draft;
     private List<PurchaseReceiptItem> items = [];
+    private readonly Dictionary<(Guid Id, string Field), ReceiptNumberDraft> numbers = [];
     private string draftRevision = "", search = "", bankSearch = "", sourceText = "";
     private bool keepDocument, replaceTextConfirm, allowNavigation, ownerChangeBlocked;
     private Guid? deleteId, ownerAtEdit;
@@ -192,7 +206,19 @@
     private bool disposed;
 
     private IEnumerable<Category> ExpenseCategories => State.Data.Categories.Where(c => c.Purpose == CategoryPurpose.Normal).OrderBy(c => c.Name);
-    private bool IsReconciled => draft != null && PurchaseReceipts.Reconciles(draft, items);
+    private bool HasInvalidNumbers => numbers.Values.Any(n => !n.IsValid);
+    private bool IsReconciled => !HasInvalidNumbers && draft != null && PurchaseReceipts.Reconciles(draft, items);
+    private ReceiptNumberDraft Number(Guid id, string field, decimal? value, int decimalPlaces = 2,
+        decimal minimum = -1_000_000_000m, decimal maximum = 1_000_000_000m, bool emptyAsZero = false)
+    {
+        if (!numbers.TryGetValue((id, field), out var input))
+            numbers[(id, field)] = input = new(value, UiCulture.Culture, decimalPlaces, minimum, maximum, emptyAsZero);
+        return input;
+    }
+    private void RemoveNumbers(Guid id)
+    {
+        foreach (var key in numbers.Keys.Where(k => k.Id == id).ToList()) numbers.Remove(key);
+    }
     private decimal VoucherAvailable
     {
         get
@@ -207,7 +233,7 @@
     private string BankLabel(Transaction entry) => $"{entry.Date:dd-MM-yyyy} · {State.AccountName(entry.AccountId)} · {entry.Description} · {Money(entry.Amount)}";
     private IEnumerable<Transaction> EligibleTransactions => State.Data.Transactions.Where(t => t.Kind == TransactionKind.Normal && t.Amount < 0 && State.Scope.Contains(t.AccountId) && (draft?.AccountId == null || t.AccountId == draft.AccountId));
     private IEnumerable<Transaction> BankChoices => EligibleTransactions.Where(t => t.Id == draft?.TransactionId || string.IsNullOrWhiteSpace(bankSearch) || $"{t.Description} {t.Date:dd-MM-yyyy} {t.Amount}".Contains(bankSearch, StringComparison.OrdinalIgnoreCase)).OrderByDescending(t => t.Id == draft?.TransactionId).ThenByDescending(t => t.Date).Take(80);
-    private IEnumerable<Transaction> BankSuggestions => draft is { } receipt && PurchaseReceipts.HasValidMealVoucherAmount(receipt) && PurchaseReceipts.AmountDue(receipt) is { } due && due > 0 && receipt.PurchaseDate is { } date && receipt.TransactionId == null
+    private IEnumerable<Transaction> BankSuggestions => !HasInvalidNumbers && draft is { } receipt && PurchaseReceipts.HasValidMealVoucherAmount(receipt) && PurchaseReceipts.AmountDue(receipt) is { } due && due > 0 && receipt.PurchaseDate is { } date && receipt.TransactionId == null
         ? EligibleTransactions.Where(t => -t.Amount == due && Math.Abs(t.Date.DayNumber - date.DayNumber) <= 7).OrderBy(t => Math.Abs(t.Date.DayNumber - date.DayNumber)).Take(3) : [];
     private IEnumerable<PurchaseReceipt> VisibleReceipts => State.Data.PurchaseReceipts.Where(r => (InitialTransaction == null || r.TransactionId == InitialTransaction) && (State.OwnerId == null || r.AccountId is { } account && State.Scope.Contains(account)) &&
         (string.IsNullOrWhiteSpace(search) || $"{r.Merchant} {r.InvoiceNumber} {r.Notes} {r.PurchaseDate:dd-MM-yyyy} {string.Join(' ', State.Data.PurchaseReceiptItems.Where(i => i.ReceiptId == r.Id).Select(i => $"{i.Name} {i.OriginalDescription} {i.Model} {i.SerialNumber} {i.Location} {State.CategoryName(PurchaseReceipts.CategoryFor(r, i, State.Data.PurchaseReceiptItems))}"))}".Contains(search, StringComparison.OrdinalIgnoreCase)))
@@ -222,6 +248,7 @@
     }
     private void NewReceipt()
     {
+        numbers.Clear();
         draft = new() { AccountId = State.OwnerId != null ? State.Data.Accounts.FirstOrDefault(a => State.Scope.Contains(a.Id))?.Id : null };
         items = []; draftRevision = State.Revision; ownerAtEdit = State.OwnerId; keepDocument = false; allowNavigation = false; ownerChangeBlocked = false;
         if (InitialTransaction is { } id && State.Data.Transactions.FirstOrDefault(t => t.Id == id && t.Kind == TransactionKind.Normal && t.Amount < 0 && State.Scope.Contains(t.AccountId)) is { } transaction)
@@ -229,6 +256,7 @@
     }
     private void Edit(PurchaseReceipt receipt)
     {
+        numbers.Clear();
         draft = receipt with { }; items = State.Data.PurchaseReceiptItems.Where(i => i.ReceiptId == receipt.Id).OrderBy(i => i.Position).Select(i => i with { }).ToList();
         draftRevision = State.Revision; ownerAtEdit = State.OwnerId; keepDocument = receipt.DocumentName.Length > 0; allowNavigation = false; ownerChangeBlocked = false;
     }
@@ -262,6 +290,7 @@
     {
         if (draft == null) return;
         var parsed = ReceiptTextParser.Parse(sourceText);
+        numbers.Clear();
         draft.Merchant = parsed.Receipt.Merchant; draft.PurchaseDate = parsed.Receipt.PurchaseDate; draft.Total = parsed.Receipt.Total; draft.InvoiceNumber = parsed.Receipt.InvoiceNumber;
         draft.MealVoucherAmount = parsed.Receipt.MealVoucherAmount;
         items = parsed.Items.Select(i => i with { ReceiptId = draft.Id }).ToList(); Unreview();
@@ -270,6 +299,7 @@
     private void Remove(PurchaseReceiptItem item)
     {
         items.Remove(item);
+        RemoveNumbers(item.Id);
         foreach (var discount in items.Where(i => i.RelatedItemId == item.Id)) discount.RelatedItemId = null;
         Unreview();
     }
@@ -283,6 +313,7 @@
     {
         await State.RunAsync(() =>
         {
+            if (HasInvalidNumbers) throw new InvalidOperationException(L["PurchaseInvalidNumbers"]);
             var index = items.IndexOf(item); if (index <= 0) return Task.CompletedTask;
             var previous = items[index - 1];
             if (previous.Kind != item.Kind || previous.CategoryId != item.CategoryId || item.RelatedItemId != null || previous.RelatedItemId != null ||
@@ -293,6 +324,7 @@
             previous.Name += " " + item.Name; previous.OriginalDescription += "\n" + item.OriginalDescription;
             previous.Amount = previous.Amount != null && item.Amount != null ? previous.Amount + item.Amount : null;
             previous.Quantity = null; previous.UnitPrice = null; previous.Unit = "";
+            RemoveNumbers(previous.Id); RemoveNumbers(item.Id);
             foreach (var discount in items.Where(i => i.RelatedItemId == item.Id)) discount.RelatedItemId = previous.Id;
             items.Remove(item); Unreview(); return Task.CompletedTask;
         });
@@ -320,6 +352,7 @@
         if (draft == null) return;
         await State.RunAsync(async () =>
         {
+            if (HasInvalidNumbers) throw new InvalidOperationException(L["PurchaseInvalidNumbers"]);
             await Receipts.SaveAsync(draftRevision, draft, items, keepDocument, scan?.UploadId, cancellation.Token);
             await CloseDraft(); await State.LoadAsync();
         }, L["PurchaseSavedMessage"]);
@@ -333,7 +366,7 @@
     private async Task CloseDraft()
     {
         if (scan != null) Receipts.DiscardUpload(scan.UploadId);
-        scan = null; draft = null; items = []; sourceText = ""; bankSearch = ""; replaceTextConfirm = false;
+        scan = null; draft = null; items = []; numbers.Clear(); sourceText = ""; bankSearch = ""; replaceTextConfirm = false;
         await ReleasePreview();
     }
     private async Task ReleasePreview()

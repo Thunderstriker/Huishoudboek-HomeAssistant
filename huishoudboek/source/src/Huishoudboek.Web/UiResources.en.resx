@@ -1091,6 +1091,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="PurchaseDifference" xml:space="preserve"><value>Difference</value></data>
   <data name="PurchaseReconciled" xml:space="preserve"><value>Every item has a name and amount, and the total matches. Review the content as well.</value></data>
   <data name="PurchaseNeedsReview" xml:space="preserve"><value>Review required. Missing amounts or differences are never filled automatically. You can save a draft as long as entered fields are valid.</value></data>
+  <data name="PurchaseInvalidNumbers" xml:space="preserve"><value>Check the highlighted numbers. Use a comma or dot as the decimal separator, without thousands separators: at most two decimal places for amounts and four for quantity/weight and unit price. Receipt total, meal vouchers and unit price cannot be negative; quantity/weight must be positive.</value></data>
   <data name="PurchaseItems" xml:space="preserve"><value>Receipt items</value></data>
   <data name="PurchaseAddItem" xml:space="preserve"><value>Add item</value></data>
   <data name="PurchaseCategoriesHelp" xml:space="preserve"><value>Choose the category for each product. When you select “Count this receipt in reports”, these totals feed budgets and charts, including the voucher-funded part. Gift chocolates can have a different category from ordinary groceries.</value></data>

@@ -1091,6 +1091,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="PurchaseDifference" xml:space="preserve"><value>Verschil</value></data>
   <data name="PurchaseReconciled" xml:space="preserve"><value>Alle regels hebben een naam en bedrag; het totaal sluit aan. Controleer ook de inhoud.</value></data>
   <data name="PurchaseNeedsReview" xml:space="preserve"><value>Controle nodig. Ontbrekende bedragen of verschillen worden niet automatisch aangevuld. Opslaan als concept kan altijd als de ingevulde velden geldig zijn.</value></data>
+  <data name="PurchaseInvalidNumbers" xml:space="preserve"><value>Controleer de gemarkeerde getallen. Gebruik een komma of punt als decimaalteken, zonder duizendtallen: maximaal twee decimalen voor bedragen en vier voor aantal/gewicht en eenheidsprijs. Bontotaal, maaltijdcheques en eenheidsprijs zijn niet negatief; aantal/gewicht is positief.</value></data>
   <data name="PurchaseItems" xml:space="preserve"><value>Productregels</value></data>
   <data name="PurchaseAddItem" xml:space="preserve"><value>Regel toevoegen</value></data>
   <data name="PurchaseCategoriesHelp" xml:space="preserve"><value>Kies de categorie per product. Met ‘Deze bon opnemen in de cijfers’ tellen deze totalen mee in budgetten en grafieken, inclusief het met maaltijdcheques betaalde deel. Cadeauchocolade mag bijvoorbeeld een andere categorie hebben dan gewone boodschappen.</value></data>
