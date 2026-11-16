@@ -39,6 +39,8 @@ public static class Reporting
             .Concat(report.Categories.Where(c => c.Id == Guid.Empty)).ToList();
         var warnings = new List<string> { "Werkelijke boekingen, geen prognose. Onvolledige imports kunnen het beeld vertekenen.",
             "Budget 0 betekent geen limiet. Maandoverschot is geen rekeningsaldo. Interne overboekingen zijn geen uitgaven." };
+        if (data.MealVoucherCredits.Count > 0 || data.PurchaseReceipts.Any(r => r.IsApplied && r.MealVoucherAmount > 0))
+            warnings.Add("Maaltijdchequeontvangsten tellen als inkomen en toegepaste bonnen volledig als kosten. Ongebruikte cheques zijn geen vrij bankgeld en verhogen geen banksaldo of cashprognose.");
         if (new DateOnly(year, month, 1) > today) warnings.Add("Toekomstige maand: nog geen werkelijke boekingen.");
         return new($"{year:D4}-{month:D2}", today < end ? today : end, "EUR", report.Income, report.Outflow,
             report.Savings, report.Available, categories, warnings);

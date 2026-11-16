@@ -1,0 +1,5 @@
+@inject WebState State
+@if (State.Data.MealVoucherCredits.Count > 0 || State.Data.PurchaseReceipts.Any(r => r.IsApplied && r.MealVoucherAmount > 0))
+{
+    <p class="muted">@L[State.OwnerId == null ? "MealVouchersReportHelp" : "MealVouchersSharedHelp"] <a href="maaltijdcheques">@L["MealVouchersTitle"] →</a></p>
+}

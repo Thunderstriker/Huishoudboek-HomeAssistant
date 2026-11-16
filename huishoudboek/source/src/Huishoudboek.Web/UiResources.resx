@@ -682,6 +682,7 @@ Deze boeking vervangt alleen deze geplande betaling. Controleer dat het dezelfde
   <data name="DeleteCategoryQuestion" xml:space="preserve"><value>Categorie ‘{0}’ verwijderen in de HELE administratie?
 {1} transacties en {2} vaste posten blijven bestaan en worden Zonder categorie.
 {3} regels, {4} maandbudgetten en standaardbudget {5} worden verwijderd.
+Bonstandaarden en regelcategorieën met deze categorie worden gewist; regels zonder eigen categorie volgen de bonstandaard. Aankoopgegevens en betalingen blijven behouden.
 Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden. De verwerking als sparen/eigen rekeningbeweging vervalt ook voor eerdere boekingen; rapporten veranderen. Geen directe undo; maak zo nodig eerst een back-up.</value></data>
   <data name="ImportAccountNote" xml:space="preserve"><value>Elke import boekt alleen op de gekozen rekening, met het bedrag uit het bestand. Andere rekeningen worden niet automatisch gekoppeld of aangepast; importeer voor elke rekening het eigen bestand. Er is geen dubbelfilter: hetzelfde afschrift opnieuw importeren voegt de boekingen opnieuw toe. Controleer valuta, rekening en openingsdatum. Er wordt pas na expliciete bevestiging opgeslagen.</value></data>
   <data name="AfterImportBothAccounts" xml:space="preserve"><value>Na import van beide rekeningen kunt u</value></data>
@@ -1047,7 +1048,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="PurchasesHelp" xml:space="preserve"><value>Lees een bon regel voor regel, controleer de bedragen en bewaar aankoopgegevens. Een bonbestand bewaren is optioneel.</value></data>
   <data name="PurchaseNew" xml:space="preserve"><value>Bon toevoegen</value></data>
   <data name="PurchaseReview" xml:space="preserve"><value>Bon en producten controleren</value></data>
-  <data name="PurchaseNoAccounting" xml:space="preserve"><value>Dit zijn aankoopgegevens, geen nieuwe boekingen. Saldi, budgetten en bestaande transacties veranderen niet. Categoriesplitsingen toepassen volgt later.</value></data>
+  <data name="PurchaseNoAccounting" xml:space="preserve"><value>Controleer eerst de bon en neem deze daarna desgewenst op in de cijfers. Dit past categoriesplitsingen toe en registreert maaltijdcheque-uitgaven, zonder oorspronkelijke bankbedragen of banksaldi te wijzigen.</value></data>
   <data name="PurchaseStaleDraft" xml:space="preserve"><value>De administratie is intussen gewijzigd. Dit concept kan niet over nieuwere gegevens worden opgeslagen. Kopieer eventuele correcties en open de bon opnieuw.</value></data>
   <data name="PurchaseUpload" xml:space="preserve"><value>Foto of PDF van de bon</value></data>
   <data name="PurchaseUploadHelp" xml:space="preserve"><value>JPEG, PNG of PDF; maximaal 8 MB, 30 megapixels en vijf PDF-pagina's. Lokale herkenning, zonder cloud. De tijdelijke upload vervalt na 15 minuten.</value></data>
@@ -1072,20 +1073,27 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="PurchaseDate" xml:space="preserve"><value>Aankoopdatum</value></data>
   <data name="PurchaseInvoice" xml:space="preserve"><value>Bon- of factuurnummer</value></data>
   <data name="PurchaseTotal" xml:space="preserve"><value>Bontotaal (EUR)</value></data>
+  <data name="PurchaseDefaultCategory" xml:space="preserve"><value>Standaardcategorie voor deze bon</value></data>
+  <data name="PurchaseDefaultCategoryHelp" xml:space="preserve"><value>Geldt voor alle regels, tenzij u op een regel een andere categorie kiest. Een gewijzigde standaard behoudt handmatig gekozen categorieën. Kies op een regel ‘Standaard’ om weer de boncategorie te gebruiken.</value></data>
+  <data name="PurchaseUseDefaultCategory" xml:space="preserve"><value>Standaard: {0}</value></data>
+  <data name="PurchaseMealVouchers" xml:space="preserve"><value>Betaald met maaltijdcheques (EUR)</value></data>
+  <data name="PurchaseMealVouchersHelp" xml:space="preserve"><value>Vul een positief betaalbedrag in, geen negatieve productregel. Behoud het volledige bontotaal en alle productbedragen: € 40 totaal min € 30 maaltijdcheques geeft € 10 om aan de bankboeking te koppelen. Een volledig met maaltijdcheques betaalde bon heeft geen bankkoppeling nodig.</value></data>
+  <data name="PurchaseAmountDue" xml:space="preserve"><value>Resterende betaling / bankbedrag</value></data>
+  <data name="PurchaseInvalidMealVouchers" xml:space="preserve"><value>Het bedrag aan maaltijdcheques is nul of positief, heeft maximaal twee decimalen en is niet hoger dan het bontotaal.</value></data>
   <data name="PurchaseNotes" xml:space="preserve"><value>Notities</value></data>
   <data name="PurchaseNoAccount" xml:space="preserve"><value>Nog geen rekening — alleen bij heel huishouden</value></data>
   <data name="PurchaseBankLink" xml:space="preserve"><value>Bankboeking koppelen (optioneel)</value></data>
-  <data name="PurchaseBankLinkHelp" xml:space="preserve"><value>Voorstellen hebben hetzelfde totaal en een bankdatum binnen zeven dagen. U bevestigt de koppeling zelf. Zoek op banktekst of datum; maximaal 80 boekingen zichtbaar.</value></data>
+  <data name="PurchaseBankLinkHelp" xml:space="preserve"><value>Voorstellen sluiten aan op de resterende betaling na maaltijdcheques en hebben een bankdatum binnen zeven dagen. U bevestigt de koppeling zelf. Zoek op banktekst of datum; maximaal 80 boekingen zichtbaar.</value></data>
   <data name="PurchaseNoTransaction" xml:space="preserve"><value>Nog geen bankboeking</value></data>
   <data name="PurchaseLinkSuggestion" xml:space="preserve"><value>Koppel voorstel</value></data>
-  <data name="PurchaseBankMismatch" xml:space="preserve"><value>Bankbedrag {0} en bontotaal {1} verschillen. Controleer bijvoorbeeld een waardebon of gemengde betaling. De koppeling past geen bedragen aan.</value></data>
+  <data name="PurchaseBankMismatch" xml:space="preserve"><value>Bankbedrag {0} en de resterende betaling van {1} na maaltijdcheques verschillen. Controleer het bedrag aan maaltijdcheques of andere betaalwijzen. De koppeling past geen bedragen aan.</value></data>
   <data name="PurchaseItemTotal" xml:space="preserve"><value>Regels en correcties samen</value></data>
   <data name="PurchaseDifference" xml:space="preserve"><value>Verschil</value></data>
   <data name="PurchaseReconciled" xml:space="preserve"><value>Alle regels hebben een naam en bedrag; het totaal sluit aan. Controleer ook de inhoud.</value></data>
   <data name="PurchaseNeedsReview" xml:space="preserve"><value>Controle nodig. Ontbrekende bedragen of verschillen worden niet automatisch aangevuld. Opslaan als concept kan altijd als de ingevulde velden geldig zijn.</value></data>
   <data name="PurchaseItems" xml:space="preserve"><value>Productregels</value></data>
   <data name="PurchaseAddItem" xml:space="preserve"><value>Regel toevoegen</value></data>
-  <data name="PurchaseCategoriesHelp" xml:space="preserve"><value>Categorieën gelden voorlopig alleen voor deze bonregels. Ze veranderen de bankcategorisatie of budgetten niet. Cadeauchocolade mag bijvoorbeeld een andere categorie hebben dan gewone boodschappen.</value></data>
+  <data name="PurchaseCategoriesHelp" xml:space="preserve"><value>Kies de categorie per product. Met ‘Deze bon opnemen in de cijfers’ tellen deze totalen mee in budgetten en grafieken, inclusief het met maaltijdcheques betaalde deel. Cadeauchocolade mag bijvoorbeeld een andere categorie hebben dan gewone boodschappen.</value></data>
   <data name="PurchaseItemName" xml:space="preserve"><value>Product / omschrijving</value></data>
   <data name="PurchaseQuantity" xml:space="preserve"><value>Aantal / gewicht</value></data>
   <data name="PurchaseUnit" xml:space="preserve"><value>Eenheid</value></data>
@@ -1120,15 +1128,15 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="PurchaseMergeTooLong" xml:space="preserve"><value>De samengevoegde omschrijving is te lang. Kort de tekst eerst in.</value></data>
   <data name="PurchaseNoItems" xml:space="preserve"><value>Nog geen productregels. Lees een bestand, plak tekst of voeg handmatig regels toe.</value></data>
   <data name="PurchaseCategoryPreview" xml:space="preserve"><value>Voorlopige verdeling per categorie</value></data>
-  <data name="PurchaseConfirmReview" xml:space="preserve"><value>Ik heb de winkel, datum, productregels en het aansluitende bontotaal gecontroleerd</value></data>
+  <data name="PurchaseConfirmReview" xml:space="preserve"><value>Ik heb de winkel, datum, productregels, het aansluitende bontotaal en de betaling met maaltijdcheques gecontroleerd</value></data>
   <data name="PurchaseSaveReviewed" xml:space="preserve"><value>Gecontroleerde bon opslaan</value></data>
   <data name="PurchaseSaveDraft" xml:space="preserve"><value>Bon als concept opslaan</value></data>
-  <data name="PurchaseSavedMessage" xml:space="preserve"><value>Aankoopgegevens opgeslagen. Bankboekingen en budgetten zijn ongewijzigd.</value></data>
+  <data name="PurchaseSavedMessage" xml:space="preserve"><value>Bon opgeslagen. De cijferinstelling bepaalt of categorieën en maaltijdchequebetalingen meetellen; oorspronkelijke bankbedragen zijn ongewijzigd.</value></data>
   <data name="PurchaseReplaceTitle" xml:space="preserve"><value>Huidige bonregels vervangen?</value></data>
-  <data name="PurchaseReplaceText" xml:space="preserve"><value>Opnieuw lezen vervangt winkel, aankoopdatum, totaal, factuurnummer en alle huidige productregels, inclusief correcties, categorieën en garantiegegevens. Rekening, bankkoppeling en notities blijven staan.</value></data>
+  <data name="PurchaseReplaceText" xml:space="preserve"><value>Opnieuw lezen vervangt winkel, aankoopdatum, totaal, betaling met maaltijdcheques, factuurnummer en alle huidige productregels, inclusief correcties, regelcategorieën en garantiegegevens. Standaardcategorie, rekening, bankkoppeling en notities blijven staan.</value></data>
   <data name="PurchaseDelete" xml:space="preserve"><value>Bon verwijderen</value></data>
-  <data name="PurchaseDeleteHelp" xml:space="preserve"><value>Verwijder deze aankoopgegevens, productregels en eventuele bijlage uit de actieve administratie? Bankboekingen en vergoedingsverwachtingen blijven behouden. Oudere back-ups veranderen niet.</value></data>
-  <data name="PurchaseDeleted" xml:space="preserve"><value>Aankoopgegevens verwijderd; bankboekingen zijn ongewijzigd.</value></data>
+  <data name="PurchaseDeleteHelp" xml:space="preserve"><value>Deze bon, productregels en bijlage verwijderen? Bij een toegepaste bon verdwijnen ook de banksplitsingen en maaltijdcheque-uitgaven; de oorspronkelijke bankcategorie geldt weer. Bankbedragen en oudere back-ups blijven behouden. Ontkoppel eerst afhankelijke retouren of vergoedingsverwachtingen.</value></data>
+  <data name="PurchaseDeleted" xml:space="preserve"><value>Bon en eventuele toegepaste bonsplitsingen en maaltijdcheque-uitgaven verwijderd. Oorspronkelijke bankbedragen zijn ongewijzigd.</value></data>
   <data name="PurchaseDeadlines" xml:space="preserve"><value>Retour &amp; garantie binnen 30 dagen</value></data>
   <data name="PurchaseDeadlinesHelp" xml:space="preserve"><value>Volgens de datums die u zelf hebt vastgelegd, voor producten die nog in bezit zijn. Geen automatische melding buiten deze pagina.</value></data>
   <data name="PurchaseSaved" xml:space="preserve"><value>Bewaarde aankoopgegevens</value></data>
@@ -1145,4 +1153,30 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="PurchaseViewForTransaction" xml:space="preserve"><value>Bonnen bekijken</value></data>
   <data name="PurchaseViewAll" xml:space="preserve"><value>Alle aankoopgegevens bekijken</value></data>
   <data name="PurchaseFinishEditing" xml:space="preserve"><value>Sla de bon eerst op of annuleer het bewerken voordat u van eigenaarfilter wisselt. Het vorige filter is hersteld; uw invoer blijft staan.</value></data>
+  <data name="PurchaseApplyReports" xml:space="preserve"><value>Deze bon opnemen in de cijfers (categorieën en maaltijdchequebetaling)</value></data>
+  <data name="PurchaseApplyReportsHelp" xml:space="preserve"><value>Vereist een gecontroleerde, aansluitende bon en een exacte bankkoppeling voor het restant, tenzij alles met maaltijdcheques is betaald. De hele bon telt eenmaal mee. Bank- en maaltijdchequebetalingen worden eerst evenredig over categorieën verdeeld, met aansluitende centen. Overzichten volgen de gekoppelde bankdatum, anders de aankoopdatum. Opnieuw opslaan van een toegepaste bon berekent de splitsingen opnieuw. Uitvinken verwijdert de splitsingen en maaltijdcheque-uitgaven; de oorspronkelijke bankcategorie geldt weer.</value></data>
+  <data name="PurchaseApplied" xml:space="preserve"><value>Opgenomen in de cijfers</value></data>
+  <data name="PurchaseAppliedSplitsHelp" xml:space="preserve"><value>Deze splitsingen horen bij een toegepaste bon. Behoud gewone uitgaven binnen de categorietotalen; het restant is met maaltijdcheques betaald. Wijzig de volledige verdeling of stop de toepassing via Aankopen &amp; garanties.</value></data>
+  <data name="MealVouchersTitle" xml:space="preserve"><value>Maaltijdcheques</value></data>
+  <data name="MealVouchersHelp" xml:space="preserve"><value>Eén gezamenlijk huishoudsaldo, ongeacht wiens maaltijdcheques worden gebruikt. Leg iedere ontvangst vast met aantal en waarde; verschillende chequeprijzen kunnen apart worden ingevoerd.</value></data>
+  <data name="MealVouchersSharedHelp" xml:space="preserve"><value>Maaltijdcheque-inkomsten en daarmee betaalde kosten horen bij het hele huishouden, niet bij een persoon. Ze staan in overzichten met ‘Alle eigenaren’. Met een eigenaarfilter ziet u alleen het bankbetaalde deel van die eigenaar.</value></data>
+  <data name="MealVouchersBalance" xml:space="preserve"><value>Gezamenlijk maaltijdchequesaldo</value></data>
+  <data name="MealVouchersRestricted" xml:space="preserve"><value>Beperkt bruikbaar betaaltegoed, geen bankgeld, spaargeld of noodbuffer. Het verhoogt geen banksaldi of geschatte bestedingsruimte op betaalrekeningen.</value></data>
+  <data name="MealVouchersNegative" xml:space="preserve"><value>De geregistreerde betalingen zijn hoger dan het op deze datum beschikbare tegoed. Controleer ontbrekende ontvangsten, het beginsaldo en bonbetalingen. Het verschil wordt nooit met verzonnen inkomsten aangevuld.</value></data>
+  <data name="MealVouchersAdd" xml:space="preserve"><value>Ontvangen maaltijdcheques vastleggen</value></data>
+  <data name="MealVouchersOpening" xml:space="preserve"><value>Beginsaldo maaltijdcheques</value></data>
+  <data name="MealVouchersOpeningHelp" xml:space="preserve"><value>Cheques die u al heeft bij de start van de registratie. Dit verhoogt het saldo, niet de inkomsten. Zonder bekend aantal kunt u aantal 1 en het volledige saldo als waarde invoeren. Kies een datum op of vóór de eerste geregistreerde betaling.</value></data>
+  <data name="MealVouchersContributionHelp" xml:space="preserve"><value>De volledige ontvangen waarde telt op deze datum als inkomen in maaltijdcheques. Is uw werknemersbijdrage al van het geïmporteerde nettoloon afgetrokken, boek die inhouding dan niet nogmaals als uitgave. Boek deze chequeontvangst niet ook als bankinkomen.</value></data>
+  <data name="MealVouchersQuantity" xml:space="preserve"><value>Aantal maaltijdcheques</value></data>
+  <data name="MealVouchersUnitValue" xml:space="preserve"><value>Waarde per cheque (EUR)</value></data>
+  <data name="MealVouchersCredits" xml:space="preserve"><value>Ontvangsten en beginsaldo</value></data>
+  <data name="MealVouchersDatesHelp" xml:space="preserve"><value>Alle datums, los van het maand- en eigenaarfilter. Toekomstige ontvangsten tellen nog niet mee in het saldo of de werkelijke inkomsten van vandaag.</value></data>
+  <data name="MealVouchersEmpty" xml:space="preserve"><value>Nog geen ontvangen maaltijdcheques geregistreerd.</value></data>
+  <data name="MealVouchersPayments" xml:space="preserve"><value>Maaltijdchequebetalingen op bonnen</value></data>
+  <data name="MealVouchersPaymentsHelp" xml:space="preserve"><value>Alleen bonnen die expliciet in de cijfers zijn opgenomen gebruiken het gezamenlijke saldo, op hun aankoopdatum. Open een bon om de betaling te wijzigen of te verwijderen; ontvangen inkomen telt bij uitgeven niet opnieuw mee.</value></data>
+  <data name="MealVouchersNoPayments" xml:space="preserve"><value>Nog geen toegepaste maaltijdchequebetalingen.</value></data>
+  <data name="MealVouchersDeleteHelp" xml:space="preserve"><value>Deze maaltijdchequeontvangst of dit beginsaldo verwijderen? De waarde verdwijnt uit het saldo en bij een ontvangst ook uit het inkomen op die datum. Bonbetalingen blijven geregistreerd; het saldo kan daardoor negatief worden.</value></data>
+  <data name="MealVouchersAvailableForReceipt" xml:space="preserve"><value>Maaltijdchequesaldo vóór deze bon, op de aankoopdatum</value></data>
+  <data name="MealVouchersReportHelp" xml:space="preserve"><value>Inkomsten bevatten geregistreerde maaltijdchequeontvangsten; kosten bevatten het volledige bedrag van toegepaste bonnen. Ongebruikte cheques zijn beperkt bruikbaar tegoed, geen vrij bankgeld. Banksaldi en de cashprognose bevatten dit tegoed niet.</value></data>
+  <data name="MealVouchersLeaveWarning" xml:space="preserve"><value>Deze pagina verlaten en de niet-opgeslagen maaltijdcheque-invoer verwerpen?</value></data>
 </root>

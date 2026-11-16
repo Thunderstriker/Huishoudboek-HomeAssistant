@@ -58,8 +58,13 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   producten, kortingen en het bontotaal en kies alvast categorieën per regel.
   Bewaar het originele bonbestand alleen als u dat aanvinkt, bijvoorbeeld voor garantie;
   bij boodschappen kunnen alleen de productgegevens blijven staan. Retour- en
-  garantiedatums, serienummers en bankkoppelingen zijn optioneel. Het toepassen van
-  de categorieën als transactiesplitsing volgt later; bankbedragen blijven ongewijzigd.
+  garantiedatums, serienummers en bankkoppelingen zijn optioneel. Neem gecontroleerde
+  bonnen expliciet op in de cijfers: de volledige aankoop telt per productcategorie,
+  zonder dubbele bankbetaling. Oorspronkelijke bankbedragen blijven ongewijzigd.
+- **Gezamenlijke maaltijdcheques:** registreer ontvangstdatum, aantal en waarde per
+  cheque, ook bij verschillende waarden, en optioneel een beginsaldo. Ontvangsten zijn
+  extra inkomen; toegepaste bonnen verlagen het gedeelde tegoed. Geen saldo per persoon
+  en geen verhoging van vrij bankgeld of cashprognoses.
 - **Rekeningen en vermogen:** betaal- en spaarrekeningen, beleggen, eigenaren en hypotheek.
 - **Import en export:** Excel/CSV-import, automatische herkenning van Argenta-exports,
   kant-en-klare profielen voor ING (NL), Rabobank en KBC/CBC, CSV-export en volledige databaseback-ups met herstel.

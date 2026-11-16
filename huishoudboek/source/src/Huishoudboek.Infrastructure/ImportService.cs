@@ -286,21 +286,25 @@ public static class ImportService
     {
         using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
         using var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.GetCultureInfo("nl-NL")) { Delimiter = ";" });
-        foreach (var h in new[] { "Datum", "Rekening", "Omschrijving", "Bedrag", "Categorie", "Type", "Tegenrekening", "Aflossing", "Eigen omschrijving", "Transactie-ID", "Transferkoppeling", "Gekoppelde transactie-ID", "Vaste-post-ID", "Vaste post", "Geplande betaaldatum", "Splitsingen (JSON)", "Vergoedingsverwachtingen (JSON)", "Categorie telt als", "Categorie-instellingen (JSON)" }) csv.WriteField(h);
+        foreach (var h in new[] { "Datum", "Rekening", "Omschrijving", "Bedrag", "Categorie", "Type", "Tegenrekening", "Aflossing", "Eigen omschrijving", "Transactie-ID", "Transferkoppeling", "Gekoppelde transactie-ID", "Vaste-post-ID", "Vaste post", "Geplande betaaldatum", "Splitsingen (JSON)", "Vergoedingsverwachtingen (JSON)", "Categorie telt als", "Categorie-instellingen (JSON)", "Aankoopbon-ID", "Maaltijdchequeontvangst (JSON)" }) csv.WriteField(h);
         csv.NextRecord();
         var matches = data.TransferMatches.Where(m => m.IsConfirmed).SelectMany(m => new[] { (Id: m.DebitTransactionId, Match: m), (Id: m.CreditTransactionId, Match: m) })
             .ToDictionary(p => p.Id, p => p.Match);
-        var lines = TransactionAccounting.Lines(data, data.Transactions).ToLookup(l => l.Transaction.Id);
-        foreach (var t in data.Transactions.OrderBy(t => t.Date))
+        var vouchers = MealVouchers.Lines(data).ToList();
+        var lines = TransactionAccounting.Lines(data, data.Transactions).Concat(vouchers).ToLookup(l => l.Transaction.Id);
+        var credits = data.MealVoucherCredits.ToDictionary(c => c.Id);
+        var receipts = data.PurchaseReceipts.Where(r => r.IsApplied).ToList();
+        foreach (var t in data.Transactions.Concat(vouchers.Select(l => l.Transaction).DistinctBy(t => t.Id)).OrderBy(t => t.Date).ThenBy(t => t.Id))
         {
             // Neutralize formula injection when opening an exported CSV in a spreadsheet.
             static string Safe(string s) => s.TrimStart().StartsWith('=') || s.TrimStart().StartsWith('+') ||
                 s.TrimStart().StartsWith('-') || s.TrimStart().StartsWith('@') ? "'" + s : s;
             csv.WriteField(t.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-            csv.WriteField(Safe(data.Accounts.Single(a => a.Id == t.AccountId).Name));
+            var shared = t.AccountId == Guid.Empty;
+            csv.WriteField(shared ? "Maaltijdcheques (gezamenlijk)" : Safe(data.Accounts.Single(a => a.Id == t.AccountId).Name));
             csv.WriteField(Safe(t.Description)); csv.WriteField(t.Amount);
             csv.WriteField(Safe(data.Categories.FirstOrDefault(c => c.Id == t.CategoryId)?.Name ?? ""));
-            csv.WriteField(t.Kind.ToString());
+            csv.WriteField(shared ? t.Amount > 0 ? "MealVoucherIncome" : "MealVoucherPayment" : t.Kind.ToString());
             csv.WriteField(Safe(data.Accounts.FirstOrDefault(a => a.Id == t.CounterAccountId)?.Name ?? ""));
             csv.WriteField(t.PrincipalComponent); csv.WriteField(Safe(t.UserDescription));
             csv.WriteField(t.Id);
@@ -310,12 +314,16 @@ public static class ImportService
             csv.WriteField(recurring?.Id.ToString() ?? "");
             csv.WriteField(Safe(recurring?.Name ?? ""));
             csv.WriteField(recurring == null ? "" : RecurringSchedule.LinkedDate(recurring, t).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-            csv.WriteField(System.Text.Json.JsonSerializer.Serialize(data.TransactionAllocations.Where(a => a.TransactionId == t.Id)));
+            csv.WriteField(shared
+                ? System.Text.Json.JsonSerializer.Serialize(lines[t.Id].Select(l => new { l.Amount, l.CategoryId, l.Treatment, l.Note }))
+                : System.Text.Json.JsonSerializer.Serialize(data.TransactionAllocations.Where(a => a.TransactionId == t.Id)));
             csv.WriteField(System.Text.Json.JsonSerializer.Serialize(data.ReimbursementClaims.Where(c => c.ExpenseTransactionId == t.Id)));
             csv.WriteField(data.Categories.FirstOrDefault(c => c.Id == t.CategoryId)?.Purpose.ToString() ?? "Normal");
             var categoryIds = data.TransactionAllocations.Where(a => a.TransactionId == t.Id).Select(a => a.CategoryId)
                 .Append(t.CategoryId).Concat(lines[t.Id].Select(l => l.CategoryId)).ToHashSet();
             csv.WriteField(System.Text.Json.JsonSerializer.Serialize(data.Categories.Where(c => categoryIds.Contains(c.Id))));
+            csv.WriteField(receipts.FirstOrDefault(r => r.Id == t.Id || r.TransactionId == t.Id)?.Id.ToString() ?? "");
+            csv.WriteField(credits.TryGetValue(t.Id, out var credit) ? System.Text.Json.JsonSerializer.Serialize(credit) : "");
             csv.NextRecord();
         }
     }

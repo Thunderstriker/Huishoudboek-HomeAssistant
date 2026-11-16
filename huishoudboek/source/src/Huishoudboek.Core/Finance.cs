@@ -62,7 +62,7 @@ public static class Finance
     }
 
     public static MonthlyReport Report(HouseholdData data, int year, int month, DateOnly today,
-        IReadOnlySet<Guid>? scope = null)
+        IReadOnlySet<Guid>? scope = null, bool includeShared = false)
     {
         var first = new DateOnly(year, month, 1);
         var last = first.AddMonths(1).AddDays(-1);
@@ -74,7 +74,7 @@ public static class Finance
         var transactions = data.Transactions.ToDictionary(t => t.Id);
         var actual = data.Transactions.Where(t => t.Date >= first && t.Date <= cutoff).ToList();
         var ordinary = actual.Where(t => t.Kind != TransactionKind.Transfer && !matched.ContainsKey(t.Id) && InScope(t)).ToList();
-        var lines = TransactionAccounting.Lines(data, ordinary).ToList();
+        var lines = TransactionAccounting.ReportLines(data, first, cutoff, scope, includeShared).ToList();
         var income = lines.Sum(l => l.Income);
         var outflow = lines.Sum(l => l.Spending);
         var legacySavings = actual.Sum(t => LegacySavingsEffect(data, t, scope, matched, transactions));
@@ -95,8 +95,7 @@ public static class Finance
         if (legacySavings != 0) savingsCategories.Add(new(Guid.Empty, "Eerder vastgelegde overboekingen", 0, legacySavings));
 
         var future = data.Transactions.Where(t => t.Date >= first && t.Date > cutoff && t.Date <= last).ToList();
-        var futureOrdinary = future.Where(t => t.Kind != TransactionKind.Transfer && !matched.ContainsKey(t.Id) && InScope(t)).ToList();
-        var futureLines = TransactionAccounting.Lines(data, futureOrdinary).ToList();
+        var futureLines = TransactionAccounting.ReportLines(data, cutoff.AddDays(1), last, scope, includeShared).ToList();
         var plannedIncome = futureLines.Sum(l => l.Income);
         var plannedOutflow = futureLines.Sum(l => l.Spending);
         var plannedSavings = futureLines.Sum(l => l.Savings) + future.Sum(t => LegacySavingsEffect(data, t, scope, matched, transactions));

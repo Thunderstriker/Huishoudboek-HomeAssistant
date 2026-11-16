@@ -45,8 +45,7 @@ public static class FinancialInsights
         var scope = accounts.Select(a => a.Id).ToHashSet();
         var firstCurrent = new DateOnly(today.Year, today.Month, 1);
         var first = firstCurrent.AddMonths(-HistoryMonths);
-        var lines = TransactionAccounting.Lines(data, data.Transactions.Where(t => scope.Contains(t.AccountId) &&
-            t.Date >= first && t.Date < firstCurrent)).ToList();
+        var lines = TransactionAccounting.ReportLines(data, first, firstCurrent.AddDays(-1), scope, includeShared: ownerId == null).ToList();
         var byMonth = lines.ToLookup(l => new DateOnly(l.Transaction.Date.Year, l.Transaction.Date.Month, 1));
         var months = new List<InsightMonth>();
         for (var month = first; month < firstCurrent; month = month.AddMonths(1))
@@ -60,8 +59,9 @@ public static class FinancialInsights
                     .Select(p => new InsightCoverageIssue(a.Id, p.From, p.Through))).ToList();
             var covered = relevant.Count > 0 && issues.Count == 0;
             // Investment-account activity is not a normal household spending/income baseline.
-            var entries = byMonth[month].Where(l => accounts.Any(a => a.Id == l.Transaction.AccountId && a.Kind != AccountKind.Investment)).ToList();
-            var report = Finance.Report(data, month.Year, month.Month, today, scope);
+            var entries = byMonth[month].Where(l => l.Transaction.AccountId == Guid.Empty ||
+                accounts.Any(a => a.Id == l.Transaction.AccountId && a.Kind != AccountKind.Investment)).ToList();
+            var report = Finance.Report(data, month.Year, month.Month, today, scope, includeShared: ownerId == null);
             months.Add(new(month, covered, entries.Where(l => !l.IsExceptional).Sum(l => l.Income),
                 entries.Sum(l => l.TypicalSpending), entries.Where(l => l.IsEssential).Sum(l => l.TypicalSpending),
                 entries.Where(l => l.IsExceptional).Sum(l => l.Spending), report.Savings,

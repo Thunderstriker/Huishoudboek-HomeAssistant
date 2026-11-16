@@ -40,7 +40,7 @@ public sealed record HomeOverview(DateOnly Today, MonthlyReport Month, IReadOnly
             .OrderByDescending(t => t.Date).ThenBy(t => t.Id).Take(5)
             .Select(t => new HomeTransaction(t, scope.Contains(t.AccountId) ? t.AccountId : t.CounterAccountId!.Value,
                 scope.Contains(t.AccountId) ? t.Amount : -t.Amount)).ToArray();
-        return new(today, Finance.Report(data, year, month, today, scope), accounts, cashFlow, recent,
+        return new(today, Finance.Report(data, year, month, today, scope, includeShared: ownerId == null), accounts, cashFlow, recent,
             FirstWeek.UncategorizedCount(data, today, scope));
     }
 }

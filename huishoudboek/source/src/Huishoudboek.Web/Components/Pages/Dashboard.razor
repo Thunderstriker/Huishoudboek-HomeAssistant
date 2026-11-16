@@ -19,6 +19,7 @@
     </div>
 </div>
 <p class="muted">@L["ActualBalancesNote", overview.AsOf.ToString("dd-MM-yyyy")] <a href="vooruitblik">@L["FinancialOutlook"]</a></p>
+<MealVoucherReportNote />
 @if (report.ExceptionalOutflow != 0)
 { <p class="notice">@L["ExceptionalActualNote", Money(report.ExceptionalOutflow)] <a href="inzichten">@L["FinancialInsights"] →</a></p> }
 <MonthlyCharts Report="report" />

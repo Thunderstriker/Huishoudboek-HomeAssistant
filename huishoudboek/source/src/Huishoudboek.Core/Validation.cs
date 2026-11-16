@@ -32,6 +32,10 @@ public static class Validation
         Unique(data.AccountStatementPeriods.Select(x => x.Id), "rekeningperioden");
         Unique(data.PurchaseReceipts.Select(x => x.Id), "aankoopbonnen");
         Unique(data.PurchaseReceiptItems.Select(x => x.Id), "bonregels");
+        Unique(data.MealVoucherCredits.Select(x => x.Id), "ontvangen maaltijdcheques");
+        Unique(data.Transactions.Select(t => t.Id).Concat(data.MealVoucherCredits.Select(c => c.Id))
+            .Concat(data.PurchaseReceipts.Where(r => r.IsApplied && r.MealVoucherAmount > 0).Select(r => r.Id)), "rapportboekingen");
+        MealVouchers.Validate(data);
         PurchaseReceipts.Validate(data);
         var owners = data.Owners.Select(o => o.Id).ToHashSet();
         var accounts = data.Accounts.Select(a => a.Id).ToHashSet();

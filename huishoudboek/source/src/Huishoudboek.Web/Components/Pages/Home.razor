@@ -11,6 +11,8 @@
         <DashboardAccounts Accounts="overview.Accounts" />
     </div>
 
+    <MealVoucherReportNote />
+
     @if (nextAction is not null)
     {
         <section class="dashboard-next-action @(attention.Count > 0 ? "has-attention" : "")" aria-labelledby="@(attention.Count > 0 ? "dashboard-attention-heading" : "dashboard-next-heading")">

@@ -28,9 +28,9 @@ public sealed record MortgageProjection(decimal Balance, IReadOnlyList<MortgageR
 /// <summary>Detailed desktop/web reports. Unlike the public reader reports, explanations can contain bank text.</summary>
 public static class DetailedReporting
 {
-    public static IReadOnlyList<CategoryBudgetOverview> Budgets(HouseholdData data, int year, int month, DateOnly today, IReadOnlySet<Guid>? scope = null)
+    public static IReadOnlyList<CategoryBudgetOverview> Budgets(HouseholdData data, int year, int month, DateOnly today, IReadOnlySet<Guid>? scope = null, bool includeShared = false)
     {
-        var report = Finance.Report(data, year, month, today, scope);
+        var report = Finance.Report(data, year, month, today, scope, includeShared);
         return data.Categories.Select(c => new CategoryBudgetOverview(c.Id, c.Name, c.MonthlyBudget,
             data.BudgetOverrides.FirstOrDefault(b => b.CategoryId == c.Id && b.Year == year && b.Month == month)?.Amount ?? c.MonthlyBudget,
             c.Purpose == CategoryPurpose.Savings ? report.SavingsCategories.FirstOrDefault(r => r.Id == c.Id)?.Saved ?? 0 :
@@ -46,7 +46,7 @@ public static class DetailedReporting
         var scope = data.Accounts.Where(a => ownerId == null || a.OwnerIds.Contains(ownerId.Value)).Select(a => a.Id).ToHashSet();
         var end = new DateOnly(year, month, 1).AddMonths(1).AddDays(-1);
         var asOf = today < end ? today : end;
-        var report = Finance.Report(data, year, month, today, scope);
+        var report = Finance.Report(data, year, month, today, scope, includeShared: ownerId == null);
         var big = report.Categories.Where(c => c.IsOverBudget).Take(3).ToList();
         var unbudgeted = report.Categories.Where(c => c.Budget == 0 && c.Spent > 0).Sum(c => c.Spent);
         var culture = System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
@@ -61,8 +61,8 @@ public static class DetailedReporting
         if (report.SavingsExceedSurplus) reason += $" Na sparen is het maandresultaat {Money(-report.Available)} negatief; dit is geen extra uitgave.";
         if (unbudgeted > 0) reason += $" {Money(unbudgeted)} uitgaven zonder ingesteld budget.";
         if (report.Forecast.Available < 0) reason += $" Verwacht tekort uit maandinkomen: {Money(-report.Forecast.Available)}.";
-        var largest = TransactionAccounting.Lines(data, data.Transactions.Where(t => t.Date.Year == year && t.Date.Month == month &&
-            t.Date <= today && scope.Contains(t.AccountId))).Where(l => l.Spending > 0 && big.Any(c => c.Id == l.CategoryId))
+        var largest = TransactionAccounting.ReportLines(data, new DateOnly(year, month, 1), asOf, scope, includeShared: ownerId == null)
+            .Where(l => l.Spending > 0 && big.Any(c => c.Id == l.CategoryId))
             .OrderByDescending(l => l.Spending).Take(2).ToList();
         if (largest.Count > 0) reason += " Grootste betalingen: " + string.Join("; ", largest.Select(l => $"{l.Transaction.Description} ({Money(l.Spending)})")) + ".";
         var note = $"Schatting: geboekte bedragen + nog niet gekoppelde vaste posten + {Money(report.Forecast.VariableEstimate)} extra variabele uitgaven op basis van het daggemiddelde. " +
@@ -83,7 +83,7 @@ public static class DetailedReporting
     public static AnnualOverview Year(HouseholdData data, int year, DateOnly today, Guid? ownerId = null)
     {
         var scope = data.Accounts.Where(a => ownerId == null || a.OwnerIds.Contains(ownerId.Value)).Select(a => a.Id).ToHashSet();
-        var reports = Enumerable.Range(1, 12).Select(m => Finance.Report(data, year, m, today, scope)).ToList();
+        var reports = Enumerable.Range(1, 12).Select(m => Finance.Report(data, year, m, today, scope, includeShared: ownerId == null)).ToList();
         var months = reports.Select((r, i) => new AnnualMonth(i + 1, r.Income, r.Outflow, r.Savings)).ToList();
         var categories = data.Categories.Where(c => c.Purpose == CategoryPurpose.Normal).Select(c => new CategoryResult(c.Id, c.Name,
             Enumerable.Range(1, 12).Sum(m => data.BudgetOverrides.FirstOrDefault(b => b.CategoryId == c.Id && b.Year == year && b.Month == m)?.Amount ?? c.MonthlyBudget),

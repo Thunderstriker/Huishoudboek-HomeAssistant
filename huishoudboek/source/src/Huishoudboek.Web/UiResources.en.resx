@@ -682,6 +682,7 @@ This entry replaces only this planned payment. Check that it is the same payment
   <data name="DeleteCategoryQuestion" xml:space="preserve"><value>Delete category ‘{0}’ across ALL records?
 {1} transactions and {2} recurring payments remain and become Uncategorized.
 {3} rules, {4} monthly budgets and default budget {5} are removed.
+Receipt defaults and item categories using this category are cleared; items without their own category follow the receipt default. Receipt details and payments are preserved.
 Amounts, bank text, balances, principal repayments and import history are preserved. Savings/own-account treatment also ends for earlier entries; reports change. No immediate undo; make a backup first if needed.</value></data>
   <data name="ImportAccountNote" xml:space="preserve"><value>Each import records entries only on the selected account, using the amount from the file. Other accounts are not automatically matched or adjusted; import each account's own file. No duplicate filtering is applied: importing the same statement again adds its transactions again. Check currency, account and opening date. Nothing is saved until explicit confirmation.</value></data>
   <data name="AfterImportBothAccounts" xml:space="preserve"><value>After importing both accounts, you can</value></data>
@@ -1047,7 +1048,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="PurchasesHelp" xml:space="preserve"><value>Read a receipt item by item, review the amounts and keep purchase details. Keeping the original file is optional.</value></data>
   <data name="PurchaseNew" xml:space="preserve"><value>Add receipt</value></data>
   <data name="PurchaseReview" xml:space="preserve"><value>Review receipt and products</value></data>
-  <data name="PurchaseNoAccounting" xml:space="preserve"><value>These are purchase details, not new bank entries. Balances, budgets and existing transactions do not change. Applying category splits will follow later.</value></data>
+  <data name="PurchaseNoAccounting" xml:space="preserve"><value>Review the receipt first, then optionally include it in reports. This applies category splits and records voucher spending without changing original bank amounts or bank balances.</value></data>
   <data name="PurchaseStaleDraft" xml:space="preserve"><value>The administration has changed. This draft cannot overwrite newer data. Copy any corrections and reopen the receipt.</value></data>
   <data name="PurchaseUpload" xml:space="preserve"><value>Receipt photo or PDF</value></data>
   <data name="PurchaseUploadHelp" xml:space="preserve"><value>JPEG, PNG or PDF; up to 8 MB, 30 megapixels and five PDF pages. Local recognition, no cloud. The temporary upload expires after 15 minutes.</value></data>
@@ -1072,20 +1073,27 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="PurchaseDate" xml:space="preserve"><value>Purchase date</value></data>
   <data name="PurchaseInvoice" xml:space="preserve"><value>Receipt or invoice number</value></data>
   <data name="PurchaseTotal" xml:space="preserve"><value>Receipt total (EUR)</value></data>
+  <data name="PurchaseDefaultCategory" xml:space="preserve"><value>Default category for this receipt</value></data>
+  <data name="PurchaseDefaultCategoryHelp" xml:space="preserve"><value>Applies to all items unless you choose another category on that line. Changing the default preserves manually chosen categories. Choose “Default” on a line to use the receipt category again.</value></data>
+  <data name="PurchaseUseDefaultCategory" xml:space="preserve"><value>Default: {0}</value></data>
+  <data name="PurchaseMealVouchers" xml:space="preserve"><value>Paid with meal vouchers (EUR)</value></data>
+  <data name="PurchaseMealVouchersHelp" xml:space="preserve"><value>Enter a positive payment amount, not a negative item. Keep the full receipt total and all product amounts: €40 total minus €30 in meal vouchers leaves €10 to match to the bank transaction. A receipt paid entirely with meal vouchers needs no bank link.</value></data>
+  <data name="PurchaseAmountDue" xml:space="preserve"><value>Remaining payment / bank amount</value></data>
+  <data name="PurchaseInvalidMealVouchers" xml:space="preserve"><value>The meal-voucher amount must be zero or positive, have at most two decimal places and not exceed the receipt total.</value></data>
   <data name="PurchaseNotes" xml:space="preserve"><value>Notes</value></data>
   <data name="PurchaseNoAccount" xml:space="preserve"><value>No account yet — whole household only</value></data>
   <data name="PurchaseBankLink" xml:space="preserve"><value>Link bank transaction (optional)</value></data>
-  <data name="PurchaseBankLinkHelp" xml:space="preserve"><value>Suggestions have the same total and a bank date within seven days. You confirm each link. Search bank text or date; up to 80 entries are shown.</value></data>
+  <data name="PurchaseBankLinkHelp" xml:space="preserve"><value>Suggestions match the remaining payment after meal vouchers and have a bank date within seven days. You confirm each link. Search bank text or date; up to 80 entries are shown.</value></data>
   <data name="PurchaseNoTransaction" xml:space="preserve"><value>No bank transaction yet</value></data>
   <data name="PurchaseLinkSuggestion" xml:space="preserve"><value>Link suggestion</value></data>
-  <data name="PurchaseBankMismatch" xml:space="preserve"><value>Bank amount {0} differs from receipt total {1}. Check for vouchers or mixed payments. Linking does not change either amount.</value></data>
+  <data name="PurchaseBankMismatch" xml:space="preserve"><value>Bank amount {0} differs from the remaining payment of {1} after meal vouchers. Check the voucher amount or other payment methods. Linking does not change either amount.</value></data>
   <data name="PurchaseItemTotal" xml:space="preserve"><value>Items and adjustments</value></data>
   <data name="PurchaseDifference" xml:space="preserve"><value>Difference</value></data>
   <data name="PurchaseReconciled" xml:space="preserve"><value>Every item has a name and amount, and the total matches. Review the content as well.</value></data>
   <data name="PurchaseNeedsReview" xml:space="preserve"><value>Review required. Missing amounts or differences are never filled automatically. You can save a draft as long as entered fields are valid.</value></data>
   <data name="PurchaseItems" xml:space="preserve"><value>Receipt items</value></data>
   <data name="PurchaseAddItem" xml:space="preserve"><value>Add item</value></data>
-  <data name="PurchaseCategoriesHelp" xml:space="preserve"><value>Categories currently apply only to these receipt items. They do not change bank categorisation or budgets. Gift chocolates can have a different category from ordinary groceries.</value></data>
+  <data name="PurchaseCategoriesHelp" xml:space="preserve"><value>Choose the category for each product. When you select “Count this receipt in reports”, these totals feed budgets and charts, including the voucher-funded part. Gift chocolates can have a different category from ordinary groceries.</value></data>
   <data name="PurchaseItemName" xml:space="preserve"><value>Product / description</value></data>
   <data name="PurchaseQuantity" xml:space="preserve"><value>Quantity / weight</value></data>
   <data name="PurchaseUnit" xml:space="preserve"><value>Unit</value></data>
@@ -1120,15 +1128,15 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="PurchaseMergeTooLong" xml:space="preserve"><value>The merged description is too long. Shorten it first.</value></data>
   <data name="PurchaseNoItems" xml:space="preserve"><value>No items yet. Read a document, paste text or add items manually.</value></data>
   <data name="PurchaseCategoryPreview" xml:space="preserve"><value>Provisional category breakdown</value></data>
-  <data name="PurchaseConfirmReview" xml:space="preserve"><value>I have checked the shop, date, items and matching receipt total</value></data>
+  <data name="PurchaseConfirmReview" xml:space="preserve"><value>I have checked the shop, date, items, matching receipt total and meal-voucher payment</value></data>
   <data name="PurchaseSaveReviewed" xml:space="preserve"><value>Save reviewed receipt</value></data>
   <data name="PurchaseSaveDraft" xml:space="preserve"><value>Save receipt as draft</value></data>
-  <data name="PurchaseSavedMessage" xml:space="preserve"><value>Purchase details saved. Bank entries and budgets are unchanged.</value></data>
+  <data name="PurchaseSavedMessage" xml:space="preserve"><value>Receipt saved. Its reporting setting determines whether categories and voucher payments count; original bank amounts are unchanged.</value></data>
   <data name="PurchaseReplaceTitle" xml:space="preserve"><value>Replace current receipt items?</value></data>
-  <data name="PurchaseReplaceText" xml:space="preserve"><value>Re-reading replaces the shop, purchase date, total, invoice number and all current items, including corrections, categories and warranty details. Account, bank link and notes are retained.</value></data>
+  <data name="PurchaseReplaceText" xml:space="preserve"><value>Re-reading replaces the shop, purchase date, total, meal-voucher payment, invoice number and all current items, including corrections, line categories and warranty details. Default category, account, bank link and notes are retained.</value></data>
   <data name="PurchaseDelete" xml:space="preserve"><value>Delete receipt</value></data>
-  <data name="PurchaseDeleteHelp" xml:space="preserve"><value>Remove these purchase details, items and any attachment from the active administration? Bank entries and reimbursement expectations remain unchanged. Older backups are not changed.</value></data>
-  <data name="PurchaseDeleted" xml:space="preserve"><value>Purchase details deleted; bank entries are unchanged.</value></data>
+  <data name="PurchaseDeleteHelp" xml:space="preserve"><value>Remove this receipt, items and attachment? If applied, its bank splits and voucher spending are also removed; the original bank category becomes effective again. Bank amounts and older backups are unchanged. Unlink dependent refunds or reimbursement expectations first.</value></data>
+  <data name="PurchaseDeleted" xml:space="preserve"><value>Receipt and any applied receipt splits and voucher spending removed. Original bank amounts are unchanged.</value></data>
   <data name="PurchaseDeadlines" xml:space="preserve"><value>Returns &amp; warranties within 30 days</value></data>
   <data name="PurchaseDeadlinesHelp" xml:space="preserve"><value>Based on dates you recorded, for products still kept. No automatic notifications outside this page.</value></data>
   <data name="PurchaseSaved" xml:space="preserve"><value>Saved purchase details</value></data>
@@ -1145,4 +1153,30 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="PurchaseViewForTransaction" xml:space="preserve"><value>View receipts</value></data>
   <data name="PurchaseViewAll" xml:space="preserve"><value>View all purchase details</value></data>
   <data name="PurchaseFinishEditing" xml:space="preserve"><value>Save or cancel this receipt before changing the owner filter. The previous filter has been restored; your entries are retained.</value></data>
+  <data name="PurchaseApplyReports" xml:space="preserve"><value>Count this receipt in reports (categories and meal-voucher payment)</value></data>
+  <data name="PurchaseApplyReportsHelp" xml:space="preserve"><value>Requires a reviewed, matching receipt and an exact bank link for the remainder, unless paid entirely with vouchers. The full bill counts once. Bank and voucher payments are initially divided proportionally over categories, with exact cents. Reports use the bank date when linked; otherwise the purchase date. Saving an applied receipt again recalculates its splits. Unticking removes its splits and voucher spending, restoring the original bank category.</value></data>
+  <data name="PurchaseApplied" xml:space="preserve"><value>Included in reports</value></data>
+  <data name="PurchaseAppliedSplitsHelp" xml:space="preserve"><value>These splits belong to an applied receipt. Keep ordinary expenses within its category totals; the remainder is paid with vouchers. Change the full category breakdown or stop applying it in Purchases &amp; warranties.</value></data>
+  <data name="MealVouchersTitle" xml:space="preserve"><value>Meal vouchers</value></data>
+  <data name="MealVouchersHelp" xml:space="preserve"><value>One shared household balance, regardless of whose vouchers are used. Record each credit with its quantity and value; different voucher values can be entered separately.</value></data>
+  <data name="MealVouchersSharedHelp" xml:space="preserve"><value>Voucher income and voucher-funded costs belong to the whole household, not to an individual. They appear in reports with “All owners” selected. With an owner filter, only that owner's bank-funded part is shown.</value></data>
+  <data name="MealVouchersBalance" xml:space="preserve"><value>Shared voucher balance</value></data>
+  <data name="MealVouchersRestricted" xml:space="preserve"><value>Restricted payment balance, not bank cash, savings or an emergency reserve. It does not increase bank balances or the cash spending forecast.</value></data>
+  <data name="MealVouchersNegative" xml:space="preserve"><value>Recorded voucher payments exceed credits available on this date. Check missing credits, the opening balance and receipt payments. No income is invented to fill the gap.</value></data>
+  <data name="MealVouchersAdd" xml:space="preserve"><value>Record vouchers received</value></data>
+  <data name="MealVouchersOpening" xml:space="preserve"><value>Opening voucher balance</value></data>
+  <data name="MealVouchersOpeningHelp" xml:space="preserve"><value>Vouchers already held when you start tracking. This increases the balance, not income. For an amount without a known count, enter quantity 1 and the full balance as its value. Choose a date on or before the first payment you track.</value></data>
+  <data name="MealVouchersContributionHelp" xml:space="preserve"><value>The full credited value counts as non-cash income on this date. If your employee contribution was already deducted from imported net salary, do not record that deduction again as an expense. Do not also enter this voucher credit as bank income.</value></data>
+  <data name="MealVouchersQuantity" xml:space="preserve"><value>Number of vouchers</value></data>
+  <data name="MealVouchersUnitValue" xml:space="preserve"><value>Value per voucher (EUR)</value></data>
+  <data name="MealVouchersCredits" xml:space="preserve"><value>Credits and opening balance</value></data>
+  <data name="MealVouchersDatesHelp" xml:space="preserve"><value>All dates, independent of the month and owner filters. Future credits do not affect today's balance or actual income yet.</value></data>
+  <data name="MealVouchersEmpty" xml:space="preserve"><value>No voucher credits recorded yet.</value></data>
+  <data name="MealVouchersPayments" xml:space="preserve"><value>Voucher payments on receipts</value></data>
+  <data name="MealVouchersPaymentsHelp" xml:space="preserve"><value>Only receipts explicitly included in reports use the shared balance, on their purchase date. Open a receipt to change or remove its payment; received income is not counted again when spent.</value></data>
+  <data name="MealVouchersNoPayments" xml:space="preserve"><value>No applied voucher payments yet.</value></data>
+  <data name="MealVouchersDeleteHelp" xml:space="preserve"><value>Delete this voucher credit or opening balance? Its value is removed from the balance and, for a credit, from income on its date. Receipt payments remain recorded, so the balance may become negative.</value></data>
+  <data name="MealVouchersAvailableForReceipt" xml:space="preserve"><value>Voucher balance before this receipt, on the purchase date</value></data>
+  <data name="MealVouchersReportHelp" xml:space="preserve"><value>Income includes recorded meal-voucher credits; costs include the full amount of applied receipts. Unspent vouchers are restricted credit, not available bank cash. Bank balances and cash forecasts exclude this credit.</value></data>
+  <data name="MealVouchersLeaveWarning" xml:space="preserve"><value>Leave this page and discard the unsaved voucher entry?</value></data>
 </root>

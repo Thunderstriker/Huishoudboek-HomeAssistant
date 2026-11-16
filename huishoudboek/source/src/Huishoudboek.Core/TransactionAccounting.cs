@@ -14,6 +14,14 @@ public sealed record AccountingLine(Transaction Transaction, Guid? AllocationId,
 /// <summary>One interpretation of bank entries for every budget/report, never for account balances.</summary>
 public static class TransactionAccounting
 {
+    /// <summary>Household reports include shared, restricted vouchers; account/owner scopes opt in explicitly.</summary>
+    public static IEnumerable<AccountingLine> ReportLines(HouseholdData data, DateOnly from, DateOnly through,
+        IReadOnlySet<Guid>? scope = null, bool includeShared = false) =>
+        Lines(data, data.Transactions.Where(t => t.Date >= from && t.Date <= through &&
+            (scope == null || scope.Contains(t.AccountId))))
+        .Concat(scope == null || includeShared
+            ? MealVouchers.Lines(data).Where(l => l.Transaction.Date >= from && l.Transaction.Date <= through) : []);
+
     public static IEnumerable<AccountingLine> Lines(HouseholdData data, IEnumerable<Transaction> transactions)
     {
         var categories = data.Categories.ToDictionary(c => c.Id);

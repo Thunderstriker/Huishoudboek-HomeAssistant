@@ -1,0 +1,85 @@
+@page "/maaltijdcheques"
+@attribute [Authorize]
+@inherits PageBase
+@inject IJSRuntime JS
+
+<PageTitle>@L["MealVouchersTitle"] · Huishoudboek</PageTitle>
+<h1>@L["MealVouchersTitle"]</h1>
+<p>@L["MealVouchersHelp"]</p>
+<p class="notice">@L["MealVouchersSharedHelp"]</p>
+@{ var balance = MealVouchers.Balance(State.Data, State.Today); }
+<section class="card">
+    <h2>@L["MealVouchersBalance"] · @State.Today.ToString("dd-MM-yyyy")</h2>
+    <p class="voucher-balance @(balance < 0 ? "negative" : "")"><strong>@Money(balance)</strong></p>
+    <p class="muted">@L["MealVouchersRestricted"]</p>
+    @if (balance < 0) { <p class="notice warning" role="status">@L["MealVouchersNegative"]</p> }
+    <div class="actions"><button class="primary" @onclick="() => Edit(new MealVoucherCredit { Date = State.Today })" disabled="@(draft != null)">+ @L["MealVouchersAdd"]</button>
+        @if (!State.Data.MealVoucherCredits.Any(c => c.IsOpeningBalance))
+        { <button @onclick="() => Edit(new MealVoucherCredit { Date = State.Today, IsOpeningBalance = true })" disabled="@(draft != null)">@L["MealVouchersOpening"]</button> }
+        <a class="button" href="aankopen">@L["PurchasesTitle"] →</a>
+    </div>
+</section>
+@if (draft is { } credit)
+{
+    <NavigationLock ConfirmExternalNavigation="true" OnBeforeInternalNavigation="BeforeNavigate" />
+    <section class="card">
+        <h2>@L[credit.IsOpeningBalance ? "MealVouchersOpening" : "MealVouchersAdd"]</h2>
+        <p class="muted">@L[credit.IsOpeningBalance ? "MealVouchersOpeningHelp" : "MealVouchersContributionHelp"]</p>
+        @if (revision != State.Revision) { <p class="notice warning">@L["PurchaseStaleDraft"]</p> }
+        <form @onsubmit="Save" @onsubmit:preventDefault>
+            <div class="fields">
+                <label>@L["Date"]<input id="voucher-date" type="date" @bind="credit.Date" required /></label>
+                <label>@L["MealVouchersQuantity"]<input id="voucher-quantity" type="number" min="1" max="100000" step="1" @bind="credit.Quantity" required /></label>
+                <label>@L["MealVouchersUnitValue"]<input id="voucher-value" type="number" min="0.01" max="1000000" step="0.01" @bind="credit.UnitValue" required /></label>
+                <label>@L["PurchaseNotes"]<input maxlength="2000" @bind="credit.Note" /></label>
+            </div>
+            <p>@L["Total"]: <strong>@(credit.Quantity is > 0 and <= 100_000 && credit.UnitValue is > 0 and <= 1_000_000 ? Money(MealVouchers.Value(credit)) : L["Unknown"].Value)</strong></p>
+            <div class="actions"><button class="primary" type="submit">@L["Save"]</button><button type="button" @onclick="() => draft = null">@L["Cancel"]</button></div>
+        </form>
+    </section>
+}
+<section class="card">
+    <h2>@L["MealVouchersCredits"]</h2>
+    <p class="muted">@L["MealVouchersDatesHelp"]</p>
+    @{ var credits = State.Data.MealVoucherCredits.OrderByDescending(c => c.Date).ThenBy(c => c.Id).ToList(); creditPage = Math.Min(creditPage, Math.Max(0, (credits.Count - 1) / 20)); }
+    <div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th>@L["MealVouchersQuantity"]</th><th class="money">@L["MealVouchersUnitValue"]</th><th class="money">@L["Total"]</th><th>@L["PurchaseNotes"]</th><th>@L["Actions"]</th></tr></thead><tbody>
+        @foreach (var entry in credits.Skip(creditPage * 20).Take(20))
+        {
+            <tr @key="entry.Id"><td>@entry.Date.ToString("dd-MM-yyyy") @if (entry.Date > State.Today) { <span class="badge">@L["Planned"]</span> } @if (entry.IsOpeningBalance) { <span class="badge">@L["MealVouchersOpening"]</span> }</td><td>@entry.Quantity</td><td class="money">@Money(entry.UnitValue)</td><td class="money">@Money(MealVouchers.Value(entry))</td><td>@entry.Note</td><td><div class="actions"><button @onclick="() => Edit(entry)" disabled="@(draft != null)">@L["Edit"]</button><button @onclick="() => RequestDelete(entry.Id)" disabled="@(draft != null)">@L["Delete"]</button></div></td></tr>
+        }
+    </tbody></table></div>
+    @if (credits.Count == 0) { <p class="empty">@L["MealVouchersEmpty"]</p> }
+    <Pager Count="credits.Count" Size="20" @bind-Page="creditPage" />
+</section>
+<section class="card">
+    <h2>@L["MealVouchersPayments"]</h2>
+    <p class="muted">@L["MealVouchersPaymentsHelp"]</p>
+    @{ var payments = State.Data.PurchaseReceipts.Where(r => r.IsApplied && r.MealVoucherAmount > 0).OrderByDescending(r => r.PurchaseDate).ThenBy(r => r.Id).ToList(); paymentPage = Math.Min(paymentPage, Math.Max(0, (payments.Count - 1) / 20)); }
+    <ul>@foreach (var receipt in payments.Skip(paymentPage * 20).Take(20))
+    { <li>@receipt.PurchaseDate?.ToString("dd-MM-yyyy") · <a href="@($"aankopen?receipt={receipt.Id:D}")">@receipt.Merchant</a> · @Money(receipt.MealVoucherAmount) @if (receipt.PurchaseDate > State.Today) { <span class="badge">@L["Planned"]</span> }</li> }</ul>
+    @if (payments.Count == 0) { <p class="empty">@L["MealVouchersNoPayments"]</p> }
+    <Pager Count="payments.Count" Size="20" @bind-Page="paymentPage" />
+</section>
+@if (deleteId is { } deleting)
+{ <Confirm Title="@L["Delete"]" Text="@L["MealVouchersDeleteHelp"]" ActionLabel="@L["Delete"]" Cancel="() => deleteId = null" Accept="() => Delete(deleting)" /> }
+
+@code {
+    private MealVoucherCredit? draft;
+    private string revision = "";
+    private string deleteRevision = "";
+    private Guid? deleteId;
+    private int creditPage, paymentPage;
+    private void Edit(MealVoucherCredit credit) { draft = credit with { }; revision = State.Revision; }
+    private void RequestDelete(Guid id) { deleteId = id; deleteRevision = State.Revision; }
+    private async Task Save()
+    {
+        if (draft is not { } credit) return;
+        await State.RunAsync(async () => { await State.SaveAsync(d => MealVouchers.SaveCredit(d, credit), revision); draft = null; }, L["ChangesSaved"]);
+    }
+    private async Task Delete(Guid id) => await State.RunAsync(async () =>
+    { await State.SaveAsync(d => d.MealVoucherCredits.RemoveAll(c => c.Id == id), deleteRevision); deleteId = null; }, L["ChangesSaved"]);
+    private async Task BeforeNavigate(LocationChangingContext context)
+    {
+        if (draft != null && !await JS.InvokeAsync<bool>("confirm", L["MealVouchersLeaveWarning"].Value)) context.PreventNavigation();
+    }
+}

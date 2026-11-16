@@ -18,6 +18,7 @@
 { <p class="notice">@L["ExceptionalActualNote", Money(overview.ExceptionalOutflow)]</p> }
 <YearCharts Months="actualMonths" Categories="overview.Categories" />
 <p class="muted">@L["AnnualActualNote"]</p>
+<MealVoucherReportNote />
 <details class="card"><summary>@L["ViewMonthlyAmounts"]</summary>
 <div class="table-scroll"><table><thead><tr><th>@L["Month"]</th><th class="money">@L["Income"]</th><th class="money">@L["Outflow"]</th><th class="money">@L["Savings"]</th><th class="money">@L["Available"]</th></tr></thead><tbody>
     @foreach (var row in overview.Months) { <tr><td>@MonthName(row.Month)</td><td class="money">@Money(row.Income)</td><td class="money">@Money(row.Outflow)</td><td class="money">@Money(row.Savings)</td><td class="money">@Money(row.Available)</td></tr> }

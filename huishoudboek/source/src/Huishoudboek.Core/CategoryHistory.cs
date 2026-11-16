@@ -50,8 +50,7 @@ public static class CategoryHistory
         var cutoff = today < last ? today : last;
         var accounts = data.Accounts.Where(a => ownerId == null || a.OwnerIds.Contains(ownerId.Value)).ToList();
         var scope = accounts.Select(a => a.Id).ToHashSet();
-        var lines = TransactionAccounting.Lines(data, data.Transactions.Where(t => scope.Contains(t.AccountId) &&
-                t.Date >= first && t.Date <= cutoff))
+        var lines = TransactionAccounting.ReportLines(data, first, cutoff, scope, includeShared: ownerId == null)
             .Where(l => (l.CategoryId ?? Guid.Empty) == categoryId && l.Spending != 0)
             .ToLookup(l => new DateOnly(l.Transaction.Date.Year, l.Transaction.Date.Month, 1));
         var months = new List<CategoryHistoryMonth>(count);

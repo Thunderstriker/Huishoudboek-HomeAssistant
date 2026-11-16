@@ -54,6 +54,13 @@ zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
   categorieën en verwerk terugbetalingen als lagere uitgaven, nooit als inkomsten.
   Houd werkgeversvergoedingen en gedeelde aankopen bij, met deelbetalingen en
   openstaande bedragen. Bankboekingen en saldi blijven intact.
+- **Aankopen & garanties:** lees bonnen lokaal en neem gecontroleerde productcategorieën
+  expliciet op in de cijfers, zonder dubbele bankbetaling. De volledige bon telt als
+  kosten, inclusief het met maaltijdcheques betaalde deel.
+- **Maaltijdcheques:** één gezamenlijk tegoed met ontvangstdatum, aantal, waarde per
+  cheque en optioneel beginsaldo. Nieuwe ontvangsten tellen als extra inkomen; betalingen
+  op toegepaste bonnen verlagen het tegoed. Geen registratie per persoon en geen extra
+  vrij bankgeld of cashreserve.
 
 **Inkomsten min uitgaven** is het overschot vóór sparen. **Maandresultaat na sparen**
 is inkomsten min lasten en netto opzijgezet, geen rekeningsaldo.

@@ -50,10 +50,18 @@ public static class Categorization
     {
         if (categoryId == Guid.Empty || !data.Categories.Any(c => c.Id == categoryId))
             throw new InvalidOperationException("Kies een bestaande categorie om te verwijderen.");
+        // A deleted explicit receipt category falls back to the receipt default, just
+        // like the item editor. Preserve the same funding split and allocation IDs.
+        var receiptFallbacks = data.PurchaseReceipts.Where(r => r.IsApplied && r.TransactionId != null)
+            .SelectMany(r => data.TransactionAllocations.Where(a => a.TransactionId == r.TransactionId && a.CategoryId == categoryId)
+                .Select(a => (Allocation: a, Category: r.DefaultCategoryId == categoryId ? null : r.DefaultCategoryId))).ToList();
         // Only labels and category settings are removed, never financial records or recurring links.
         foreach (var t in data.Transactions.Where(t => t.CategoryId == categoryId)) t.CategoryId = null;
         foreach (var a in data.TransactionAllocations.Where(a => a.CategoryId == categoryId)) a.CategoryId = null;
         foreach (var r in data.RecurringPayments.Where(r => r.CategoryId == categoryId)) r.CategoryId = null;
+        foreach (var r in data.PurchaseReceipts.Where(r => r.DefaultCategoryId == categoryId)) r.DefaultCategoryId = null;
+        foreach (var i in data.PurchaseReceiptItems.Where(i => i.CategoryId == categoryId)) i.CategoryId = null;
+        foreach (var fallback in receiptFallbacks) fallback.Allocation.CategoryId = fallback.Category;
         data.Rules.RemoveAll(r => r.CategoryId == categoryId);
         data.BudgetOverrides.RemoveAll(b => b.CategoryId == categoryId);
         data.Categories.RemoveAll(c => c.Id == categoryId);

@@ -822,13 +822,25 @@ het hele huishouden. Dit zijn weergavefilters, geen toegangsbeperking voor docum
    De regels en correcties moeten exact aansluiten op het bontotaal voordat u de bon
    als gecontroleerd kunt markeren. Een verschil wordt nooit automatisch weggeboekt;
    opslaan als concept blijft mogelijk.
-4. Kies optioneel bestaande uitgavencategorieën per product, bijvoorbeeld voeding,
-   schoonmaak, persoonlijke verzorging of cadeaus. Een korting kan aan een product worden
-   gekoppeld en volgt dan diens categorie. Een algemene korting blijft apart totdat u
-   deze zelf toewijst. Btw die al in de prijzen zit, is geen extra productregel.
-5. Koppel optioneel een bankboeking. Voorstellen hebben hetzelfde totaal en een datum
-   binnen zeven dagen; u bevestigt ze zelf. Bij waardebonnen of gemengde betalingen mag
-   het bankbedrag afwijken, maar dat verschil blijft zichtbaar.
+4. Kies rechts optioneel een **Standaardcategorie voor deze bon**, bijvoorbeeld voeding.
+   Alle regels volgen deze categorie, tenzij u op een regel een andere categorie kiest,
+   bijvoorbeeld schoonmaak of cadeaus. Een gewijzigde standaard behoudt handmatige
+   keuzes; kies op een regel **Standaard** om weer de boncategorie te volgen. Een korting
+   kan aan een product worden gekoppeld en volgt dan diens categorie; een algemene korting
+   volgt de boncategorie tenzij u zelf een andere kiest. Btw die al in de prijzen zit,
+   is geen extra productregel.
+5. Vul bij betaling met maaltijdcheques het positieve bedrag in bij **Betaald met
+   maaltijdcheques (EUR)**, niet als negatieve productregel. Bij € 40 aan producten en
+   € 30 maaltijdcheques blijven het bontotaal en de regels € 40; de resterende betaling is
+   € 10. Duidelijk benoemde maaltijdchequebetalingen worden uit de bontekst voorgesteld;
+   controleer het bedrag en vul het zo nodig zelf in. Het bedrag mag niet hoger zijn dan
+   het bontotaal. Een volledig met maaltijdcheques betaalde bon kan zonder bankkoppeling
+   als gecontroleerd worden opgeslagen.
+6. Koppel optioneel een bankboeking. Voorstellen sluiten aan op de **resterende betaling
+   na maaltijdcheques** en hebben een datum binnen zeven dagen; u bevestigt ze zelf.
+    Andere gemengde betalingen kunnen nog een zichtbaar verschil geven. Alleen de
+    betaalgegevens invullen wijzigt geen cijfers: neem de gecontroleerde bon expliciet
+    op zoals hieronder beschreven. Oorspronkelijke bankbedragen en banksaldi blijven intact.
 
 ### Het bonbestand wel of niet bewaren
 
@@ -851,7 +863,74 @@ versleutelt de database of bijlagen niet. CSV-export bevat geen bonregels of doc
 gebruik daarvoor altijd een volledige databaseback-up. Database-import ondersteunt
 bestanden tot 256 MB; bewaarde foto's vergroten de back-up.
 
-### Retour, garantie en de vervolgstap voor boodschappen
+### De volledige bon opnemen in de cijfers
+
+Vink na controle **Deze bon opnemen in de cijfers (categorieën en maaltijdchequebetaling)**
+aan en sla op. Bestaande bonnen worden bij een update **niet automatisch toegepast**.
+Alle regels moeten aansluiten op een positief bontotaal; na kortingen mag geen categorie
+een negatief totaal hebben. Voor het niet met cheques betaalde restant is één exacte
+bankkoppeling nodig. Bij volledige betaling met maaltijdcheques is geen bankkoppeling nodig.
+Andere betaalwijzen zoals een contant restant worden nog niet verwerkt.
+
+- De boncategorieën worden opgeteld, inclusief productgebonden en algemene kortingen.
+- Het bankdeel wordt als echte transactiesplitsingen over de categorieën verdeeld;
+  het cheque-deel vult iedere categorie aan tot het volledige bonbedrag. Zo telt een
+  bon van € 90 voeding en € 10 huishouden **€ 100 kosten**, ook bij € 60 maaltijdcheques
+  en slechts € 40 bankbetaling. De bankbetaling wordt niet nogmaals opgeteld.
+- Betalingen worden eerst evenredig verdeeld, met exact aansluitende centen. Deze
+  verdeling zegt niets over welke producten wettelijk met maaltijdcheques betaald mogen
+  worden. Via de gewone splitsingeneditor kunt u het bankdeel anders verdelen, zolang
+  iedere categorie binnen haar bontotaal blijft. Het chequedeel volgt als restant.
+  Opnieuw opslaan van een toegepaste bon berekent de evenredige splitsingen opnieuw.
+- De volledige aankoop volgt in rapporten de gekoppelde bankdatum; zonder bankkoppeling
+  volgt deze de aankoopdatum. Het maaltijdchequesaldo wordt op de aankoopdatum verlaagd.
+- Maand-/jaaroverzichten, dashboard, budgetten, categorietrends, inzichten en gekoppelde
+  Home Assistant-overzichtskaarten gebruiken dezelfde bedragen. Cheque-inkomsten en het
+  met cheques betaalde deel zijn gezamenlijk en staan alleen bij **Alle eigenaren**.
+  Een eigenaarfilter bevat alleen het bankbetaalde deel van de geselecteerde rekeningen.
+- Een bankboeking kan maar via één toegepaste bon meetellen. Bestaande handmatige
+  splitsingen of retour-/vergoedingskoppelingen worden niet stilzwijgend overschreven.
+- Uitvinken of de bon verwijderen verwijdert de bonsplitsingen en chequebesteding;
+  de oorspronkelijke bankcategorie geldt weer. Afhankelijke retouren of verwachtingen
+  moeten eerst worden ontkoppeld. Een bankboeking verwijderen of een import terugdraaien
+  ontkoppelt de bon en stopt de toepassing; aankoopgegevens en bijlage blijven behouden.
+
+### Eén gezamenlijk maaltijdchequetegoed
+
+Open **Transacties → Maaltijdcheques** (`/maaltijdcheques`). Er is één gedeeld saldo;
+u hoeft niet te weten van wie de gebruikte cheques waren. De pagina toont alle datums,
+los van de maandkeuze en het eigenaarfilter.
+
+1. Leg eventueel één **Beginsaldo maaltijdcheques** vast voor reeds aanwezige cheques.
+   Vul zonder bekend aantal bijvoorbeeld aantal 1 en het volledige saldo als waarde in.
+   Kies een datum op of vóór de eerste geregistreerde betaling. Dit is **geen inkomen**.
+2. Gebruik **Ontvangen maaltijdcheques vastleggen** met datum, aantal en waarde per cheque.
+   Verschillende waarden voert u apart in, bijvoorbeeld 20 × € 8 en 18 × € 10. De volledige
+   ontvangen waarde telt eenmaal als inkomen op de ontvangstdatum, niet nogmaals bij uitgeven.
+3. Vul op de bon het betaalde chequebedrag in en neem de gecontroleerde bon op in de cijfers.
+   De betaling gebruikt automatisch dit gezamenlijke tegoed, zonder keuze van persoon of batch.
+4. Het saldo is ontvangen waarde plus beginsaldo min toegepaste bonbetalingen tot de datum.
+   Toekomstige ontvangsten en bonbetalingen tellen nog niet mee in het saldo van vandaag.
+   Een negatief saldo waarschuwt voor ontbrekende ontvangsten, een beginsaldo of onjuiste
+   betalingen; de app verzint geen inkomen en verwijdert geen echte aankoop om dit op te lossen.
+
+**Nettoloon en werknemersbijdrage:** als de eigen bijdrage al op het geïmporteerde nettoloon
+is ingehouden, combineert u dat lagere nettoloon met de volledige chequeontvangst. Boek de
+inhouding dan niet nogmaals als uitgave, en de chequeontvangst niet ook als bankinkomen.
+Een afzonderlijk via de bank betaalde eigen bijdrage vraagt een consistente aparte verwerking;
+de cheque-invoer herkent of corrigeert zulke bankboekingen niet automatisch.
+
+Ongebruikte maaltijdcheques zijn **beperkt bruikbaar betaaltegoed**, geen vrij bankgeld,
+spaargeld of noodbuffer. Ze verhogen geen banksaldi, vrijheidsreserves of geschatte
+cashbestedingsruimte. Een maandresultaat kan wel nog ongebruikt chequetegoed bevatten;
+het is dus niet hetzelfde als vrij besteedbaar bankgeld. De pagina toont dit expliciet.
+
+CSV-export bevat ook niet-contante cheque-inkomsten en toegepaste chequebetalingen, herkenbaar
+als `MealVoucherIncome` en `MealVoucherPayment`, met categorieverdeling, bonverwijzing en
+ontvangstgegevens. Het beginsaldo, niet-toegepaste bonnen en bonbestanden zijn geen gewone
+exportboekingen. Gebruik een volledige databaseback-up voor de volledige administratie.
+
+### Retour en garantie
 
 Per product kunt u merk/model, serienummer, locatie, status, retourdatum en garantiedatum
 vastleggen. Datums worden niet afgeleid uit algemene wettelijke aannames: controleer de
@@ -859,11 +938,10 @@ voorwaarden van de aankoop zelf. De pagina toont komende termijnen binnen 30 dag
 maar verstuurt nog geen Home Assistant-pushmeldingen. Een bestaande vergoedingsverwachting
 van de gekoppelde aankoop is selecteerbaar; een productstatus boekt geen terugbetaling.
 
-Deze eerste versie wijzigt **geen** bankbedragen, transactiecategorieën, splitsingen,
-budgetten of saldi. De categorieën op bonregels zijn voorbereiding op een latere functie
-om een boodschappenbetaling over categorieën te verdelen. Persoonsverrekening is niet
-onderdeel van deze functie. Het verwijderen van een bankboeking of terugdraaien van een
-import ontkoppelt de bon, maar bewaart de aankoopgegevens en eventuele bijlage.
+Een productstatus boekt zelf geen terugbetaling. De bestaande retour-/vergoedingsfunctie
+werkt op de werkelijk bankbetaalde splitsingen; een terugbetaling van chequetegoed wordt
+niet automatisch afgeleid uit een productstatus of bankontvangst. Persoonsverrekening
+is niet onderdeel van deze functie.
 
 ### Lokale herkenning en computerpreview
 
@@ -887,11 +965,11 @@ Controleer de herkenningskwaliteit met uw eigen winkelbonnen voordat u daarop ve
   `/data` is de private, permanente app-opslag van de Supervisor, geen Windows-pad.
 - Normale herstarts en updates behouden `/data`. Een bestaande ontbrekende of
   beschadigde database wordt nooit automatisch vervangen door een lege database.
-- Bij een Home Assistant-update worden ondersteunde schema's 1–10 na validatie
-  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 11. Vooraf wordt
-  een SQLite-bewuste `.voor-versie-11-….db`-veiligheidskopie naast de database gemaakt.
+- Bij een Home Assistant-update worden ondersteunde schema's 1–13 na validatie
+  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 14. Vooraf wordt
+  een SQLite-bewuste `.voor-versie-14-….db`-veiligheidskopie naast de database gemaakt.
   Onbekende schema's worden geweigerd. Teruggaan naar een oude appversie vereist
-  herstel van een passende oude back-up; schema-11-back-ups zijn niet leesbaar in
+  herstel van een passende oude back-up; schema-14-back-ups zijn niet leesbaar in
   oudere apps. De normale Windows-service blijft automatische upgrades weigeren.
 - Alleen een werkelijk nieuwe installatie begint met een lege administratie en
   standaardcategorieën, zonder fictieve bedragen. U kunt ook zelf rekeningen aanmaken.

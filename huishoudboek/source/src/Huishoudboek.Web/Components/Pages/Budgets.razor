@@ -5,8 +5,9 @@
 <h1>@L["BudgetsCategories"]</h1>
 <p class="notice">@L["CategoryPurposeHelp"]</p>
 <p class="muted">@L["CategoryInsightHelp"]</p>
+<MealVoucherReportNote />
 <div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Category(State)">+ @L["Category"]</button></div>
-@{ var budgets = DetailedReporting.Budgets(State.Data, State.Year, State.Month, State.Today, State.Scope); }
+@{ var budgets = DetailedReporting.Budgets(State.Data, State.Year, State.Month, State.Today, State.Scope, includeShared: State.OwnerId == null); }
 <h2>@(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
 @foreach (var purpose in Enum.GetValues<CategoryPurpose>())
 {

@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.2.3
+
+- Standaardcategorie per aankoopbon, met afwijkende categorieën per productregel.
+  Handmatige keuzes blijven behouden bij een gewijzigde standaard; zoeken en
+  categorievoorbeelden gebruiken de gekozen bon- en regelcategorieën. Categorieën
+  verwijderen wist ook bonverwijzingen, zonder aankoopgegevens te verwijderen.
+- Maaltijdcheques als aparte betaling vastleggen zonder negatieve productregel:
+  het volledige bontotaal blijft controleerbaar en alleen het resterende bedrag
+  wordt met de bankboeking vergeleken. Duidelijk benoemde betalingen worden uit
+  bontekst herkend; volledig met maaltijdcheques betaalde bonnen kunnen zonder bankkoppeling.
+- Databaseschema 13 met veiligheidskopie vóór migratie en behoud van bestaande
+  aankoopbonnen en oudere databaseback-ups.
+- Eén gezamenlijke maaltijdchequeregistratie met ontvangstdatum, aantal, waarde per
+  cheque en optioneel beginsaldo. Ontvangsten tellen als extra inkomen; het beginsaldo
+  niet. Bestedingen verlagen het tegoed, zonder banksaldi of cashreserves te verhogen.
+- Gecontroleerde bonnen expliciet opnemen in budgetten, grafieken en categorietrends:
+  de volledige aankoop telt per productcategorie mee, ook bij gedeeltelijke of volledige
+  betaling met maaltijdcheques. De gekoppelde bankbetaling wordt niet dubbel geteld.
+- Bonsplitsingen met aansluitende centen, bescherming van bestaande splitsingen en
+  retourkoppelingen, en veilig opnieuw toepassen of verwijderen. Gedeelde cheque-inkomsten
+  en -kosten staan bij het hele huishouden; eigenaarfilters behouden alleen hun bankdeel.
+- CSV-export uitgebreid met maaltijdcheque-inkomsten, -uitgaven en bonverwijzingen.
+  Databaseschema 14 bewaart ontvangsten en toegepaste bonnen, met veiligheidskopie vóór
+  migratie en behoud van oudere back-ups.
+- App- en containerversie bijgewerkt naar 0.2.3 voor installatie en updates via Home Assistant.
+
 ## 0.2.2
 
 - Nieuwe pagina Aankopen & garanties met lokale bonherkenning uit foto's en PDF's:

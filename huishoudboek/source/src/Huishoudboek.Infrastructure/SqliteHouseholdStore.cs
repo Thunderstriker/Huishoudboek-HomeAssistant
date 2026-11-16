@@ -14,7 +14,7 @@ namespace Huishoudboek.Infrastructure;
 public sealed class SqliteHouseholdStore : IAdministrationStore
 {
     public const long MaximumRestoreBytes = 256L * 1024 * 1024;
-    private const int SchemaVersion = 12;
+    private const int SchemaVersion = 14;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -58,7 +58,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         typeof(BudgetOverride), typeof(Transaction), typeof(RecurringPayment), typeof(CategorizationRule),
         typeof(InvestmentValuation), typeof(ImportBatch), typeof(ImportProfile), typeof(TransferMatch),
         typeof(TransactionAllocation), typeof(ReimbursementClaim), typeof(AccountReview), typeof(AccountStatementPeriod),
-        typeof(PurchaseReceipt), typeof(PurchaseReceiptItem)];
+        typeof(PurchaseReceipt), typeof(PurchaseReceiptItem), typeof(MealVoucherCredit)];
 
     private static SqliteConnection Open(string path, bool readOnly = false)
     {
@@ -157,6 +157,16 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             CreateTable(connection, tx, typeof(PurchaseReceiptItem));
             CreateReceiptDocuments(connection, tx);
         }
+        else if (version < 13)
+        {
+            Execute(connection, tx, "ALTER TABLE [PurchaseReceipt] ADD COLUMN [MealVoucherAmount] TEXT NOT NULL DEFAULT '0'");
+            Execute(connection, tx, "ALTER TABLE [PurchaseReceipt] ADD COLUMN [DefaultCategoryId] TEXT NULL");
+        }
+        if (version < 14)
+        {
+            if (version >= 12) Execute(connection, tx, "ALTER TABLE [PurchaseReceipt] ADD COLUMN [IsApplied] INTEGER NOT NULL DEFAULT 0");
+            CreateTable(connection, tx, typeof(MealVoucherCredit));
+        }
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -199,8 +209,9 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             ReimbursementClaims = version >= 6 ? Read<ReimbursementClaim>(connection, tx) : [],
             AccountReviews = version >= 7 ? Read<AccountReview>(connection, tx) : [],
             AccountStatementPeriods = version >= 11 ? Read<AccountStatementPeriod>(connection, tx) : [],
-            PurchaseReceipts = version >= 12 ? Read<PurchaseReceipt>(connection, tx) : [],
-            PurchaseReceiptItems = version >= 12 ? Read<PurchaseReceiptItem>(connection, tx) : []
+            PurchaseReceipts = version >= 12 ? Read<PurchaseReceipt>(connection, tx, version) : [],
+            PurchaseReceiptItems = version >= 12 ? Read<PurchaseReceiptItem>(connection, tx) : [],
+            MealVoucherCredits = version >= 14 ? Read<MealVoucherCredit>(connection, tx) : []
         };
         using var command = connection.CreateCommand();
         command.Transaction = tx;
@@ -239,6 +250,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         Write(connection, tx, data.AccountReviews);
         Write(connection, tx, data.AccountStatementPeriods);
         Write(connection, tx, data.PurchaseReceipts); Write(connection, tx, data.PurchaseReceiptItems);
+        Write(connection, tx, data.MealVoucherCredits);
         if (restoreFrom != null)
         {
             Execute(connection, tx, "DELETE FROM receipt_documents");
@@ -298,6 +310,12 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
 
     private static string? PreviousDefault(Type type, string property, int version)
     {
+        if (version < 14 && type == typeof(PurchaseReceipt) && property == nameof(PurchaseReceipt.IsApplied)) return "0";
+        if (version < 13 && type == typeof(PurchaseReceipt))
+        {
+            if (property == nameof(PurchaseReceipt.MealVoucherAmount)) return "'0'";
+            if (property == nameof(PurchaseReceipt.DefaultCategoryId)) return "NULL";
+        }
         if (version < 10 && type == typeof(Category) && property is nameof(Category.IsEssential) or nameof(Category.IsExceptional)) return "0";
         if (version < 10 && type == typeof(Account) && property == nameof(Account.IncludeInFreedom)) return "1";
         if (version < 10 && type == typeof(Account) && property == nameof(Account.EarmarkedAmount)) return "'0'";

@@ -12,6 +12,8 @@ public static class ReceiptTextParser
     private static Regex Pattern(string pattern) => new(pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
     private static readonly Regex Price = Pattern(@"(?<![\d.,])(?<amount>-?\s*(?:\d{1,3}(?:[., ]\d{3})+|\d+)[,.]\d{2})\s*(?<minus>-)?\s*(?:€|EUR)?\s*[A-D*]?\s*$");
     private static readonly Regex Total = Pattern(@"^(?:grand\s+total|totaal(?:bedrag|\s+te\s+betalen)?|te\s+betalen|eindtotaal|total(?:\s+due)?|amount\s+due)\b");
+    private static readonly Regex RemainingTotal = Pattern(@"^(?:totaal\s+te\s+betalen|te\s+betalen|total\s+due|amount\s+due)\b");
+    private static readonly Regex MealVouchers = Pattern(@"^(?:(?:betaald\s+met|betaling|payment|paid\s+with)\s*:?\s*)?(?:e[\s-]?)?(?:maaltijd[\s-]*cheques?|meal[\s-]+vouchers?|titres?[\s-]+repas|ch[eè]ques?[\s-]+repas)\s*:?\s*$");
     private static readonly Regex Ignore = Pattern(@"^(?:sub\s*tota[al]+|sub\s*total|btw\b|vat\b|tax\b|basis\b|maatstaf\b|netto\b|bruto\b|totaal\s+(?:korting|voordeel|bespaar|artikelen|aantal)|total\s+(?:discount|saving|items)|u\s+bespaart|bespaard|voordeel\s+totaal|betaald\b|betaling\b|payment\b|pin\b|pinnen\b|bancontact\b|maestro\b|mastercard\b|visa\b|kaart\b|card\b|cash\b|contant\b|wisselgeld\b|change\b|terug\b|saldo\b|kassa\b|kassier\b|terminal\b|klant\b|klantenkaart\b|loyalty\b|tel\b|telefoon\b|www\.|https?://|bonnummer\b|bon\s*(?:nr|nummer)|factuur\b|invoice\b|datum\b|date\b|tijd\b|time\b|omschrijving\b|description\b|artikel\s+(?:prijs|aantal)|aantal\s+artikelen)");
     private static readonly Regex Discount = Pattern(@"\b(?:korting|bonus|promo|discount|coupon|waardebon|actievoordeel)\b");
     private static readonly Regex Deposit = Pattern(@"\b(?:statiegeld|leeggoed|deposit|pfand)\b");
@@ -48,9 +50,16 @@ public static class ReceiptTextParser
             if (receipt.InvoiceNumber.Length == 0 && Invoice.Match(line) is { Success: true } invoice)
                 receipt.InvoiceNumber = invoice.Groups["number"].Value;
             var price = Price.Match(line);
+            if (price.Success && MealVouchers.IsMatch(line[..price.Index].Trim(' ', '\t', '€', ':')) && TryNumber(price.Groups["amount"].Value, out var vouchers))
+            {
+                receipt.MealVoucherAmount += Math.Abs(vouchers);
+                pending = null;
+                continue;
+            }
             if (Total.IsMatch(line) && !Ignore.IsMatch(line) && price.Success && TryNumber(price.Groups["amount"].Value, out var total) && total >= 0)
             {
-                receipt.Total = total;
+                // A later remaining-payment line must not replace the full purchase total.
+                if (!RemainingTotal.IsMatch(line) || receipt.Total == null) receipt.Total = total;
                 afterTotal = true;
                 pending = null;
                 continue;
