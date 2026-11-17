@@ -319,7 +319,7 @@ var tests = new (string Name, Action Run)[]
             using (var connection = new SqliteConnection($"Data Source={path};Pooling=False"))
             {
                 connection.Open(); using var command = connection.CreateCommand();
-                command.CommandText = "DROP TABLE MealVoucherCredit; ALTER TABLE PurchaseReceipt DROP COLUMN IsApplied;";
+                command.CommandText = "DROP TABLE InvestmentTrade; DROP TABLE InvestmentInstrument; DROP TABLE MealVoucherCredit; ALTER TABLE PurchaseReceipt DROP COLUMN IsApplied;";
                 if (version < 13) command.CommandText += "ALTER TABLE PurchaseReceipt DROP COLUMN MealVoucherAmount; ALTER TABLE PurchaseReceipt DROP COLUMN DefaultCategoryId;";
                 if (version < 12) command.CommandText += "DROP TABLE PurchaseReceipt; DROP TABLE PurchaseReceiptItem; DROP TABLE receipt_documents;";
                 command.CommandText += $"PRAGMA user_version={version};"; command.ExecuteNonQuery();
@@ -330,9 +330,9 @@ var tests = new (string Name, Action Run)[]
             Equal(40m, Finance.Report(loaded, 2026, 11, Fixture.Today).Outflow);
             Equal(version >= 12 ? 1 : 0, loaded.PurchaseReceipts.Count);
             if (version >= 12) True(upgraded.ReadReceiptDocument(storedReceipt.Id)!.Content.SequenceEqual(document.Content));
-            Equal(1, Directory.GetFiles(directory, "*.voor-versie-14-*.db").Length);
+            Equal(1, Directory.GetFiles(directory, "*.voor-versie-15-*.db").Length);
             var restored = new SqliteHouseholdStore(Path.Combine(directory, "restored.db"));
-            restored.Restore(Directory.GetFiles(directory, "*.voor-versie-14-*.db").Single());
+            restored.Restore(Directory.GetFiles(directory, "*.voor-versie-15-*.db").Single());
             Equal(40m, Finance.Report(restored.Load(), 2026, 11, Fixture.Today).Outflow);
         });
     }),
@@ -395,7 +395,7 @@ var tests = new (string Name, Action Run)[]
         Equal(saved.Revision, coordinator.Read().Revision);
         Equal(100m, Finance.Report(coordinator.Read().Data, 2026, 11, Fixture.Today).Outflow);
     }))
-};
+}.Concat(InvestmentTests.All()).ToArray();
 
 var failed = 0;
 foreach (var test in tests)

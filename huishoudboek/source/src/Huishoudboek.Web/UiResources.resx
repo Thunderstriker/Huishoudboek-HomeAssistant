@@ -1182,4 +1182,131 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="MealVouchersLeaveWarning" xml:space="preserve"><value>Deze pagina verlaten en de niet-opgeslagen maaltijdcheque-invoer verwerpen?</value></data>
   <data name="PurchaseVoucherCreditHelp" xml:space="preserve"><value>Vul de werkelijke ontvangstdatum in; de aankoopdatum is alvast ingevuld. Opslaan werkt het gezamenlijke maaltijdchequeregister direct bij, zonder uw boninvoer te verliezen. Deze ontvangst of dit beginsaldo blijft bewaard als u de bon daarna annuleert. Sla de cheque-invoer op of annuleer deze voordat u de bon opslaat.</value></data>
   <data name="PurchaseVoucherCreditSaved" xml:space="preserve"><value>Maaltijdcheques opgeslagen. U kunt verder met de aankoopbon.</value></data>
+  <data name="InvestmentsTitle" xml:space="preserve"><value>Beleggingen</value></data>
+  <data name="InvestmentIntro" xml:space="preserve"><value>Volg aandelen en ETF's met gewogen aankoopkosten, FIFO-verkopen en dagelijkse koerspercentages. Huidige posities, los van de maandkeuze; het eigenaarfilter blijft gelden. Geen grafieken of automatische bankboekingen.</value></data>
+  <data name="InvestmentViewPortfolio" xml:space="preserve"><value>Portefeuille bekijken</value></data>
+  <data name="InvestmentHoldingsValue" xml:space="preserve"><value>Geschatte effectenwaarde</value></data>
+  <data name="InvestmentUnrealized" xml:space="preserve"><value>Ongerealiseerd resultaat</value></data>
+  <data name="InvestmentRealized" xml:space="preserve"><value>Gerealiseerd resultaat (FIFO)</value></data>
+  <data name="InvestmentRemainingCost" xml:space="preserve"><value>Resterende aankoopkosten</value></data>
+  <data name="InvestmentPartial" xml:space="preserve"><value>Gedeeltelijk</value></data>
+  <data name="InvestmentIncomplete" xml:space="preserve"><value>Koersen, wisselkoersen of aankoopkosten ontbreken. Een gedeeltelijk subtotaal is geen volledige portefeuillewaarde; onbekend resultaat staat als —.</value></data>
+  <data name="InvestmentEstimatedFx" xml:space="preserve"><value>Een deel van de EUR-aankoopkosten is geschat met een vastgelegde historische wisselkoers.</value></data>
+  <data name="InvestmentSeparateNote" xml:space="preserve"><value>Aparte portefeuilleschatting, niet opgeteld bij bestaande handmatige waarderingen of banksaldi. Resultaten zijn inclusief vastgelegde kosten, zonder dividend en geen belastingaangifte.</value></data>
+  <data name="InvestmentShares" xml:space="preserve"><value>stuks</value></data>
+  <data name="InvestmentLatestPrice" xml:space="preserve"><value>laatste koers</value></data>
+  <data name="InvestmentSinceClose" xml:space="preserve"><value>sinds vorige handelsafsluiting</value></data>
+  <data name="InvestmentSinceBuys" xml:space="preserve"><value>sinds aankopen ({0}, incl. kosten)</value></data>
+  <data name="InvestmentYourEurReturn" xml:space="preserve"><value>uw resultaat in EUR, inclusief valuta-effect</value></data>
+  <data name="InvestmentHoldingValue" xml:space="preserve"><value>Positiewaarde</value></data>
+  <data name="InvestmentMissingPrice" xml:space="preserve"><value>Geen bruikbare koers. Controleer de koppeling of vul een handmatige koers in; na een splitsing is een nieuwe koers nodig.</value></data>
+  <data name="InvestmentOldPrice" xml:space="preserve"><value>Deze koers is ouder dan vier kalenderdagen. Controleer de koersdatum; beurzen kunnen gesloten zijn.</value></data>
+  <data name="InvestmentPriceDate" xml:space="preserve"><value>Koersdatum</value></data>
+  <data name="InvestmentFetched" xml:space="preserve"><value>opgehaald</value></data>
+  <data name="InvestmentWeightedCost" xml:space="preserve"><value>Gewogen resterende kostprijs per aandeel</value></data>
+  <data name="InvestmentFifoHelp" xml:space="preserve"><value>Iedere aankoop blijft een apart lot. Resultaat = (huidige waarde − resterende aankoopkosten) / resterende aankoopkosten. FIFO verwijdert bij verkoop eerst de oudste aandelen en hun evenredige kosten; splitsingen wijzigen aantallen, niet de totale kosten. Dagpercentages zijn koersbewegingen, geen persoonlijk dagresultaat.</value></data>
+  <data name="InvestmentFxRate" xml:space="preserve"><value>Wisselkoers voor huidige waarde</value></data>
+  <data name="InvestmentManualFx" xml:space="preserve"><value>handmatig, op de ingevulde koersdatum</value></data>
+  <data name="InvestmentOldFx" xml:space="preserve"><value>De gebruikte wisselkoers is ouder dan vier kalenderdagen.</value></data>
+  <data name="InvestmentAddTrade" xml:space="preserve"><value>Historische transactie toevoegen</value></data>
+  <data name="InvestmentAddInstrument" xml:space="preserve"><value>Effect toevoegen</value></data>
+  <data name="InvestmentNeedAccount" xml:space="preserve"><value>Maak eerst een beleggingsrekening aan bij Rekeningen, of pas het eigenaarfilter aan.</value></data>
+  <data name="InvestmentInstrument" xml:space="preserve"><value>Aandeel of ETF</value></data>
+  <data name="InvestmentInstruments" xml:space="preserve"><value>Effecten en handmatige koersen beheren</value></data>
+  <data name="InvestmentExchange" xml:space="preserve"><value>Beurs / notering</value></data>
+  <data name="InvestmentCurrency" xml:space="preserve"><value>Handelsvaluta (EUR, USD, …)</value></data>
+  <data name="InvestmentProviderSymbol" xml:space="preserve"><value>Alpha Vantage-symbool (leeg = handmatig)</value></data>
+  <data name="InvestmentConfirmMapping" xml:space="preserve"><value>Naam, ISIN/aandelenklasse, beurs en valuta gecontroleerd tegen mijn broker; dit is de juiste providersymboolkoppeling.</value></data>
+  <data name="InvestmentUsListing" xml:space="preserve"><value>Bevestigde Amerikaanse notering (voor betaalde vertraagde/realtimegegevens)</value></data>
+  <data name="InvestmentManualHelp" xml:space="preserve"><value>Zonder providersymbool gebruikt dit effect handmatige koersen, ook zonder API-sleutel. De optionele handmatige EUR-wisselkoers geldt op dezelfde datum als de handmatige koers en wordt gebruikt als de API-wisselkoers ontbreekt of van een eerdere dag is.</value></data>
+  <data name="InvestmentManualPrice" xml:space="preserve"><value>Handmatige koers (handelsvaluta)</value></data>
+  <data name="InvestmentPreviousClose" xml:space="preserve"><value>Vorige handelsafsluiting (optioneel)</value></data>
+  <data name="InvestmentManualEurRate" xml:space="preserve"><value>Handmatige EUR per 1 eenheid handelsvaluta (optioneel)</value></data>
+  <data name="InvestmentSearch" xml:space="preserve"><value>Zoek bedrijf, fonds of symbool</value></data>
+  <data name="InvestmentSearchButton" xml:space="preserve"><value>Zoeken bij Alpha Vantage</value></data>
+  <data name="InvestmentSearchQuota" xml:space="preserve"><value>Elke zoekactie verbruikt één API-aanvraag. Selecteer een resultaat en bevestig zelf de juiste notering; zoekresultaten zijn geen bewijs van koersdekking.</value></data>
+  <data name="InvestmentTradeBuy" xml:space="preserve"><value>Aankoop</value></data>
+  <data name="InvestmentTradeSell" xml:space="preserve"><value>Verkoop</value></data>
+  <data name="InvestmentTradeSplit" xml:space="preserve"><value>Aandelensplitsing</value></data>
+  <data name="InvestmentTradeOpening" xml:space="preserve"><value>Openingspositie / ontbrekende historie</value></data>
+  <data name="InvestmentSequence" xml:space="preserve"><value>Volgorde binnen dezelfde dag</value></data>
+  <data name="InvestmentSplitRatio" xml:space="preserve"><value>Verhouding nieuw/oud (2 = 2 voor 1)</value></data>
+  <data name="InvestmentQuantity" xml:space="preserve"><value>Aantal aandelen</value></data>
+  <data name="InvestmentUnitPrice" xml:space="preserve"><value>Uitvoeringsprijs per aandeel</value></data>
+  <data name="InvestmentFees" xml:space="preserve"><value>Makelaarskosten</value></data>
+  <data name="InvestmentTax" xml:space="preserve"><value>Transactietaks (TOB)</value></data>
+  <data name="InvestmentFxCosts" xml:space="preserve"><value>Valutakosten</value></data>
+  <data name="InvestmentSettlement" xml:space="preserve"><value>Werkelijk totaal afgerekend in EUR (optioneel)</value></data>
+  <data name="InvestmentHistoricalRate" xml:space="preserve"><value>Historische EUR per 1 handelsvaluta (optionele schatting)</value></data>
+  <data name="InvestmentTradeCurrencyHelp" xml:space="preserve"><value>Prijs, makelaarskosten, TOB en valutakosten zijn in {0}. Reken kosten uit een andere valuta eerst correct om; voeg ze niet nogmaals toe aan een reeds volledig EUR-afrekentotaal.</value></data>
+  <data name="InvestmentSplitHelp" xml:space="preserve"><value>Een splitsing past alle bestaande lotaantallen op deze rekening aan zonder de kosten te veranderen. Leg dezelfde corporate action vast op iedere betrokken rekening.</value></data>
+  <data name="InvestmentOpeningHelp" xml:space="preserve"><value>Gebruik dit alleen bij ontbrekende aankoop- of overdrachtshistorie. Laat een onbekende kostprijs leeg; de winst blijft dan onbekend totdat de historie is aangevuld. Bij overdracht tellen de oorspronkelijke kosten, niet de marktwaarde op de overdrachtsdatum.</value></data>
+  <data name="InvestmentSettlementHelp" xml:space="preserve"><value>EUR-afrekening = totale werkelijke aankoopafschrijving inclusief alle kosten, of netto verkoopontvangst. Dit bedrag heeft voorrang op de historische wisselkoers. Ontbrekende historische FX wordt nooit met de huidige koers ingevuld.</value></data>
+  <data name="InvestmentHistory" xml:space="preserve"><value>Aankoop- en verkoophistorie</value></data>
+  <data name="InvestmentAllIn" xml:space="preserve"><value>Totaal / netto afrekening</value></data>
+  <data name="InvestmentQuoteSettings" xml:space="preserve"><value>Koersgegevens en eigen API-sleutel</value></data>
+  <data name="InvestmentSecretHelp" xml:space="preserve"><value>Optionele Alpha Vantage-koppeling met uw eigen gratis of betaalde sleutel. Alleen symbolen en valutaparen worden opgevraagd; aantallen, aankoopprijzen en bankgegevens worden niet verstuurd. De opgeslagen sleutel wordt nooit teruggestuurd naar de browser.</value></data>
+  <data name="InvestmentLicenseHelp" xml:space="preserve"><value>Bedoeld voor persoonlijk gebruik. Bevestig zelf de providerrechten voor uw abonnement en noteringen. Home Assistant-gebruikers met toegang tot deze app kunnen ook de portefeuille bekijken; een eigenaarfilter is geen toegangsbeveiliging.</value></data>
+  <data name="InvestmentKeyConfigured" xml:space="preserve"><value>Sleutel ingesteld</value></data>
+  <data name="InvestmentKeyMissing" xml:space="preserve"><value>Geen sleutel ingesteld</value></data>
+  <data name="InvestmentQuotaUsed" xml:space="preserve"><value>API-aanvragen vandaag (UTC): {0} / {1}</value></data>
+  <data name="InvestmentLastAttempt" xml:space="preserve"><value>Laatste aanvraag</value></data>
+  <data name="InvestmentLastSuccess" xml:space="preserve"><value>Laatste geslaagde controle/volledige update</value></data>
+  <data name="InvestmentNextUpdate" xml:space="preserve"><value>Volgende update</value></data>
+  <data name="InvestmentEnableQuotes" xml:space="preserve"><value>Koersaanvragen inschakelen met mijn eigen API-sleutel</value></data>
+  <data name="InvestmentPaidKey" xml:space="preserve"><value>Ik gebruik een betaalde API-sleutel met de ingestelde rechten en limieten</value></data>
+  <data name="InvestmentConnectionGroup" xml:space="preserve"><value>Verbinding</value></data>
+  <data name="InvestmentScheduleGroup" xml:space="preserve"><value>Updateschema</value></data>
+  <data name="InvestmentLimitsGroup" xml:space="preserve"><value>API-limieten</value></data>
+  <data name="InvestmentKey" xml:space="preserve"><value>API-sleutel</value></data>
+  <data name="InvestmentKeyHelp" xml:space="preserve"><value>Voer een nieuwe sleutel in om deze te vervangen. Laat leeg om de opgeslagen sleutel te behouden.</value></data>
+  <data name="InvestmentFrequency" xml:space="preserve"><value>Opvraagfrequentie</value></data>
+  <data name="InvestmentFrequencyManual" xml:space="preserve"><value>Alleen handmatig</value></data>
+  <data name="InvestmentFrequencyDaily" xml:space="preserve"><value>Dagelijks (standaard)</value></data>
+  <data name="InvestmentFrequencySeveralPerDay" xml:space="preserve"><value>Meerdere keren per dag</value></data>
+  <data name="InvestmentFrequencyHourly" xml:space="preserve"><value>Elk uur</value></data>
+  <data name="InvestmentFrequencyRealtime" xml:space="preserve"><value>Realtime polling (betaalde rechten)</value></data>
+  <data name="InvestmentDailyHour" xml:space="preserve"><value>Uur van dagelijkse update</value></data>
+  <data name="InvestmentDailyHourHelp" xml:space="preserve"><value>Uur van 0 tot 23, in de tijdzone van de server: {0}.</value></data>
+  <data name="InvestmentUpdatesPerDay" xml:space="preserve"><value>Aantal updates per dag</value></data>
+  <data name="InvestmentPollSeconds" xml:space="preserve"><value>Pollinginterval (seconden)</value></data>
+  <data name="InvestmentPollSecondsHelp" xml:space="preserve"><value>Minimaal 60 seconden tussen geplande updates.</value></data>
+  <data name="InvestmentDataFreshness" xml:space="preserve"><value>Aangevraagde gegevensrechten (US)</value></data>
+  <data name="InvestmentFreshnessEndOfDay" xml:space="preserve"><value>Slotkoers</value></data>
+  <data name="InvestmentFreshnessDelayed" xml:space="preserve"><value>15 minuten vertraagd (betaalde rechten)</value></data>
+  <data name="InvestmentFreshnessRealtime" xml:space="preserve"><value>Realtime aangevraagd (betaalde rechten)</value></data>
+  <data name="InvestmentFreshnessManual" xml:space="preserve"><value>Handmatig</value></data>
+  <data name="InvestmentDailyBudget" xml:space="preserve"><value>Aanvragen per dag</value></data>
+  <data name="InvestmentDailyBudgetHelp" xml:space="preserve"><value>Gebruik 0 voor onbeperkte aanvragen, uitsluitend bij een betaald abonnement.</value></data>
+  <data name="InvestmentMinuteBudget" xml:space="preserve"><value>Aanvragen per minuut</value></data>
+  <data name="InvestmentQuotaHelp" xml:space="preserve"><value>Gratis Alpha Vantage: maximaal 25 aanvragen per dag; deze app gebruikt conservatief maximaal 5/minuut. Alle aanvragen delen dit blijvende budget, ook tests, zoekacties, FX en handmatig vernieuwen. Betaald: stel de limieten van uw abonnement in. Geen automatische herhaalpogingen.</value></data>
+  <data name="InvestmentFreshnessHelp" xml:space="preserve"><value>Vaker slotkoersen opvragen maakt ze niet live. Realtime/vertraagde US-data vereist naast een betaald abonnement aparte providerrechten. Niet-US-noteringen blijven slotkoersen. Opgehaald-tijd is niet de beurstijd. Historische aankopen downloaden geen historische marktprijzen.</value></data>
+  <data name="InvestmentEstimatedCalls" xml:space="preserve"><value>Raming: {0} aanvragen per volledige update; {1} per 24 uur bij dit schema, exclusief zoekacties/tests. Bij een te laag budget worden aanvragen gestopt, niet alsnog verstuurd.</value></data>
+  <data name="InvestmentTest" xml:space="preserve"><value>Verbinding testen (1 aanvraag)</value></data>
+  <data name="InvestmentRefresh" xml:space="preserve"><value>Koersen nu opvragen</value></data>
+  <data name="InvestmentRemoveKey" xml:space="preserve"><value>Sleutel verwijderen en koppeling uitschakelen</value></data>
+  <data name="InvestmentBackupHelp" xml:space="preserve"><value>Effecten, transacties en handmatige koersen gaan mee in de financiële databaseback-up. De API-sleutel en koerscache niet. Een volledige Home Assistant-back-up kan de versleutelde sleutel én lokale beveiligingssleutels bevatten; beveilig die back-up. Hostbeheerders kunnen lokale geheimen benaderen.</value></data>
+  <data name="InvestmentDeleteTradeHelp" xml:space="preserve"><value>Deze effectenregistratie verwijderen? Latere aantallen en FIFO-resultaten worden opnieuw berekend. Bankboekingen blijven ongewijzigd; verwijderen mag geen latere verkoop zonder aandelen achterlaten.</value></data>
+  <data name="InvestmentInstrumentInUse" xml:space="preserve"><value>Dit effect wordt nog door transacties gebruikt.</value></data>
+  <data name="InvestmentInvalidNumber" xml:space="preserve"><value>Controleer de getallen: komma of punt, maximaal acht decimalen en geen duizendtalscheiding. Aantal en uitvoeringsprijs zijn verplicht bij aan-/verkoop.</value></data>
+  <data name="InvestmentChooseInstrument" xml:space="preserve"><value>Kies eerst een geldig effect.</value></data>
+  <data name="InvestmentStatusNotConfigured" xml:space="preserve"><value>Voer uw eigen API-sleutel in en schakel koersaanvragen in.</value></data>
+  <data name="InvestmentStatusDisabled" xml:space="preserve"><value>Koersaanvragen zijn uitgeschakeld.</value></data>
+  <data name="InvestmentStatusReady" xml:space="preserve"><value>Ingesteld; nog geen geslaagde controle bevestigd.</value></data>
+  <data name="InvestmentStatusConnectionOk" xml:space="preserve"><value>Verbinding getest met IBM; dekking van uw eigen noteringen is nog niet bevestigd.</value></data>
+  <data name="InvestmentStatusSearchOk" xml:space="preserve"><value>Zoekactie voltooid.</value></data>
+  <data name="InvestmentStatusUpdated" xml:space="preserve"><value>Koersen en wisselkoersen bijgewerkt; controleer de afzonderlijke koersdatums.</value></data>
+  <data name="InvestmentStatusPartialUpdate" xml:space="preserve"><value>Gedeeltelijk bijgewerkt. Een notering of valutapaar ontbreekt; eerdere geslaagde koersen blijven behouden.</value></data>
+  <data name="InvestmentStatusNoSymbols" xml:space="preserve"><value>Geen open posities met een providersymbool om op te vragen.</value></data>
+  <data name="InvestmentStatusBusy" xml:space="preserve"><value>Er loopt al een koersaanvraag. Wacht tot die voltooid is.</value></data>
+  <data name="InvestmentStatusRefreshCooldown" xml:space="preserve"><value>Wacht minimaal 30 seconden na de laatste aanvraag voor een nieuwe volledige update.</value></data>
+  <data name="InvestmentStatusDailyLimit" xml:space="preserve"><value>Het lokale API-dagbudget is bereikt. Eerdere koersen blijven beschikbaar.</value></data>
+  <data name="InvestmentStatusProviderLimit" xml:space="preserve"><value>De provider heeft een limiet gemeld. Aanvragen zijn uit voorzorg 24 uur gepauzeerd; koersen blijven behouden.</value></data>
+  <data name="InvestmentStatusEntitlementRequired" xml:space="preserve"><value>De provider vereist aanvullende betaalde gegevensrechten. Controleer het abonnement en de ingestelde rechten.</value></data>
+  <data name="InvestmentStatusKeyOrAccessInvalid" xml:space="preserve"><value>De provider accepteert de sleutel of gegevensrechten niet. Controleer uw instellingen lokaal.</value></data>
+  <data name="InvestmentStatusKeyUnavailable" xml:space="preserve"><value>De opgeslagen sleutel kan niet worden ontsleuteld. Voer de eigen sleutel opnieuw in.</value></data>
+  <data name="InvestmentStatusConnectionFailed" xml:space="preserve"><value>De koersprovider is niet bereikbaar of gaf geen bruikbaar antwoord. Eerdere koersen blijven behouden.</value></data>
+  <data name="InvestmentStatusInvalidResponse" xml:space="preserve"><value>Geen bruikbaar providerantwoord; er zijn geen nulkoersen opgeslagen.</value></data>
+  <data name="InvestmentStatusSymbolUnavailable" xml:space="preserve"><value>Geen bruikbare koers voor deze notering. Controleer beurs, valuta, symbool en gegevensrechten.</value></data>
+  <data name="InvestmentStatusConfigurationInvalid" xml:space="preserve"><value>De lokale koersconfiguratie is beschadigd. De administratie blijft bruikbaar; voer uw sleutel en instellingen opnieuw in. Aanvragen blijven uit voorzorg 24 uur geblokkeerd en het oude bestand wordt bij opslaan bewaard.</value></data>
 </root>

@@ -1,0 +1,32 @@
+@inherits PageBase
+@inject IInvestmentAdministration InvestmentsBackend
+@if (market != null)
+{
+    <InvestmentCards Positions="@Investments.Positions(State.Data, market.Quotes, market.Rates, State.Today, State.OwnerId)"
+                     Accounts="State.Data.Accounts" Today="State.Today" Compact="Compact" />
+}
+@code {
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public EventCallback<InvestmentMarketSnapshot> MarketChanged { get; set; }
+    private InvestmentMarketSnapshot? market;
+    private readonly CancellationTokenSource stop = new();
+    private Task? watch;
+    protected override async Task OnInitializedAsync() => await RefreshAsync();
+    public async Task RefreshAsync()
+    {
+        try
+        {
+            market = await InvestmentsBackend.ReadAsync();
+            if (!stop.IsCancellationRequested) { await MarketChanged.InvokeAsync(market); StateHasChanged(); }
+        }
+        catch (UnauthorizedAccessException) { market = null; }
+    }
+    protected override void OnAfterRender(bool firstRender) { if (firstRender) watch = WatchAsync(); }
+    private async Task WatchAsync()
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+        try { while (await timer.WaitForNextTickAsync(stop.Token)) await InvokeAsync(RefreshAsync); }
+        catch (OperationCanceledException) { }
+    }
+    public override void Dispose() { stop.Cancel(); base.Dispose(); }
+}

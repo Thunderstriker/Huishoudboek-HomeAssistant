@@ -2,10 +2,17 @@
 
 Een lokaal, Nederlandstalig huishoudboek in uw Home Assistant-zijbalk.
 Beheer transacties, rekeningen, eigenaren, budgetten, vaste posten en hypotheek
-zonder cloudverbinding of aparte Windows-backend. Alle bedragen zijn in EUR.
+zonder cloudsynchronisatie of aparte Windows-backend. De boekhouding is in EUR;
+beleggingen bewaren ook hun handelsvaluta. Optionele koersaanvragen vereisen internet.
 
 ## Inzicht in Uw Financiën
 
+- **Beleggingen:** prestatiekaarten zonder grafieken met koersverschil sinds de vorige
+  handelsafsluiting en gewogen resultaat sinds aankoop. Historische aankopen, FIFO-verkopen,
+  kosten, valuta en splitsingen; optionele Alpha Vantage-koersen met uw eigen gratis of
+  betaalde sleutel. Dagelijks als standaard, met gedeelde blijvende API-budgetten.
+  Portefeuilleschattingen blijven apart van bankboekingen en handmatige waarderingen.
+  Zie [Beleggingen en Alpha Vantage](DOCS.md#beleggingen-en-alpha-vantage).
 - **Dashboard:** financiële momentopname met een centraal maandresultaat, compacte
   rekeningsaldi van vandaag en één gerichte volgende stap. Uitgaven staan in leesbare
   categoriebalken naast de komende betalingen; budgetten en recente boekingen volgen eronder.

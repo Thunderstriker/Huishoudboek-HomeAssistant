@@ -1,0 +1,9 @@
+<label>@Label
+    <input type="text" inputmode="decimal" autocomplete="off" @bind="Draft.Text" @bind:event="oninput"
+           aria-invalid="@(!Draft.IsValid ? "true" : "false")" class="@(!Draft.IsValid ? "invalid" : "")" />
+    @if (!Draft.IsValid) { <small class="negative">@L["InvestmentInvalidNumber"]</small> }
+</label>
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter, EditorRequired] public ReceiptNumberDraft Draft { get; set; } = null!;
+}

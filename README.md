@@ -2,7 +2,9 @@
 
 Een lokaal, Nederlandstalig huishoudboek in de Home Assistant-zijbalk.
 Houd inkomsten, uitgaven, budgetten en spaargeld bij zonder cloudverbinding,
-automatische bankkoppeling of aparte Windows-backend. Alle bedragen zijn in EUR.
+automatische bankkoppeling of aparte Windows-backend. De boekhouding is in EUR;
+beleggingen bewaren daarnaast hun oorspronkelijke handelsvaluta. Koersgegevens
+opvragen via Alpha Vantage is optioneel en vereist internet en een eigen API-sleutel.
 
 Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
 
@@ -66,6 +68,12 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   extra inkomen; toegepaste bonnen verlagen het gedeelde tegoed. Geen saldo per persoon
   en geen verhoging van vrij bankgeld of cashprognoses.
 - **Rekeningen en vermogen:** betaal- en spaarrekeningen, beleggen, eigenaren en hypotheek.
+- **Beleggingen:** prestatiekaarten per aandeel/ETF met het verschil sinds de vorige
+  handelsafsluiting en het gewogen resultaat sinds aankoop, zonder grafieken.
+  Historische aankopen, FIFO-verkopen, kosten, TOB en splitsingen met oorspronkelijke handelsvaluta;
+  optionele dagelijkse Alpha Vantage-koersen met een eigen gratis of betaalde sleutel.
+  Aparte schatting zonder dubbele handmatige waarderingen of automatische bankboekingen.
+  Zie [de beleggingshandleiding](huishoudboek/DOCS.md#beleggingen-en-alpha-vantage).
 - **Import en export:** Excel/CSV-import, automatische herkenning van Argenta-exports,
   kant-en-klare profielen voor ING (NL), Rabobank en KBC/CBC, CSV-export en volledige databaseback-ups met herstel.
 - **Imports per rekening:** alleen de gekozen rekening wordt bijgewerkt, met de
@@ -97,7 +105,8 @@ De spaarlijn toont bijdragen opgeteld sinds januari, geen saldo of beleggingsren
 Home Assistant bouwt de app vanuit de broncode in deze repository. Er zijn geen
 vooraf gebouwde container-images. Installatie en updates vragen daarom internet,
 extra opslag en geheugen voor de .NET 10 SDK en NuGet-pakketten. Normaal gebruik
-heeft daarna geen internet nodig. De Home Assistant-host moet blijven draaien.
+heeft daarna geen internet nodig, behalve voor zelf ingeschakelde koersaanvragen.
+De Home Assistant-host moet blijven draaien.
 
 ### Architecturen
 
@@ -168,8 +177,10 @@ Wijzigingen per versie staan in de [changelog](huishoudboek/CHANGELOG.md).
 
 De webinterface is alleen bereikbaar via Home Assistant-ingress, zonder externe
 app-poort. Alle toegelaten ingress-gebruikers hebben dezelfde volledige financiële
-rechten. Geef daarom alleen vertrouwde personen toegang. Er is geen cloud,
-telemetrie, MQTT of automatische bankverbinding.
+rechten. Geef daarom alleen vertrouwde personen toegang. Er is geen cloudsynchronisatie,
+telemetrie, MQTT of automatische bankverbinding. Alleen bij expliciet ingeschakelde
+Alpha Vantage-koersen worden effectensymbolen en valutaparen naar die provider gestuurd,
+met de eigen API-sleutel; geen aantallen, aankoopprijzen, bankboekingen of saldi.
 
 Meer informatie over database-import, opslag en veiligheidsbeperkingen:
 [documentatie](huishoudboek/DOCS.md).

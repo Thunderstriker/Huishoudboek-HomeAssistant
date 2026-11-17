@@ -54,6 +54,11 @@ public static class ServiceApplication
         builder.Services.AddScoped<UiPreferences>();
         builder.Services.AddSingleton(_ => new AdministrationCoordinator(options.DataDirectory, initialize, claim, allowUpgrade: homeAssistant.Enabled));
         builder.Services.AddSingleton(sp => new ImportWorkspace(sp.GetRequiredService<AdministrationCoordinator>().DirectoryPath));
+        builder.Services.AddSingleton(sp => new InvestmentMarketStore(sp.GetRequiredService<AdministrationCoordinator>().DirectoryPath));
+        builder.Services.AddSingleton<AlphaVantageClient>();
+        builder.Services.AddSingleton<InvestmentMarketService>();
+        builder.Services.AddScoped<IInvestmentAdministration, InvestmentAdministration>();
+        builder.Services.AddHostedService<InvestmentQuoteWorker>();
         var app = builder.Build();
         try { Configure(app, options, website, homeAssistant); return app; }
         catch { app.DisposeAsync().AsTask().GetAwaiter().GetResult(); throw; }

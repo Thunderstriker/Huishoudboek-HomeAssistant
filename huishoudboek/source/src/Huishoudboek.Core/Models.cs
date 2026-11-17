@@ -208,6 +208,8 @@ public sealed class HouseholdData
     public List<RecurringPayment> RecurringPayments { get; set; } = [];
     public List<CategorizationRule> Rules { get; set; } = [];
     public List<InvestmentValuation> Valuations { get; set; } = [];
+    public List<InvestmentInstrument> Instruments { get; set; } = [];
+    public List<InvestmentTrade> InvestmentTrades { get; set; } = [];
     public List<ImportBatch> ImportBatches { get; set; } = [];
     public List<AccountStatementPeriod> AccountStatementPeriods { get; set; } = [];
     public List<PurchaseReceipt> PurchaseReceipts { get; set; } = [];

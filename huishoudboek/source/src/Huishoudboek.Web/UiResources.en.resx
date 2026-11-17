@@ -1182,4 +1182,131 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="MealVouchersLeaveWarning" xml:space="preserve"><value>Leave this page and discard the unsaved voucher entry?</value></data>
   <data name="PurchaseVoucherCreditHelp" xml:space="preserve"><value>Enter the actual date received; the purchase date is prefilled. Saving updates the shared meal voucher register immediately without losing your purchase edits. This credit or opening balance remains saved if you later cancel the purchase. Save or cancel the voucher entry before saving the purchase.</value></data>
   <data name="PurchaseVoucherCreditSaved" xml:space="preserve"><value>Meal vouchers saved. You can continue editing the purchase.</value></data>
+  <data name="InvestmentsTitle" xml:space="preserve"><value>Investments</value></data>
+  <data name="InvestmentIntro" xml:space="preserve"><value>Track stocks and ETFs with weighted purchase costs, FIFO sales and daily price percentages. Current holdings are independent of the month selector; the owner filter still applies. No charts or automatic bank entries.</value></data>
+  <data name="InvestmentViewPortfolio" xml:space="preserve"><value>View portfolio</value></data>
+  <data name="InvestmentHoldingsValue" xml:space="preserve"><value>Estimated securities value</value></data>
+  <data name="InvestmentUnrealized" xml:space="preserve"><value>Unrealized gain/loss</value></data>
+  <data name="InvestmentRealized" xml:space="preserve"><value>Realized gain/loss (FIFO)</value></data>
+  <data name="InvestmentRemainingCost" xml:space="preserve"><value>Remaining purchase cost</value></data>
+  <data name="InvestmentPartial" xml:space="preserve"><value>Partial</value></data>
+  <data name="InvestmentIncomplete" xml:space="preserve"><value>Prices, exchange rates or purchase costs are missing. A partial subtotal is not a complete portfolio value; unknown results appear as —.</value></data>
+  <data name="InvestmentEstimatedFx" xml:space="preserve"><value>Some EUR purchase costs are estimated using a recorded historical exchange rate.</value></data>
+  <data name="InvestmentSeparateNote" xml:space="preserve"><value>Separate portfolio estimate, not added to existing manual valuations or bank balances. Results include recorded costs, exclude dividends and are not tax reporting.</value></data>
+  <data name="InvestmentShares" xml:space="preserve"><value>shares</value></data>
+  <data name="InvestmentLatestPrice" xml:space="preserve"><value>latest price</value></data>
+  <data name="InvestmentSinceClose" xml:space="preserve"><value>since previous trading close</value></data>
+  <data name="InvestmentSinceBuys" xml:space="preserve"><value>since purchases ({0}, including costs)</value></data>
+  <data name="InvestmentYourEurReturn" xml:space="preserve"><value>your EUR return, including currency effects</value></data>
+  <data name="InvestmentHoldingValue" xml:space="preserve"><value>Holding value</value></data>
+  <data name="InvestmentMissingPrice" xml:space="preserve"><value>No usable price. Check the mapping or enter a manual price; a new price is needed after a split.</value></data>
+  <data name="InvestmentOldPrice" xml:space="preserve"><value>This price is over four calendar days old. Check its market date; exchanges may have been closed.</value></data>
+  <data name="InvestmentPriceDate" xml:space="preserve"><value>Price date</value></data>
+  <data name="InvestmentFetched" xml:space="preserve"><value>fetched</value></data>
+  <data name="InvestmentWeightedCost" xml:space="preserve"><value>Weighted remaining cost per share</value></data>
+  <data name="InvestmentFifoHelp" xml:space="preserve"><value>Each purchase remains a separate lot. Return = (current value − remaining purchase cost) / remaining purchase cost. FIFO sales remove the oldest shares and their proportional costs first; splits change quantities, not total costs. Daily percentages describe price movements, not your personal daily result.</value></data>
+  <data name="InvestmentFxRate" xml:space="preserve"><value>Exchange rate for current value</value></data>
+  <data name="InvestmentManualFx" xml:space="preserve"><value>manual, on the entered price date</value></data>
+  <data name="InvestmentOldFx" xml:space="preserve"><value>The exchange rate used is over four calendar days old.</value></data>
+  <data name="InvestmentAddTrade" xml:space="preserve"><value>Add historical trade</value></data>
+  <data name="InvestmentAddInstrument" xml:space="preserve"><value>Add security</value></data>
+  <data name="InvestmentNeedAccount" xml:space="preserve"><value>First create an investment account under Accounts, or adjust the owner filter.</value></data>
+  <data name="InvestmentInstrument" xml:space="preserve"><value>Stock or ETF</value></data>
+  <data name="InvestmentInstruments" xml:space="preserve"><value>Manage securities and manual prices</value></data>
+  <data name="InvestmentExchange" xml:space="preserve"><value>Exchange / listing</value></data>
+  <data name="InvestmentCurrency" xml:space="preserve"><value>Trading currency (EUR, USD, …)</value></data>
+  <data name="InvestmentProviderSymbol" xml:space="preserve"><value>Alpha Vantage symbol (blank = manual)</value></data>
+  <data name="InvestmentConfirmMapping" xml:space="preserve"><value>I checked the name, ISIN/share class, exchange and currency against my broker; this is the correct provider mapping.</value></data>
+  <data name="InvestmentUsListing" xml:space="preserve"><value>Confirmed US listing (for paid delayed/realtime data)</value></data>
+  <data name="InvestmentManualHelp" xml:space="preserve"><value>Without a provider symbol, this security uses manual prices, even without an API key. The optional manual EUR rate applies on the manual price date and is used when the API exchange rate is missing or from an earlier day.</value></data>
+  <data name="InvestmentManualPrice" xml:space="preserve"><value>Manual price (trading currency)</value></data>
+  <data name="InvestmentPreviousClose" xml:space="preserve"><value>Previous trading close (optional)</value></data>
+  <data name="InvestmentManualEurRate" xml:space="preserve"><value>Manual EUR per 1 unit of trading currency (optional)</value></data>
+  <data name="InvestmentSearch" xml:space="preserve"><value>Search company, fund or symbol</value></data>
+  <data name="InvestmentSearchButton" xml:space="preserve"><value>Search Alpha Vantage</value></data>
+  <data name="InvestmentSearchQuota" xml:space="preserve"><value>Each search uses one API request. Select a result and confirm the exact listing yourself; a search match does not prove quote coverage.</value></data>
+  <data name="InvestmentTradeBuy" xml:space="preserve"><value>Buy</value></data>
+  <data name="InvestmentTradeSell" xml:space="preserve"><value>Sell</value></data>
+  <data name="InvestmentTradeSplit" xml:space="preserve"><value>Stock split</value></data>
+  <data name="InvestmentTradeOpening" xml:space="preserve"><value>Opening holding / incomplete history</value></data>
+  <data name="InvestmentSequence" xml:space="preserve"><value>Execution order within the same day</value></data>
+  <data name="InvestmentSplitRatio" xml:space="preserve"><value>New/old ratio (2 = 2 for 1)</value></data>
+  <data name="InvestmentQuantity" xml:space="preserve"><value>Number of shares</value></data>
+  <data name="InvestmentUnitPrice" xml:space="preserve"><value>Execution price per share</value></data>
+  <data name="InvestmentFees" xml:space="preserve"><value>Brokerage fees</value></data>
+  <data name="InvestmentTax" xml:space="preserve"><value>Transaction tax (TOB)</value></data>
+  <data name="InvestmentFxCosts" xml:space="preserve"><value>Currency conversion costs</value></data>
+  <data name="InvestmentSettlement" xml:space="preserve"><value>Actual total settled in EUR (optional)</value></data>
+  <data name="InvestmentHistoricalRate" xml:space="preserve"><value>Historical EUR per 1 trading currency (optional estimate)</value></data>
+  <data name="InvestmentTradeCurrencyHelp" xml:space="preserve"><value>Price, brokerage fees, transaction tax and FX costs are in {0}. Convert costs charged in another currency correctly first; do not add them again to an already all-inclusive EUR settlement total.</value></data>
+  <data name="InvestmentSplitHelp" xml:space="preserve"><value>A split adjusts all existing lot quantities on this account without changing costs. Record the same corporate action on each affected account.</value></data>
+  <data name="InvestmentOpeningHelp" xml:space="preserve"><value>Use only for missing purchase or transfer history. Leave an unknown purchase cost blank; gains remain unknown until history is completed. Transfers retain original purchase costs, not the market value on the transfer date.</value></data>
+  <data name="InvestmentSettlementHelp" xml:space="preserve"><value>EUR settlement is the actual all-inclusive purchase debit or net sale credit. It takes precedence over a historical exchange rate. Missing historical FX is never filled using today's exchange rate.</value></data>
+  <data name="InvestmentHistory" xml:space="preserve"><value>Purchase and sale history</value></data>
+  <data name="InvestmentAllIn" xml:space="preserve"><value>Total / net settlement</value></data>
+  <data name="InvestmentQuoteSettings" xml:space="preserve"><value>Market data and your API key</value></data>
+  <data name="InvestmentSecretHelp" xml:space="preserve"><value>Optional Alpha Vantage integration using your own free or paid key. Only symbols and currency pairs are requested; quantities, purchase prices and bank details are not sent. The stored key is never returned to the browser.</value></data>
+  <data name="InvestmentLicenseHelp" xml:space="preserve"><value>Intended for personal use. Verify provider rights for your subscription and listings. Home Assistant users admitted to this app can also view the portfolio; an owner filter is not access control.</value></data>
+  <data name="InvestmentKeyConfigured" xml:space="preserve"><value>Key configured</value></data>
+  <data name="InvestmentKeyMissing" xml:space="preserve"><value>No key configured</value></data>
+  <data name="InvestmentQuotaUsed" xml:space="preserve"><value>API requests today (UTC): {0} / {1}</value></data>
+  <data name="InvestmentLastAttempt" xml:space="preserve"><value>Last request</value></data>
+  <data name="InvestmentLastSuccess" xml:space="preserve"><value>Last successful check/full update</value></data>
+  <data name="InvestmentNextUpdate" xml:space="preserve"><value>Next update</value></data>
+  <data name="InvestmentEnableQuotes" xml:space="preserve"><value>Enable price requests using my own API key</value></data>
+  <data name="InvestmentPaidKey" xml:space="preserve"><value>I use a paid API key with the configured entitlements and limits</value></data>
+  <data name="InvestmentConnectionGroup" xml:space="preserve"><value>Connection</value></data>
+  <data name="InvestmentScheduleGroup" xml:space="preserve"><value>Update schedule</value></data>
+  <data name="InvestmentLimitsGroup" xml:space="preserve"><value>API limits</value></data>
+  <data name="InvestmentKey" xml:space="preserve"><value>API key</value></data>
+  <data name="InvestmentKeyHelp" xml:space="preserve"><value>Enter a new key to replace it. Leave blank to keep the stored key.</value></data>
+  <data name="InvestmentFrequency" xml:space="preserve"><value>Request frequency</value></data>
+  <data name="InvestmentFrequencyManual" xml:space="preserve"><value>Manual only</value></data>
+  <data name="InvestmentFrequencyDaily" xml:space="preserve"><value>Daily (default)</value></data>
+  <data name="InvestmentFrequencySeveralPerDay" xml:space="preserve"><value>Several times daily</value></data>
+  <data name="InvestmentFrequencyHourly" xml:space="preserve"><value>Hourly</value></data>
+  <data name="InvestmentFrequencyRealtime" xml:space="preserve"><value>Realtime polling (paid entitlements)</value></data>
+  <data name="InvestmentDailyHour" xml:space="preserve"><value>Daily update hour</value></data>
+  <data name="InvestmentDailyHourHelp" xml:space="preserve"><value>Hour from 0 to 23, in the server's time zone: {0}.</value></data>
+  <data name="InvestmentUpdatesPerDay" xml:space="preserve"><value>Updates per day</value></data>
+  <data name="InvestmentPollSeconds" xml:space="preserve"><value>Polling interval (seconds)</value></data>
+  <data name="InvestmentPollSecondsHelp" xml:space="preserve"><value>At least 60 seconds between scheduled refreshes.</value></data>
+  <data name="InvestmentDataFreshness" xml:space="preserve"><value>Requested data entitlement (US)</value></data>
+  <data name="InvestmentFreshnessEndOfDay" xml:space="preserve"><value>End-of-day price</value></data>
+  <data name="InvestmentFreshnessDelayed" xml:space="preserve"><value>15-minute delayed (paid entitlements)</value></data>
+  <data name="InvestmentFreshnessRealtime" xml:space="preserve"><value>Realtime requested (paid entitlements)</value></data>
+  <data name="InvestmentFreshnessManual" xml:space="preserve"><value>Manual</value></data>
+  <data name="InvestmentDailyBudget" xml:space="preserve"><value>Requests per day</value></data>
+  <data name="InvestmentDailyBudgetHelp" xml:space="preserve"><value>Use 0 for unlimited requests with a paid subscription only.</value></data>
+  <data name="InvestmentMinuteBudget" xml:space="preserve"><value>Requests per minute</value></data>
+  <data name="InvestmentQuotaHelp" xml:space="preserve"><value>Alpha Vantage free: at most 25 requests/day; this app conservatively uses at most 5/minute. All requests share this persistent budget, including tests, searches, FX and manual refreshes. Paid: configure your subscription's limits. No automatic retries.</value></data>
+  <data name="InvestmentFreshnessHelp" xml:space="preserve"><value>Fetching end-of-day prices more often does not make them live. Realtime/delayed US data requires provider entitlements as well as a paid subscription. Non-US listings remain end-of-day. Fetched time is not exchange time. Historical trades do not download historical market prices.</value></data>
+  <data name="InvestmentEstimatedCalls" xml:space="preserve"><value>Estimate: {0} requests per full refresh; {1} per 24 hours on this schedule, excluding searches/tests. Requests stop when the configured budget is reached.</value></data>
+  <data name="InvestmentTest" xml:space="preserve"><value>Test connection (1 request)</value></data>
+  <data name="InvestmentRefresh" xml:space="preserve"><value>Fetch prices now</value></data>
+  <data name="InvestmentRemoveKey" xml:space="preserve"><value>Remove key and disable integration</value></data>
+  <data name="InvestmentBackupHelp" xml:space="preserve"><value>Securities, trades and manual prices are included in financial database backups. The API key and quote cache are not. A full Home Assistant backup can contain both the encrypted secret and local protection keys; secure that backup. Host administrators can access local secrets.</value></data>
+  <data name="InvestmentDeleteTradeHelp" xml:space="preserve"><value>Delete this securities record? Later quantities and FIFO results will be recalculated. Bank entries remain unchanged; deletion cannot leave a later sale without sufficient shares.</value></data>
+  <data name="InvestmentInstrumentInUse" xml:space="preserve"><value>This security is still used by trades.</value></data>
+  <data name="InvestmentInvalidNumber" xml:space="preserve"><value>Check the numbers: comma or dot, at most eight decimal places, no thousands separators. Quantity and execution price are required for purchases/sales.</value></data>
+  <data name="InvestmentChooseInstrument" xml:space="preserve"><value>First choose a valid security.</value></data>
+  <data name="InvestmentStatusNotConfigured" xml:space="preserve"><value>Enter your own API key and enable price requests.</value></data>
+  <data name="InvestmentStatusDisabled" xml:space="preserve"><value>Price requests are disabled.</value></data>
+  <data name="InvestmentStatusReady" xml:space="preserve"><value>Configured; no successful check confirmed yet.</value></data>
+  <data name="InvestmentStatusConnectionOk" xml:space="preserve"><value>Connection tested with IBM; coverage of your own listings has not yet been confirmed.</value></data>
+  <data name="InvestmentStatusSearchOk" xml:space="preserve"><value>Search completed.</value></data>
+  <data name="InvestmentStatusUpdated" xml:space="preserve"><value>Prices and exchange rates updated; check each individual market date.</value></data>
+  <data name="InvestmentStatusPartialUpdate" xml:space="preserve"><value>Partially updated. A listing or currency pair is unavailable; previous successful prices are retained.</value></data>
+  <data name="InvestmentStatusNoSymbols" xml:space="preserve"><value>No open holdings with provider symbols to request.</value></data>
+  <data name="InvestmentStatusBusy" xml:space="preserve"><value>A market-data request is already running. Wait for it to finish.</value></data>
+  <data name="InvestmentStatusRefreshCooldown" xml:space="preserve"><value>Wait at least 30 seconds after the last request before another full refresh.</value></data>
+  <data name="InvestmentStatusDailyLimit" xml:space="preserve"><value>The local daily API budget has been reached. Previous prices remain available.</value></data>
+  <data name="InvestmentStatusProviderLimit" xml:space="preserve"><value>The provider reported a limit. Requests are conservatively paused for 24 hours; prices are retained.</value></data>
+  <data name="InvestmentStatusEntitlementRequired" xml:space="preserve"><value>The provider requires additional paid data entitlements. Check your subscription and configured rights.</value></data>
+  <data name="InvestmentStatusKeyOrAccessInvalid" xml:space="preserve"><value>The provider did not accept the key or data access. Check your settings locally.</value></data>
+  <data name="InvestmentStatusKeyUnavailable" xml:space="preserve"><value>The stored key cannot be decrypted. Enter your own key again.</value></data>
+  <data name="InvestmentStatusConnectionFailed" xml:space="preserve"><value>The provider is unreachable or returned no usable response. Previous prices are retained.</value></data>
+  <data name="InvestmentStatusInvalidResponse" xml:space="preserve"><value>No usable provider response; no zero prices were stored.</value></data>
+  <data name="InvestmentStatusSymbolUnavailable" xml:space="preserve"><value>No usable quote for this listing. Check exchange, currency, symbol and data entitlement.</value></data>
+  <data name="InvestmentStatusConfigurationInvalid" xml:space="preserve"><value>The local market-data configuration is damaged. Household records remain usable; re-enter your key and settings. Requests remain blocked for 24 hours as a precaution and the old file is preserved when saving.</value></data>
 </root>

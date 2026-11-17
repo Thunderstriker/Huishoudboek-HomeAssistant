@@ -1,0 +1,70 @@
+@{
+    var open = Positions.Where(p => p.Quantity > 0).OrderBy(p => p.Instrument.Name).ThenBy(p => p.AccountId).ToArray();
+    var priced = open.Where(p => p.ValueEur != null).ToArray();
+    var complete = priced.Length == open.Length;
+    var knownCost = open.All(p => p.GainEur != null);
+    var cost = open.Sum(p => p.RemainingCostEur ?? 0);
+    var gain = knownCost ? open.Sum(p => p.GainEur!.Value) : (decimal?)null;
+}
+@if (Positions.Count > 0)
+{
+    <section class="surface investment-summary" aria-label="@L["InvestmentsTitle"]">
+        <div class="panel-heading"><h2>@L["InvestmentsTitle"]</h2>@if (Compact) { <a class="text-link" href="beleggingen">@L["InvestmentViewPortfolio"] →</a> }</div>
+        <div class="investment-totals">
+            <div><small>@L["InvestmentHoldingsValue"] @if (!complete) { <span class="badge">@L["InvestmentPartial"]</span> }</small><strong>@Money(priced.Sum(p => p.ValueEur!.Value))</strong></div>
+            <div><small>@L["InvestmentUnrealized"]</small><strong class="@Tone(gain)">@Amount(gain)</strong><span>@Percent(knownCost && cost > 0 ? gain / cost * 100 : null)</span></div>
+            @if (!Compact)
+            {
+                <div><small>@L["InvestmentRemainingCost"]</small><strong>@(open.All(p => p.RemainingCostEur != null) ? Money(cost) : "—")</strong></div>
+                <div><small>@L["InvestmentRealized"]</small><strong class="@Tone(Positions.All(p => p.RealizedEur != null) ? Positions.Sum(p => p.RealizedEur) : null)">@Amount(Positions.All(p => p.RealizedEur != null) ? Positions.Sum(p => p.RealizedEur) : null)</strong></div>
+            }
+        </div>
+        @if (!complete || !knownCost) { <p class="notice warning">@L["InvestmentIncomplete"]</p> }
+        @if (open.Any(p => p.EstimatedEurCost)) { <p class="muted">@L["InvestmentEstimatedFx"]</p> }
+        <p class="muted">@L["InvestmentSeparateNote"]</p>
+    </section>
+    <div class="investment-grid @(Compact ? "compact" : "")">
+        @foreach (var p in (Compact ? open.Take(3) : open))
+        {
+            <article class="card investment-holding" @key="@((p.AccountId, p.Instrument.Id))">
+                <div class="investment-identity"><div><h3>@p.Instrument.Name</h3><small>@AccountName(p.AccountId) · @p.Instrument.Exchange · @p.Instrument.Currency</small></div><span class="badge">@p.Quantity.ToString("0.########", UiCulture.Culture) @L["InvestmentShares"]</span></div>
+                <div class="investment-price">@(p.Price is { } price ? Native(price, p.Instrument.Currency) : "—") <small>@L["InvestmentLatestPrice"]</small></div>
+                <div class="investment-performance">
+                    <div class="@Tone(p.DailyPercent)"><strong>@Percent(p.DailyPercent)</strong><span>@L["InvestmentSinceClose"]</span></div>
+                    <div class="@Tone(p.GainPercent)"><strong>@Percent(p.GainPercent)</strong><span>@L["InvestmentSinceBuys", p.Instrument.Currency]</span></div>
+                    @if (p.Instrument.Currency != "EUR")
+                    { <div class="@Tone(p.GainEurPercent)"><strong>@Percent(p.GainEurPercent)</strong><span>@L["InvestmentYourEurReturn"]</span></div> }
+                </div>
+                <p>@L["InvestmentHoldingValue"]: <strong>@Amount(p.ValueEur)</strong> @if (p.Instrument.Currency != "EUR" && p.Value is { } native) { <small>(@Native(native, p.Instrument.Currency))</small> }</p>
+                @if (p.Price == null || p.PriceDate < Today.AddDays(-4)) { <p class="notice warning">@L[p.Price == null ? "InvestmentMissingPrice" : "InvestmentOldPrice"]</p> }
+                @if (p.FxDateUtc < DateTime.UtcNow.AddDays(-4)) { <p class="notice warning">@L["InvestmentOldFx"]</p> }
+                <small class="investment-price-date">@L["InvestmentPriceDate"]: @(p.PriceDate?.ToString("dd-MM-yyyy") ?? "—") · @L["InvestmentFreshness" + p.Freshness]
+                    @if (p.RetrievedUtc is { } retrieved) { <span> · @L["InvestmentFetched"] @retrieved.ToLocalTime().ToString("dd-MM HH:mm")</span> }
+                </small>
+                @if (!Compact)
+                {
+                    <details><summary>@L["CalculationDetails"]</summary>
+                        <p>@L["InvestmentWeightedCost"]: @(p.AverageCost is { } average ? Native(average, p.Instrument.Currency) : "—")<br />
+                            @L["InvestmentRemainingCost"]: @(p.RemainingCost is { } remaining ? Native(remaining, p.Instrument.Currency) : "—")<br />
+                            @L["InvestmentUnrealized"]: @Amount(p.GainEur)<br />@L["InvestmentRealized"]: @Amount(p.RealizedEur)</p>
+                        <p>@L["InvestmentFifoHelp"]</p>
+                        @if (p.Instrument.Currency != "EUR")
+                        { <p>@L["InvestmentFxRate"]: @(p.EurRate?.ToString("0.########", UiCulture.Culture) ?? "—") EUR / @p.Instrument.Currency
+                            · @(p.ManualFx ? p.Instrument.ManualPriceDate.ToString("dd-MM-yyyy") : p.FxDateUtc?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—") @if (p.ManualFx) { <span>@L["InvestmentManualFx"]</span> }</p> }
+                    </details>
+                }
+            </article>
+        }
+    </div>
+}
+@code {
+    [Parameter] public IReadOnlyList<InvestmentPosition> Positions { get; set; } = [];
+    [Parameter] public IReadOnlyList<Account> Accounts { get; set; } = [];
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public DateOnly Today { get; set; }
+    private string AccountName(Guid id) => Accounts.FirstOrDefault(a => a.Id == id)?.Name ?? "—";
+    private static string Native(decimal amount, string currency) => amount.ToString("#,0.########", UiCulture.Culture) + " " + currency;
+    private static string Amount(decimal? amount) => amount is { } n ? Money(n) : "—";
+    private static string Percent(decimal? amount) => amount is { } n ? n.ToString("+0.00;-0.00;0.00", UiCulture.Culture) + "%" : "—";
+    private static string Tone(decimal? n) => n > 0 ? "positive" : n < 0 ? "negative" : "";
+}

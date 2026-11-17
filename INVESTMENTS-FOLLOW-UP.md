@@ -1,6 +1,15 @@
 # Follow-up: stock and ETF portfolio
 
-Status: investigation and proposed design only. **Do not implement yet.**
+Status: original investigation and proposed design, retained for reference.
+The user subsequently approved implementation for **0.3.0**, selecting Alpha Vantage,
+personal-only access, daily updates by default, configurable free/paid limits, historical
+multi-currency trades and FIFO sales. The user explicitly requested **performance cards,
+not charts**, with weighted remaining purchase costs across all lots.
+
+Current implementation and setup: [Beleggingen en Alpha Vantage](huishoudboek/DOCS.md#beleggingen-en-alpha-vantage).
+The EODHD selection and original pending decisions below are historical, not current defaults.
+Alpha Vantage coverage must still be checked locally with the user's own key; no personal
+key was requested or used during implementation.
 
 Research date: 12 November 2026. Recheck provider coverage, prices and terms before implementation.
 

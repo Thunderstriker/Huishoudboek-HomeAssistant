@@ -67,12 +67,150 @@ nieuwe app; bewerk niet beide kopieën verder.
 Deze lokale distributie voegt geen openbare repository toe en publiceert niets
 naar GitHub of een containerregister. Alleen amd64 is in deze versie opgenomen.
 
+## Beleggingen en Alpha Vantage
+
+Open **Overzichten → Beleggingen** (`/beleggingen`). De startpagina toont bij aanwezige
+effectenregistraties automatisch een compacte samenvatting en maximaal drie positiekaarten.
+Beide gebruiken de posities van vandaag en het eigenaarfilter, onafhankelijk van de maandkeuze.
+Er zijn bewust **geen beleggingsgrafieken**.
+
+### Historische aankopen invoeren
+
+1. Maak bij **Rekeningen** een effecten-/beleggingsrekening met de juiste eigenaar aan.
+2. Kies bij Beleggingen **Effect toevoegen**. Vul naam, beurs en handelsvaluta in,
+   bijvoorbeeld EUR of USD; gebruik waar mogelijk ook de ISIN en aandelenklasse.
+3. Zonder providersymbool werkt het effect met een handmatige koers en koersdatum.
+   Een optionele vorige handelsafsluiting maakt het dagpercentage beschikbaar.
+   Een uitdrukkelijk ingevoerde handmatige nulkoers is mogelijk voor een waardeloos
+   effect; een ontbrekende of mislukte API-koers wordt daarentegen nooit nul.
+4. Kies **Historische transactie toevoegen**. Registreer de uitvoeringsdatum, het
+   aantal (ook fractioneel), de prijs per aandeel en eventuele kosten, TOB en valutakosten.
+   Oude transacties mogen ouder zijn dan de openingsdatum van de bankadministratie.
+5. Geef transacties voor hetzelfde effect op dezelfde rekening en dag een eigen
+   volgordenummer. Dit bepaalt de uitvoeringsvolgorde, ook rond verkopen en splitsingen.
+
+Alle prijs- en kostenvelden staan in de **handelsvaluta**. Zijn brokerkosten in een
+andere valuta afgerekend, reken ze dan eerst met de werkelijke historische wisselkoers
+om voordat u ze bij de handelsvalutakosten optelt. Voer daarnaast bij voorkeur het
+**werkelijke totale EUR-afrekentotaal** in: aankoop inclusief alle kosten, verkoop netto
+na kosten. Dat totaal wordt niet nogmaals met de losse kosten verhoogd of verlaagd.
+Bij EUR-transacties moet het afrekentotaal aansluiten op aantal × prijs en kosten.
+
+Ontbreekt een werkelijke EUR-afrekening voor een USD-aankoop, dan kunt u expliciet
+een historische koers invoeren in **EUR per 1 USD** (bijvoorbeeld 0,92). De EUR-kosten
+worden dan als geschat gemarkeerd. Zonder beide blijft het historische EUR-resultaat
+onbekend; de app gebruikt nooit de huidige wisselkoers om oude kosten te verzinnen.
+Voor de huidige positiewaarde wordt een afzonderlijke actuele API-wisselkoers gebruikt,
+of een nieuwere handmatige wisselkoers op de ingevulde handmatige koersdatum.
+
+### Percentages en FIFO
+
+- **Sinds vorige handelsafsluiting** = `(laatste koers / vorige slotkoers − 1) × 100`.
+  Dit is een koersbeweging, geen persoonlijk dagresultaat en niet per se sinds gisteren:
+  op weekends en beursfeestdagen blijft de laatste handelsdag zichtbaar.
+- **Sinds aankopen** = `(huidige waarde − resterende aankoopkosten) /
+  resterende aankoopkosten × 100`. Iedere aankoop blijft een apart lot; kosten worden
+  naar aantallen gewogen, nooit door de losse aankooppercentages te middelen.
+- Voorbeeld zonder kosten: 10 × €100 en 5 × €120 kosten samen €1.600. Bij €110 per
+  aandeel is de waarde €1.650 en het resultaat **+3,125%**, niet het gemiddelde van
+  de twee afzonderlijke rendementen.
+- **FIFO**: een verkoop neemt eerst aandelen en evenredige kosten uit de oudste lots.
+  Verkoopkosten verlagen de gerealiseerde opbrengst. Het resterende percentage hoort
+  bij de nog aanwezige lots; gerealiseerd resultaat staat apart.
+- Bij USD-effecten staan het resultaat in USD en het persoonlijke EUR-resultaat apart;
+  dat laatste bevat ook valuta-effecten. Gemengde EUR/USD-bedragen worden nooit gemiddeld.
+- **Splitsing**: voer de verhouding nieuw/oud in, bijvoorbeeld 2 voor 2-op-1, of 0,1
+  voor 1-op-10. Aantallen wijzigen, totale kosten niet. Leg de actie op elke betrokken
+  rekening vast. Koersen van vóór de laatste splitsing worden niet gebruikt; het
+  dagpercentage op de splitsingsdag blijft verborgen om een onjuist sprongeffect te vermijden.
+- **Openingspositie / ontbrekende historie**: voor een positie zonder complete aankoop-
+  of overdrachtsgegevens. Laat onbekende kosten leeg in plaats van een marktwaarde als
+  aankoopprijs te gebruiken. Resultaten blijven onbekend zolang onbekende lots meetellen.
+
+De berekeningen zijn portefeuille-informatie, geen belastingaangifte of geannualiseerd
+rendement. Dividenden worden hier niet meegerekend; accumulerende ETF's krijgen geen
+fictief cashdividend. Er is nog geen Bolero-bestandsimporter of bulkimport van marktprijshistorie.
+
+### Eigen Alpha Vantage-sleutel instellen
+
+1. Open **Koersgegevens en eigen API-sleutel** onderaan Beleggingen.
+2. Voer **uw eigen** sleutel in, vink koersaanvragen aan en sla op. Deel de sleutel niet
+   in chat, broncode, screenshots of foutmeldingen. De opgeslagen sleutel wordt niet
+   teruggestuurd naar de browser; een leeg veld bij opslaan behoudt de bestaande sleutel.
+3. Gebruik **Verbinding testen** (één aanvraag voor IBM). Dit bewijst niet dat iedere
+   Europese ETF-notering door uw abonnement wordt ondersteund.
+4. Bewerk een effect en zoek desgewenst met de expliciete zoekknop (één aanvraag).
+   Controleer bij uw broker naam/ISIN, aandelenklasse, beurs en valuta en bevestig de koppeling.
+   EODHD-symbolen uit de oude onderzoeksnotitie zijn geen Alpha Vantage-symbolen.
+   Een zoekresultaat bewijst nog geen bruikbare koersdekking; gebruik **Koersen nu opvragen**.
+5. Ontbreekt een notering, laat die dan handmatig gewaardeerd. De app kiest nooit zelf
+   een andere aandelenklasse, beurs, token of vervangend fonds.
+
+Standaard: **dagelijks om 07:00 in de ingestelde lokale tijdzone**, met slotkoersen.
+Andere keuzes: alleen handmatig, een aantal gelijkmatig verdeelde updates per 24 uur,
+elk uur, of realtime polling met minimaal 60 seconden tussen volledige updates.
+Een herstart speelt gemiste updates niet in een inhaalreeks af.
+
+Gratis Alpha Vantage is momenteel begrensd op **25 aanvragen per dag**; de app hanteert
+daarnaast conservatief maximaal 5/minuut. De teller gebruikt UTC-dagen. Quotes worden
+gedeeld voor dezelfde notering/valuta en FX per valutapaar; een effect op twee rekeningen
+vraagt geen twee identieke koersen. Zoeken, verbindingstests, FX, mislukte aanvragen en
+handmatig vernieuwen delen hetzelfde blijvende budget. Sleutelvervanging, herstart en
+financieel databaseherstel wissen de teller niet. Is het budget te klein, dan stopt de
+app voordat een extra aanvraag wordt verstuurd; de raming in de instellingen toont dit.
+Aanvragen met dezelfde sleutel vanuit andere apps zijn niet zichtbaar in deze lokale teller.
+
+Bij een betaalde sleutel stelt u zelf het dag- en minuutbudget in. Dagbudget 0 is dan
+onbeperkt, maar het minuutbudget blijft gelden. **Vaker opvragen maakt slotkoersen niet
+realtime.** Vertraagde/realtime US-data vereist ook de juiste provider-/beursrechten;
+die worden niet uit de sleutel geraden. Andere noteringen blijven slotkoersen. De kaart
+toont de aangevraagde gegevenssoort, koersdatum en apart de ophaaltijd; die ophaaltijd
+is geen exact tijdstip van een beurstransactie. Polling is geen tick-voor-tick stream.
+
+Zonder internet of bij een providerfout blijven de laatste geldige koersen behouden;
+onbekende koersen worden nooit nul. Datums en ontbrekende gegevens blijven zichtbaar.
+Koersen/FX ouder dan vier kalenderdagen krijgen een waarschuwing (ook een beursvakantie
+kan hiervan de oorzaak zijn). Een gemelde providerlimiet pauzeert aanvragen conservatief
+24 uur. Er zijn geen automatische herhaalpogingen binnen dezelfde update.
+
+Officiële bronnen: [limieten](https://www.alphavantage.co/support/#support),
+[API-documentatie](https://www.alphavantage.co/documentation/),
+[betaalde gegevensrechten](https://www.alphavantage.co/premium/).
+Exacte dekking van uw noteringen moet u lokaal met de eigen sleutel controleren.
+
+### Boekhouding, privacy en back-ups
+
+Dit is voorlopig een **aparte portefeuilleschatting**: bestaande handmatige accountwaarderingen,
+bankboekingen, banksaldi, budgetten en spaarbijdragen blijven ongewijzigd. De portefeuillevermelding
+op het dashboard wordt niet nogmaals bij het vermogen opgeteld.
+
+Alleen effectensymbolen, zoektermen en valutaparen gaan via HTTPS met de eigen sleutel
+naar Alpha Vantage; geen aantallen, aankoopprijzen, rekeningnummers of saldi. Het gebruik
+is persoonlijk. Alle tot de app toegelaten Home Assistant-gebruikers hebben dezelfde
+rechten; eigenaarfilters zijn geen aparte toegangsbeveiliging of providerlicentie.
+
+De financiële databaseback-up bevat effecten, transacties, splitsingen en handmatige
+koersen (schema 15), maar **geen API-sleutel of koerscache**. Gewone bank-CSV-export is
+geen volledige beleggingsback-up. Database-upgrades maken eerst een veiligheidskopie;
+oudere back-ups kunnen worden hersteld met lege beleggingsregistraties.
+
+De installatie-lokale map `administration/market-data/` bevat configuratie, quota en de
+laatste quote-/FX-cache. De API-sleutel is versleuteld met ASP.NET Data Protection;
+beveiligingsmateriaal staat in de private submap `keys/`, op Windows extra beschermd
+met DPAPI. Op Linux beschermen private map- en bestandsrechten de lokale sleutels;
+dit is geen bescherming tegen een beheerder van de host. Een **volledige Home Assistant-
+back-up kan zowel het versleutelde geheim als de beveiligingssleutels bevatten**.
+Beveilig die back-up en publiceer nooit de gegevensmap. Financieel databaseherstel
+vervangt deze installatieconfiguratie niet; op een andere installatie voert u de sleutel
+opnieuw in. **Sleutel verwijderen en koppeling uitschakelen** verwijdert het opgeslagen
+geheim; eerdere quotes en de verbruiksteller blijven bestaan.
+
 ## Dashboard, maandoverzicht en aparte werkpagina's
 
 De zijbalk is op elke pagina diepgroen en bevat zes hoofdkeuzes:
 
 - **Dashboard**: direct naar de startpagina.
-- **Overzichten**: maandoverzicht, jaaroverzicht, categorietrends en inzichten.
+- **Overzichten**: maandoverzicht, jaaroverzicht, categorietrends, inzichten en beleggingen.
 - **Transacties**: transacties, aankopen & garanties, categoriseren en wekelijkse controle (tenzij verborgen).
 - **Planning**: financiële vooruitblik, budgetten, vaste posten en hypotheek.
 - **Rekeningen**: direct naar de rekeningen.

@@ -1,0 +1,224 @@
+@page "/beleggingen"
+@attribute [Authorize]
+@inherits PageBase
+@inject IInvestmentAdministration Backend
+@inject IJSRuntime JS
+
+<PageTitle>@L["InvestmentsTitle"] · Huishoudboek</PageTitle>
+<h1>@L["InvestmentsTitle"]</h1>
+<p>@L["InvestmentIntro"]</p>
+<InvestmentOverview @ref="overview" MarketChanged="OnMarketChanged" />
+<div class="actions">
+    <button class="primary" disabled="@(editing || !State.Data.Accounts.Any(a => a.Kind == AccountKind.Investment && State.Scope.Contains(a.Id)) || State.Data.Instruments.Count == 0)" @onclick="NewTrade">+ @L["InvestmentAddTrade"]</button>
+    <button disabled="@editing" @onclick="() => EditInstrument(new())">+ @L["InvestmentAddInstrument"]</button>
+    <a class="button" href="rekeningen">@L["Accounts"] →</a>
+</div>
+@if (!State.Data.Accounts.Any(a => a.Kind == AccountKind.Investment && State.Scope.Contains(a.Id))) { <p class="notice">@L["InvestmentNeedAccount"]</p> }
+@if (editing) { <NavigationLock ConfirmExternalNavigation="true" OnBeforeInternalNavigation="BeforeNavigate" /> }
+@if (instrumentDraft is { } instrument)
+{
+    <section class="card"><h2>@L["InvestmentInstrument"]</h2>
+        @if (draftRevision != State.Revision) { <p class="notice warning">@L["PurchaseStaleDraft"]</p> }
+        <form @onsubmit="SaveInstrument" @onsubmit:preventDefault>
+            <div class="fields">
+                <label>@L["Name"]<input @bind="instrument.Item.Name" maxlength="200" required /></label>
+                <label>ISIN<input @bind="instrument.Item.Isin" maxlength="20" /></label>
+                <label>@L["InvestmentExchange"]<input @bind="instrument.Item.Exchange" maxlength="100" required /></label>
+                <label>@L["InvestmentCurrency"]<input @bind="instrument.Item.Currency" minlength="3" maxlength="3" required placeholder="EUR / USD" /></label>
+                <label>@L["InvestmentProviderSymbol"]<input @bind="instrument.Item.ProviderSymbol" maxlength="40" /></label>
+            </div>
+            <label class="check"><input type="checkbox" @bind="instrument.Item.MappingConfirmed" />@L["InvestmentConfirmMapping"]</label>
+            <label class="check"><input type="checkbox" @bind="instrument.Item.IsUsListing" />@L["InvestmentUsListing"]</label>
+            <p class="muted">@L["InvestmentManualHelp"]</p>
+            <div class="fields">
+                <InvestmentNumber Label="@L["InvestmentManualPrice"]" Draft="instrument.Price" />
+                <InvestmentNumber Label="@L["InvestmentPreviousClose"]" Draft="instrument.PreviousClose" />
+                <label>@L["InvestmentPriceDate"]<input type="date" @bind="instrument.Item.ManualPriceDate" required max="@State.Today.ToString("yyyy-MM-dd")" /></label>
+                <InvestmentNumber Label="@L["InvestmentManualEurRate"]" Draft="instrument.EurRate" />
+            </div>
+            <div class="actions"><button class="primary" type="submit" disabled="@State.Busy">@L["Save"]</button><button type="button" @onclick="() => instrumentDraft = null">@L["Cancel"]</button></div>
+        </form>
+        @if (market?.Settings.Enabled == true && market.HasKey)
+        {
+            <div class="fields"><label>@L["InvestmentSearch"]<input @bind="search" maxlength="100" /></label></div>
+            <button disabled="@State.Busy" @onclick="Search">@L["InvestmentSearchButton"]</button><p class="muted">@L["InvestmentSearchQuota"]</p>
+            <ul>@foreach (var match in matches) { <li><button @onclick="() => SelectMatch(match)">@match.Symbol · @match.Name · @match.Region · @match.Currency</button></li> }</ul>
+        }
+    </section>
+}
+@if (tradeDraft is { } trade)
+{
+    <section class="card"><h2>@L["InvestmentAddTrade"]</h2>
+        @if (draftRevision != State.Revision) { <p class="notice warning">@L["PurchaseStaleDraft"]</p> }
+        <form @onsubmit="SaveTrade" @onsubmit:preventDefault>
+            <div class="fields">
+                <label>@L["InvestmentAccount"]<select @bind="trade.Item.AccountId">@foreach (var a in State.Data.Accounts.Where(a => a.Kind == AccountKind.Investment && State.Scope.Contains(a.Id))) { <option value="@a.Id">@a.Name</option> }</select></label>
+                <label>@L["InvestmentInstrument"]<select @bind="trade.Item.InstrumentId">@foreach (var i in State.Data.Instruments) { <option value="@i.Id">@i.Name · @i.Exchange · @i.Currency</option> }</select></label>
+                <label>@L["Type"]<select @bind="trade.Item.Kind">@foreach (var kind in Enum.GetValues<InvestmentTradeKind>()) { <option value="@kind">@L["InvestmentTrade" + kind]</option> }</select></label>
+                <label>@L["Date"]<input type="date" @bind="trade.Item.Date" max="@State.Today.ToString("yyyy-MM-dd")" required /></label>
+                <label>@L["InvestmentSequence"]<input type="number" @bind="trade.Item.Sequence" min="1" max="100000" step="1" required /></label>
+                <InvestmentNumber Label="@L[trade.Item.Kind == InvestmentTradeKind.Split ? "InvestmentSplitRatio" : "InvestmentQuantity"]" Draft="trade.Quantity" />
+                @if (trade.Item.Kind != InvestmentTradeKind.Split)
+                {
+                    <InvestmentNumber Label="@L["InvestmentUnitPrice"]" Draft="trade.Price" />
+                    <InvestmentNumber Label="@L["InvestmentFees"]" Draft="trade.Fees" />
+                    <InvestmentNumber Label="@L["InvestmentTax"]" Draft="trade.Tax" />
+                    <InvestmentNumber Label="@L["InvestmentFxCosts"]" Draft="trade.FxCosts" />
+                    <InvestmentNumber Label="@L["InvestmentSettlement"]" Draft="trade.Settlement" />
+                    <InvestmentNumber Label="@L["InvestmentHistoricalRate"]" Draft="trade.Rate" />
+                }
+                <label>@L["PurchaseNotes"]<input @bind="trade.Item.Note" maxlength="2000" /></label>
+            </div>
+            <p class="muted">@L["InvestmentTradeCurrencyHelp", State.Data.Instruments.FirstOrDefault(i => i.Id == trade.Item.InstrumentId)?.Currency ?? "—"]</p>
+            <p class="muted">@L[trade.Item.Kind == InvestmentTradeKind.Split ? "InvestmentSplitHelp" : trade.Item.Kind == InvestmentTradeKind.Opening ? "InvestmentOpeningHelp" : "InvestmentSettlementHelp"]</p>
+            <div class="actions"><button class="primary" disabled="@State.Busy" type="submit">@L["Save"]</button><button type="button" @onclick="() => tradeDraft = null">@L["Cancel"]</button></div>
+        </form>
+    </section>
+}
+<details class="card"><summary>@L["InvestmentInstruments"]</summary>
+    <ul class="investment-instruments">@foreach (var i in State.Data.Instruments.OrderBy(i => i.Name))
+    { <li><span><strong>@i.Name</strong> · @i.Exchange · @i.Currency · @(i.ProviderSymbol.Length > 0 ? i.ProviderSymbol : L["InvestmentFreshnessManual"].Value)</span>
+        <div class="actions"><button disabled="@editing" @onclick="() => EditInstrument(i)">@L["Edit"]</button>
+        @if (!State.Data.InvestmentTrades.Any(t => t.InstrumentId == i.Id)) { <button disabled="@editing" @onclick="() => RemoveInstrument(i.Id)">@L["Delete"]</button> }</div></li> }</ul>
+</details>
+<details class="card"><summary>@L["InvestmentHistory"]</summary><p class="muted">@L["InvestmentFifoHelp"]</p>
+    @{ var history = State.Data.InvestmentTrades.Where(t => State.Scope.Contains(t.AccountId)).OrderByDescending(t => t.Date).ThenByDescending(t => t.Sequence).ToArray(); historyPage = Math.Min(historyPage, Math.Max(0, (history.Length - 1) / 20)); }
+    <div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th>@L["InvestmentInstrument"]</th><th>@L["Type"]</th><th>@L["InvestmentQuantity"]</th><th>@L["InvestmentUnitPrice"]</th><th>@L["InvestmentAllIn"]</th><th>@L["Actions"]</th></tr></thead><tbody>
+        @foreach (var t in history.Skip(historyPage * 20).Take(20))
+        { <tr @key="t.Id"><td>@t.Date.ToString("dd-MM-yyyy") · #@t.Sequence<br /><small>@State.AccountName(t.AccountId)</small></td><td>@State.Data.Instruments.First(i => i.Id == t.InstrumentId).Name</td><td>@L["InvestmentTrade" + t.Kind]</td><td>@t.Quantity.ToString("0.########", UiCulture.Culture)</td><td>@(t.UnitPrice?.ToString("N4", UiCulture.Culture) ?? "—") @t.Currency</td><td>@(Investments.NativeAmount(t)?.ToString("N4", UiCulture.Culture) ?? "—") @t.Currency<br /><small>@(Investments.EurAmount(t) is { } eur ? Money(eur) : "—")</small>@if (t.Note.Length > 0) { <p>@t.Note</p> }</td><td><div class="actions"><button disabled="@editing" @onclick="() => EditTrade(t)">@L["Edit"]</button><button disabled="@editing" @onclick="() => AskDeleteTrade(t.Id)">@L["Delete"]</button></div></td></tr> }
+    </tbody></table></div><Pager Count="history.Length" Size="20" @bind-Page="historyPage" />
+</details>
+@if (settings is { } s && market != null)
+{
+    <details class="card investment-settings" id="koersgegevens"><summary>@L["InvestmentQuoteSettings"]</summary>
+        <p>@L["InvestmentSecretHelp"]</p><p class="notice">@L["InvestmentLicenseHelp"]</p>
+        <p role="status">@L["InvestmentStatus" + market.Status] · @L[market.HasKey ? "InvestmentKeyConfigured" : "InvestmentKeyMissing"]</p>
+        <p>@L["InvestmentQuotaUsed", market.RequestsToday, market.Settings.DailyLimit == 0 ? "∞" : market.Settings.DailyLimit.ToString()]</p>
+        <dl class="investment-settings-status">
+            <div><dt>@L["InvestmentLastAttempt"]</dt><dd>@Local(market.LastAttemptUtc)</dd></div>
+            <div><dt>@L["InvestmentLastSuccess"]</dt><dd>@Local(market.LastSuccessUtc)</dd></div>
+            <div><dt>@L["InvestmentNextUpdate"]</dt><dd>@Local(market.NextRefreshUtc)</dd></div>
+        </dl>
+        <form @onsubmit="SaveSettings" @onsubmit:preventDefault>
+            <div class="investment-settings-grid">
+                <fieldset class="investment-settings-group">
+                    <legend>@L["InvestmentConnectionGroup"]</legend>
+                    <label class="check"><input type="checkbox" @bind="s.Enabled" />@L["InvestmentEnableQuotes"]</label>
+                    <div class="investment-setting">
+                        <label>@L["InvestmentKey"]<input type="password" @bind="replacementKey" aria-describedby="investment-key-help" autocomplete="new-password" maxlength="256" spellcheck="false" /></label>
+                        <small id="investment-key-help">@L["InvestmentKeyHelp"]</small>
+                    </div>
+                    <label class="check"><input type="checkbox" @bind="s.Paid" />@L["InvestmentPaidKey"]</label>
+                </fieldset>
+                <fieldset class="investment-settings-group">
+                    <legend>@L["InvestmentScheduleGroup"]</legend>
+                    <label>@L["InvestmentFrequency"]<select @bind="s.Frequency">@foreach (var f in Enum.GetValues<QuoteFrequency>()) { <option value="@f">@L["InvestmentFrequency" + f]</option> }</select></label>
+                    @if (s.Frequency == QuoteFrequency.Daily)
+                    {
+                        <div class="investment-setting">
+                            <label>@L["InvestmentDailyHour"]<input id="investment-daily-hour" type="number" @bind="s.DailyHour" aria-describedby="investment-hour-help" min="0" max="23" required /></label>
+                            <small id="investment-hour-help">@L["InvestmentDailyHourHelp", TimeZoneInfo.Local.Id]</small>
+                        </div>
+                    }
+                    else if (s.Frequency == QuoteFrequency.SeveralPerDay)
+                    {
+                        <label>@L["InvestmentUpdatesPerDay"]<input id="investment-updates-per-day" type="number" @bind="s.UpdatesPerDay" min="2" max="24" required /></label>
+                    }
+                    else if (s.Frequency == QuoteFrequency.Realtime)
+                    {
+                        <div class="investment-setting">
+                            <label>@L["InvestmentPollSeconds"]<input id="investment-poll-seconds" type="number" @bind="s.RealtimeSeconds" aria-describedby="investment-poll-help" min="60" max="3600" required /></label>
+                            <small id="investment-poll-help">@L["InvestmentPollSecondsHelp"]</small>
+                        </div>
+                    }
+                    <label>@L["InvestmentDataFreshness"]<select @bind="s.Freshness">@foreach (var f in new[] { QuoteFreshness.EndOfDay, QuoteFreshness.Delayed, QuoteFreshness.Realtime }) { <option value="@f">@L["InvestmentFreshness" + f]</option> }</select></label>
+                </fieldset>
+                <fieldset class="investment-settings-group">
+                    <legend>@L["InvestmentLimitsGroup"]</legend>
+                    <div class="investment-setting">
+                        <label>@L["InvestmentDailyBudget"]<input type="number" @bind="s.DailyLimit" aria-describedby="investment-budget-help" min="0" max="1000000" required /></label>
+                        <small id="investment-budget-help">@L["InvestmentDailyBudgetHelp"]</small>
+                    </div>
+                    <label>@L["InvestmentMinuteBudget"]<input type="number" @bind="s.RequestsPerMinute" min="1" max="1200" required /></label>
+                    <p class="muted">@L["InvestmentQuotaHelp"]</p>
+                </fieldset>
+            </div>
+            <p class="muted">@L["InvestmentFreshnessHelp"]</p>
+            <p class="investment-settings-estimate">@L["InvestmentEstimatedCalls", EstimatedCalls(), EstimatedDaily(s)]</p>
+            <div class="actions"><button class="primary" type="submit" disabled="@State.Busy">@L["Save"]</button><button type="button" disabled="@(State.Busy || !market.HasKey || !market.Settings.Enabled)" @onclick="TestConnection">@L["InvestmentTest"]</button><button type="button" disabled="@(State.Busy || !market.HasKey || !market.Settings.Enabled)" @onclick="RefreshQuotes">@L["InvestmentRefresh"]</button><button type="button" disabled="@(State.Busy || !market.HasKey)" @onclick="RemoveKey">@L["InvestmentRemoveKey"]</button></div>
+        </form>
+        <p class="muted">@L["InvestmentBackupHelp"]</p>
+    </details>
+}
+@if (deleteTrade is { } deleting)
+{ <Confirm Title="@L["Delete"]" Text="@L["InvestmentDeleteTradeHelp"]" ActionLabel="@L["Delete"]" Cancel="() => deleteTrade = null" Accept="() => DeleteTrade(deleting)" /> }
+
+@code {
+    private InvestmentInstrumentDraft? instrumentDraft;
+    private InvestmentTradeDraft? tradeDraft;
+    private string draftRevision = "", deleteRevision = "", replacementKey = "", search = "";
+    private IReadOnlyList<InvestmentSymbol> matches = [];
+    private InvestmentMarketSnapshot? market;
+    private InvestmentQuoteSettings? settings;
+    private InvestmentOverview? overview;
+    private Guid? deleteTrade;
+    private int historyPage;
+    private bool editing => instrumentDraft != null || tradeDraft != null;
+    protected override async Task OnInitializedAsync() { await LoadMarket(); settings = market!.Settings with { }; }
+    private async Task LoadMarket() => market = await Backend.ReadAsync();
+    private void OnMarketChanged(InvestmentMarketSnapshot snapshot) => market = snapshot;
+    private void EditInstrument(InvestmentInstrument i) { instrumentDraft = new(i); draftRevision = State.Revision; matches = []; }
+    private void EditTrade(InvestmentTrade t) { tradeDraft = new(t); draftRevision = State.Revision; }
+    private void NewTrade() => EditTrade(new() { AccountId = State.Data.Accounts.First(a => a.Kind == AccountKind.Investment && State.Scope.Contains(a.Id)).Id,
+        InstrumentId = State.Data.Instruments.First().Id, Sequence = State.Data.InvestmentTrades.Where(t => t.Date == State.Today).Select(t => t.Sequence).DefaultIfEmpty(0).Max() + 1 });
+    private async Task SaveInstrument() => await State.RunAsync(async () =>
+    {
+        if (instrumentDraft is not { Valid: true } draft) throw new InvalidOperationException(L["InvestmentInvalidNumber"]);
+        var i = draft.Build();
+        await State.SaveAsync(d => { var index = d.Instruments.FindIndex(x => x.Id == i.Id); if (index < 0) d.Instruments.Add(i); else d.Instruments[index] = i; }, draftRevision);
+        instrumentDraft = null;
+    }, L["ChangesSaved"]);
+    private async Task SaveTrade() => await State.RunAsync(async () =>
+    {
+        if (tradeDraft is not { Valid: true } draft) throw new InvalidOperationException(L["InvestmentInvalidNumber"]);
+        var t = draft.Build(State.Data);
+        await State.SaveAsync(d => { var index = d.InvestmentTrades.FindIndex(x => x.Id == t.Id); if (index < 0) d.InvestmentTrades.Add(t); else d.InvestmentTrades[index] = t; }, draftRevision);
+        tradeDraft = null;
+    }, L["ChangesSaved"]);
+    private async Task RemoveInstrument(Guid id) => await State.RunAsync(async () => await State.SaveAsync(d =>
+    { if (d.InvestmentTrades.Any(t => t.InstrumentId == id)) throw new InvalidOperationException(L["InvestmentInstrumentInUse"]); d.Instruments.RemoveAll(i => i.Id == id); }), L["ChangesSaved"]);
+    private void AskDeleteTrade(Guid id) { deleteTrade = id; deleteRevision = State.Revision; }
+    private async Task DeleteTrade(Guid id) => await State.RunAsync(async () =>
+    { await State.SaveAsync(d => d.InvestmentTrades.RemoveAll(t => t.Id == id), deleteRevision); deleteTrade = null; }, L["ChangesSaved"]);
+    private async Task SaveSettings() => await State.RunAsync(async () =>
+    { try { await Backend.SaveSettingsAsync(settings!, replacementKey); } finally { replacementKey = ""; } await LoadMarket(); }, L["ChangesSaved"]);
+    private async Task RemoveKey() => await State.RunAsync(async () =>
+    {
+        await Backend.SaveSettingsAsync(market!.Settings with { Enabled = false }, null, removeKey: true);
+        replacementKey = ""; await LoadMarket(); settings = market!.Settings with { };
+    }, L["ChangesSaved"]);
+    private async Task MarketAction(Func<Task> action) => await State.RunAsync(async () =>
+    { try { await action(); } finally { await LoadMarket(); if (overview != null) await overview.RefreshAsync(); } });
+    private async Task TestConnection() => await MarketAction(Backend.TestAsync);
+    private async Task RefreshQuotes() => await MarketAction(Backend.RefreshAsync);
+    private async Task Search() => await MarketAction(async () => matches = await Backend.SearchAsync(search));
+    private void SelectMatch(InvestmentSymbol match)
+    {
+        if (instrumentDraft == null) return;
+        instrumentDraft.Item.ProviderSymbol = match.Symbol; instrumentDraft.Item.MappingConfirmed = false;
+        instrumentDraft.Item.IsUsListing = match.Region == "United States";
+        if (!State.Data.InvestmentTrades.Any(t => t.InstrumentId == instrumentDraft.Item.Id))
+        { instrumentDraft.Item.Currency = match.Currency; if (instrumentDraft.Item.Name.Length == 0) instrumentDraft.Item.Name = match.Name; }
+    }
+    private int EstimatedCalls()
+    {
+        var held = Investments.Positions(State.Data, [], [], State.Today).Where(p => p.Quantity > 0).ToArray();
+        return held.Where(p => p.Instrument.ProviderSymbol.Length > 0).DistinctBy(p => (p.Instrument.ProviderSymbol, p.Instrument.Currency, p.Instrument.IsUsListing)).Count()
+            + held.Select(p => p.Instrument.Currency).Where(c => c != "EUR").Distinct().Count();
+    }
+    private int EstimatedDaily(InvestmentQuoteSettings s) => EstimatedCalls() * (s.Frequency switch
+    { QuoteFrequency.Manual => 0, QuoteFrequency.Daily => 1, QuoteFrequency.SeveralPerDay => s.UpdatesPerDay, QuoteFrequency.Hourly => 24, _ => 86400 / Math.Max(60, s.RealtimeSeconds) });
+    private static string Local(DateTime? t) => t?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—";
+    private async Task BeforeNavigate(LocationChangingContext context)
+    { if (editing && !await JS.InvokeAsync<bool>("confirm", L["MealVouchersLeaveWarning"].Value)) context.PreventNavigation(); }
+}

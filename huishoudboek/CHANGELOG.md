@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.0
+
+- Koersinstellingen overzichtelijk gegroepeerd in verbinding, updateschema en API-limieten,
+  met korte labels, aparte hulpteksten en een mobiele indeling. Alleen relevante
+  tijdvelden voor de gekozen opvraagfrequentie worden getoond.
+- Beleggingen met prestatiekaarten per aandeel of ETF: koersverschil sinds de vorige
+  handelsafsluiting en gewogen resultaat sinds aankoop, zonder grafieken. Compacte
+  samenvatting op het dashboard; eigenaarfilters blijven gelden.
+- Historische aankopen, verkopen, openingsposities en splitsingen per beleggingsrekening,
+  met fractionele aantallen, kosten, TOB en valuta. FIFO voor verkopen; werkelijke
+  EUR-afrekeningen of expliciete historische wisselkoersen behouden oude aankoopkosten.
+- Optionele Alpha Vantage-koppeling met een eigen, lokaal versleutelde API-sleutel,
+  dagelijkse updates als standaard en instelbare frequentie, budgetten en betaalde
+  gegevensrechten. Tests, zoekacties, FX en handmatig vernieuwen delen blijvende limieten;
+  mislukte aanvragen behouden de laatste koers en worden niet als nul opgeslagen.
+- Portefeuilleschattingen blijven apart van handmatige effectenwaarderingen en
+  bankboekingen. Databaseschema 15 met veiligheidskopie vóór migratie; effecten,
+  transacties en handmatige koersen gaan mee in databaseback-ups, API-sleutels niet.
+- App- en containerversie bijgewerkt naar 0.3.0 voor installatie en updates via Home Assistant.
+
 ## 0.2.3.2
 
 - Bankboekingen zoeken bij Aankopen & garanties toont alle overeenkomsten uit de
