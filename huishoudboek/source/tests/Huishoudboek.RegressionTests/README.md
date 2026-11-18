@@ -22,3 +22,7 @@ gegroepeerde koersinstellingen met relevante tijdvelden voor iedere opvraagfrequ
 Providerantwoorden zijn gesimuleerd: er is geen echte API-sleutel of externe aanvraag nodig.
 Tijdelijke testdatabases worden in een eigen map onder de tijdelijke gebruikersmap aangemaakt
 en na iedere controle verwijderd; echte administraties worden niet geopend.
+Hypotheekcontroles vergelijken nominale en effectieve jaarrente met exacte maandrente,
+behouden oude berekeningen en rente-precisie, toetsen invoer en SQLite-opslag en scheiden
+het volledige theoretische schema van werkelijke aflossingen, inclusief een afwijkende
+eerste bankbetaling. Beide talen van de hypotheekpagina worden lokaal gerenderd.

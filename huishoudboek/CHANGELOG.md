@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0.4
+
+- Hypotheekrente expliciet instelbaar als nominale jaarrente, effectieve jaarrente
+  of exacte periodieke maandrente; bestaande hypotheken behouden hun berekening.
+- Hypotheekschema standaard vanaf de peildatum, met aparte prognose vanaf vandaag.
+  Theoretische aflossingen blijven gescheiden van werkelijke schuld; uitleg verduidelijkt
+  afgeronde rentetarieven en afwijkende eerste betalingen met dagrente.
+- App- en containerversie bijgewerkt naar 0.3.0.4 voor installatie en updates via Home Assistant.
+
 ## 0.3.0.3
 
 - Een losse premiumverwijzing in een providermelding wordt niet langer als ontbrekende

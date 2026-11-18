@@ -67,6 +67,33 @@ nieuwe app; bewerk niet beide kopieën verder.
 Deze lokale distributie voegt geen openbare repository toe en publiceert niets
 naar GitHub of een containerregister. Alleen amd64 is in deze versie opgenomen.
 
+## Hypotheek: rente en aflossingsschema
+
+Het maandbedrag is de volledige annuïteit: rente plus kapitaalaflossing. Kies bij
+**Hypotheek instellen / bewerken** de renteberekening uit het kredietcontract:
+
+- **Nominale jaarrente**: maandrente = jaarrente / 12. Bestaande hypotheken behouden
+  deze berekening totdat u expliciet een andere keuze opslaat.
+- **Effectieve jaarrente**: maandrente = `(1 + jaarrente / 100)^(1/12) - 1`.
+  Een effectieve jaarrente van 3,34% geeft ongeveer 0,2741612771% per maand,
+  niet 3,34% / 12. Gebruik hiervoor de contractrente, niet een jaarlijks kostenpercentage.
+- **Exacte maandrente**: neem de periodieke maandrente met alle beschikbare decimalen
+  over van de kredietgever. Een afgeronde 0,27% is niet genoeg voor een vergelijking
+  tot op de cent; de app leidt geen nauwkeuriger tarief af uit een banksaldo.
+
+Het schema toont standaard de theoretische maandbetalingen vanaf de peildatum,
+met de eerste betaling eind volgende maand. Bij een peildatum in mei begint het
+dus in juni, ook wanneer u de pagina pas in november opent. Dit schema verwerkt
+geen geregistreerde betalingen of extra aflossingen. De aparte **Prognose vanaf
+vandaag** begint bij de geregistreerde schuld en toont toekomstige betalingen.
+
+De **werkelijke schuld** daalt uitsluitend met geregistreerde kapitaalaflossingen.
+Een afwijkende eerste betaling door een gedeeltelijke maand, uitstel of dagrente
+valt buiten het theoretische maandschema. Registreer het werkelijke bankbedrag en
+de afzonderlijke kapitaalaflossing uit het bankoverzicht; het volledige bankbedrag
+is geen kapitaalaflossing. Zonder de exacte start-/betaaldatums, renteconventie en
+banksplitsing kan de app die eerste betaling niet betrouwbaar reconstrueren.
+
 ## Beleggingen en Alpha Vantage
 
 Open **Overzichten → Beleggingen** (`/beleggingen`). De startpagina toont bij aanwezige

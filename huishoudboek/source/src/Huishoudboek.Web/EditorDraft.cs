@@ -38,12 +38,14 @@ public sealed class EditorDraft(string title, string revision)
     private Guid? _seedTransactionId;
     private bool _transaction;
     private bool _category;
+    private bool _mortgage;
     public string Label(EditorField field) => _category && field.Key == "budget" && Text("purpose") == "Savings"
         ? UiCulture.Text("DefaultMonthlyTargetEuro") : field.Label;
     public bool IsFieldVisible(EditorField field) => _category && field.Key is "essential" or "exceptional"
         ? Text("purpose") == "Normal" : _recurringPaymentId != null && field.Key == "tolerance"
         ? Text("amountMode") == "Fixed" : _category && field.Key == "budget"
-        ? Text("purpose") != "OwnAccountMovement" : !_transaction || field.Key switch
+        ? Text("purpose") != "OwnAccountMovement" : _mortgage && field.Key == "monthlyRate"
+        ? Text("rateConvention") == "Monthly" : !_transaction || field.Key switch
     {
         "counter" => Text("kind") == "Transfer",
         "principal" => Text("kind") == "Mortgage",
@@ -370,14 +372,28 @@ public sealed class EditorDraft(string title, string revision)
     public static EditorDraft Mortgage(WebState s)
     {
         var item = s.Data.Mortgage ?? new Mortgage { OwnerIds = s.Data.Owners.Select(o => o.Id).ToList() };
-        var draft = new EditorDraft(UiCulture.Text("AnnuityMortgage"), s.Revision) { Note = UiCulture.Text("MortgageEditorNote") };
+        var draft = new EditorDraft(UiCulture.Text("AnnuityMortgage"), s.Revision)
+        { Note = UiCulture.Text("MortgageEditorNote") + " " + UiCulture.Text("MortgageRateHelp"), _mortgage = true };
         draft.Field("name", "NameLender", "text", item.Name); draft.Owners(s.Data, item.OwnerIds);
         draft.Money("principal", "ReferenceDebtEuro", item.ReferencePrincipal); draft.DateField("date", "ReferenceDate", item.ReferenceDate);
-        draft.Field("rate", "FixedAnnualRatePercent", "money", item.AnnualInterestPercent.ToString("0.####", Culture)); draft.Money("payment", "MonthlyAnnuityEuro", item.MonthlyPayment);
+        draft.Field("rate", "FixedAnnualRatePercent", "money", item.AnnualInterestPercent.ToString("0.############################", Culture));
+        draft.Choice("rateConvention", "MortgageRateConvention", Enum.GetValues<MortgageRateConvention>()
+            .Select(c => new FieldOption(c.ToString(), MortgageRateLabel(c))), item.RateConvention.ToString());
+        draft.Field("monthlyRate", "MortgageMonthlyRatePercent", "money", item.MonthlyInterestPercent?.ToString("0.############################", Culture) ?? "", false);
+        draft.Money("payment", "MonthlyAnnuityEuro", item.MonthlyPayment);
         draft.Field("months", "RemainingTermMonths", "number", item.RemainingMonths.ToString(CultureInfo.InvariantCulture));
         draft.DateField("fixedUntil", "OptionalFixedRateUntil", item.FixedRateUntil, false);
         draft.Apply = d => d.Mortgage = item with { Name = draft.Text("name"), OwnerIds = draft.Fields.Single(f => f.Key == "owners").OwnerIds.ToList(),
-            ReferencePrincipal = draft.Number("principal"), ReferenceDate = draft.Date("date"), AnnualInterestPercent = draft.Number("rate"), MonthlyPayment = draft.Number("payment"),
+            ReferencePrincipal = draft.Number("principal"), ReferenceDate = draft.Date("date"), AnnualInterestPercent = draft.Number("rate"),
+            RateConvention = Enum.Parse<MortgageRateConvention>(draft.Text("rateConvention")),
+            MonthlyInterestPercent = draft.Text("rateConvention") != "Monthly" ? item.MonthlyInterestPercent
+                : draft.Text("monthlyRate").Length == 0 ? null : draft.Number("monthlyRate"), MonthlyPayment = draft.Number("payment"),
             RemainingMonths = int.TryParse(draft.Text("months"), out var months) ? months : 0, FixedRateUntil = draft.Text("fixedUntil").Length == 0 ? null : draft.Date("fixedUntil") }; return draft;
     }
+    public static string MortgageRateLabel(MortgageRateConvention convention) => UiCulture.Text(convention switch
+    {
+        MortgageRateConvention.EffectiveAnnual => "MortgageEffectiveAnnual",
+        MortgageRateConvention.Monthly => "MortgageExactMonthly",
+        _ => "MortgageNominalAnnual"
+    });
 }

@@ -451,7 +451,21 @@
   <data name="MonthlyAnnuity" xml:space="preserve"><value>Monthly annuity</value></data>
   <data name="FixedAnnualRate" xml:space="preserve"><value>Fixed annual interest rate</value></data>
   <data name="EstimatedRemainingInterest" xml:space="preserve"><value>Estimated remaining interest</value></data>
-  <data name="MortgageEstimateNote" xml:space="preserve"><value>Debt on {0}: {1}. Actual debt is reduced only by recorded principal repayments. The schedule is an ESTIMATE: monthly payments at month end starting next month, without bank fees, daily interest, taxes or penalties.</value></data>
+  <data name="MortgageEstimateNote" xml:space="preserve"><value>Debt on {0}: {1}. Actual debt is reduced only by recorded principal repayments. The schedule is an ESTIMATE with regular month-end payments starting in the month after the selected starting point, without bank fees, daily interest, taxes or penalties.</value></data>
+  <data name="MortgageRateConvention" xml:space="preserve"><value>Lender's interest calculation</value></data>
+  <data name="MortgageNominalAnnual" xml:space="preserve"><value>Nominal annual rate (divide by 12)</value></data>
+  <data name="MortgageEffectiveAnnual" xml:space="preserve"><value>Effective annual rate (convert to monthly rate)</value></data>
+  <data name="MortgageExactMonthly" xml:space="preserve"><value>Exact monthly rate from lender</value></data>
+  <data name="MortgageMonthlyRatePercent" xml:space="preserve"><value>Exact periodic monthly rate (%)</value></data>
+  <data name="MortgageRateHelp" xml:space="preserve"><value>The monthly payment includes interest and principal. Use your contract's convention: nominal annual rate / 12 or (1 + effective annual rate)^(1/12) − 1. For a periodic monthly rate, copy every available decimal; a rounded 0.27% is not precise enough to reconcile bank figures to the cent.</value></data>
+  <data name="MortgageMonthlyRateUsed" xml:space="preserve"><value>Monthly rate used: {0}%</value></data>
+  <data name="MortgageScheduleBasis" xml:space="preserve"><value>Schedule starting point</value></data>
+  <data name="MortgageFromReference" xml:space="preserve"><value>Theoretical schedule from reference date</value></data>
+  <data name="MortgageFromToday" xml:space="preserve"><value>Forecast from today (recorded debt)</value></data>
+  <data name="MortgageReferenceScheduleNote" xml:space="preserve"><value>Starts with the debt and remaining term on the reference date, including past months. This theoretical schedule does not incorporate recorded payments or extra repayments and does not change actual debt.</value></data>
+  <data name="MortgageTodayScheduleNote" xml:space="preserve"><value>Starts with today's recorded debt; the first estimated payment is at the end of next month. Unrecorded principal repayments from past months are not automatically filled in.</value></data>
+  <data name="MortgageScheduleInterest" xml:space="preserve"><value>Estimated interest in full schedule</value></data>
+  <data name="MortgageFirstPaymentNote" xml:space="preserve"><value>An irregular first payment due to deferral or daily interest is not included in this monthly schedule. Record the actual bank amount and only the principal portion specified by your lender, not the entire payment as principal.</value></data>
   <data name="RateFixedUntil" xml:space="preserve"><value>Rate fixed through {0}; the same rate is assumed afterwards.</value></data>
   <data name="RateEndUnknown" xml:space="preserve"><value>End of fixed-rate period unknown; constant rate assumed.</value></data>
   <data name="RemainingDebtWarning" xml:space="preserve"><value>Attention: residual debt remains.</value></data>

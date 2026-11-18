@@ -2,6 +2,7 @@ namespace Huishoudboek.Core;
 
 public enum AccountKind { Current, Savings, Investment }
 public enum TransactionKind { Normal, Transfer, Mortgage }
+public enum MortgageRateConvention { NominalAnnual, EffectiveAnnual, Monthly }
 public enum PaymentFrequency { Monthly, Quarterly, Yearly, Once }
 public enum PaymentAmountMode { Fixed, Variable }
 public enum AllocationTreatment { Ordinary, Refund, Reimbursement }
@@ -147,6 +148,9 @@ public sealed record Mortgage
     public decimal ReferencePrincipal { get; set; }
     public DateOnly ReferenceDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     public decimal AnnualInterestPercent { get; set; }
+    // Missing fields in older administrations preserve the nominal annual calculation.
+    public MortgageRateConvention RateConvention { get; set; }
+    public decimal? MonthlyInterestPercent { get; set; }
     public decimal MonthlyPayment { get; set; }
     public int RemainingMonths { get; set; } = 360;
     public DateOnly? FixedRateUntil { get; set; }

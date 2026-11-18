@@ -146,6 +146,11 @@ public static class Validation
             Require(m.ReferencePrincipal > 0 && m.MonthlyPayment > 0 && m.AnnualInterestPercent is >= 0 and <= 100 && m.RemainingMonths is > 0 and <= 600,
                 "Controleer hypotheekbedrag, rente, maandbedrag en looptijd.");
             Require(Money(m.ReferencePrincipal) && Money(m.MonthlyPayment), "Hypotheekbedragen hebben maximaal twee decimalen.");
+            Require(Enum.IsDefined(m.RateConvention), "Kies een geldige renteberekening voor de hypotheek.");
+            Require(m.MonthlyInterestPercent == null || m.MonthlyInterestPercent is >= 0 and <= 100,
+                "De maandrente moet tussen 0 en 100 procent liggen.");
+            Require(m.RateConvention != MortgageRateConvention.Monthly || m.MonthlyInterestPercent != null,
+                "Vul de exacte maandrente van de kredietgever in.");
             Require(m.OwnerIds.Count > 0 && m.OwnerIds.All(owners.Contains), "Kies minstens één eigenaar voor de hypotheek.");
             Require(m.FixedRateUntil == null || m.FixedRateUntil >= m.ReferenceDate, "Rentevaste einddatum ligt vóór de peildatum.");
             Require(data.Transactions.Where(t => t.Kind == TransactionKind.Mortgage && t.Date >= m.ReferenceDate).Sum(t => t.PrincipalComponent) <= m.ReferencePrincipal,

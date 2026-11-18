@@ -230,11 +230,20 @@ public static class Finance
         }
     }
 
+    public static decimal MortgageMonthlyRate(Mortgage mortgage) => mortgage.RateConvention switch
+    {
+        MortgageRateConvention.NominalAnnual => mortgage.AnnualInterestPercent / 1200m,
+        MortgageRateConvention.EffectiveAnnual => (decimal)(Math.Pow(1 + (double)mortgage.AnnualInterestPercent / 100, 1d / 12) - 1),
+        MortgageRateConvention.Monthly => (mortgage.MonthlyInterestPercent
+            ?? throw new InvalidOperationException("Vul de exacte maandrente van de kredietgever in.")) / 100m,
+        _ => throw new InvalidOperationException("Onbekende renteberekening voor de hypotheek.")
+    };
+
     public static IReadOnlyList<MortgageRow> MortgageSchedule(Mortgage mortgage, decimal balance,
         DateOnly asOf, int? months = null)
     {
         var rows = new List<MortgageRow>();
-        var rate = mortgage.AnnualInterestPercent / 1200m;
+        var rate = MortgageMonthlyRate(mortgage);
         var first = new DateOnly(asOf.Year, asOf.Month, 1).AddMonths(1);
         var elapsed = Math.Max(0, (asOf.Year - mortgage.ReferenceDate.Year) * 12 + asOf.Month - mortgage.ReferenceDate.Month);
         var count = months ?? Math.Max(0, mortgage.RemainingMonths - elapsed);

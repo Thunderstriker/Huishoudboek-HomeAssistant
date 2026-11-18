@@ -36,10 +36,12 @@ public static class DetailedReporting
             c.Purpose == CategoryPurpose.Savings ? report.SavingsCategories.FirstOrDefault(r => r.Id == c.Id)?.Saved ?? 0 :
                 report.Categories.FirstOrDefault(r => r.Id == c.Id)?.Spent ?? 0, c.Purpose)).ToList();
     }
-    public static MortgageProjection Mortgage(HouseholdData data, DateOnly today)
+    public static MortgageProjection Mortgage(HouseholdData data, DateOnly today, bool fromReferenceDate = false)
     {
         var balance = Finance.MortgageBalance(data, today);
-        return new(balance, data.Mortgage is { } mortgage ? Finance.MortgageSchedule(mortgage, balance, today) : []);
+        return new(balance, data.Mortgage is { } mortgage ? Finance.MortgageSchedule(mortgage,
+            fromReferenceDate ? mortgage.ReferencePrincipal : balance,
+            fromReferenceDate ? mortgage.ReferenceDate : today) : []);
     }
     public static DashboardOverview Dashboard(HouseholdData data, int year, int month, DateOnly today, Guid? ownerId = null)
     {

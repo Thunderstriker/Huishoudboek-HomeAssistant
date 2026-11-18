@@ -451,7 +451,21 @@
   <data name="MonthlyAnnuity" xml:space="preserve"><value>Maandelijkse annuïteit</value></data>
   <data name="FixedAnnualRate" xml:space="preserve"><value>Vaste jaarrente</value></data>
   <data name="EstimatedRemainingInterest" xml:space="preserve"><value>Geschatte resterende rente</value></data>
-  <data name="MortgageEstimateNote" xml:space="preserve"><value>Schuld op {0}: {1}. Werkelijke schuld wordt alleen verlaagd met geregistreerde aflossingen. Schema is een SCHATTING: maandelijkse betalingen op maandeinde vanaf volgende maand, zonder bankkosten, dagrente, belastingen of boetes.</value></data>
+  <data name="MortgageEstimateNote" xml:space="preserve"><value>Schuld op {0}: {1}. Werkelijke schuld wordt alleen verlaagd met geregistreerde aflossingen. Het schema is een SCHATTING met gewone maandbetalingen op maandeinde vanaf de maand na de gekozen start, zonder bankkosten, dagrente, belastingen of boetes.</value></data>
+  <data name="MortgageRateConvention" xml:space="preserve"><value>Renteberekening volgens kredietgever</value></data>
+  <data name="MortgageNominalAnnual" xml:space="preserve"><value>Nominale jaarrente (delen door 12)</value></data>
+  <data name="MortgageEffectiveAnnual" xml:space="preserve"><value>Effectieve jaarrente (omrekenen naar maandrente)</value></data>
+  <data name="MortgageExactMonthly" xml:space="preserve"><value>Exacte maandrente van kredietgever</value></data>
+  <data name="MortgageMonthlyRatePercent" xml:space="preserve"><value>Exacte periodieke maandrente (%)</value></data>
+  <data name="MortgageRateHelp" xml:space="preserve"><value>Het maandbedrag is rente plus aflossing. Kies de renteconventie uit uw contract: nominale jaarrente / 12 of (1 + effectieve jaarrente)^(1/12) − 1. Neem bij een periodieke maandrente alle beschikbare decimalen over; een afgeronde 0,27% is niet nauwkeurig genoeg om bankbedragen op centen te vergelijken.</value></data>
+  <data name="MortgageMonthlyRateUsed" xml:space="preserve"><value>Gebruikte maandrente: {0}%</value></data>
+  <data name="MortgageScheduleBasis" xml:space="preserve"><value>Start van het schema</value></data>
+  <data name="MortgageFromReference" xml:space="preserve"><value>Theoretisch schema vanaf peildatum</value></data>
+  <data name="MortgageFromToday" xml:space="preserve"><value>Prognose vanaf vandaag (geregistreerde schuld)</value></data>
+  <data name="MortgageReferenceScheduleNote" xml:space="preserve"><value>Begint bij de schuld en resterende looptijd op peildatum, ook voor verstreken maanden. Dit theoretische schema verwerkt geen geregistreerde betalingen of extra aflossingen en verandert de werkelijke schuld niet.</value></data>
+  <data name="MortgageTodayScheduleNote" xml:space="preserve"><value>Begint bij de geregistreerde schuld van vandaag; de eerste geschatte betaling is eind volgende maand. Niet-geregistreerde aflossingen uit eerdere maanden worden niet automatisch ingehaald.</value></data>
+  <data name="MortgageScheduleInterest" xml:space="preserve"><value>Geschatte rente in volledig schema</value></data>
+  <data name="MortgageFirstPaymentNote" xml:space="preserve"><value>Een afwijkende eerste betaling door uitstel of dagrente zit niet in dit maandschema. Registreer daarvoor het werkelijke bankbedrag en alleen de kapitaalaflossing volgens uw kredietgever; niet de volledige betaling als aflossing.</value></data>
   <data name="RateFixedUntil" xml:space="preserve"><value>Rente vast t/m {0}; daarna dezelfde rente aangenomen.</value></data>
   <data name="RateEndUnknown" xml:space="preserve"><value>Einde rentevaste periode onbekend; constante rente aangenomen.</value></data>
   <data name="RemainingDebtWarning" xml:space="preserve"><value>Let op: er blijft een restschuld over.</value></data>

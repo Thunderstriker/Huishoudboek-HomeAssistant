@@ -6,21 +6,32 @@
 <div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Mortgage(State)">@L["EditMortgage"]</button><button @onclick="() => Draft = EditorDraft.Transaction(State, mortgage: true)">@L["RecordPayment"]</button></div>
 @if (State.Data.Mortgage is { } mortgage)
 {
-    var projection = DetailedReporting.Mortgage(State.Data, State.Today); var rows = projection.Rows;
+    var projection = DetailedReporting.Mortgage(State.Data, State.Today, fromReferenceDate); var rows = projection.Rows;
     <h2>@mortgage.Name</h2><div class="metrics">
         <div class="card"><div class="metric-label">@L["DebtToday"]</div><div class="metric-value">@Money(projection.Balance)</div></div>
         <div class="card"><div class="metric-label">@L["MonthlyAnnuity"]</div><div class="metric-value">@Money(mortgage.MonthlyPayment)</div></div>
         <div class="card"><div class="metric-label">@L["FixedAnnualRate"]</div><div class="metric-value">@mortgage.AnnualInterestPercent.ToString("N3", UiCulture.Culture) %</div></div>
-        <div class="card"><div class="metric-label">@L["EstimatedRemainingInterest"]</div><div class="metric-value">@Money(projection.TotalInterest)</div></div>
+        <div class="card"><div class="metric-label">@L[fromReferenceDate ? "MortgageScheduleInterest" : "EstimatedRemainingInterest"]</div><div class="metric-value">@Money(projection.TotalInterest)</div></div>
     </div>
+    <p>@EditorDraft.MortgageRateLabel(mortgage.RateConvention) · @L["MortgageMonthlyRateUsed", (Finance.MortgageMonthlyRate(mortgage) * 100).ToString("0.##########", UiCulture.Culture)]</p>
     <p class="notice warning">@L["MortgageEstimateNote", mortgage.ReferenceDate.ToString("dd-MM-yyyy"), Money(mortgage.ReferencePrincipal)]
         @(mortgage.FixedRateUntil is { } fixedUntil ? L["RateFixedUntil", fixedUntil.ToString("dd-MM-yyyy")].Value : L["RateEndUnknown"].Value)
         @if (rows.LastOrDefault()?.Remaining > 0) { @L["RemainingDebtWarning"] }
-        @L["MortgageCashNote"]</p>
+        @L["MortgageFirstPaymentNote"] @L["MortgageCashNote"]</p>
+    <label for="mortgage-schedule-basis">@L["MortgageScheduleBasis"]</label>
+    <select id="mortgage-schedule-basis" @bind="fromReferenceDate" @bind:after="ResetPage">
+        <option value="true">@L["MortgageFromReference"]</option>
+        <option value="false">@L["MortgageFromToday"]</option>
+    </select>
+    <p class="muted">@L[fromReferenceDate ? "MortgageReferenceScheduleNote" : "MortgageTodayScheduleNote"]</p>
     <section class="card"><h2>@L["RepaymentSchedule"]</h2><div class="table-scroll"><table><thead><tr><th>#</th><th>@L["ExpectedDate"]</th><th class="money">@L["Payment"]</th><th class="money">@L["Interest"]</th><th class="money">@L["Principal"]</th><th class="money">@L["RemainingDebt"]</th><th>@L["AfterFixedRateAssumption"]</th></tr></thead><tbody>
     @foreach (var row in rows.Skip(page * 100).Take(100)) { <tr><td>@row.Number</td><td>@row.Date.ToString("dd-MM-yyyy")</td><td class="money">@Money(row.Payment)</td><td class="money">@Money(row.Interest)</td><td class="money">@Money(row.Principal)</td><td class="money">@Money(row.Remaining)</td><td>@(row.AssumesUnchangedRate ? L["UnchangedRate"].Value : "—")</td></tr> }
     </tbody></table></div><Pager Count="rows.Count" @bind-Page="page" /></section>
 }
 else { <section class="card"><p>@L["NoMortgageNote"]</p></section> }
 <EditDialogs Page="this" />
-@code { private int page; }
+@code {
+    private int page;
+    private bool fromReferenceDate = true;
+    private void ResetPage() => page = 0;
+}
