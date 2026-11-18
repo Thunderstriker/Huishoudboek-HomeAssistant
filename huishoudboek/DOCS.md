@@ -153,6 +153,21 @@ vervolgstap, vaste foutcode en eventuele HTTP-statuscode. HTTP 200 kan nog steed
 providerfout bevatten, zoals ontbrekende gegevensrechten of een limiet. Het oplopen van
 de aanvraagteller bewijst daarom niet dat een bruikbare koers is ontvangen.
 
+Klap bij een resultaat **Aanvraagparameters (zonder geheimen)** open om de gebruikte
+`function`, het `symbol` of valutapaar en bij quotes de `entitlement` te controleren.
+Bij een basisaanvraag staat expliciet **weggelaten (basisaanvraag/slotkoers)**. Dit zijn
+de parameters van die verzendpoging, niet de huidige of nog niet opgeslagen formulierkeuze.
+Ze worden pas vastgelegd nadat de lokale controles een verzendpoging toelaten; ze bewijzen
+zonder HTTP-resultaat niet dat een antwoord is ontvangen. Oude resultaten of niet-verstuurde
+aanvragen tonen geen verzendparameters. Zoektermen en de API-sleutel worden nooit opgenomen.
+
+Bij een providerfout staat ook een vaste **Herkenningsreden**, zonder onbewerkte providertekst.
+Een losse vermelding van premium of een upgradeadvies bewijst geen ontbrekende gegevensrechten.
+Concrete sleutel- of quotafouten krijgen voorrang op zulke adviezen; alleen een expliciete
+premium-eindpunt-/rechtenmelding wordt `EntitlementRequired`. Een niet-herkende melding blijft
+`ProviderRejected`, zonder te beweren dat een betaald abonnement nodig is. Oudere foutresultaten
+worden niet achteraf opnieuw geïnterpreteerd: voer voor nieuwe diagnostiek een nieuwe actie uit.
+
 De gegevensstatus vermeldt of gegevens in deze actie zijn opgehaald, eerder opgeslagen
 gegevens zijn behouden of gegevens ontbreken, inclusief de beschikbare koersdatum.
 Een mislukte afzonderlijke FX-aanvraag wegens ontbrekende gegevensrechten verhindert
@@ -248,6 +263,22 @@ Voor een US-notering voegt de app bij vertraagde of realtime gegevens respectiev
 zijn. Een geslaagde basisaanvraag zonder deze parameter bewijst niet dat de varianten met
 deze parameter werken. Vergelijk daarom ook de opgeslagen app-instellingen.
 
+#### AMZN-basistest vanuit Home Assistant
+
+Bij verschil tussen de browser en de app gebruikt u **AMZN-basistest (1 aanvraag)** onder
+Koersgegevens. Wacht minstens 30 seconden na de laatste aanvraag; anders verschijnt
+`DiagnosticCooldown` zonder dat budget wordt verbruikt. De test verstuurt vanaf de app-server
+uitsluitend `function=GLOBAL_QUOTE` en `symbol=AMZN`, met de opgeslagen sleutel, **zonder
+`entitlement` en zonder FX-aanvraag**. Dit blijft zo als vertraagde/realtimegegevens zijn
+ingesteld. De test gebruikt dezelfde aanvraagcoördinatie, dag-/minuutbudgetten en eventuele
+expliciete providerwachttijd als andere acties. Er zijn geen automatische herhaalpogingen.
+
+Het resultaat toont één diagnostische quote met de aanvraagparameters, eventuele HTTP-status
+en vaste herkenningsreden. Een geslaagde test bevestigt een geldig antwoord vanaf deze app-server
+op dat moment, niet de oorzaak van een eerder verschil of betaalde gegevensrechten. De test
+wijzigt geen opgeslagen portefeuillekoers, FX, effectenregistratie of banksaldo; gebruik daarna
+zo nodig **Koersen nu opvragen**. Ook het onbewerkte testantwoord wordt niet bewaard.
+
 **Diagnosenotitie, 18 november 2026:** de gebruiker heeft bevestigd dat zowel de losse
 USD→EUR-aanvraag als de AMZN-basisaanvraag met de eigen sleutel werkt. Er zijn geen
 sleutels, actuele koersen of onbewerkte antwoorden vastgelegd. Ontbrekende dekking van
@@ -256,6 +287,14 @@ de ontbrekende koersweergave in de app is nog niet vastgesteld. Controleer het
 **Resultaat laatste API-actie**, de ingestelde gegevensrechten, het lokale budget en de
 bereikbaarheid vanuit de app-server. Een geslaagde test vanaf een ander apparaat
 bewijst niet dat de app-server dezelfde netwerktoegang heeft.
+
+De gebruiker bevestigde bij de vervolgdiagnose dat **Slotkoers** al was ingesteld,
+terwijl AMZN in de app `EntitlementRequired` met HTTP 200 gaf. De oude herkenning van
+iedere premiumverwijzing was te ruim, maar zonder het oorspronkelijke providerantwoord
+is niet vastgesteld of juist die herkenning deze concrete melding veroorzaakte.
+Versie 0.3.0.3 voegt daarom de veilige parameters, herkenningsreden en losse AMZN-basistest
+toe; een werkend antwoord vanaf de persoonlijke Home Assistant-installatie moet daar
+nog worden gecontroleerd. Er zijn geen persoonlijke API-aanvragen vanuit de ontwikkeling gedaan.
 
 ### Boekhouding, privacy en back-ups
 

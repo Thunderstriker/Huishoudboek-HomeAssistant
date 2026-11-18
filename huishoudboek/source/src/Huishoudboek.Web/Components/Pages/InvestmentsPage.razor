@@ -145,7 +145,8 @@
             </div>
             <p class="muted">@L["InvestmentFreshnessHelp"]</p>
             <p class="investment-settings-estimate">@L["InvestmentEstimatedCalls", EstimatedCalls(), EstimatedDaily(s)]</p>
-            <div class="actions"><button class="primary" type="submit" disabled="@State.Busy">@L["Save"]</button><button type="button" disabled="@(State.Busy || !market.HasKey || !market.Settings.Enabled)" @onclick="TestConnection">@L["InvestmentTest"]</button><button type="button" disabled="@(State.Busy || !market.HasKey || !market.Settings.Enabled)" @onclick="RefreshQuotes">@L["InvestmentRefresh"]</button><button type="button" disabled="@(State.Busy || !market.HasKey)" @onclick="RemoveKey">@L["InvestmentRemoveKey"]</button></div>
+            <div class="actions"><button class="primary" type="submit" disabled="@State.Busy">@L["Save"]</button><button type="button" disabled="@(State.Busy || !market.HasKey || !market.Settings.Enabled)" @onclick="TestConnection">@L["InvestmentTest"]</button><button type="button" disabled="@(State.Busy || !market.HasKey || !market.Settings.Enabled)" @onclick="TestAmzn">@L["InvestmentTestAmzn"]</button><button type="button" disabled="@(State.Busy || !market.HasKey || !market.Settings.Enabled)" @onclick="RefreshQuotes">@L["InvestmentRefresh"]</button><button type="button" disabled="@(State.Busy || !market.HasKey)" @onclick="RemoveKey">@L["InvestmentRemoveKey"]</button></div>
+            <p class="muted">@L["InvestmentTestAmznHelp"]</p>
         </form>
         <InvestmentRequestLimits ProviderLimit="market.ProviderLimit" DailyBudgetResetUtc="market.DailyBudgetResetUtc" />
         <InvestmentMarketFeedback Report="market.Report" Running="marketActionRunning" Error="@marketActionError" />
@@ -215,6 +216,7 @@
         finally { marketActionRunning = false; }
     }
     private async Task TestConnection() => await MarketAction(Backend.TestAsync);
+    private async Task TestAmzn() => await MarketAction(Backend.TestAmznAsync);
     private async Task RefreshQuotes() => await MarketAction(Backend.RefreshAsync);
     private async Task Search() => await MarketAction(async () => matches = await Backend.SearchAsync(search));
     private void SelectMatch(InvestmentSymbol match)

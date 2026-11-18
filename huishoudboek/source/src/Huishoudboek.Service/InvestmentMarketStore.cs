@@ -130,9 +130,11 @@ public sealed class InvestmentMarketStore
         });
 }
 
-public sealed class MarketDataException(string code, int? httpStatusCode = null, DateTime? retryAfterUtc = null) : Exception
+public sealed class MarketDataException(string code, int? httpStatusCode = null, DateTime? retryAfterUtc = null,
+    InvestmentProviderReason? providerReason = null) : Exception
 {
     public string Code { get; } = code;
     public int? HttpStatusCode { get; } = httpStatusCode;
     public DateTime? RetryAfterUtc { get; } = retryAfterUtc;
+    public InvestmentProviderReason? ProviderReason { get; } = providerReason;
 }

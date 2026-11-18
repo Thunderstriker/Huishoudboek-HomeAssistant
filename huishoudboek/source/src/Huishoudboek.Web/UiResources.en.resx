@@ -1314,7 +1314,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="InvestmentLocalBudgetHelp" xml:space="preserve"><value>This is the configured app budget, not the provider limit. It becomes available again at 00:00 UTC; the provider's quota may reset differently.</value></data>
   <data name="InvestmentLocalBudgetCountdown" xml:space="preserve"><value>Local budget available again in:</value></data>
   <data name="InvestmentLocalBudgetAvailable" xml:space="preserve"><value>A new local budget day has started. The next request will recheck the budget; the provider may still report a limit.</value></data>
-  <data name="InvestmentStatusEntitlementRequired" xml:space="preserve"><value>The provider requires additional paid data entitlements. Check your subscription and configured rights.</value></data>
+  <data name="InvestmentStatusEntitlementRequired" xml:space="preserve"><value>The provider reports that additional paid data entitlements are required. Check the classification reason and actual request parameters; merely mentioning premium is not proof.</value></data>
   <data name="InvestmentStatusKeyOrAccessInvalid" xml:space="preserve"><value>The provider did not accept the key or data access. Check your settings locally.</value></data>
   <data name="InvestmentStatusKeyUnavailable" xml:space="preserve"><value>The stored key cannot be decrypted. Enter your own key again.</value></data>
   <data name="InvestmentStatusConnectionFailed" xml:space="preserve"><value>The provider is unreachable. Check internet access and DNS on the server and try again later. Previous prices are retained.</value></data>
@@ -1331,7 +1331,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="InvestmentStatusInterrupted" xml:space="preserve"><value>The API action was interrupted, for example by a restart. Previously stored data is retained. Fetch again later if needed.</value></data>
   <data name="InvestmentStatusHttpError" xml:space="preserve"><value>The provider rejected the request with an HTTP error. Check the HTTP code: for 401/403, check the key and access rights; for 5xx, try again later.</value></data>
   <data name="InvestmentStatusTimeout" xml:space="preserve"><value>The provider did not respond within the timeout. Check the internet connection and try again later.</value></data>
-  <data name="InvestmentStatusProviderRejected" xml:space="preserve"><value>The provider returned a message instead of data; its cause could not be safely identified. Check the key, subscription and provider status in your provider account. No data from this response was stored.</value></data>
+  <data name="InvestmentStatusProviderRejected" xml:space="preserve"><value>The provider returned a notice instead of usable data; its cause could not be reliably identified. This does not prove paid access is required. Compare the request parameters and use the AMZN baseline test if needed. No price data from this response was stored.</value></data>
   <data name="InvestmentStatusEmptyQuote" xml:space="preserve"><value>The provider returned no price for this symbol. Check the listing and data entitlements; a search match does not guarantee quote coverage.</value></data>
   <data name="InvestmentStatusSymbolMismatch" xml:space="preserve"><value>The returned symbol does not match the selected listing. Nothing was overwritten; check the provider symbol mapping.</value></data>
   <data name="InvestmentStatusOlderData" xml:space="preserve"><value>The provider returned older data than already stored. The newer stored data is retained.</value></data>
@@ -1342,7 +1342,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="InvestmentRequestData" xml:space="preserve"><value>Data status</value></data>
   <data name="InvestmentRequestKindQuote" xml:space="preserve"><value>Stock quote</value></data>
   <data name="InvestmentRequestKindFx" xml:space="preserve"><value>Exchange rate</value></data>
-  <data name="InvestmentRequestKindTest" xml:space="preserve"><value>Test quote (IBM)</value></data>
+  <data name="InvestmentRequestKindTest" xml:space="preserve"><value>Diagnostic stock quote</value></data>
   <data name="InvestmentRequestKindSearch" xml:space="preserve"><value>Symbol search</value></data>
   <data name="InvestmentRequestPending" xml:space="preserve"><value>Waiting for its turn.</value></data>
   <data name="InvestmentRequestRequesting" xml:space="preserve"><value>Fetching or waiting for the per-minute budget.</value></data>
@@ -1352,5 +1352,20 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="InvestmentDataStateUpdated" xml:space="preserve"><value>Data fetched and stored during this action.</value></data>
   <data name="InvestmentDataStateRetained" xml:space="preserve"><value>Previously stored data retained; not refreshed during this action.</value></data>
   <data name="InvestmentDataStateMissing" xml:space="preserve"><value>No stored data available.</value></data>
-  <data name="InvestmentRequestPrivacy" xml:space="preserve"><value>Diagnostics contain only symbols/currency pairs, fixed error codes and optional HTTP status codes; no API key, request URL or raw provider response.</value></data>
+  <data name="InvestmentRequestPrivacy" xml:space="preserve"><value>Diagnostics contain only allowlisted request parameters, symbols/currency pairs, fixed classification/error codes and optional HTTP status codes; no API key, search term, request URL or raw provider response. Send parameters appear only when a request is attempted; they do not by themselves prove a response was received.</value></data>
+  <data name="InvestmentTestAmzn" xml:space="preserve"><value>AMZN baseline test (1 request)</value></data>
+  <data name="InvestmentTestAmznHelp" xml:space="preserve"><value>Test only GLOBAL_QUOTE for AMZN from this app server, without entitlement or a preceding FX request. Wait at least 30 seconds after the last request. The test uses the stored key and local limits, changes no portfolio prices and retains no raw response.</value></data>
+  <data name="InvestmentStatusAmznTestOk" xml:space="preserve"><value>AMZN baseline test passed: the app server received a valid AMZN closing quote without entitlement. No FX requested or portfolio prices changed; this does not prove paid data entitlements.</value></data>
+  <data name="InvestmentStatusDiagnosticCooldown" xml:space="preserve"><value>No AMZN test request was sent. Wait at least 30 seconds after the last request so the baseline test is separate from preceding FX or quote requests.</value></data>
+  <data name="InvestmentOperationTestAmzn" xml:space="preserve"><value>AMZN baseline test</value></data>
+  <data name="InvestmentRequestParameters" xml:space="preserve"><value>Request parameters (no secrets)</value></data>
+  <data name="InvestmentRequestEntitlementOmitted" xml:space="preserve"><value>omitted (baseline/closing quote)</value></data>
+  <data name="InvestmentRequestParametersUnavailable" xml:space="preserve"><value>No send parameters recorded: older result or request not yet sent.</value></data>
+  <data name="InvestmentProviderReasonLabel" xml:space="preserve"><value>Classification reason:</value></data>
+  <data name="InvestmentProviderReasonInvalidApiKey" xml:space="preserve"><value>The notice explicitly identifies an invalid or missing API key.</value></data>
+  <data name="InvestmentProviderReasonRequestLimit" xml:space="preserve"><value>HTTP 429 or a recognized request/quota restriction was received; premium advice does not turn this into an entitlement error.</value></data>
+  <data name="InvestmentProviderReasonPremiumEndpoint" xml:space="preserve"><value>The notice explicitly identifies this endpoint as a premium endpoint.</value></data>
+  <data name="InvestmentProviderReasonMissingEntitlement" xml:space="preserve"><value>The notice explicitly states that required access or entitlement is missing.</value></data>
+  <data name="InvestmentProviderReasonUnrecognizedNotice" xml:space="preserve"><value>No concrete key, quota or entitlement error recognized; a premium reference alone is insufficient.</value></data>
+  <data name="InvestmentProviderReasonProviderErrorMessage" xml:space="preserve"><value>The provider returned an Error Message instead of usable data.</value></data>
 </root>

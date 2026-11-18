@@ -8,6 +8,7 @@ public interface IInvestmentAdministration
     Task<InvestmentMarketSnapshot> ReadAsync();
     Task SaveSettingsAsync(InvestmentQuoteSettings settings, string? replacementKey, bool removeKey = false);
     Task TestAsync();
+    Task TestAmznAsync();
     Task RefreshAsync();
     Task<IReadOnlyList<InvestmentSymbol>> SearchAsync(string keywords);
 }

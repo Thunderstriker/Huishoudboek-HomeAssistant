@@ -241,6 +241,90 @@ internal static class InvestmentTests
             try { market.RefreshAsync().GetAwaiter().GetResult(); } catch (MarketDataException) { }
             Equal(110m, market.Read().Quotes.Single().Price);
         }));
+        yield return ("AMZN baseline sends exactly the browser parameters without FX, entitlements or cache/financial changes", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Market.RefreshAsync().GetAwaiter().GetResult(); f.ClearCooldown();
+            f.Market.SaveSettingsAsync(new() { Enabled = true, Paid = true, Frequency = QuoteFrequency.Manual, Freshness = QuoteFreshness.Realtime }, null, false).GetAwaiter().GetResult();
+            var before = f.Market.Read(); var revision = f.Coordinator.Read().Revision;
+            f.Market.TestAmznAsync().GetAwaiter().GetResult();
+            var after = f.Market.Read(); var report = after.Report!; var request = report.Requests.Single();
+            Equal(3, f.Handler.Calls); Equal(before.RequestsToday + 1, after.RequestsToday);
+            var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(f.Handler.Uris.Last().Query);
+            Equal(3, query.Count); Equal("GLOBAL_QUOTE", query["function"].ToString()); Equal("AMZN", query["symbol"].ToString());
+            Equal(MarketFixture.Secret, query["apikey"].ToString()); True(!query.ContainsKey("entitlement"));
+            Equal("TestAmzn", report.Operation); Equal("AmznTestOk", report.Status); Equal("AMZN", request.Target);
+            Equal(InvestmentDataState.NotApplicable, request.DataState); Equal<int?>(200, request.HttpStatusCode);
+            Equal(new InvestmentRequestParameters("GLOBAL_QUOTE", "AMZN"), request.Parameters);
+            Equal(before.Quotes.Single(), after.Quotes.Single()); Equal(before.Rates.Single(), after.Rates.Single());
+            Equal(before.NextRefreshUtc, after.NextRefreshUtc); Equal(revision, f.Coordinator.Read().Revision);
+            Equal(request, new InvestmentMarketStore(directory).Snapshot(DateTime.UtcNow).Report!.Requests.Single());
+            True(!JsonSerializer.Serialize(after).Contains(MarketFixture.Secret));
+        }));
+        yield return ("AMZN baseline respects disabled/key/quota/provider/cooldown guards without sending a request", () =>
+        {
+            foreach (var code in new[] { "Disabled", "NotConfigured", "DailyLimit", "ProviderRetryWait", "DiagnosticCooldown" })
+                InDirectory(directory =>
+                {
+                    using var f = new MarketFixture(directory);
+                    f.Store.Update(s =>
+                    {
+                        if (code == "Disabled") s.Settings.Enabled = false;
+                        if (code == "NotConfigured") s.ProtectedKey = "";
+                        if (code == "DailyLimit") { s.BudgetDayUtc = DateOnly.FromDateTime(DateTime.UtcNow); s.RequestsToday = 25; }
+                        if (code == "ProviderRetryWait") s.ProviderLimit = new(DateTime.UtcNow, DateTime.UtcNow.AddMinutes(2), true);
+                        if (code == "DiagnosticCooldown") s.LastAttemptUtc = DateTime.UtcNow;
+                    });
+                    ExpectMarketError(code, () => f.Market.TestAmznAsync().GetAwaiter().GetResult());
+                    Equal(0, f.Handler.Calls); var report = f.Market.Read().Report!;
+                    Equal(code, report.ErrorCode); Equal("TestAmzn", report.Operation);
+                    Equal<InvestmentRequestParameters?>(null, report.Requests.Single().Parameters);
+                    Equal<int?>(null, report.Requests.Single().HttpStatusCode);
+                });
+        });
+        yield return ("AMZN baseline also works without portfolio holdings and validates the returned symbol", () => InDirectory(directory =>
+        {
+            using var coordinator = new AdministrationCoordinator(directory, initialize: true);
+            var store = new InvestmentMarketStore(directory); var handler = new FakeHandler(_ => QuoteJson(symbol: "AMZN"));
+            using var client = new AlphaVantageClient(handler); using var market = new InvestmentMarketService(store, client, coordinator);
+            market.SaveSettingsAsync(new() { Enabled = true, Frequency = QuoteFrequency.Manual }, "fictionalkey12345", false).GetAwaiter().GetResult();
+            market.TestAmznAsync().GetAwaiter().GetResult(); Equal(1, handler.Calls);
+            Equal("AmznTestOk", market.Read().Report!.Status); Equal(0, market.Read().Quotes.Count); Equal(0, market.Read().Rates.Count);
+            store.Update(s => s.LastAttemptUtc = DateTime.UtcNow.AddMinutes(-2)); handler.Reply = _ => QuoteJson(symbol: "IBM");
+            ExpectMarketError("SymbolMismatch", () => market.TestAmznAsync().GetAwaiter().GetResult());
+            Equal<int?>(200, market.Read().Report!.Requests.Single().HttpStatusCode); Equal(2, handler.Calls);
+        }));
+        yield return ("Refresh diagnostics record the actual quote entitlement and FX parameters, never current draft settings", () =>
+        {
+            foreach (var freshness in new[] { QuoteFreshness.EndOfDay, QuoteFreshness.Delayed, QuoteFreshness.Realtime })
+            foreach (var us in new[] { false, true })
+                InDirectory(directory =>
+                {
+                    using var f = new MarketFixture(directory);
+                    f.Coordinator.Update(f.Coordinator.Read().Revision, d => d.Instruments.Single().IsUsListing = us);
+                    f.Market.SaveSettingsAsync(new() { Enabled = true, Paid = true, Frequency = QuoteFrequency.Manual, Freshness = freshness }, null, false).GetAwaiter().GetResult();
+                    f.Market.RefreshAsync().GetAwaiter().GetResult();
+                    var report = f.Market.Read().Report!;
+                    var expected = !us || freshness == QuoteFreshness.EndOfDay ? null : freshness == QuoteFreshness.Delayed ? "delayed" : "realtime";
+                    var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(f.Handler.Uris[1].Query);
+                    Equal(expected, query.TryGetValue("entitlement", out var value) ? value.ToString() : null);
+                    Equal(new InvestmentRequestParameters("GLOBAL_QUOTE", "AMZN", Entitlement: expected), report.Requests[1].Parameters);
+                    Equal(new InvestmentRequestParameters("CURRENCY_EXCHANGE_RATE", FromCurrency: "USD", ToCurrency: "EUR"), report.Requests[0].Parameters);
+                    True(report.Requests.All(r => r.HttpStatusCode == 200)); Equal(2, f.Handler.Calls);
+                    // A later settings change must not rewrite what was actually sent in this report.
+                    f.Market.SaveSettingsAsync(new() { Enabled = true, Frequency = QuoteFrequency.Manual }, null, false).GetAwaiter().GetResult();
+                    Equal(report.Requests[1].Parameters, f.Market.Read().Report!.Requests[1].Parameters);
+                });
+        });
+        yield return ("Search diagnostics retain only the function and never the search term or key", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Handler.Reply = _ => "{\"bestMatches\":[]}";
+            f.Market.SearchAsync("private-search-term").GetAwaiter().GetResult();
+            Equal(new InvestmentRequestParameters("SYMBOL_SEARCH"), f.Market.Read().Report!.Requests.Single().Parameters);
+            var json = File.ReadAllText(Path.Combine(directory, "market-data", "state.json"));
+            True(!json.Contains("private-search-term")); True(!json.Contains(MarketFixture.Secret)); True(!json.Contains("apikey="));
+        }));
         yield return ("An unspecified provider limit suggests a wait without locking manual rechecks or retrying automatically", () => InDirectory(directory =>
         {
             using var coordinator = new AdministrationCoordinator(directory, initialize: true);
@@ -515,6 +599,14 @@ internal static class InvestmentTests
                 [new("Quote", "AMZN", "Requesting", InvestmentDataState.Missing)]));
             var restarted = new InvestmentMarketStore(directory).Snapshot(DateTime.UtcNow).Report!;
             Equal("Interrupted", restarted.Status); True(restarted.CompletedUtc != null); Equal("NotRequested", restarted.Requests.Single().Status);
+            upgraded.Update(s => s.Report = new("Refresh", DateTime.UtcNow, DateTime.UtcNow, "UpdateFailed",
+                [new("Quote", "AMZN", "EntitlementRequired", InvestmentDataState.Missing, HttpStatusCode: 200)]));
+            var oldReport = JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+            var oldRequest = oldReport["Report"]!["Requests"]![0]!.AsObject(); oldRequest.Remove("Parameters"); oldRequest.Remove("ProviderReason");
+            File.WriteAllText(path, oldReport.ToJsonString());
+            var preserved = new InvestmentMarketStore(directory).Snapshot(DateTime.UtcNow).Report!.Requests.Single();
+            Equal("EntitlementRequired", preserved.Status); Equal<int?>(200, preserved.HttpStatusCode);
+            Equal<InvestmentRequestParameters?>(null, preserved.Parameters); Equal<InvestmentProviderReason?>(null, preserved.ProviderReason);
         }));
         yield return ("Refreshing without open holdings explicitly reports no symbols without spending quota", () => InDirectory(directory =>
         {
@@ -535,6 +627,7 @@ internal static class InvestmentTests
                 {
                     Equal("Requesting", report.Requests[0].Status); Equal("Pending", report.Requests[1].Status);
                     ExpectMarketError("Busy", () => f.Market.TestAsync().GetAwaiter().GetResult());
+                    ExpectMarketError("Busy", () => f.Market.TestAmznAsync().GetAwaiter().GetResult());
                     Equal("Refresh", f.Market.Read().Report!.Operation);
                 }
                 else { Equal("Updated", report.Requests[0].Status); Equal("Requesting", report.Requests[1].Status); }
@@ -576,7 +669,15 @@ internal static class InvestmentTests
             {
                 ("This is a premium endpoint. Check your request frequency.", "EntitlementRequired"),
                 ("Our standard API rate limit is 25 requests per day. Subscribe to premium.", "ProviderLimit"),
+                ("API call frequency exceeded. Subscribe for premium access.", "ProviderLimit"),
+                ("Too many requests. Upgrade to a premium endpoint.", "ProviderLimit"),
                 ("The API key is invalid.", "KeyOrAccessInvalid"),
+                ("The API key is invalid. Subscribe for premium access.", "KeyOrAccessInvalid"),
+                ("Upgrade to premium for more data.", "ProviderRejected"),
+                ("Premium access and entitlement options are available on our website.", "ProviderRejected"),
+                ("Upgrade to access premium-only features.", "ProviderRejected"),
+                ("Premium access is required for this request.", "EntitlementRequired"),
+                ("Your key does not have the required entitlement.", "EntitlementRequired"),
                 ("Unrecognized provider notice.", "ProviderRejected")
             })
             {
@@ -584,6 +685,48 @@ internal static class InvestmentTests
                 ExpectMarketError(expected, () => AlphaVantageClient.Check(json.RootElement));
             }
         });
+        yield return ("Safe provider classification reasons survive HTTP wrapping and persistence without raw notices", () =>
+        {
+            foreach (var (notice, code, reason) in new[]
+            {
+                ("The API key is invalid. Upgrade to premium.", "KeyOrAccessInvalid", InvestmentProviderReason.InvalidApiKey),
+                ("25 requests per day. Consider premium access.", "ProviderLimit", InvestmentProviderReason.RequestLimit),
+                ("This is a premium endpoint.", "EntitlementRequired", InvestmentProviderReason.PremiumEndpoint),
+                ("Premium access required.", "EntitlementRequired", InvestmentProviderReason.MissingEntitlement),
+                ("Consider premium access.", "ProviderRejected", InvestmentProviderReason.UnrecognizedNotice)
+            })
+            foreach (var field in new[] { "Note", "Information" })
+                InDirectory(directory =>
+                {
+                    using var f = new MarketFixture(directory, "EUR");
+                    f.Handler.Reply = _ => JsonSerializer.Serialize(new Dictionary<string, string> { [field] = notice + " " + MarketFixture.Secret + " https://private.invalid/?apikey=" + MarketFixture.Secret });
+                    try { f.Market.RefreshAsync().GetAwaiter().GetResult(); } catch (MarketDataException ex) { Equal(code, ex.Code); }
+                    var request = f.Market.Read().Report!.Requests.Single();
+                    Equal(code, request.Status); Equal<InvestmentProviderReason?>(reason, request.ProviderReason); Equal<int?>(200, request.HttpStatusCode);
+                    Equal(new InvestmentRequestParameters("GLOBAL_QUOTE", "AMZN"), request.Parameters);
+                    Equal(request, new InvestmentMarketStore(directory).Snapshot(DateTime.UtcNow).Report!.Requests.Single());
+                    var stored = File.ReadAllText(Path.Combine(directory, "market-data", "state.json"));
+                    True(!stored.Contains(MarketFixture.Secret)); True(!stored.Contains(notice)); True(!stored.Contains("private.invalid"));
+                    Equal(1, f.Handler.Calls);
+                });
+        });
+        yield return ("Concrete errors in either provider notice field take precedence over generic premium advice", () =>
+        {
+            foreach (var field in new[] { "Note", "Information" })
+            {
+                using var json = JsonDocument.Parse(JsonSerializer.Serialize(new Dictionary<string, string>
+                { [field] = "Upgrade to premium.", [field == "Note" ? "Information" : "Note"] = "The API key is invalid." }));
+                ExpectMarketError("KeyOrAccessInvalid", () => AlphaVantageClient.Check(json.RootElement));
+            }
+        });
+        yield return ("Invalid quote data retains its actual successful HTTP status instead of guessing HTTP 200", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory, "EUR");
+            f.Handler.StatusCode = HttpStatusCode.Created; f.Handler.Reply = _ => "{\"Global Quote\":{}}";
+            f.Market.RefreshAsync().GetAwaiter().GetResult();
+            var result = f.Market.Read().Report!.Requests.Single();
+            Equal("EmptyQuote", result.Status); Equal<int?>(201, result.HttpStatusCode);
+        }));
         yield return ("The response body receives a deadline token and a stalled read is diagnosed as a timeout", () => InDirectory(directory =>
         {
             using var f = new MarketFixture(directory, "EUR");
@@ -613,9 +756,11 @@ internal static class InvestmentTests
             var authentication = new TestAuthentication();
             var adapter = new InvestmentAdministration(market, authentication, sessions);
             try { adapter.ReadAsync().GetAwaiter().GetResult(); throw new Exception("Expected authentication failure"); } catch (UnauthorizedAccessException) { }
+            try { adapter.TestAmznAsync().GetAwaiter().GetResult(); throw new Exception("Expected authentication failure"); } catch (UnauthorizedAccessException) { }
             authentication.Principal = sessions.Create(false);
             True(!adapter.ReadAsync().GetAwaiter().GetResult().HasKey);
             sessions.Revoke(authentication.Principal);
+            try { adapter.TestAmznAsync().GetAwaiter().GetResult(); throw new Exception("Expected revoked session failure"); } catch (UnauthorizedAccessException) { }
             try { adapter.SaveSettingsAsync(new(), "fictionalkey12345").GetAwaiter().GetResult(); throw new Exception("Expected revoked session failure"); } catch (UnauthorizedAccessException) { }
             True(!market.Read().HasKey);
         }));
@@ -658,6 +803,7 @@ internal static class InvestmentTests
                 True(!html.Contains("<canvas")); True(!html.Contains("InvestmentSinceBuys"));
                 True(!html.Contains("ProtectedKey")); True(!html.Contains("fictionalkey12345"));
                 True(!html.Contains("marketActionError"));
+                True(html.Contains(language == "nl-NL" ? "AMZN-basistest (1 aanvraag)" : "AMZN baseline test (1 request)"));
                 True(html.Contains("class=\"investment-settings-grid\""));
                 True(html.Contains("<legend>" + (language == "nl-NL" ? "Verbinding" : "Connection") + "</legend>"));
                 True(html.Contains("<legend>" + (language == "nl-NL" ? "Updateschema" : "Update schedule") + "</legend>"));
@@ -681,8 +827,9 @@ internal static class InvestmentTests
             foreach (var status in new[] { "PartialUpdate", "UpdateFailed", "Updated", "Requesting", "Interrupted", "NoSymbols", "ConnectionOk", "SearchOk" })
             {
                 store.Update(s => s.Report = new("Refresh", DateTime.UtcNow, status == "Requesting" ? null : DateTime.UtcNow, status,
-                    [new("Fx", "USD→EUR", "EntitlementRequired", InvestmentDataState.Missing, HttpStatusCode: 200),
-                     new("Quote", "AMZN", "Updated", InvestmentDataState.Updated, PriceDate: Portfolio.Today),
+                    [new("Fx", "USD→EUR", "EntitlementRequired", InvestmentDataState.Missing, HttpStatusCode: 200,
+                        Parameters: new("CURRENCY_EXCHANGE_RATE", FromCurrency: "USD", ToCurrency: "EUR"), ProviderReason: InvestmentProviderReason.MissingEntitlement),
+                     new("Quote", "AMZN", "Updated", InvestmentDataState.Updated, PriceDate: Portfolio.Today, Parameters: new("GLOBAL_QUOTE", "AMZN")),
                      new("Quote", "IBM", "EmptyQuote", InvestmentDataState.Retained, PriceDate: Portfolio.Today)]));
                 using var request = new HttpRequestMessage(HttpMethod.Get, "/beleggingen");
                 request.Headers.Add("Cookie", ".AspNetCore.Culture=" + Uri.EscapeDataString("c=" + language + "|uic=" + language));
@@ -695,10 +842,32 @@ internal static class InvestmentTests
                 True(html.Contains(language == "nl-NL" ? "Laatst opgeslagen gegevens behouden" : "Previously stored data retained"));
                 True(html.Contains("AMZN")); True(html.Contains("USD→EUR")); True(html.Contains("HTTP 200"));
                 True(html.Contains("GLOBAL_QUOTE")); True(html.Contains("CURRENCY_EXCHANGE_RATE"));
+                True(html.Contains("function=CURRENCY_EXCHANGE_RATE")); True(html.Contains("from_currency=USD")); True(html.Contains("to_currency=EUR"));
+                True(html.Contains("function=GLOBAL_QUOTE")); True(html.Contains("symbol=AMZN"));
+                True(html.Contains(language == "nl-NL" ? "entitlement=weggelaten" : "entitlement=omitted"));
+                True(html.Contains(language == "nl-NL" ? "Herkenningsreden:" : "Classification reason:"));
+                True(html.Contains(language == "nl-NL" ? "Geen verzendparameters vastgelegd" : "No send parameters recorded"));
                 True(!html.Contains("InvestmentStatus")); True(!html.Contains("InvestmentDataState"));
                 True(!html.Contains(MarketFixture.Secret)); True(!html.Contains("apikey="));
                 if (status == "UpdateFailed") True(html.Contains(language == "nl-NL" ? "Geen gegevens bijgewerkt." : "No data updated."));
                 if (status == "Requesting") True(html.Contains(language == "nl-NL" ? "API-actie wordt uitgevoerd" : "API action is running"));
+            }
+            foreach (var language in new[] { "nl-NL", "en-GB" })
+            foreach (var reason in Enum.GetValues<InvestmentProviderReason>())
+            {
+                var entitlement = (int)reason % 3 == 0 ? null : (int)reason % 3 == 1 ? "delayed" : "realtime";
+                store.Update(s => s.Report = new("TestAmzn", DateTime.UtcNow, DateTime.UtcNow, "UpdateFailed",
+                    [new("Test", "AMZN", "ProviderRejected", InvestmentDataState.NotApplicable, HttpStatusCode: 200,
+                        Parameters: new("GLOBAL_QUOTE", "AMZN", Entitlement: entitlement), ProviderReason: reason)]));
+                using var request = new HttpRequestMessage(HttpMethod.Get, "/beleggingen");
+                request.Headers.Add("Cookie", ".AspNetCore.Culture=" + Uri.EscapeDataString("c=" + language + "|uic=" + language));
+                using var response = await client.SendAsync(request);
+                var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+                True(response.IsSuccessStatusCode); True(html.Contains("symbol=AMZN")); True(html.Contains("HTTP 200"));
+                if (entitlement != null) True(html.Contains("entitlement=" + entitlement));
+                True(html.Contains(language == "nl-NL" ? "Dit bewijst niet dat betaalde toegang nodig is" : "This does not prove paid access is required"));
+                True(!html.Contains("InvestmentProviderReason")); True(!html.Contains("InvestmentOperation"));
+                True(!html.Contains(MarketFixture.Secret)); True(!html.Contains("apikey="));
             }
             foreach (var language in new[] { "nl-NL", "en-GB" })
             foreach (var supplied in new[] { false, true })

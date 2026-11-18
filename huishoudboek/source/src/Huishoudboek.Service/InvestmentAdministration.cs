@@ -21,6 +21,7 @@ public sealed class InvestmentAdministration(InvestmentMarketService market, Aut
     public async Task SaveSettingsAsync(InvestmentQuoteSettings settings, string? replacementKey, bool removeKey = false)
     { await AuthorizeAsync(); await SafeAsync(() => market.SaveSettingsAsync(settings, replacementKey, removeKey)); }
     public async Task TestAsync() { await AuthorizeAsync(); await SafeAsync(() => market.TestAsync()); }
+    public async Task TestAmznAsync() { await AuthorizeAsync(); await SafeAsync(() => market.TestAmznAsync()); }
     public async Task RefreshAsync() { await AuthorizeAsync(); await SafeAsync(() => market.RefreshAsync()); }
     public async Task<IReadOnlyList<InvestmentSymbol>> SearchAsync(string keywords)
     { await AuthorizeAsync(); return await SafeAsync(() => market.SearchAsync(keywords)); }

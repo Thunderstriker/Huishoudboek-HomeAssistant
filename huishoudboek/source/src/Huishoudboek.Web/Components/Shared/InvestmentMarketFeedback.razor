@@ -26,13 +26,29 @@
                     @foreach (var request in report.Requests)
                     {
                         <tr>
-                            <td><strong>@request.Target</strong><br />@L["InvestmentRequestKind" + request.Kind]<br /><small class="muted">@Endpoint(request.Kind)</small></td>
+                            <td><strong>@request.Target</strong><br />@L["InvestmentRequestKind" + request.Kind]<br /><small class="muted">@Endpoint(request.Kind)</small>
+                                @if (request.Parameters is { } parameters)
+                                {
+                                    <details><summary>@L["InvestmentRequestParameters"]</summary>
+                                        <code>function=@parameters.Function</code>
+                                        @if (parameters.Symbol is { } symbol) { <br /><code>symbol=@symbol</code> }
+                                        @if (parameters.FromCurrency is { } from) { <br /><code>from_currency=@from</code> }
+                                        @if (parameters.ToCurrency is { } to) { <br /><code>to_currency=@to</code> }
+                                        @if (parameters.Function == "GLOBAL_QUOTE")
+                                        { <br /><code>entitlement=@(parameters.Entitlement ?? L["InvestmentRequestEntitlementOmitted"].Value)</code> }
+                                    </details>
+                                }
+                                else
+                                { <br /><small class="muted">@L["InvestmentRequestParametersUnavailable"]</small> }
+                            </td>
                             <td>
                                 @if (request.Status is "Pending" or "Requesting" or "NotRequested" or "Updated")
                                 { @L["InvestmentRequest" + request.Status] }
                                 else
                                 { <span class="negative">@L["InvestmentStatus" + request.Status]</span><br /><small class="muted">@request.Status</small> }
                                 @if (request.HttpStatusCode is { } http) { <small class="investment-request-http">HTTP @http</small> }
+                                @if (request.ProviderReason is { } reason)
+                                { <br /><small>@L["InvestmentProviderReasonLabel"] @L["InvestmentProviderReason" + reason] <span class="muted">(@reason)</span></small> }
                             </td>
                             <td>
                                 @L["InvestmentDataState" + request.DataState]

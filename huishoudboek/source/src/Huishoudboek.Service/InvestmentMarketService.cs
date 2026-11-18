@@ -54,19 +54,25 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
         };
     }
 
-    public async Task TestAsync(CancellationToken cancellationToken = default)
+    public Task TestAsync(CancellationToken cancellationToken = default) => TestQuoteAsync("IBM", false, cancellationToken);
+
+    public Task TestAmznAsync(CancellationToken cancellationToken = default) => TestQuoteAsync("AMZN", true, cancellationToken);
+
+    private async Task TestQuoteAsync(string symbol, bool diagnostic, CancellationToken cancellationToken)
     {
         await ExecuteAsync(async () =>
         {
-            BeginReport("Test", [new("Test", "IBM", "Pending", InvestmentDataState.NotApplicable)]);
-            await RunRequestAsync(0, async () =>
+            BeginReport(diagnostic ? "TestAmzn" : "Test", [new("Test", symbol, "Pending", InvestmentDataState.NotApplicable)]);
+            // Keep the AMZN baseline test separate from a preceding FX/quote burst. Never add an automatic probe.
+            if (diagnostic && store.Read(s => s.LastAttemptUtc) > DateTime.UtcNow.AddSeconds(-30))
+                throw new MarketDataException("DiagnosticCooldown");
+            await RunRequestAsync(0, new() { ["function"] = "GLOBAL_QUOTE", ["symbol"] = symbol }, root =>
             {
-                var test = new InvestmentInstrument { ProviderSymbol = "IBM", Currency = "USD" };
-                using var json = await QueryAsync(new Dictionary<string, string> { ["function"] = "GLOBAL_QUOTE", ["symbol"] = "IBM" }, cancellationToken);
-                _ = AlphaVantageClient.ParseQuote(json.RootElement, test, QuoteFreshness.EndOfDay, DateTime.UtcNow);
-                return new("Test", "IBM", "Updated", InvestmentDataState.NotApplicable);
-            });
-            CompleteReport("ConnectionOk", markSuccess: true);
+                var test = new InvestmentInstrument { ProviderSymbol = symbol, Currency = "USD" };
+                _ = AlphaVantageClient.ParseQuote(root, test, QuoteFreshness.EndOfDay, DateTime.UtcNow);
+                return new("Test", symbol, "Updated", InvestmentDataState.NotApplicable);
+            }, cancellationToken: cancellationToken);
+            CompleteReport(diagnostic ? "AmznTestOk" : "ConnectionOk", markSuccess: true);
         }, cancellationToken);
     }
 
@@ -78,12 +84,11 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
         {
             // Search terms and provider response text do not belong in persistent diagnostics.
             BeginReport("Search", [new("Search", "", "Pending", InvestmentDataState.NotApplicable)]);
-            await RunRequestAsync(0, async () =>
+            await RunRequestAsync(0, new() { ["function"] = "SYMBOL_SEARCH", ["keywords"] = keywords.Trim() }, root =>
             {
-                using var json = await QueryAsync(new Dictionary<string, string> { ["function"] = "SYMBOL_SEARCH", ["keywords"] = keywords.Trim() }, cancellationToken);
-                result = AlphaVantageClient.ParseSearch(json.RootElement);
+                result = AlphaVantageClient.ParseSearch(root);
                 return new("Search", "", "Updated", InvestmentDataState.NotApplicable);
-            });
+            }, cancellationToken: cancellationToken);
             CompleteReport("SearchOk");
         }, cancellationToken);
         return result;
@@ -125,10 +130,9 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
             // Account/key, quota and connection failures still stop the entire request lane.
             foreach (var currency in currencies)
             {
-                await RunRequestAsync(index++, async () =>
+                await RunRequestAsync(index++, new() { ["function"] = "CURRENCY_EXCHANGE_RATE", ["from_currency"] = currency, ["to_currency"] = "EUR" }, root =>
                 {
-                    using var json = await QueryAsync(new Dictionary<string, string> { ["function"] = "CURRENCY_EXCHANGE_RATE", ["from_currency"] = currency, ["to_currency"] = "EUR" }, cancellationToken);
-                    var rate = AlphaVantageClient.ParseFx(json.RootElement, currency, DateTime.UtcNow);
+                    var rate = AlphaVantageClient.ParseFx(root, currency, DateTime.UtcNow);
                     store.Update(s =>
                     {
                         var old = s.Rates.FirstOrDefault(r => r.Currency == currency);
@@ -136,7 +140,7 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
                         s.Rates.RemoveAll(r => r.Currency == currency); s.Rates.Add(rate);
                     });
                     return new("Fx", currency + "→EUR", "Updated", InvestmentDataState.Updated, DataUtc: rate.RetrievedUtc);
-                }, continueOnUnavailable: true);
+                }, continueOnUnavailable: true, cancellationToken: cancellationToken);
             }
             foreach (var group in groups)
             {
@@ -144,10 +148,9 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
                 var freshness = first.IsUsListing ? state.Settings.Freshness : QuoteFreshness.EndOfDay;
                 var parameters = new Dictionary<string, string> { ["function"] = "GLOBAL_QUOTE", ["symbol"] = first.ProviderSymbol };
                 if (freshness != QuoteFreshness.EndOfDay) parameters["entitlement"] = freshness == QuoteFreshness.Realtime ? "realtime" : "delayed";
-                await RunRequestAsync(index++, async () =>
+                await RunRequestAsync(index++, parameters, root =>
                 {
-                    using var json = await QueryAsync(parameters, cancellationToken);
-                    var quote = AlphaVantageClient.ParseQuote(json.RootElement, first, freshness, DateTime.UtcNow);
+                    var quote = AlphaVantageClient.ParseQuote(root, first, freshness, DateTime.UtcNow);
                     store.Update(s =>
                     {
                         if (s.Quotes.Any(q => group.Any(i => i.Id == q.InstrumentId) && q.Symbol == quote.Symbol && q.Currency == quote.Currency && q.PriceDate > quote.PriceDate))
@@ -159,7 +162,7 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
                         }
                     });
                     return new("Quote", first.ProviderSymbol, "Updated", InvestmentDataState.Updated, PriceDate: quote.PriceDate);
-                }, continueOnUnavailable: true);
+                }, continueOnUnavailable: true, cancellationToken: cancellationToken);
             }
             store.Update(s => s.Quotes.RemoveAll(q => !data.Instruments.Any(i => i.Id == q.InstrumentId)));
             CompleteReport("Updated", markSuccess: true);
@@ -180,14 +183,22 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
         s.Report = report with { Requests = requests };
     });
 
-    private async Task RunRequestAsync(int index, Func<Task<InvestmentRequestResult>> request, bool continueOnUnavailable = false)
+    private async Task RunRequestAsync(int index, Dictionary<string, string> parameters, Func<JsonElement, InvestmentRequestResult> apply,
+        bool continueOnUnavailable = false, CancellationToken cancellationToken = default)
     {
         UpdateRequest(index, r => r with { Status = "Requesting" });
-        try { var result = await request(); UpdateRequest(index, _ => result); }
+        int? httpStatus = null;
+        try
+        {
+            using var response = await QueryAsync(index, parameters, cancellationToken);
+            httpStatus = response.HttpStatusCode;
+            var result = apply(response.Document.RootElement);
+            UpdateRequest(index, previous => result with { Parameters = previous.Parameters, HttpStatusCode = httpStatus });
+        }
         catch (Exception ex) when (ex is MarketDataException or JsonException or KeyNotFoundException or FormatException or InvalidOperationException)
         {
             var error = ex as MarketDataException ?? new MarketDataException("InvalidResponse");
-            UpdateRequest(index, r => r with { Status = error.Code, HttpStatusCode = error.HttpStatusCode });
+            UpdateRequest(index, r => r with { Status = error.Code, HttpStatusCode = error.HttpStatusCode ?? httpStatus, ProviderReason = error.ProviderReason });
             if (!continueOnUnavailable || error.Code is not ("InvalidResponse" or "SymbolUnavailable" or "EmptyQuote" or "SymbolMismatch" or "OlderData" or "EntitlementRequired"))
                 throw error;
         }
@@ -246,7 +257,7 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
         finally { _reportActive = false; _operation.Release(); }
     }
 
-    private async Task<System.Text.Json.JsonDocument> QueryAsync(Dictionary<string, string> parameters, CancellationToken cancellationToken)
+    private async Task<AlphaVantageClient.Response> QueryAsync(int index, Dictionary<string, string> parameters, CancellationToken cancellationToken)
     {
         var key = store.Key();
         if (key.Length == 0) throw new MarketDataException("NotConfigured");
@@ -272,6 +283,9 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
             if (wait <= TimeSpan.Zero) break;
             await Task.Delay(wait, cancellationToken);
         }
+        // Build diagnostics from an allowlist, never by redacting/copying the secret-bearing URL or request dictionary.
+        UpdateRequest(index, r => r with { Parameters = new(parameters["function"], parameters.GetValueOrDefault("symbol"),
+            parameters.GetValueOrDefault("from_currency"), parameters.GetValueOrDefault("to_currency"), parameters.GetValueOrDefault("entitlement")) });
         var document = await client.QueryAsync(key, parameters, cancellationToken);
         try { store.Update(s => s.ProviderLimit = null); return document; }
         catch { document.Dispose(); throw; }

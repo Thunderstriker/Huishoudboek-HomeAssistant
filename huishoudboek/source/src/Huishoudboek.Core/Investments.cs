@@ -49,9 +49,16 @@ public sealed record InvestmentSymbol(string Symbol, string Name, string Region,
 
 public enum InvestmentDataState { NotApplicable, Updated, Retained, Missing }
 
+public enum InvestmentProviderReason { InvalidApiKey, RequestLimit, PremiumEndpoint, MissingEntitlement, UnrecognizedNotice, ProviderErrorMessage }
+
+/// <summary>Allowlisted request fields only: never an API key, search term or URL.</summary>
+public sealed record InvestmentRequestParameters(string Function, string? Symbol = null, string? FromCurrency = null,
+    string? ToCurrency = null, string? Entitlement = null);
+
 /// <summary>Safe request diagnostics: application codes and listing identifiers, never provider text or URLs.</summary>
 public sealed record InvestmentRequestResult(string Kind, string Target, string Status, InvestmentDataState DataState,
-    DateOnly? PriceDate = null, DateTime? DataUtc = null, int? HttpStatusCode = null);
+    DateOnly? PriceDate = null, DateTime? DataUtc = null, int? HttpStatusCode = null,
+    InvestmentRequestParameters? Parameters = null, InvestmentProviderReason? ProviderReason = null);
 
 public sealed record InvestmentMarketReport(string Operation, DateTime StartedUtc, DateTime? CompletedUtc,
     string Status, IReadOnlyList<InvestmentRequestResult> Requests, string? ErrorCode = null);

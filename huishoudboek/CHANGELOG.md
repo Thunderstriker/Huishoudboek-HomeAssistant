@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0.3
+
+- Een losse premiumverwijzing in een providermelding wordt niet langer als ontbrekende
+  betaalde gegevensrechten uitgelegd. Concrete sleutel- en quotafouten krijgen voorrang;
+  een onbekende melding blijft als onbekende oorzaak zichtbaar.
+- API-resultaten tonen de werkelijk gebruikte, veilige aanvraagparameters en een vaste
+  herkenningsreden, inclusief een weggelaten of ingestelde entitlement. Sleutels, zoektermen,
+  aanvraag-URL's en onbewerkte providerantwoorden blijven buiten de diagnostiek.
+- Nieuwe AMZN-basistest met één slotkoersaanvraag vanaf de app-server, zonder entitlement
+  of voorafgaande FX-aanvraag. De test respecteert lokale limieten en wijzigt geen portefeuillekoersen.
+- App- en containerversie bijgewerkt naar 0.3.0.3 voor installatie en updates via Home Assistant.
+
 ## 0.3.0.2
 
 - Een gemelde API-providerlimiet veroorzaakt niet langer een vaste blokkering van

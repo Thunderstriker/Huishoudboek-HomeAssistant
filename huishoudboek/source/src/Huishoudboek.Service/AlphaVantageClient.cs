@@ -7,11 +7,16 @@ namespace Huishoudboek.Service;
 /// <summary>Fixed HTTPS host; no HttpClientFactory logging handlers, redirects, raw errors or secret-bearing URLs escape.</summary>
 public sealed class AlphaVantageClient : IDisposable
 {
+    public sealed record Response(JsonDocument Document, int HttpStatusCode) : IDisposable
+    {
+        public void Dispose() => Document.Dispose();
+    }
+
     private readonly HttpClient _http;
     public AlphaVantageClient() : this(new HttpClientHandler { AllowAutoRedirect = false }) { }
     public AlphaVantageClient(HttpMessageHandler handler) => _http = new(handler) { Timeout = TimeSpan.FromSeconds(20) };
 
-    public async Task<JsonDocument> QueryAsync(string key, IReadOnlyDictionary<string, string> parameters, CancellationToken cancellationToken)
+    public async Task<Response> QueryAsync(string key, IReadOnlyDictionary<string, string> parameters, CancellationToken cancellationToken)
     {
         try
         {
@@ -22,7 +27,7 @@ public sealed class AlphaVantageClient : IDisposable
             var query = string.Join("&", parameters.Select(p => Uri.EscapeDataString(p.Key) + "=" + Uri.EscapeDataString(p.Value)));
             using var response = await _http.GetAsync("https://www.alphavantage.co/query?" + query + "&apikey=" + Uri.EscapeDataString(key),
                 HttpCompletionOption.ResponseHeadersRead, requestToken);
-            if ((int)response.StatusCode == 429) throw new MarketDataException("ProviderLimit", 429, RetryAfterUtc(response));
+            if ((int)response.StatusCode == 429) throw new MarketDataException("ProviderLimit", 429, RetryAfterUtc(response), InvestmentProviderReason.RequestLimit);
             if (!response.IsSuccessStatusCode) throw new MarketDataException("HttpError", (int)response.StatusCode);
             await using var input = await response.Content.ReadAsStreamAsync(requestToken);
             using var output = new MemoryStream();
@@ -35,11 +40,11 @@ public sealed class AlphaVantageClient : IDisposable
             JsonDocument document;
             try { document = JsonDocument.Parse(output.ToArray()); }
             catch (JsonException) { throw new MarketDataException("InvalidResponse", (int)response.StatusCode); }
-            try { Check(document.RootElement); return document; }
+            try { Check(document.RootElement); return new(document, (int)response.StatusCode); }
             catch (MarketDataException ex)
             {
                 document.Dispose();
-                throw new MarketDataException(ex.Code, (int)response.StatusCode, ex.Code == "ProviderLimit" ? RetryAfterUtc(response) : null);
+                throw new MarketDataException(ex.Code, (int)response.StatusCode, ex.Code == "ProviderLimit" ? RetryAfterUtc(response) : null, ex.ProviderReason);
             }
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -61,22 +66,40 @@ public sealed class AlphaVantageClient : IDisposable
     public static void Check(JsonElement root)
     {
         if (root.ValueKind != JsonValueKind.Object) throw new MarketDataException("InvalidResponse");
-        if (root.TryGetProperty("Error Message", out _)) throw new MarketDataException("SymbolUnavailable");
+        if (root.TryGetProperty("Error Message", out _))
+            throw new MarketDataException("SymbolUnavailable", providerReason: InvestmentProviderReason.ProviderErrorMessage);
+        static int Priority(InvestmentProviderReason reason) => reason switch
+        {
+            InvestmentProviderReason.InvalidApiKey => 0,
+            InvestmentProviderReason.RequestLimit => 1,
+            InvestmentProviderReason.PremiumEndpoint or InvestmentProviderReason.MissingEntitlement => 2,
+            _ => 3
+        };
+        (string Code, InvestmentProviderReason Reason)? rejection = null;
         foreach (var name in new[] { "Note", "Information" })
             if (root.TryGetProperty(name, out var error))
             {
-                var text = error.ToString();
-                if (text.Contains("premium endpoint", StringComparison.OrdinalIgnoreCase) || text.Contains("premium-only", StringComparison.OrdinalIgnoreCase) ||
-                    text.Contains("premium access", StringComparison.OrdinalIgnoreCase) || text.Contains("entitlement", StringComparison.OrdinalIgnoreCase))
-                    throw new MarketDataException("EntitlementRequired");
-                if (text.Contains("rate limit", StringComparison.OrdinalIgnoreCase) || text.Contains("frequency", StringComparison.OrdinalIgnoreCase) ||
-                    text.Contains("requests per day", StringComparison.OrdinalIgnoreCase)) throw new MarketDataException("ProviderLimit");
-                if (text.Contains("premium", StringComparison.OrdinalIgnoreCase) || text.Contains("entitlement", StringComparison.OrdinalIgnoreCase))
-                    throw new MarketDataException("EntitlementRequired");
-                if (new[] { "invalid key", "invalid api key", "api key is invalid", "apikey is invalid", "api key is not valid", "missing api key", "api key is missing" }
-                    .Any(phrase => text.Contains(phrase, StringComparison.OrdinalIgnoreCase))) throw new MarketDataException("KeyOrAccessInvalid");
-                throw new MarketDataException("ProviderRejected");
+                var candidate = ClassifyNotice(error.ToString());
+                // A generic upgrade notice must not hide a concrete key/quota error in the other field.
+                if (rejection == null || Priority(candidate.Reason) < Priority(rejection.Value.Reason)) rejection = candidate;
             }
+        if (rejection is { } rejected) throw new MarketDataException(rejected.Code, providerReason: rejected.Reason);
+    }
+
+    private static (string Code, InvestmentProviderReason Reason) ClassifyNotice(string text)
+    {
+        bool Contains(params string[] phrases) => phrases.Any(p => text.Contains(p, StringComparison.OrdinalIgnoreCase));
+        if (Contains("invalid key", "invalid api key", "api key is invalid", "apikey is invalid", "api key is not valid", "missing api key", "api key is missing"))
+            return ("KeyOrAccessInvalid", InvestmentProviderReason.InvalidApiKey);
+        if (Contains("rate limit", "requests per day", "requests per minute", "too many requests", "quota exceeded", "quota exhausted") ||
+            Contains("frequency") && Contains("exceed", "call frequency", "frequency limit"))
+            return ("ProviderLimit", InvestmentProviderReason.RequestLimit);
+        if (Contains("this is a premium endpoint", "this endpoint is premium", "this endpoint requires a premium", "this function is a premium endpoint"))
+            return ("EntitlementRequired", InvestmentProviderReason.PremiumEndpoint);
+        if (Contains("premium access required", "premium access is required", "entitlement required", "entitlement is required", "required entitlement", "not entitled", "missing entitlement"))
+            return ("EntitlementRequired", InvestmentProviderReason.MissingEntitlement);
+        // Merely mentioning premium plans or entitlements is not evidence that the requested endpoint requires them.
+        return ("ProviderRejected", InvestmentProviderReason.UnrecognizedNotice);
     }
 
     public static InvestmentQuote ParseQuote(JsonElement root, InvestmentInstrument instrument, QuoteFreshness freshness, DateTime now)
