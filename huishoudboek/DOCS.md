@@ -188,8 +188,27 @@ is geen exact tijdstip van een beurstransactie. Polling is geen tick-voor-tick s
 Zonder internet of bij een providerfout blijven de laatste geldige koersen behouden;
 onbekende koersen worden nooit nul. Datums en ontbrekende gegevens blijven zichtbaar.
 Koersen/FX ouder dan vier kalenderdagen krijgen een waarschuwing (ook een beursvakantie
-kan hiervan de oorzaak zijn). Een gemelde providerlimiet pauzeert aanvragen conservatief
-24 uur. Er zijn geen automatische herhaalpogingen binnen dezelfde update.
+kan hiervan de oorzaak zijn). Een gemelde providerlimiet veroorzaakt **geen vaste
+blokkering van 24 uur** meer. Bestaande blokkeringen uit oudere versies vervallen bij
+de upgrade; opgeslagen koersen, de sleutel en de lokale verbruiksteller blijven behouden.
+
+Bij een providerlimiet verschijnt naast de API-acties een **afteller met hervattijd**,
+die zonder herladen iedere seconde bijwerkt en ook na herladen/herstart beschikbaar is:
+
+- Geeft de provider een geldige HTTP-header `Retry-After` mee (aantal seconden of een
+  HTTP-datum), dan verstuurt de app vóór dat tijdstip geen aanvragen. Een tussentijdse
+  poging toont `ProviderRetryWait` zonder HTTP-status: de app heeft niets verstuurd.
+- Zonder hervattijd toont de app een **geadviseerde wachttijd van één minuut**. Dit is
+  geen bevestigde reset van een minuut- of daglimiet bij Alpha Vantage en blokkeert geen
+  handmatige poging; de normale wachttijd en lokale budgetten blijven wel gelden.
+- Na afloop mag u opnieuw proberen, maar alleen de provider kan bevestigen dat er weer
+  budget is. Een nieuwe limietmelding behoudt de laatste geldige koersen en toont een
+  nieuwe wachttijd. Er zijn geen automatische herhaalpogingen binnen dezelfde update;
+  geplande updates respecteren de opgegeven of geadviseerde wachttijd.
+- Het **lokale API-dagbudget** blijft een aparte bescherming. Als dat is verbruikt,
+  toont een eigen afteller de reset om **00:00 UTC**, weergegeven in de lokale tijdzone.
+  Dit is niet noodzakelijk het resettijdstip van de provider. Sleutelvervanging en
+  herstart maken geen nieuw lokaal budget vrij.
 
 Officiële bronnen: [limieten](https://www.alphavantage.co/support/#support),
 [API-documentatie](https://www.alphavantage.co/documentation/),

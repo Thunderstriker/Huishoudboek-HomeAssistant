@@ -1,0 +1,72 @@
+@implements IAsyncDisposable
+
+@if (ProviderLimit is { } limit)
+{
+    <section class="notice warning investment-limit-feedback" aria-label="@L["InvestmentProviderLimitTitle"]">
+        <p role="status"><strong>@L["InvestmentProviderLimitTitle"]</strong> @L[limit.ProviderSuppliedRetryTime ? "InvestmentProviderRetryKnown" : "InvestmentProviderRetryUnknown"]</p>
+        @if (limit.RetryUtc > now)
+        {
+            <p>@L[limit.ProviderSuppliedRetryTime ? "InvestmentProviderRetryCountdown" : "InvestmentProviderSuggestedCountdown"]
+                <span role="timer" aria-live="off">@Remaining(limit.RetryUtc)</span>
+                · <time datetime="@limit.RetryUtc.ToString("O", CultureInfo.InvariantCulture)">@Local(limit.RetryUtc)</time></p>
+        }
+        else
+        {
+            <p role="status">@L["InvestmentProviderRetryAvailable"]</p>
+        }
+        <p>@L["InvestmentProviderRetryBudget"]</p>
+    </section>
+}
+@if (DailyBudgetResetUtc is { } reset)
+{
+    <section class="notice warning investment-budget-feedback" aria-label="@L["InvestmentLocalBudgetTitle"]">
+        <p role="status"><strong>@L["InvestmentLocalBudgetTitle"]</strong> @L["InvestmentLocalBudgetHelp"]</p>
+        @if (reset > now)
+        {
+            <p>@L["InvestmentLocalBudgetCountdown"] <span role="timer" aria-live="off">@Remaining(reset)</span>
+                · <time datetime="@reset.ToString("O", CultureInfo.InvariantCulture)">@Local(reset)</time></p>
+        }
+        else
+        {
+            <p role="status">@L["InvestmentLocalBudgetAvailable"]</p>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public InvestmentProviderLimit? ProviderLimit { get; set; }
+    [Parameter] public DateTime? DailyBudgetResetUtc { get; set; }
+    private DateTime now = DateTime.UtcNow;
+    private readonly CancellationTokenSource stop = new();
+    private Task? watch;
+    protected override void OnParametersSet() => now = DateTime.UtcNow;
+    protected override void OnAfterRender(bool firstRender) { if (firstRender) watch = WatchAsync(); }
+    private async Task WatchAsync()
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(stop.Token))
+                await InvokeAsync(() =>
+                {
+                    // Render the last tick as well, so an expired countdown becomes a retry hint without reloading.
+                    var counting = ProviderLimit?.RetryUtc > now || DailyBudgetResetUtc > now;
+                    now = DateTime.UtcNow;
+                    if (counting) StateHasChanged();
+                });
+        }
+        catch (OperationCanceledException) { }
+    }
+    private string Remaining(DateTime until)
+    {
+        var seconds = (long)Math.Ceiling(Math.Max(0, (until - now).TotalSeconds));
+        return $"{seconds / 3600:00}:{seconds / 60 % 60:00}:{seconds % 60:00}";
+    }
+    private static string Local(DateTime time) => time.ToLocalTime().ToString("dd-MM-yyyy HH:mm:ss");
+    public async ValueTask DisposeAsync()
+    {
+        await stop.CancelAsync();
+        if (watch != null) await watch;
+        stop.Dispose();
+    }
+}

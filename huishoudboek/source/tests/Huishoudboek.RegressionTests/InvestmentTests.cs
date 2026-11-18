@@ -241,19 +241,116 @@ internal static class InvestmentTests
             try { market.RefreshAsync().GetAwaiter().GetResult(); } catch (MarketDataException) { }
             Equal(110m, market.Read().Quotes.Single().Price);
         }));
-        yield return ("Provider limits persist a cooldown and do not retry", () => InDirectory(directory =>
+        yield return ("An unspecified provider limit suggests a wait without locking manual rechecks or retrying automatically", () => InDirectory(directory =>
         {
             using var coordinator = new AdministrationCoordinator(directory, initialize: true);
             var store = new InvestmentMarketStore(directory); var handler = new FakeHandler(_ => "{\"Information\":\"25 requests per day\"}");
             using var client = new AlphaVantageClient(handler); using var market = new InvestmentMarketService(store, client, coordinator);
             market.SaveSettingsAsync(new() { Enabled = true }, "fictionalkey12345", false).GetAwaiter().GetResult();
-            try { market.TestAsync().GetAwaiter().GetResult(); } catch (MarketDataException) { }
-            var until = store.Read(s => s.BlockedUntilUtc);
-            try { market.TestAsync().GetAwaiter().GetResult(); } catch (MarketDataException) { }
-            Equal(until, store.Read(s => s.BlockedUntilUtc));
+            ExpectMarketError("ProviderLimit", () => market.TestAsync().GetAwaiter().GetResult());
+            var limit = market.Read().ProviderLimit!;
             Equal(1, handler.Calls); Equal(1, market.Read().RequestsToday);
-            True(store.Read(s => s.BlockedUntilUtc) > DateTime.UtcNow);
-            Equal("ProviderLimit", new InvestmentMarketStore(directory).Snapshot(DateTime.UtcNow).Status);
+            True(!limit.ProviderSuppliedRetryTime); Equal(TimeSpan.FromMinutes(1), limit.RetryUtc - limit.ReportedUtc);
+            Equal(limit, new InvestmentMarketStore(directory).Snapshot(DateTime.UtcNow).ProviderLimit);
+            store.Update(s => s.NextRefreshUtc = DateTime.UtcNow.AddMinutes(-1));
+            market.RefreshAsync(scheduled: true).GetAwaiter().GetResult();
+            Equal(1, handler.Calls); Equal("Test", market.Read().Report!.Operation);
+            handler.Reply = _ => QuoteJson();
+            market.TestAsync().GetAwaiter().GetResult();
+            Equal(2, handler.Calls); Equal(2, market.Read().RequestsToday);
+            Equal<InvestmentProviderLimit?>(null, market.Read().ProviderLimit); Equal("ConnectionOk", market.Read().Status);
+        }));
+        yield return ("Explicit Retry-After seconds and dates persist, distinguish local waits and expire without extending", () =>
+        {
+            foreach (var status in new[] { HttpStatusCode.OK, HttpStatusCode.TooManyRequests })
+            foreach (var header in new[] { "120", DateTime.UtcNow.AddMinutes(3).ToString("R", CultureInfo.InvariantCulture) })
+                InDirectory(directory =>
+                {
+                    using var f = new MarketFixture(directory);
+                    f.Handler.StatusCode = status; f.Handler.RetryAfter = header;
+                    f.Handler.Reply = _ => "{\"Note\":\"API call frequency exceeded\"}";
+                    ExpectMarketError("ProviderLimit", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
+                    var limit = f.Market.Read().ProviderLimit!;
+                    True(limit.ProviderSuppliedRetryTime); True(limit.RetryUtc > DateTime.UtcNow.AddMinutes(1));
+                    Equal(limit, new InvestmentMarketStore(directory).Snapshot(DateTime.UtcNow).ProviderLimit);
+                    Equal<int?>((int)status, f.Market.Read().Report!.Requests[0].HttpStatusCode);
+                    f.ClearCooldown();
+                    ExpectMarketError("ProviderRetryWait", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
+                    var report = f.Market.Read().Report!;
+                    Equal("ProviderRetryWait", report.ErrorCode); Equal("ProviderRetryWait", report.Requests[0].Status);
+                    Equal<int?>(null, report.Requests[0].HttpStatusCode); Equal("NotRequested", report.Requests[1].Status);
+                    Equal(1, f.Handler.Calls); Equal(1, f.Market.Read().RequestsToday); Equal(limit, f.Market.Read().ProviderLimit);
+                    f.Store.Update(s => s.ProviderLimit = limit with { RetryUtc = DateTime.UtcNow.AddSeconds(-1) });
+                    f.Handler.StatusCode = HttpStatusCode.OK; f.Handler.RetryAfter = null;
+                    f.Handler.Reply = uri => uri.Query.Contains("CURRENCY_EXCHANGE_RATE") ? FxJson() : QuoteJson(symbol: "AMZN");
+                    f.Market.RefreshAsync().GetAwaiter().GetResult();
+                    Equal(3, f.Handler.Calls); Equal(3, f.Market.Read().RequestsToday);
+                    Equal<InvestmentProviderLimit?>(null, f.Market.Read().ProviderLimit); Equal("Updated", f.Market.Read().Status);
+                });
+        });
+        yield return ("Missing and invalid Retry-After headers do not create an enforced provider pause", () =>
+        {
+            foreach (var header in new string?[] { null, "not-a-date-" + MarketFixture.Secret, "-1" })
+                InDirectory(directory =>
+                {
+                    using var f = new MarketFixture(directory);
+                    f.Handler.StatusCode = HttpStatusCode.TooManyRequests; f.Handler.RetryAfter = header;
+                    ExpectMarketError("ProviderLimit", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
+                    True(!f.Market.Read().ProviderLimit!.ProviderSuppliedRetryTime); Equal(1, f.Handler.Calls);
+                    True(!JsonSerializer.Serialize(f.Market.Read()).Contains(MarketFixture.Secret));
+                    f.ClearCooldown(); f.Handler.StatusCode = HttpStatusCode.OK; f.Handler.RetryAfter = null;
+                    f.Market.RefreshAsync().GetAwaiter().GetResult();
+                    Equal(3, f.Handler.Calls); Equal("Updated", f.Market.Read().Status);
+                });
+        });
+        yield return ("Zero and past Retry-After times permit a new attempt without an invented extra wait", () =>
+        {
+            foreach (var header in new[] { "0", DateTime.UtcNow.AddMinutes(-1).ToString("R", CultureInfo.InvariantCulture) })
+                InDirectory(directory =>
+                {
+                    using var f = new MarketFixture(directory);
+                    f.Handler.StatusCode = HttpStatusCode.TooManyRequests; f.Handler.RetryAfter = header;
+                    ExpectMarketError("ProviderLimit", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
+                    var limit = f.Market.Read().ProviderLimit!;
+                    True(limit.ProviderSuppliedRetryTime); True(limit.RetryUtc <= DateTime.UtcNow);
+                    f.ClearCooldown(); f.Handler.StatusCode = HttpStatusCode.OK; f.Handler.RetryAfter = null;
+                    f.Market.RefreshAsync().GetAwaiter().GetResult();
+                    Equal(3, f.Handler.Calls); Equal("Updated", f.Market.Read().Status);
+                });
+        });
+        yield return ("A provider limit preserves cached prices and FX and a successful manual retry clears its notice", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Market.RefreshAsync().GetAwaiter().GetResult(); var before = f.Market.Read(); f.ClearCooldown();
+            f.Handler.StatusCode = HttpStatusCode.TooManyRequests;
+            ExpectMarketError("ProviderLimit", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
+            var limited = f.Market.Read();
+            Equal(before.Quotes.Single(), limited.Quotes.Single()); Equal(before.Rates.Single(), limited.Rates.Single());
+            Equal(before.LastSuccessUtc, limited.LastSuccessUtc); Equal(3, f.Handler.Calls);
+            True(limited.Report!.Requests.All(r => r.DataState == InvestmentDataState.Retained));
+            f.ClearCooldown(); f.Handler.StatusCode = HttpStatusCode.OK;
+            f.Market.RefreshAsync().GetAwaiter().GetResult();
+            Equal(5, f.Handler.Calls); Equal(5, f.Market.Read().RequestsToday);
+            Equal<InvestmentProviderLimit?>(null, f.Market.Read().ProviderLimit); Equal("Updated", f.Market.Read().Status);
+        }));
+        yield return ("Upgrade ignores a legacy 24-hour block while retaining the key, request budget and cached rates", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Market.RefreshAsync().GetAwaiter().GetResult(); f.ClearCooldown();
+            var before = f.Market.Read();
+            var path = Path.Combine(directory, "market-data", "state.json");
+            var legacy = JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+            legacy.Remove("ProviderLimit"); legacy["BlockedUntilUtc"] = DateTime.UtcNow.AddHours(24); legacy["Status"] = "ProviderLimit";
+            File.WriteAllText(path, legacy.ToJsonString());
+            var upgraded = new InvestmentMarketStore(directory); var after = upgraded.Snapshot(DateTime.UtcNow);
+            Equal(before.RequestsToday, after.RequestsToday); Equal(MarketFixture.Secret, upgraded.Key());
+            Equal(before.Quotes.Single(), after.Quotes.Single()); Equal(before.Rates.Single(), after.Rates.Single());
+            True(!after.ProviderLimit!.ProviderSuppliedRetryTime);
+            using var client = new AlphaVantageClient(new FakeHandler(uri => uri.Query.Contains("CURRENCY_EXCHANGE_RATE") ? FxJson() : QuoteJson(symbol: "AMZN")));
+            using var market = new InvestmentMarketService(upgraded, client, f.Coordinator);
+            market.RefreshAsync().GetAwaiter().GetResult();
+            Equal(before.RequestsToday + 2, market.Read().RequestsToday); Equal("Updated", market.Read().Status);
+            True(!File.ReadAllText(path).Contains("BlockedUntilUtc"));
         }));
         yield return ("Disabled integration makes no outbound requests", () => InDirectory(directory =>
         {
@@ -332,7 +429,7 @@ internal static class InvestmentTests
             Equal("UpdateFailed", report.Status); True(report.CompletedUtc != null);
             Equal("ProviderLimit", report.Requests[0].Status); Equal<int?>(200, report.Requests[0].HttpStatusCode);
             Equal("NotRequested", report.Requests[1].Status); Equal(InvestmentDataState.Missing, report.Requests[1].DataState);
-            True(f.Store.Read(s => s.BlockedUntilUtc) > DateTime.UtcNow);
+            True(f.Market.Read().ProviderLimit is { ProviderSuppliedRetryTime: false });
         }));
         yield return ("A local budget failure is visible without inventing an HTTP response or sending a request", () => InDirectory(directory =>
         {
@@ -343,6 +440,11 @@ internal static class InvestmentTests
             Equal(0, f.Handler.Calls); Equal("DailyLimit", report.ErrorCode);
             Equal("DailyLimit", report.Requests[0].Status); Equal<int?>(null, report.Requests[0].HttpStatusCode);
             Equal("NotRequested", report.Requests[1].Status);
+            var now = DateTime.UtcNow;
+            Equal<DateTime?>(now.Date.AddDays(1), f.Store.Snapshot(now).DailyBudgetResetUtc);
+            var tomorrow = f.Store.Snapshot(now.Date.AddDays(1));
+            Equal(0, tomorrow.RequestsToday); Equal<DateTime?>(null, tomorrow.DailyBudgetResetUtc);
+            Equal<InvestmentProviderLimit?>(null, tomorrow.ProviderLimit);
         }));
         yield return ("HTTP, timeout, transport and malformed responses produce safe actionable endpoint diagnostics", () =>
         {
@@ -460,13 +562,13 @@ internal static class InvestmentTests
             Equal("PartialUpdate", report.Status); Equal("DailyLimit", report.ErrorCode);
             Equal("Updated", report.Requests[0].Status); Equal("DailyLimit", report.Requests[1].Status); Equal(1, f.Handler.Calls);
         }));
-        yield return ("HTTP 429 records the status and applies the same durable pause as an HTTP-200 provider limit", () => InDirectory(directory =>
+        yield return ("HTTP 429 without a retry time records the status without guessing a day-long block", () => InDirectory(directory =>
         {
             using var f = new MarketFixture(directory);
             f.Handler.StatusCode = HttpStatusCode.TooManyRequests;
             ExpectMarketError("ProviderLimit", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
             Equal<int?>(429, f.Market.Read().Report!.Requests[0].HttpStatusCode);
-            Equal(1, f.Handler.Calls); True(f.Store.Read(s => s.BlockedUntilUtc) > DateTime.UtcNow);
+            Equal(1, f.Handler.Calls); True(f.Market.Read().ProviderLimit is { ProviderSuppliedRetryTime: false });
         }));
         yield return ("Provider explanations are classified without mistaking subscription advice for a limit or exposing raw text", () =>
         {
@@ -497,7 +599,7 @@ internal static class InvestmentTests
             var path = Path.Combine(directory, "market-data", "state.json"); File.WriteAllText(path, "{broken");
             var damaged = new InvestmentMarketStore(directory); var snapshot = damaged.Snapshot(DateTime.UtcNow);
             Equal("ConfigurationInvalid", snapshot.Status); True(!snapshot.Settings.Enabled); Equal(25, snapshot.RequestsToday);
-            True(damaged.Read(s => s.BlockedUntilUtc) > DateTime.UtcNow);
+            True(snapshot.DailyBudgetResetUtc > DateTime.UtcNow); Equal<InvestmentProviderLimit?>(null, snapshot.ProviderLimit);
             damaged.Update(s => s.Status = "Disabled");
             Equal("{broken", File.ReadAllText(Directory.GetFiles(Path.GetDirectoryName(path)!, "state.invalid-*.json").Single()));
             True(coordinator.Read().Data != null);
@@ -598,6 +700,43 @@ internal static class InvestmentTests
                 if (status == "UpdateFailed") True(html.Contains(language == "nl-NL" ? "Geen gegevens bijgewerkt." : "No data updated."));
                 if (status == "Requesting") True(html.Contains(language == "nl-NL" ? "API-actie wordt uitgevoerd" : "API action is running"));
             }
+            foreach (var language in new[] { "nl-NL", "en-GB" })
+            foreach (var supplied in new[] { false, true })
+            foreach (var expired in new[] { false, true })
+            {
+                var now = DateTime.UtcNow;
+                var limit = new InvestmentProviderLimit(now.AddMinutes(-3), expired ? now.AddMinutes(-1) : now.AddMinutes(2), supplied);
+                store.Update(s =>
+                {
+                    s.ProviderLimit = limit; s.BudgetDayUtc = DateOnly.FromDateTime(now); s.RequestsToday = 25; s.Settings.DailyLimit = 25;
+                    s.Status = supplied ? "ProviderRetryWait" : "ProviderLimit";
+                    s.Report = new("Refresh", now, now, "UpdateFailed",
+                        [new("Fx", "USD→EUR", s.Status, InvestmentDataState.Retained, HttpStatusCode: supplied ? null : 200)], ErrorCode: s.Status);
+                });
+                using var request = new HttpRequestMessage(HttpMethod.Get, "/beleggingen");
+                request.Headers.Add("Cookie", ".AspNetCore.Culture=" + Uri.EscapeDataString("c=" + language + "|uic=" + language));
+                using var response = await client.SendAsync(request);
+                var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+                True(response.IsSuccessStatusCode);
+                True(html.Contains(language == "nl-NL" ? "API-providerlimiet gemeld" : "API provider limit reported"));
+                True(html.Contains(language == "nl-NL" ? "Lokaal API-dagbudget bereikt" : "Local daily API budget reached"));
+                True(html.Contains("00:00 UTC"));
+                Equal(expired ? 1 : 2, html.Split("role=\"timer\"").Length - 1);
+                if (expired) True(html.Contains(language == "nl-NL" ? "De wachttijd is voorbij" : "The waiting time has elapsed"));
+                if (supplied)
+                {
+                    True(html.Contains("Retry-After"));
+                    True(html.Contains(language == "nl-NL" ? "Er is geen nieuwe aanvraag verstuurd" : "No new request was sent"));
+                }
+                else
+                {
+                    True(html.Contains(language == "nl-NL" ? "geen bevestigde reset" : "not a confirmed provider limit reset"));
+                    True(html.Contains(language == "nl-NL" ? "Handmatig opnieuw proberen blijft mogelijk" : "Manual retries remain available"));
+                }
+                True(!html.Contains("InvestmentProvider")); True(!html.Contains("InvestmentLocalBudget"));
+                True(!html.Contains("uit voorzorg 24 uur")); True(!html.Contains("paused for 24 hours"));
+                True(!html.Contains(MarketFixture.Secret)); True(!html.Contains("apikey="));
+            }
             await using var scope = app.Services.CreateAsyncScope();
             await using var renderer = new HtmlRenderer(scope.ServiceProvider, app.Services.GetRequiredService<ILoggerFactory>());
             var feedback = await renderer.Dispatcher.InvokeAsync(async () =>
@@ -608,6 +747,14 @@ internal static class InvestmentTests
             });
             True(feedback.Contains("role=\"alert\"")); True(feedback.Contains("role=\"status\""));
             True(feedback.Contains("Safe local failure &lt;details&gt;")); True(!feedback.Contains("<details>"));
+            var elapsedBudget = await renderer.Dispatcher.InvokeAsync(async () =>
+            {
+                var output = await renderer.RenderComponentAsync<Huishoudboek.Web.Components.Shared.InvestmentRequestLimits>(ParameterView.FromDictionary(
+                    new Dictionary<string, object?> { ["DailyBudgetResetUtc"] = DateTime.UtcNow.AddSeconds(-1) }));
+                return output.ToHtmlString();
+            });
+            True(!elapsedBudget.Contains("role=\"timer\"")); True(!elapsedBudget.Contains("InvestmentLocalBudget"));
+            True(elapsedBudget.Contains("role=\"status\""));
         }
         finally { await app.StopAsync(); }
     }
@@ -637,11 +784,14 @@ internal static class InvestmentTests
         public List<Uri> Uris { get; } = [];
         public Func<Uri, string> Reply { get; set; } = reply;
         public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.OK;
+        public string? RetryAfter { get; set; }
         public HttpContent? Content { get; set; }
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Calls++; Uris.Add(request.RequestUri!);
-            return Task.FromResult(new HttpResponseMessage(StatusCode) { Content = Content ?? new StringContent(Reply(request.RequestUri!)) });
+            var response = new HttpResponseMessage(StatusCode) { Content = Content ?? new StringContent(Reply(request.RequestUri!)) };
+            if (RetryAfter != null) response.Headers.TryAddWithoutValidation("Retry-After", RetryAfter);
+            return Task.FromResult(response);
         }
     }
     private sealed class TimeoutReadStream : MemoryStream

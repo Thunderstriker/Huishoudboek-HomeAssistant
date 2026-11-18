@@ -25,7 +25,7 @@ public sealed class InvestmentMarketStore
         public DateTime? LastAttemptUtc { get; set; }
         public DateTime? LastSuccessUtc { get; set; }
         public DateTime? NextRefreshUtc { get; set; }
-        public DateTime? BlockedUntilUtc { get; set; }
+        public InvestmentProviderLimit? ProviderLimit { get; set; }
         // Codes, never raw provider messages, URLs, keys or exception text.
         public string Status { get; set; } = "NotConfigured";
         public InvestmentMarketReport? Report { get; set; }
@@ -55,6 +55,9 @@ public sealed class InvestmentMarketStore
                 throw new InvalidOperationException();
             if (_state.Report is { } storedReport && (storedReport.Requests == null || storedReport.Requests.Any(r => r == null)))
                 throw new InvalidOperationException();
+            // Legacy BlockedUntilUtc is deliberately ignored: a guessed 24-hour lock must not survive the upgrade.
+            if (_state.Status == "ProviderLimit" && _state.ProviderLimit == null && _state.LastAttemptUtc is { } attempt)
+                _state.ProviderLimit = new(attempt, attempt.AddMinutes(1), false);
             // A restart must not leave the previous action looking as if it is still running.
             if (_state.Report is { CompletedUtc: null } report)
                 _state.Report = report with { CompletedUtc = DateTime.UtcNow, Status = "Interrupted", ErrorCode = "Interrupted",
@@ -64,8 +67,7 @@ public sealed class InvestmentMarketStore
         {
             // Fail closed without taking the entire household app offline or silently granting a new quota.
             // Preserve the damaged file on the next explicit write, for local recovery.
-            _state = new() { Status = "ConfigurationInvalid", BudgetDayUtc = DateOnly.FromDateTime(DateTime.UtcNow),
-                RequestsToday = 25, BlockedUntilUtc = DateTime.UtcNow.AddHours(24) };
+            _state = new() { Status = "ConfigurationInvalid", BudgetDayUtc = DateOnly.FromDateTime(DateTime.UtcNow), RequestsToday = 25 };
             _preserveInvalidFile = true;
         }
     }
@@ -120,11 +122,17 @@ public sealed class InvestmentMarketStore
 
     public InvestmentMarketSnapshot Snapshot(DateTime now) => Read(s => new InvestmentMarketSnapshot(s.Settings, s.ProtectedKey.Length > 0,
         s.Quotes.ToArray(), s.Rates.ToArray(), s.BudgetDayUtc == DateOnly.FromDateTime(now) ? s.RequestsToday : 0,
-        s.LastAttemptUtc, s.LastSuccessUtc, s.NextRefreshUtc, s.Status) { Report = s.Report });
+        s.LastAttemptUtc, s.LastSuccessUtc, s.NextRefreshUtc, s.Status)
+        {
+            Report = s.Report, ProviderLimit = s.ProviderLimit,
+            DailyBudgetResetUtc = s.BudgetDayUtc == DateOnly.FromDateTime(now) && s.Settings.DailyLimit > 0 && s.RequestsToday >= s.Settings.DailyLimit
+                ? now.Date.AddDays(1) : null
+        });
 }
 
-public sealed class MarketDataException(string code, int? httpStatusCode = null) : Exception
+public sealed class MarketDataException(string code, int? httpStatusCode = null, DateTime? retryAfterUtc = null) : Exception
 {
     public string Code { get; } = code;
     public int? HttpStatusCode { get; } = httpStatusCode;
+    public DateTime? RetryAfterUtc { get; } = retryAfterUtc;
 }

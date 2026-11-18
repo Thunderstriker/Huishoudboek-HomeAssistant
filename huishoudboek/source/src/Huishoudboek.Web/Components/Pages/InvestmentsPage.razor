@@ -147,6 +147,7 @@
             <p class="investment-settings-estimate">@L["InvestmentEstimatedCalls", EstimatedCalls(), EstimatedDaily(s)]</p>
             <div class="actions"><button class="primary" type="submit" disabled="@State.Busy">@L["Save"]</button><button type="button" disabled="@(State.Busy || !market.HasKey || !market.Settings.Enabled)" @onclick="TestConnection">@L["InvestmentTest"]</button><button type="button" disabled="@(State.Busy || !market.HasKey || !market.Settings.Enabled)" @onclick="RefreshQuotes">@L["InvestmentRefresh"]</button><button type="button" disabled="@(State.Busy || !market.HasKey)" @onclick="RemoveKey">@L["InvestmentRemoveKey"]</button></div>
         </form>
+        <InvestmentRequestLimits ProviderLimit="market.ProviderLimit" DailyBudgetResetUtc="market.DailyBudgetResetUtc" />
         <InvestmentMarketFeedback Report="market.Report" Running="marketActionRunning" Error="@marketActionError" />
         <p class="muted">@L["InvestmentBackupHelp"]</p>
     </details>

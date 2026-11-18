@@ -27,7 +27,7 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
                 s.Settings = settings with { };
                 s.NextRefreshUtc = settings.Enabled ? NextRefresh(settings, DateTime.UtcNow) : null;
                 s.Status = s.ProtectedKey.Length == 0 ? "NotConfigured" : settings.Enabled ? "Ready" : "Disabled";
-                // Key replacement, disable/re-enable, and financial restore do not reset quota or provider cooldown.
+                // Key replacement, disable/re-enable, and financial restore do not reset quota or an explicit provider retry time.
             });
         }
         finally { _operation.Release(); }
@@ -96,6 +96,8 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
             var state = store.Read(s => s);
             var now = DateTime.UtcNow;
             if (scheduled && (!state.Settings.Enabled || state.Settings.Frequency == QuoteFrequency.Manual || state.NextRefreshUtc > now)) return;
+            // Background work respects both a provider retry time and the suggested wait; manual rechecks may ignore only the suggestion.
+            if (scheduled && state.ProviderLimit?.RetryUtc > now) return;
             var data = administration.Read().Data;
             var held = Investments.Positions(data, [], [], DateOnly.FromDateTime(DateTime.Today)).Where(p => p.Quantity > 0).ToArray();
             var instruments = held.Select(p => p.Instrument).Where(i => i.ProviderSymbol.Length > 0).DistinctBy(i => i.Id).ToArray();
@@ -229,9 +231,11 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
             store.Update(s =>
             {
                 s.Status = ex.Code;
-                // Checking an existing pause must not extend it forever on an hourly schedule.
-                if (ex.Code == "ProviderLimit" && !(s.BlockedUntilUtc > DateTime.UtcNow))
-                    s.BlockedUntilUtc = DateTime.UtcNow.AddHours(24);
+                if (ex.Code == "ProviderLimit")
+                {
+                    var now = DateTime.UtcNow;
+                    s.ProviderLimit = new(now, ex.RetryAfterUtc ?? now.AddMinutes(1), ex.RetryAfterUtc.HasValue);
+                }
             });
             throw;
         }
@@ -255,7 +259,8 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
             store.Update(s =>
             {
                 if (!s.Settings.Enabled) throw new MarketDataException("Disabled");
-                if (s.BlockedUntilUtc > now) throw new MarketDataException("ProviderLimit");
+                if (s.ProviderLimit is { ProviderSuppliedRetryTime: true } limit && limit.RetryUtc > now)
+                    throw new MarketDataException("ProviderRetryWait");
                 if (s.BudgetDayUtc != DateOnly.FromDateTime(now)) { s.BudgetDayUtc = DateOnly.FromDateTime(now); s.RequestsToday = 0; }
                 if (settings.DailyLimit > 0 && s.RequestsToday >= settings.DailyLimit) throw new MarketDataException("DailyLimit");
                 s.RecentRequestsUtc.RemoveAll(t => t <= now.AddMinutes(-1));
@@ -267,7 +272,9 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
             if (wait <= TimeSpan.Zero) break;
             await Task.Delay(wait, cancellationToken);
         }
-        return await client.QueryAsync(key, parameters, cancellationToken);
+        var document = await client.QueryAsync(key, parameters, cancellationToken);
+        try { store.Update(s => s.ProviderLimit = null); return document; }
+        catch { document.Dispose(); throw; }
     }
     public void Dispose() => _operation.Dispose();
 }

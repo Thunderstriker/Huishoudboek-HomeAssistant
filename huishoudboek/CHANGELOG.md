@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0.2
+
+- Een gemelde API-providerlimiet veroorzaakt niet langer een vaste blokkering van
+  24 uur; ook bestaande blokkeringen vervallen zonder koersen, sleutel of verbruik te wissen.
+- Bij providerlimieten verschijnt een afteller met hervattijd: een opgegeven
+  Retry-After wordt gerespecteerd, anders is één minuut wachten alleen een duidelijk
+  gemarkeerd advies en blijft handmatig opnieuw proberen mogelijk binnen de lokale limieten.
+  Het lokale dagbudget toont apart wanneer het om 00:00 UTC opnieuw beschikbaar is.
+- App- en containerversie bijgewerkt naar 0.3.0.2 voor installatie en updates via Home Assistant.
+
 ## 0.3.0.1
 
 - Koersaanvragen tonen naast de knoppen voortgang en een blijvend resultaat per

@@ -1301,14 +1301,26 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="InvestmentStatusBusy" xml:space="preserve"><value>A market-data request is already running. Wait for it to finish.</value></data>
   <data name="InvestmentStatusRefreshCooldown" xml:space="preserve"><value>Wait at least 30 seconds after the last request before another full refresh.</value></data>
   <data name="InvestmentStatusDailyLimit" xml:space="preserve"><value>The local daily API budget has been reached. Previous prices remain available.</value></data>
-  <data name="InvestmentStatusProviderLimit" xml:space="preserve"><value>The provider reported a limit. Requests are conservatively paused for 24 hours; prices are retained.</value></data>
+  <data name="InvestmentStatusProviderLimit" xml:space="preserve"><value>The provider reported a limit. Prices are retained; check the current waiting time before trying again.</value></data>
+  <data name="InvestmentStatusProviderRetryWait" xml:space="preserve"><value>No new request was sent: the provider's specified waiting time had not elapsed at that attempt. Check the current countdown; prices are retained.</value></data>
+  <data name="InvestmentProviderLimitTitle" xml:space="preserve"><value>API provider limit reported</value></data>
+  <data name="InvestmentProviderRetryKnown" xml:space="preserve"><value>The provider supplied a Retry-After time indicating when another attempt is allowed. No requests are sent before then.</value></data>
+  <data name="InvestmentProviderRetryUnknown" xml:space="preserve"><value>The provider supplied no retry time. Waiting one minute is only a suggestion, not a confirmed provider limit reset. Manual retries remain available within the local budget and normal waiting time.</value></data>
+  <data name="InvestmentProviderRetryCountdown" xml:space="preserve"><value>Try again in:</value></data>
+  <data name="InvestmentProviderSuggestedCountdown" xml:space="preserve"><value>Suggested waiting time:</value></data>
+  <data name="InvestmentProviderRetryAvailable" xml:space="preserve"><value>The waiting time has elapsed. You can try again; only the provider can confirm whether quota is available again.</value></data>
+  <data name="InvestmentProviderRetryBudget" xml:space="preserve"><value>Retrying consumes request budget. Previously valid prices are retained; there are no automatic retries within the same update.</value></data>
+  <data name="InvestmentLocalBudgetTitle" xml:space="preserve"><value>Local daily API budget reached</value></data>
+  <data name="InvestmentLocalBudgetHelp" xml:space="preserve"><value>This is the configured app budget, not the provider limit. It becomes available again at 00:00 UTC; the provider's quota may reset differently.</value></data>
+  <data name="InvestmentLocalBudgetCountdown" xml:space="preserve"><value>Local budget available again in:</value></data>
+  <data name="InvestmentLocalBudgetAvailable" xml:space="preserve"><value>A new local budget day has started. The next request will recheck the budget; the provider may still report a limit.</value></data>
   <data name="InvestmentStatusEntitlementRequired" xml:space="preserve"><value>The provider requires additional paid data entitlements. Check your subscription and configured rights.</value></data>
   <data name="InvestmentStatusKeyOrAccessInvalid" xml:space="preserve"><value>The provider did not accept the key or data access. Check your settings locally.</value></data>
   <data name="InvestmentStatusKeyUnavailable" xml:space="preserve"><value>The stored key cannot be decrypted. Enter your own key again.</value></data>
   <data name="InvestmentStatusConnectionFailed" xml:space="preserve"><value>The provider is unreachable. Check internet access and DNS on the server and try again later. Previous prices are retained.</value></data>
   <data name="InvestmentStatusInvalidResponse" xml:space="preserve"><value>The provider response contains missing or invalid data. Check the listing and currency and try again later; no zero prices were stored.</value></data>
   <data name="InvestmentStatusSymbolUnavailable" xml:space="preserve"><value>No usable quote for this listing. Check exchange, currency, symbol and data entitlement.</value></data>
-  <data name="InvestmentStatusConfigurationInvalid" xml:space="preserve"><value>The local market-data configuration is damaged. Household records remain usable; re-enter your key and settings. Requests remain blocked for 24 hours as a precaution and the old file is preserved when saving.</value></data>
+  <data name="InvestmentStatusConfigurationInvalid" xml:space="preserve"><value>The local market-data configuration is damaged. Household records remain usable; re-enter your key and settings. The local daily budget is treated as spent and the old file is preserved when saving.</value></data>
   <data name="InvestmentRequestReport" xml:space="preserve"><value>Latest API action result</value></data>
   <data name="InvestmentOperationRefresh" xml:space="preserve"><value>Fetch prices</value></data>
   <data name="InvestmentOperationTest" xml:space="preserve"><value>Connection test</value></data>

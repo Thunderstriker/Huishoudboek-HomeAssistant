@@ -1301,14 +1301,26 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="InvestmentStatusBusy" xml:space="preserve"><value>Er loopt al een koersaanvraag. Wacht tot die voltooid is.</value></data>
   <data name="InvestmentStatusRefreshCooldown" xml:space="preserve"><value>Wacht minimaal 30 seconden na de laatste aanvraag voor een nieuwe volledige update.</value></data>
   <data name="InvestmentStatusDailyLimit" xml:space="preserve"><value>Het lokale API-dagbudget is bereikt. Eerdere koersen blijven beschikbaar.</value></data>
-  <data name="InvestmentStatusProviderLimit" xml:space="preserve"><value>De provider heeft een limiet gemeld. Aanvragen zijn uit voorzorg 24 uur gepauzeerd; koersen blijven behouden.</value></data>
+  <data name="InvestmentStatusProviderLimit" xml:space="preserve"><value>De provider heeft een limiet gemeld. Koersen blijven behouden; bekijk de actuele wachttijd voordat u opnieuw probeert.</value></data>
+  <data name="InvestmentStatusProviderRetryWait" xml:space="preserve"><value>Er is geen nieuwe aanvraag verstuurd: de door de provider opgegeven wachttijd was bij die poging nog niet voorbij. Bekijk de actuele afteller; koersen blijven behouden.</value></data>
+  <data name="InvestmentProviderLimitTitle" xml:space="preserve"><value>API-providerlimiet gemeld</value></data>
+  <data name="InvestmentProviderRetryKnown" xml:space="preserve"><value>De provider gaf via Retry-After aan vanaf wanneer een nieuwe poging is toegestaan. Tot dan worden geen aanvragen verstuurd.</value></data>
+  <data name="InvestmentProviderRetryUnknown" xml:space="preserve"><value>De provider gaf geen hervattijd op. Eén minuut wachten is alleen een advies, geen bevestigde reset van de providerlimiet. Handmatig opnieuw proberen blijft mogelijk binnen het lokale budget en de normale wachttijd.</value></data>
+  <data name="InvestmentProviderRetryCountdown" xml:space="preserve"><value>Opnieuw proberen over:</value></data>
+  <data name="InvestmentProviderSuggestedCountdown" xml:space="preserve"><value>Geadviseerde wachttijd:</value></data>
+  <data name="InvestmentProviderRetryAvailable" xml:space="preserve"><value>De wachttijd is voorbij. U kunt opnieuw proberen; alleen de provider kan bevestigen of er weer budget beschikbaar is.</value></data>
+  <data name="InvestmentProviderRetryBudget" xml:space="preserve"><value>Opnieuw proberen verbruikt aanvraagbudget. Eerdere geldige koersen blijven behouden; er zijn geen automatische herhaalpogingen binnen dezelfde update.</value></data>
+  <data name="InvestmentLocalBudgetTitle" xml:space="preserve"><value>Lokaal API-dagbudget bereikt</value></data>
+  <data name="InvestmentLocalBudgetHelp" xml:space="preserve"><value>Dit is het ingestelde app-budget, niet de providerlimiet. Het wordt om 00:00 UTC opnieuw beschikbaar; het providerbudget kan anders resetten.</value></data>
+  <data name="InvestmentLocalBudgetCountdown" xml:space="preserve"><value>Lokaal budget opnieuw beschikbaar over:</value></data>
+  <data name="InvestmentLocalBudgetAvailable" xml:space="preserve"><value>De lokale budgetdag is opnieuw begonnen. Een volgende aanvraag controleert het budget opnieuw; de provider kan nog steeds een limiet melden.</value></data>
   <data name="InvestmentStatusEntitlementRequired" xml:space="preserve"><value>De provider vereist aanvullende betaalde gegevensrechten. Controleer het abonnement en de ingestelde rechten.</value></data>
   <data name="InvestmentStatusKeyOrAccessInvalid" xml:space="preserve"><value>De provider accepteert de sleutel of gegevensrechten niet. Controleer uw instellingen lokaal.</value></data>
   <data name="InvestmentStatusKeyUnavailable" xml:space="preserve"><value>De opgeslagen sleutel kan niet worden ontsleuteld. Voer de eigen sleutel opnieuw in.</value></data>
   <data name="InvestmentStatusConnectionFailed" xml:space="preserve"><value>De koersprovider is niet bereikbaar. Controleer internet en DNS op de server en probeer later opnieuw. Eerdere koersen blijven behouden.</value></data>
   <data name="InvestmentStatusInvalidResponse" xml:space="preserve"><value>Het providerantwoord bevat ontbrekende of ongeldige gegevens. Controleer notering en valuta en probeer later opnieuw; er zijn geen nulkoersen opgeslagen.</value></data>
   <data name="InvestmentStatusSymbolUnavailable" xml:space="preserve"><value>Geen bruikbare koers voor deze notering. Controleer beurs, valuta, symbool en gegevensrechten.</value></data>
-  <data name="InvestmentStatusConfigurationInvalid" xml:space="preserve"><value>De lokale koersconfiguratie is beschadigd. De administratie blijft bruikbaar; voer uw sleutel en instellingen opnieuw in. Aanvragen blijven uit voorzorg 24 uur geblokkeerd en het oude bestand wordt bij opslaan bewaard.</value></data>
+  <data name="InvestmentStatusConfigurationInvalid" xml:space="preserve"><value>De lokale koersconfiguratie is beschadigd. De administratie blijft bruikbaar; voer uw sleutel en instellingen opnieuw in. Het lokale dagbudget geldt als verbruikt en het oude bestand wordt bij opslaan bewaard.</value></data>
   <data name="InvestmentRequestReport" xml:space="preserve"><value>Resultaat laatste API-actie</value></data>
   <data name="InvestmentOperationRefresh" xml:space="preserve"><value>Koersen opvragen</value></data>
   <data name="InvestmentOperationTest" xml:space="preserve"><value>Verbindingstest</value></data>

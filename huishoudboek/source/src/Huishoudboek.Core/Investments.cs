@@ -56,6 +56,9 @@ public sealed record InvestmentRequestResult(string Kind, string Target, string 
 public sealed record InvestmentMarketReport(string Operation, DateTime StartedUtc, DateTime? CompletedUtc,
     string Status, IReadOnlyList<InvestmentRequestResult> Requests, string? ErrorCode = null);
 
+/// <summary>A provider retry time, or a non-binding suggestion when the provider gives no reset time.</summary>
+public sealed record InvestmentProviderLimit(DateTime ReportedUtc, DateTime RetryUtc, bool ProviderSuppliedRetryTime);
+
 public sealed record InvestmentQuoteSettings
 {
     public bool Enabled { get; set; }
@@ -84,6 +87,8 @@ public sealed record InvestmentMarketSnapshot(InvestmentQuoteSettings Settings, 
     DateTime? LastAttemptUtc, DateTime? LastSuccessUtc, DateTime? NextRefreshUtc, string Status)
 {
     public InvestmentMarketReport? Report { get; init; }
+    public InvestmentProviderLimit? ProviderLimit { get; init; }
+    public DateTime? DailyBudgetResetUtc { get; init; }
 }
 
 public sealed record InvestmentPosition(Guid AccountId, InvestmentInstrument Instrument, decimal Quantity,

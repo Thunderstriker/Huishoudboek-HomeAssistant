@@ -22,7 +22,7 @@ public sealed class AlphaVantageClient : IDisposable
             var query = string.Join("&", parameters.Select(p => Uri.EscapeDataString(p.Key) + "=" + Uri.EscapeDataString(p.Value)));
             using var response = await _http.GetAsync("https://www.alphavantage.co/query?" + query + "&apikey=" + Uri.EscapeDataString(key),
                 HttpCompletionOption.ResponseHeadersRead, requestToken);
-            if ((int)response.StatusCode == 429) throw new MarketDataException("ProviderLimit", 429);
+            if ((int)response.StatusCode == 429) throw new MarketDataException("ProviderLimit", 429, RetryAfterUtc(response));
             if (!response.IsSuccessStatusCode) throw new MarketDataException("HttpError", (int)response.StatusCode);
             await using var input = await response.Content.ReadAsStreamAsync(requestToken);
             using var output = new MemoryStream();
@@ -36,12 +36,26 @@ public sealed class AlphaVantageClient : IDisposable
             try { document = JsonDocument.Parse(output.ToArray()); }
             catch (JsonException) { throw new MarketDataException("InvalidResponse", (int)response.StatusCode); }
             try { Check(document.RootElement); return document; }
-            catch (MarketDataException ex) { document.Dispose(); throw new MarketDataException(ex.Code, (int)response.StatusCode); }
+            catch (MarketDataException ex)
+            {
+                document.Dispose();
+                throw new MarketDataException(ex.Code, (int)response.StatusCode, ex.Code == "ProviderLimit" ? RetryAfterUtc(response) : null);
+            }
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         { throw new MarketDataException("Timeout"); }
         catch (Exception ex) when (ex is HttpRequestException or IOException)
         { throw new MarketDataException("ConnectionFailed"); }
+    }
+
+    private static DateTime? RetryAfterUtc(HttpResponseMessage response)
+    {
+        var retry = response.Headers.RetryAfter;
+        var now = DateTime.UtcNow;
+        if (retry?.Date is { } date) return date.UtcDateTime;
+        if (retry?.Delta is { } delta && delta >= TimeSpan.Zero && delta <= DateTime.MaxValue - now)
+            return now.Add(delta);
+        return null;
     }
 
     public static void Check(JsonElement root)
