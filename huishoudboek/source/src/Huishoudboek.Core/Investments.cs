@@ -47,6 +47,15 @@ public sealed record InvestmentQuote(Guid InstrumentId, string Symbol, string Cu
 public sealed record InvestmentFxRate(string Currency, decimal EurRate, DateTime RetrievedUtc);
 public sealed record InvestmentSymbol(string Symbol, string Name, string Region, string Currency);
 
+public enum InvestmentDataState { NotApplicable, Updated, Retained, Missing }
+
+/// <summary>Safe request diagnostics: application codes and listing identifiers, never provider text or URLs.</summary>
+public sealed record InvestmentRequestResult(string Kind, string Target, string Status, InvestmentDataState DataState,
+    DateOnly? PriceDate = null, DateTime? DataUtc = null, int? HttpStatusCode = null);
+
+public sealed record InvestmentMarketReport(string Operation, DateTime StartedUtc, DateTime? CompletedUtc,
+    string Status, IReadOnlyList<InvestmentRequestResult> Requests, string? ErrorCode = null);
+
 public sealed record InvestmentQuoteSettings
 {
     public bool Enabled { get; set; }
@@ -72,7 +81,10 @@ public sealed record InvestmentQuoteSettings
 
 public sealed record InvestmentMarketSnapshot(InvestmentQuoteSettings Settings, bool HasKey,
     IReadOnlyList<InvestmentQuote> Quotes, IReadOnlyList<InvestmentFxRate> Rates, int RequestsToday,
-    DateTime? LastAttemptUtc, DateTime? LastSuccessUtc, DateTime? NextRefreshUtc, string Status);
+    DateTime? LastAttemptUtc, DateTime? LastSuccessUtc, DateTime? NextRefreshUtc, string Status)
+{
+    public InvestmentMarketReport? Report { get; init; }
+}
 
 public sealed record InvestmentPosition(Guid AccountId, InvestmentInstrument Instrument, decimal Quantity,
     decimal? RemainingCost, decimal? RemainingCostEur, decimal? Realized, decimal? RealizedEur,

@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 LABEL io.hass.name="Huishoudboek" \
       io.hass.description="Lokaal huishoudboek met volledige webinterface" \
-      io.hass.version="0.3.0" \
+      io.hass.version="0.3.0.1" \
       io.hass.type="addon" \
       io.hass.arch="aarch64|amd64|armhf|armv7|i386"
 WORKDIR /app

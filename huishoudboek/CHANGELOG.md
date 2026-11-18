@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0.1
+
+- Koersaanvragen tonen naast de knoppen voortgang en een blijvend resultaat per
+  effect en valutapaar, met concrete foutcodes, vervolgstappen en eventuele HTTP-status.
+  Zichtbaar is welke gegevens zijn vernieuwd, behouden of nog ontbreken; sleutels,
+  aanvraag-URL's en onbewerkte providerantwoorden blijven buiten de diagnostiek.
+- Ontbrekende gegevensrechten voor een afzonderlijke wisselkoers blokkeren niet langer
+  een beschikbare aandelenkoers. Limieten en verbindingsfouten stoppen verdere aanvragen;
+  een volledig mislukte update wordt niet meer als gedeeltelijk geslaagd gemeld.
+- De provider-time-out geldt ook tijdens het lezen van de antwoordinhoud, zodat een
+  vastgelopen antwoord de koersaanvraag niet onbeperkt bezet houdt.
+- Documentatie aangevuld met veilige handmatige USD→EUR- en AMZN-testaanvragen en de
+  bevestiging dat beide basisaanvragen werken; de oorspronkelijke app-oorzaak is nog onbekend.
+- App- en containerversie bijgewerkt naar 0.3.0.1 voor installatie en updates via Home Assistant.
+
 ## 0.3.0
 
 - Koersinstellingen overzichtelijk gegroepeerd in verbinding, updateschema en API-limieten,

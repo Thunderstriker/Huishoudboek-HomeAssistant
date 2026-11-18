@@ -147,6 +147,7 @@
             <p class="investment-settings-estimate">@L["InvestmentEstimatedCalls", EstimatedCalls(), EstimatedDaily(s)]</p>
             <div class="actions"><button class="primary" type="submit" disabled="@State.Busy">@L["Save"]</button><button type="button" disabled="@(State.Busy || !market.HasKey || !market.Settings.Enabled)" @onclick="TestConnection">@L["InvestmentTest"]</button><button type="button" disabled="@(State.Busy || !market.HasKey || !market.Settings.Enabled)" @onclick="RefreshQuotes">@L["InvestmentRefresh"]</button><button type="button" disabled="@(State.Busy || !market.HasKey)" @onclick="RemoveKey">@L["InvestmentRemoveKey"]</button></div>
         </form>
+        <InvestmentMarketFeedback Report="market.Report" Running="marketActionRunning" Error="@marketActionError" />
         <p class="muted">@L["InvestmentBackupHelp"]</p>
     </details>
 }
@@ -163,6 +164,8 @@
     private InvestmentOverview? overview;
     private Guid? deleteTrade;
     private int historyPage;
+    private bool marketActionRunning;
+    private string? marketActionError;
     private bool editing => instrumentDraft != null || tradeDraft != null;
     protected override async Task OnInitializedAsync() { await LoadMarket(); settings = market!.Settings with { }; }
     private async Task LoadMarket() => market = await Backend.ReadAsync();
@@ -191,14 +194,25 @@
     private async Task DeleteTrade(Guid id) => await State.RunAsync(async () =>
     { await State.SaveAsync(d => d.InvestmentTrades.RemoveAll(t => t.Id == id), deleteRevision); deleteTrade = null; }, L["ChangesSaved"]);
     private async Task SaveSettings() => await State.RunAsync(async () =>
-    { try { await Backend.SaveSettingsAsync(settings!, replacementKey); } finally { replacementKey = ""; } await LoadMarket(); }, L["ChangesSaved"]);
+    { marketActionError = null; try { await Backend.SaveSettingsAsync(settings!, replacementKey); } finally { replacementKey = ""; } await LoadMarket(); }, L["ChangesSaved"]);
     private async Task RemoveKey() => await State.RunAsync(async () =>
     {
+        marketActionError = null;
         await Backend.SaveSettingsAsync(market!.Settings with { Enabled = false }, null, removeKey: true);
         replacementKey = ""; await LoadMarket(); settings = market!.Settings with { };
     }, L["ChangesSaved"]);
-    private async Task MarketAction(Func<Task> action) => await State.RunAsync(async () =>
-    { try { await action(); } finally { await LoadMarket(); if (overview != null) await overview.RefreshAsync(); } });
+    private async Task MarketAction(Func<Task> action)
+    {
+        if (State.Busy) return;
+        marketActionRunning = true; marketActionError = null;
+        try
+        {
+            var completed = await State.RunAsync(async () =>
+            { try { await action(); } finally { await LoadMarket(); if (overview != null) await overview.RefreshAsync(); } });
+            if (!completed) marketActionError = State.Message;
+        }
+        finally { marketActionRunning = false; }
+    }
     private async Task TestConnection() => await MarketAction(Backend.TestAsync);
     private async Task RefreshQuotes() => await MarketAction(Backend.RefreshAsync);
     private async Task Search() => await MarketAction(async () => matches = await Backend.SearchAsync(search));

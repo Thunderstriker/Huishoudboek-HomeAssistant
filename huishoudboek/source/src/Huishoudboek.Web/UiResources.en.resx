@@ -1305,8 +1305,40 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="InvestmentStatusEntitlementRequired" xml:space="preserve"><value>The provider requires additional paid data entitlements. Check your subscription and configured rights.</value></data>
   <data name="InvestmentStatusKeyOrAccessInvalid" xml:space="preserve"><value>The provider did not accept the key or data access. Check your settings locally.</value></data>
   <data name="InvestmentStatusKeyUnavailable" xml:space="preserve"><value>The stored key cannot be decrypted. Enter your own key again.</value></data>
-  <data name="InvestmentStatusConnectionFailed" xml:space="preserve"><value>The provider is unreachable or returned no usable response. Previous prices are retained.</value></data>
-  <data name="InvestmentStatusInvalidResponse" xml:space="preserve"><value>No usable provider response; no zero prices were stored.</value></data>
+  <data name="InvestmentStatusConnectionFailed" xml:space="preserve"><value>The provider is unreachable. Check internet access and DNS on the server and try again later. Previous prices are retained.</value></data>
+  <data name="InvestmentStatusInvalidResponse" xml:space="preserve"><value>The provider response contains missing or invalid data. Check the listing and currency and try again later; no zero prices were stored.</value></data>
   <data name="InvestmentStatusSymbolUnavailable" xml:space="preserve"><value>No usable quote for this listing. Check exchange, currency, symbol and data entitlement.</value></data>
   <data name="InvestmentStatusConfigurationInvalid" xml:space="preserve"><value>The local market-data configuration is damaged. Household records remain usable; re-enter your key and settings. Requests remain blocked for 24 hours as a precaution and the old file is preserved when saving.</value></data>
+  <data name="InvestmentRequestReport" xml:space="preserve"><value>Latest API action result</value></data>
+  <data name="InvestmentOperationRefresh" xml:space="preserve"><value>Fetch prices</value></data>
+  <data name="InvestmentOperationTest" xml:space="preserve"><value>Connection test</value></data>
+  <data name="InvestmentOperationSearch" xml:space="preserve"><value>Symbol search</value></data>
+  <data name="InvestmentRequestRunning" xml:space="preserve"><value>API requests are running. The per-minute budget may cause a wait; do not click again.</value></data>
+  <data name="InvestmentStatusRequesting" xml:space="preserve"><value>The API action is running. Results appear below; the per-minute budget may cause a wait.</value></data>
+  <data name="InvestmentStatusUpdateFailed" xml:space="preserve"><value>No data updated. See each request below for the cause and next step. Previously stored data is retained.</value></data>
+  <data name="InvestmentStatusInterrupted" xml:space="preserve"><value>The API action was interrupted, for example by a restart. Previously stored data is retained. Fetch again later if needed.</value></data>
+  <data name="InvestmentStatusHttpError" xml:space="preserve"><value>The provider rejected the request with an HTTP error. Check the HTTP code: for 401/403, check the key and access rights; for 5xx, try again later.</value></data>
+  <data name="InvestmentStatusTimeout" xml:space="preserve"><value>The provider did not respond within the timeout. Check the internet connection and try again later.</value></data>
+  <data name="InvestmentStatusProviderRejected" xml:space="preserve"><value>The provider returned a message instead of data; its cause could not be safely identified. Check the key, subscription and provider status in your provider account. No data from this response was stored.</value></data>
+  <data name="InvestmentStatusEmptyQuote" xml:space="preserve"><value>The provider returned no price for this symbol. Check the listing and data entitlements; a search match does not guarantee quote coverage.</value></data>
+  <data name="InvestmentStatusSymbolMismatch" xml:space="preserve"><value>The returned symbol does not match the selected listing. Nothing was overwritten; check the provider symbol mapping.</value></data>
+  <data name="InvestmentStatusOlderData" xml:space="preserve"><value>The provider returned older data than already stored. The newer stored data is retained.</value></data>
+  <data name="InvestmentRequestStarted" xml:space="preserve"><value>Started:</value></data>
+  <data name="InvestmentRequestCompleted" xml:space="preserve"><value>Completed:</value></data>
+  <data name="InvestmentRequestTarget" xml:space="preserve"><value>Request</value></data>
+  <data name="InvestmentRequestOutcome" xml:space="preserve"><value>Result / next step</value></data>
+  <data name="InvestmentRequestData" xml:space="preserve"><value>Data status</value></data>
+  <data name="InvestmentRequestKindQuote" xml:space="preserve"><value>Stock quote</value></data>
+  <data name="InvestmentRequestKindFx" xml:space="preserve"><value>Exchange rate</value></data>
+  <data name="InvestmentRequestKindTest" xml:space="preserve"><value>Test quote (IBM)</value></data>
+  <data name="InvestmentRequestKindSearch" xml:space="preserve"><value>Symbol search</value></data>
+  <data name="InvestmentRequestPending" xml:space="preserve"><value>Waiting for its turn.</value></data>
+  <data name="InvestmentRequestRequesting" xml:space="preserve"><value>Fetching or waiting for the per-minute budget.</value></data>
+  <data name="InvestmentRequestNotRequested" xml:space="preserve"><value>Not completed or not sent: the API action stopped. See the error for this action.</value></data>
+  <data name="InvestmentRequestUpdated" xml:space="preserve"><value>Succeeded.</value></data>
+  <data name="InvestmentDataStateNotApplicable" xml:space="preserve"><value>Test/search only; no portfolio price stored.</value></data>
+  <data name="InvestmentDataStateUpdated" xml:space="preserve"><value>Data fetched and stored during this action.</value></data>
+  <data name="InvestmentDataStateRetained" xml:space="preserve"><value>Previously stored data retained; not refreshed during this action.</value></data>
+  <data name="InvestmentDataStateMissing" xml:space="preserve"><value>No stored data available.</value></data>
+  <data name="InvestmentRequestPrivacy" xml:space="preserve"><value>Diagnostics contain only symbols/currency pairs, fixed error codes and optional HTTP status codes; no API key, request URL or raw provider response.</value></data>
 </root>

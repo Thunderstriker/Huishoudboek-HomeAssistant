@@ -28,6 +28,7 @@ public sealed class InvestmentMarketStore
         public DateTime? BlockedUntilUtc { get; set; }
         // Codes, never raw provider messages, URLs, keys or exception text.
         public string Status { get; set; } = "NotConfigured";
+        public InvestmentMarketReport? Report { get; set; }
     }
 
     public InvestmentMarketStore(string administrationDirectory)
@@ -52,6 +53,12 @@ public sealed class InvestmentMarketStore
             _state.Settings.Validate();
             if (_state.ProtectedKey == null || _state.Quotes == null || _state.Rates == null || _state.RecentRequestsUtc == null || _state.RequestsToday < 0)
                 throw new InvalidOperationException();
+            if (_state.Report is { } storedReport && (storedReport.Requests == null || storedReport.Requests.Any(r => r == null)))
+                throw new InvalidOperationException();
+            // A restart must not leave the previous action looking as if it is still running.
+            if (_state.Report is { CompletedUtc: null } report)
+                _state.Report = report with { CompletedUtc = DateTime.UtcNow, Status = "Interrupted", ErrorCode = "Interrupted",
+                    Requests = report.Requests.Select(r => r.Status is "Pending" or "Requesting" ? r with { Status = "NotRequested" } : r).ToArray() };
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or NullReferenceException)
         {
@@ -113,10 +120,11 @@ public sealed class InvestmentMarketStore
 
     public InvestmentMarketSnapshot Snapshot(DateTime now) => Read(s => new InvestmentMarketSnapshot(s.Settings, s.ProtectedKey.Length > 0,
         s.Quotes.ToArray(), s.Rates.ToArray(), s.BudgetDayUtc == DateOnly.FromDateTime(now) ? s.RequestsToday : 0,
-        s.LastAttemptUtc, s.LastSuccessUtc, s.NextRefreshUtc, s.Status));
+        s.LastAttemptUtc, s.LastSuccessUtc, s.NextRefreshUtc, s.Status) { Report = s.Report });
 }
 
-public sealed class MarketDataException(string code) : Exception
+public sealed class MarketDataException(string code, int? httpStatusCode = null) : Exception
 {
     public string Code { get; } = code;
+    public int? HttpStatusCode { get; } = httpStatusCode;
 }

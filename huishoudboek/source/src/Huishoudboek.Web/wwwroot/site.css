@@ -71,6 +71,7 @@
 .investment-settings-group p{margin:0}.investment-settings-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:.75rem 1.5rem;margin:1rem 0;padding:1rem 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .investment-settings-status dt{color:var(--muted);font-size:.87rem}.investment-settings-status dd{margin:.2rem 0 0;font-variant-numeric:tabular-nums}
 .investment-settings-estimate{padding:.85rem 1rem;border-left:3px solid var(--accent);border-radius:0 6px 6px 0;background:#f0f7f5}
+.investment-request-report{margin:1rem 0;padding:1rem;border:1px solid var(--border);border-radius:10px;overflow-wrap:anywhere}.investment-request-report h3{margin-top:0}.investment-request-report td{vertical-align:top;white-space:normal;min-width:150px}.investment-request-http{display:block;color:var(--muted)}
 @media(max-width:700px){.investment-settings-grid{grid-template-columns:minmax(0,1fr);gap:1rem}.investment-settings-group{padding:1rem}.investment-settings .actions>*{width:100%;min-height:44px}}
 
 /* Dashboard-only content palette: keep forms and other work pages unchanged. */

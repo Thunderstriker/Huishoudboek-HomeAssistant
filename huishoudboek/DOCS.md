@@ -146,6 +146,24 @@ fictief cashdividend. Er is nog geen Bolero-bestandsimporter of bulkimport van m
 5. Ontbreekt een notering, laat die dan handmatig gewaardeerd. De app kiest nooit zelf
    een andere aandelenklasse, beurs, token of vervangend fonds.
 
+Na testen, zoeken of **Koersen nu opvragen** verschijnt naast de knoppen het
+**Resultaat laatste API-actie**. Dit blijft bewaard bij herladen en toont afzonderlijk
+de aandelenkoers (bijvoorbeeld AMZN) en wisselkoers (bijvoorbeeld USD→EUR), met oorzaak,
+vervolgstap, vaste foutcode en eventuele HTTP-statuscode. HTTP 200 kan nog steeds een
+providerfout bevatten, zoals ontbrekende gegevensrechten of een limiet. Het oplopen van
+de aanvraagteller bewijst daarom niet dat een bruikbare koers is ontvangen.
+
+De gegevensstatus vermeldt of gegevens in deze actie zijn opgehaald, eerder opgeslagen
+gegevens zijn behouden of gegevens ontbreken, inclusief de beschikbare koersdatum.
+Een mislukte afzonderlijke FX-aanvraag wegens ontbrekende gegevensrechten verhindert
+niet dat een beschikbare aandelenkoers in de handelsvaluta wordt opgehaald; zonder
+bruikbare FX kan de EUR-waardering wel ontbreken. Limieten, sleutel-/toegangsfouten en
+verbindingsfouten stoppen verdere aanvragen; overgeslagen aanvragen worden gemarkeerd.
+Na zoeken of testen geldt minimaal 30 seconden wachttijd voor een volledige update.
+Wachten op het minuutbudget wordt ook als voortgang aangegeven. Voor diagnose kunt u
+de foutcode en de betreffende notering/het valutapaar delen, nooit uw API-sleutel of de
+installatiegegevensmap. Onbewerkte providerantwoorden en aanvraag-URL's worden niet bewaard.
+
 Standaard: **dagelijks om 07:00 in de ingestelde lokale tijdzone**, met slotkoersen.
 Andere keuzes: alleen handmatig, een aantal gelijkmatig verdeelde updates per 24 uur,
 elk uur, of realtime polling met minimaal 60 seconden tussen volledige updates.
@@ -177,6 +195,48 @@ Officiële bronnen: [limieten](https://www.alphavantage.co/support/#support),
 [API-documentatie](https://www.alphavantage.co/documentation/),
 [betaalde gegevensrechten](https://www.alphavantage.co/premium/).
 Exacte dekking van uw noteringen moet u lokaal met de eigen sleutel controleren.
+
+### Koersaanvragen handmatig controleren
+
+Dezelfde basisaanvragen kunt u buiten de app testen. Vervang `YOUR_API_KEY` alleen
+lokaal door uw eigen sleutel; deel of commit nooit de ingevulde URL. Iedere handmatige
+aanvraag verbruikt providerbudget, maar verhoogt de lokale aanvraagteller van de app niet.
+
+**USD naar EUR** (EUR per 1 USD):
+
+```text
+https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=EUR&apikey=YOUR_API_KEY
+```
+
+Een bruikbaar antwoord bevat `Realtime Currency Exchange Rate`, met USD als
+`1. From_Currency Code`, EUR als `3. To_Currency Code`, een positieve `5. Exchange Rate`,
+een geldig tijdstip in `6. Last Refreshed` en `7. Time Zone` gelijk aan `UTC`.
+
+**AMZN-slotkoers**:
+
+```text
+https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=AMZN&apikey=YOUR_API_KEY
+```
+
+Een bruikbaar antwoord bevat `Global Quote`, met `01. symbol` gelijk aan `AMZN`, een
+positieve `05. price` en een geldige `07. latest trading day`. `08. previous close`
+wordt gebruikt voor het verschil sinds de vorige handelsafsluiting. Een leeg
+`Global Quote`-object of een veld `Information`, `Note` of `Error Message` kan ook bij
+HTTP 200 op een mislukte aanvraag wijzen.
+
+Voor een US-notering voegt de app bij vertraagde of realtime gegevens respectievelijk
+`entitlement=delayed` of `entitlement=realtime` toe. Die rechten moeten apart beschikbaar
+zijn. Een geslaagde basisaanvraag zonder deze parameter bewijst niet dat de varianten met
+deze parameter werken. Vergelijk daarom ook de opgeslagen app-instellingen.
+
+**Diagnosenotitie, 18 november 2026:** de gebruiker heeft bevestigd dat zowel de losse
+USD→EUR-aanvraag als de AMZN-basisaanvraag met de eigen sleutel werkt. Er zijn geen
+sleutels, actuele koersen of onbewerkte antwoorden vastgelegd. Ontbrekende dekking van
+deze twee basisaanvragen is daarmee op dat testmoment niet aangetoond; de oorzaak van
+de ontbrekende koersweergave in de app is nog niet vastgesteld. Controleer het
+**Resultaat laatste API-actie**, de ingestelde gegevensrechten, het lokale budget en de
+bereikbaarheid vanuit de app-server. Een geslaagde test vanaf een ander apparaat
+bewijst niet dat de app-server dezelfde netwerktoegang heeft.
 
 ### Boekhouding, privacy en back-ups
 

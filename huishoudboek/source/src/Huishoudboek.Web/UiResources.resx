@@ -1305,8 +1305,40 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="InvestmentStatusEntitlementRequired" xml:space="preserve"><value>De provider vereist aanvullende betaalde gegevensrechten. Controleer het abonnement en de ingestelde rechten.</value></data>
   <data name="InvestmentStatusKeyOrAccessInvalid" xml:space="preserve"><value>De provider accepteert de sleutel of gegevensrechten niet. Controleer uw instellingen lokaal.</value></data>
   <data name="InvestmentStatusKeyUnavailable" xml:space="preserve"><value>De opgeslagen sleutel kan niet worden ontsleuteld. Voer de eigen sleutel opnieuw in.</value></data>
-  <data name="InvestmentStatusConnectionFailed" xml:space="preserve"><value>De koersprovider is niet bereikbaar of gaf geen bruikbaar antwoord. Eerdere koersen blijven behouden.</value></data>
-  <data name="InvestmentStatusInvalidResponse" xml:space="preserve"><value>Geen bruikbaar providerantwoord; er zijn geen nulkoersen opgeslagen.</value></data>
+  <data name="InvestmentStatusConnectionFailed" xml:space="preserve"><value>De koersprovider is niet bereikbaar. Controleer internet en DNS op de server en probeer later opnieuw. Eerdere koersen blijven behouden.</value></data>
+  <data name="InvestmentStatusInvalidResponse" xml:space="preserve"><value>Het providerantwoord bevat ontbrekende of ongeldige gegevens. Controleer notering en valuta en probeer later opnieuw; er zijn geen nulkoersen opgeslagen.</value></data>
   <data name="InvestmentStatusSymbolUnavailable" xml:space="preserve"><value>Geen bruikbare koers voor deze notering. Controleer beurs, valuta, symbool en gegevensrechten.</value></data>
   <data name="InvestmentStatusConfigurationInvalid" xml:space="preserve"><value>De lokale koersconfiguratie is beschadigd. De administratie blijft bruikbaar; voer uw sleutel en instellingen opnieuw in. Aanvragen blijven uit voorzorg 24 uur geblokkeerd en het oude bestand wordt bij opslaan bewaard.</value></data>
+  <data name="InvestmentRequestReport" xml:space="preserve"><value>Resultaat laatste API-actie</value></data>
+  <data name="InvestmentOperationRefresh" xml:space="preserve"><value>Koersen opvragen</value></data>
+  <data name="InvestmentOperationTest" xml:space="preserve"><value>Verbindingstest</value></data>
+  <data name="InvestmentOperationSearch" xml:space="preserve"><value>Effect zoeken</value></data>
+  <data name="InvestmentRequestRunning" xml:space="preserve"><value>API-aanvragen worden uitgevoerd. Het minuutbudget kan voor wachttijd zorgen; klik niet opnieuw.</value></data>
+  <data name="InvestmentStatusRequesting" xml:space="preserve"><value>API-actie wordt uitgevoerd. De resultaten verschijnen hieronder; het minuutbudget kan voor wachttijd zorgen.</value></data>
+  <data name="InvestmentStatusUpdateFailed" xml:space="preserve"><value>Geen gegevens bijgewerkt. Bekijk hieronder per aanvraag de oorzaak en vervolgstap. Eerdere gegevens blijven behouden.</value></data>
+  <data name="InvestmentStatusInterrupted" xml:space="preserve"><value>De API-actie is onderbroken, bijvoorbeeld door een herstart. Eerdere gegevens blijven behouden. Vraag later zo nodig opnieuw op.</value></data>
+  <data name="InvestmentStatusHttpError" xml:space="preserve"><value>De provider heeft de aanvraag met een HTTP-fout geweigerd. Bekijk de HTTP-code: controleer bij 401/403 de sleutel en toegangsrechten; probeer bij 5xx later opnieuw.</value></data>
+  <data name="InvestmentStatusTimeout" xml:space="preserve"><value>De provider antwoordde niet binnen de wachttijd. Controleer de internetverbinding en probeer later opnieuw.</value></data>
+  <data name="InvestmentStatusProviderRejected" xml:space="preserve"><value>De provider gaf een melding in plaats van gegevens; de oorzaak kon niet veilig worden herkend. Controleer sleutel, abonnement en providerstatus in uw provideraccount. Er zijn geen gegevens uit dit antwoord opgeslagen.</value></data>
+  <data name="InvestmentStatusEmptyQuote" xml:space="preserve"><value>De provider gaf geen koers terug voor dit symbool. Controleer de notering en gegevensrechten; een zoekresultaat garandeert geen koersdekking.</value></data>
+  <data name="InvestmentStatusSymbolMismatch" xml:space="preserve"><value>Het teruggestuurde symbool komt niet overeen met de gekozen notering. Er is niets overschreven; controleer de providersymboolkoppeling.</value></data>
+  <data name="InvestmentStatusOlderData" xml:space="preserve"><value>De provider gaf oudere gegevens terug dan al zijn opgeslagen. De nieuwere opgeslagen gegevens zijn behouden.</value></data>
+  <data name="InvestmentRequestStarted" xml:space="preserve"><value>Gestart:</value></data>
+  <data name="InvestmentRequestCompleted" xml:space="preserve"><value>Afgerond:</value></data>
+  <data name="InvestmentRequestTarget" xml:space="preserve"><value>Aanvraag</value></data>
+  <data name="InvestmentRequestOutcome" xml:space="preserve"><value>Resultaat / vervolgstap</value></data>
+  <data name="InvestmentRequestData" xml:space="preserve"><value>Gegevensstatus</value></data>
+  <data name="InvestmentRequestKindQuote" xml:space="preserve"><value>Aandelenkoers</value></data>
+  <data name="InvestmentRequestKindFx" xml:space="preserve"><value>Wisselkoers</value></data>
+  <data name="InvestmentRequestKindTest" xml:space="preserve"><value>Testkoers (IBM)</value></data>
+  <data name="InvestmentRequestKindSearch" xml:space="preserve"><value>Symbolen zoeken</value></data>
+  <data name="InvestmentRequestPending" xml:space="preserve"><value>Nog niet aan de beurt.</value></data>
+  <data name="InvestmentRequestRequesting" xml:space="preserve"><value>Bezig met opvragen of wachten op het minuutbudget.</value></data>
+  <data name="InvestmentRequestNotRequested" xml:space="preserve"><value>Niet afgerond of niet verstuurd: de API-actie is gestopt. Bekijk de foutmelding bij deze actie.</value></data>
+  <data name="InvestmentRequestUpdated" xml:space="preserve"><value>Geslaagd.</value></data>
+  <data name="InvestmentDataStateNotApplicable" xml:space="preserve"><value>Test/zoekactie; geen portefeuillekoers opgeslagen.</value></data>
+  <data name="InvestmentDataStateUpdated" xml:space="preserve"><value>Gegevens in deze actie opgehaald en opgeslagen.</value></data>
+  <data name="InvestmentDataStateRetained" xml:space="preserve"><value>Laatst opgeslagen gegevens behouden; niet vernieuwd in deze actie.</value></data>
+  <data name="InvestmentDataStateMissing" xml:space="preserve"><value>Geen opgeslagen gegevens beschikbaar.</value></data>
+  <data name="InvestmentRequestPrivacy" xml:space="preserve"><value>Diagnostiek bevat alleen symbolen/valutaparen, vaste foutcodes en eventuele HTTP-statuscodes; geen API-sleutel, aanvraag-URL of onbewerkt providerantwoord.</value></data>
 </root>

@@ -15,24 +15,32 @@ public sealed class AlphaVantageClient : IDisposable
     {
         try
         {
+            // ResponseHeadersRead does not apply HttpClient.Timeout to subsequent body reads.
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(_http.Timeout);
+            var requestToken = timeout.Token;
             var query = string.Join("&", parameters.Select(p => Uri.EscapeDataString(p.Key) + "=" + Uri.EscapeDataString(p.Value)));
             using var response = await _http.GetAsync("https://www.alphavantage.co/query?" + query + "&apikey=" + Uri.EscapeDataString(key),
-                HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            if ((int)response.StatusCode == 429) throw new MarketDataException("ProviderLimit");
-            if (!response.IsSuccessStatusCode) throw new MarketDataException("ConnectionFailed");
-            await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
+                HttpCompletionOption.ResponseHeadersRead, requestToken);
+            if ((int)response.StatusCode == 429) throw new MarketDataException("ProviderLimit", 429);
+            if (!response.IsSuccessStatusCode) throw new MarketDataException("HttpError", (int)response.StatusCode);
+            await using var input = await response.Content.ReadAsStreamAsync(requestToken);
             using var output = new MemoryStream();
             var buffer = new byte[8192]; int count;
-            while ((count = await input.ReadAsync(buffer, cancellationToken)) > 0)
+            while ((count = await input.ReadAsync(buffer, requestToken)) > 0)
             {
-                if (output.Length + count > 1_048_576) throw new MarketDataException("InvalidResponse");
+                if (output.Length + count > 1_048_576) throw new MarketDataException("InvalidResponse", (int)response.StatusCode);
                 output.Write(buffer, 0, count);
             }
-            var document = JsonDocument.Parse(output.ToArray());
+            JsonDocument document;
+            try { document = JsonDocument.Parse(output.ToArray()); }
+            catch (JsonException) { throw new MarketDataException("InvalidResponse", (int)response.StatusCode); }
             try { Check(document.RootElement); return document; }
-            catch { document.Dispose(); throw; }
+            catch (MarketDataException ex) { document.Dispose(); throw new MarketDataException(ex.Code, (int)response.StatusCode); }
         }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException or IOException || ex is OperationCanceledException && !cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        { throw new MarketDataException("Timeout"); }
+        catch (Exception ex) when (ex is HttpRequestException or IOException)
         { throw new MarketDataException("ConnectionFailed"); }
     }
 
@@ -44,23 +52,31 @@ public sealed class AlphaVantageClient : IDisposable
             if (root.TryGetProperty(name, out var error))
             {
                 var text = error.ToString();
+                if (text.Contains("premium endpoint", StringComparison.OrdinalIgnoreCase) || text.Contains("premium-only", StringComparison.OrdinalIgnoreCase) ||
+                    text.Contains("premium access", StringComparison.OrdinalIgnoreCase) || text.Contains("entitlement", StringComparison.OrdinalIgnoreCase))
+                    throw new MarketDataException("EntitlementRequired");
                 if (text.Contains("rate limit", StringComparison.OrdinalIgnoreCase) || text.Contains("frequency", StringComparison.OrdinalIgnoreCase) ||
                     text.Contains("requests per day", StringComparison.OrdinalIgnoreCase)) throw new MarketDataException("ProviderLimit");
                 if (text.Contains("premium", StringComparison.OrdinalIgnoreCase) || text.Contains("entitlement", StringComparison.OrdinalIgnoreCase))
                     throw new MarketDataException("EntitlementRequired");
-                throw new MarketDataException("KeyOrAccessInvalid");
+                if (new[] { "invalid key", "invalid api key", "api key is invalid", "apikey is invalid", "api key is not valid", "missing api key", "api key is missing" }
+                    .Any(phrase => text.Contains(phrase, StringComparison.OrdinalIgnoreCase))) throw new MarketDataException("KeyOrAccessInvalid");
+                throw new MarketDataException("ProviderRejected");
             }
     }
 
     public static InvestmentQuote ParseQuote(JsonElement root, InvestmentInstrument instrument, QuoteFreshness freshness, DateTime now)
     {
         Check(root);
-        if (!root.TryGetProperty("Global Quote", out var q) || !q.TryGetProperty("01. symbol", out var symbol) ||
-            !string.Equals(symbol.GetString(), instrument.ProviderSymbol, StringComparison.OrdinalIgnoreCase) ||
-            !TryDecimal(q, "05. price", out var price) || price is <= 0 or > 1_000_000_000 ||
+        if (!root.TryGetProperty("Global Quote", out var q) || q.ValueKind != JsonValueKind.Object || !q.EnumerateObject().Any())
+            throw new MarketDataException("EmptyQuote");
+        if (!q.TryGetProperty("01. symbol", out var symbol) || symbol.ValueKind != JsonValueKind.String ||
+            !string.Equals(symbol.GetString(), instrument.ProviderSymbol, StringComparison.OrdinalIgnoreCase))
+            throw new MarketDataException("SymbolMismatch");
+        if (!TryDecimal(q, "05. price", out var price) || price is <= 0 or > 1_000_000_000 ||
             !q.TryGetProperty("07. latest trading day", out var date) || !DateOnly.TryParseExact(date.GetString(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day) ||
             day > DateOnly.FromDateTime(now.AddDays(1)) || day.Year < 1900)
-            throw new MarketDataException("SymbolUnavailable");
+            throw new MarketDataException("InvalidResponse");
         decimal? previous = TryDecimal(q, "08. previous close", out var close) && close > 0 ? close : null;
         return new(instrument.Id, instrument.ProviderSymbol, instrument.Currency, price, previous, day, now, freshness);
     }

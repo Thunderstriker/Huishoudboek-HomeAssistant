@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Security.Claims;
 using Huishoudboek.Core;
 using Huishoudboek.Infrastructure;
@@ -9,9 +10,12 @@ using Huishoudboek.Service;
 using Huishoudboek.Web;
 using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 internal static class InvestmentTests
 {
@@ -274,6 +278,218 @@ internal static class InvestmentTests
             market.RefreshAsync().GetAwaiter().GetResult();
             Equal(2, handler.Calls); Equal(2, market.Read().Quotes.Count); Equal(1, market.Read().Rates.Count);
         }));
+        yield return ("Refresh reports successful AMZN and FX requests and persists safe diagnostics", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Market.RefreshAsync().GetAwaiter().GetResult();
+            var snapshot = f.Market.Read(); var report = snapshot.Report!;
+            Equal("Refresh", report.Operation); Equal("Updated", report.Status); True(report.CompletedUtc >= report.StartedUtc);
+            Equal(2, report.Requests.Count); Equal(2, f.Handler.Calls); Equal(2, snapshot.RequestsToday);
+            True(report.Requests.All(r => r.Status == "Updated" && r.DataState == InvestmentDataState.Updated));
+            Equal("USD→EUR", report.Requests[0].Target); Equal("AMZN", report.Requests[1].Target);
+            Equal<DateOnly?>(Portfolio.Today, report.Requests[1].PriceDate);
+            Equal("Updated", new InvestmentMarketStore(directory).Snapshot(DateTime.UtcNow).Report!.Status);
+            True(!JsonSerializer.Serialize(snapshot).Contains(MarketFixture.Secret));
+        }));
+        yield return ("Unsupported FX access is reported separately and does not block a native AMZN quote", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Handler.Reply = uri => uri.Query.Contains("CURRENCY_EXCHANGE_RATE")
+                ? "{\"Information\":\"premium access required; " + MarketFixture.Secret + " https://private.invalid/?apikey=" + MarketFixture.Secret + "\"}"
+                : QuoteJson(symbol: "AMZN");
+            f.Market.RefreshAsync().GetAwaiter().GetResult();
+            var snapshot = f.Market.Read(); var report = snapshot.Report!;
+            Equal("PartialUpdate", report.Status); Equal("PartialUpdate", snapshot.Status); Equal(2, f.Handler.Calls);
+            Equal("EntitlementRequired", report.Requests[0].Status); Equal<int?>(200, report.Requests[0].HttpStatusCode);
+            Equal(InvestmentDataState.Missing, report.Requests[0].DataState);
+            Equal("Updated", report.Requests[1].Status); Equal(110m, snapshot.Quotes.Single().Price); Equal(0, snapshot.Rates.Count);
+            Equal<DateTime?>(null, snapshot.LastSuccessUtc);
+            var json = JsonSerializer.Serialize(snapshot);
+            True(!json.Contains(MarketFixture.Secret)); True(!json.Contains("private.invalid")); True(!json.Contains("premium access required"));
+        }));
+        yield return ("Failed refresh retains dated cached quotes and FX and does not claim a partial success", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Market.RefreshAsync().GetAwaiter().GetResult(); var before = f.Market.Read();
+            f.ClearCooldown();
+            f.Handler.Reply = uri => uri.Query.Contains("CURRENCY_EXCHANGE_RATE") ? "{}" : "{\"Global Quote\":{}}";
+            f.Market.RefreshAsync().GetAwaiter().GetResult();
+            var after = f.Market.Read(); var report = after.Report!;
+            Equal("UpdateFailed", report.Status); Equal("UpdateFailed", after.Status); Equal(before.LastSuccessUtc, after.LastSuccessUtc);
+            Equal(before.Quotes.Single(), after.Quotes.Single()); Equal(before.Rates.Single(), after.Rates.Single());
+            True(report.Requests.All(r => r.DataState == InvestmentDataState.Retained));
+            Equal("InvalidResponse", report.Requests[0].Status); Equal("EmptyQuote", report.Requests[1].Status);
+            Equal(before.Quotes.Single().PriceDate, report.Requests[1].PriceDate!.Value);
+            Equal(before.Rates.Single().RetrievedUtc, report.Requests[0].DataUtc!.Value);
+        }));
+        yield return ("Provider limits identify the failed endpoint and the unrequested quote without retrying", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Handler.Reply = _ => "{\"Note\":\"25 requests per day; " + MarketFixture.Secret + "\"}";
+            ExpectMarketError("ProviderLimit", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
+            var snapshot = f.Market.Read(); var report = snapshot.Report!;
+            Equal(1, f.Handler.Calls); Equal(1, snapshot.RequestsToday); Equal("ProviderLimit", report.ErrorCode);
+            Equal("UpdateFailed", report.Status); True(report.CompletedUtc != null);
+            Equal("ProviderLimit", report.Requests[0].Status); Equal<int?>(200, report.Requests[0].HttpStatusCode);
+            Equal("NotRequested", report.Requests[1].Status); Equal(InvestmentDataState.Missing, report.Requests[1].DataState);
+            True(f.Store.Read(s => s.BlockedUntilUtc) > DateTime.UtcNow);
+        }));
+        yield return ("A local budget failure is visible without inventing an HTTP response or sending a request", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Store.Update(s => { s.Settings.DailyLimit = 1; s.BudgetDayUtc = DateOnly.FromDateTime(DateTime.UtcNow); s.RequestsToday = 1; });
+            ExpectMarketError("DailyLimit", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
+            var report = f.Market.Read().Report!;
+            Equal(0, f.Handler.Calls); Equal("DailyLimit", report.ErrorCode);
+            Equal("DailyLimit", report.Requests[0].Status); Equal<int?>(null, report.Requests[0].HttpStatusCode);
+            Equal("NotRequested", report.Requests[1].Status);
+        }));
+        yield return ("HTTP, timeout, transport and malformed responses produce safe actionable endpoint diagnostics", () =>
+        {
+            foreach (var code in new[] { "HttpError", "Timeout", "ConnectionFailed", "InvalidResponse", "EmptyQuote", "SymbolMismatch" })
+                InDirectory(directory =>
+                {
+                    using var f = new MarketFixture(directory, "EUR");
+                    f.Handler.StatusCode = code == "HttpError" ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK;
+                    f.Handler.Reply = _ => code switch
+                    {
+                        "Timeout" => throw new TaskCanceledException(MarketFixture.Secret),
+                        "ConnectionFailed" => throw new HttpRequestException("https://private.invalid/?apikey=" + MarketFixture.Secret),
+                        "InvalidResponse" => "not JSON " + MarketFixture.Secret,
+                        "EmptyQuote" => "{\"Global Quote\":{}}",
+                        "SymbolMismatch" => QuoteJson(symbol: "OTHER"),
+                        _ => MarketFixture.Secret
+                    };
+                    try { f.Market.RefreshAsync().GetAwaiter().GetResult(); }
+                    catch (MarketDataException ex) { Equal(code, ex.Code); True(!ex.ToString().Contains(MarketFixture.Secret)); }
+                    var report = f.Market.Read().Report!; var request = report.Requests.Single();
+                    Equal("UpdateFailed", report.Status); Equal(code, request.Status); Equal("AMZN", request.Target);
+                    Equal(InvestmentDataState.Missing, request.DataState); Equal(1, f.Handler.Calls);
+                    if (code == "HttpError") Equal<int?>(503, request.HttpStatusCode);
+                    if (code == "InvalidResponse") Equal<int?>(200, request.HttpStatusCode);
+                    True(!JsonSerializer.Serialize(report).Contains(MarketFixture.Secret));
+                    True(!File.ReadAllText(Path.Combine(directory, "market-data", "state.json")).Contains(MarketFixture.Secret));
+                });
+        });
+        yield return ("Older provider data is diagnosed and never overwrites newer stored prices", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory, "EUR");
+            f.Market.RefreshAsync().GetAwaiter().GetResult();
+            f.Store.Update(s => s.Quotes[0] = s.Quotes[0] with { PriceDate = Portfolio.Today.AddDays(1), Price = 120 });
+            f.ClearCooldown(); f.Market.RefreshAsync().GetAwaiter().GetResult();
+            var snapshot = f.Market.Read(); var result = snapshot.Report!.Requests.Single();
+            Equal("OlderData", result.Status); Equal(InvestmentDataState.Retained, result.DataState); Equal(120m, snapshot.Quotes.Single().Price);
+        }));
+        yield return ("Cooldown after a connection test explains why every refresh request was skipped", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Handler.Reply = _ => QuoteJson();
+            f.Market.TestAsync().GetAwaiter().GetResult();
+            Equal("Test", f.Market.Read().Report!.Operation); Equal("ConnectionOk", f.Market.Read().Report!.Status);
+            ExpectMarketError("RefreshCooldown", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
+            var report = f.Market.Read().Report!;
+            Equal("RefreshCooldown", report.ErrorCode); True(report.Requests.All(r => r.Status == "NotRequested")); Equal(1, f.Handler.Calls);
+        }));
+        yield return ("Connection-test and search failures have safe reports without persisting search terms", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Handler.Reply = _ => "{\"Global Quote\":{}}";
+            ExpectMarketError("EmptyQuote", () => f.Market.TestAsync().GetAwaiter().GetResult());
+            Equal("Test", f.Market.Read().Report!.Operation); Equal("IBM", f.Market.Read().Report!.Requests.Single().Target);
+            f.Handler.Reply = _ => "{\"Information\":\"invalid key " + MarketFixture.Secret + "\"}";
+            ExpectMarketError("KeyOrAccessInvalid", () => f.Market.SearchAsync("private-search-term").GetAwaiter().GetResult());
+            var report = f.Market.Read().Report!;
+            Equal("Search", report.Operation); Equal("", report.Requests.Single().Target);
+            True(!JsonSerializer.Serialize(report).Contains("private-search-term"));
+        }));
+        yield return ("Existing market state without diagnostics remains compatible and interrupted reports finish safely", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            var path = Path.Combine(directory, "market-data", "state.json");
+            var legacy = JsonNode.Parse(File.ReadAllText(path))!.AsObject(); legacy.Remove("Report"); File.WriteAllText(path, legacy.ToJsonString());
+            var upgraded = new InvestmentMarketStore(directory);
+            True(upgraded.Key() == MarketFixture.Secret); Equal<InvestmentMarketReport?>(null, upgraded.Snapshot(DateTime.UtcNow).Report);
+            upgraded.Update(s => s.Report = new("Refresh", DateTime.UtcNow, null, "Requesting",
+                [new("Quote", "AMZN", "Requesting", InvestmentDataState.Missing)]));
+            var restarted = new InvestmentMarketStore(directory).Snapshot(DateTime.UtcNow).Report!;
+            Equal("Interrupted", restarted.Status); True(restarted.CompletedUtc != null); Equal("NotRequested", restarted.Requests.Single().Status);
+        }));
+        yield return ("Refreshing without open holdings explicitly reports no symbols without spending quota", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Coordinator.Update(f.Coordinator.Read().Revision, d => d.InvestmentTrades.Clear());
+            f.Market.RefreshAsync().GetAwaiter().GetResult();
+            Equal("NoSymbols", f.Market.Read().Report!.Status); Equal(0, f.Handler.Calls);
+        }));
+        yield return ("Progress identifies the current request and busy actions cannot overwrite the running report", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            var observed = 0;
+            f.Handler.Reply = uri =>
+            {
+                var report = f.Market.Read().Report!;
+                Equal("Requesting", report.Status); Equal<DateTime?>(null, report.CompletedUtc);
+                if (observed++ == 0)
+                {
+                    Equal("Requesting", report.Requests[0].Status); Equal("Pending", report.Requests[1].Status);
+                    ExpectMarketError("Busy", () => f.Market.TestAsync().GetAwaiter().GetResult());
+                    Equal("Refresh", f.Market.Read().Report!.Operation);
+                }
+                else { Equal("Updated", report.Requests[0].Status); Equal("Requesting", report.Requests[1].Status); }
+                return uri.Query.Contains("CURRENCY_EXCHANGE_RATE") ? FxJson() : QuoteJson(symbol: "AMZN");
+            };
+            f.Market.RefreshAsync().GetAwaiter().GetResult();
+            Equal(2, observed); Equal("Updated", f.Market.Read().Report!.Status);
+        }));
+        yield return ("Cancellation completes diagnostics and leaves remaining requests unrequested", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory); using var stop = new CancellationTokenSource();
+            f.Handler.Reply = _ => { stop.Cancel(); throw new OperationCanceledException(stop.Token); };
+            try { f.Market.RefreshAsync(cancellationToken: stop.Token).GetAwaiter().GetResult(); throw new Exception("Expected cancellation"); }
+            catch (OperationCanceledException) { }
+            var snapshot = f.Market.Read(); var report = snapshot.Report!;
+            Equal("Interrupted", snapshot.Status); Equal("Interrupted", report.ErrorCode); True(report.CompletedUtc != null);
+            True(report.Requests.All(r => r.Status == "NotRequested")); Equal(1, f.Handler.Calls);
+        }));
+        yield return ("A budget exhausted after FX success reports a partial update and the exact stopped quote", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Store.Update(s => s.Settings.DailyLimit = 1);
+            ExpectMarketError("DailyLimit", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
+            var report = f.Market.Read().Report!;
+            Equal("PartialUpdate", report.Status); Equal("DailyLimit", report.ErrorCode);
+            Equal("Updated", report.Requests[0].Status); Equal("DailyLimit", report.Requests[1].Status); Equal(1, f.Handler.Calls);
+        }));
+        yield return ("HTTP 429 records the status and applies the same durable pause as an HTTP-200 provider limit", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory);
+            f.Handler.StatusCode = HttpStatusCode.TooManyRequests;
+            ExpectMarketError("ProviderLimit", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
+            Equal<int?>(429, f.Market.Read().Report!.Requests[0].HttpStatusCode);
+            Equal(1, f.Handler.Calls); True(f.Store.Read(s => s.BlockedUntilUtc) > DateTime.UtcNow);
+        }));
+        yield return ("Provider explanations are classified without mistaking subscription advice for a limit or exposing raw text", () =>
+        {
+            foreach (var (text, expected) in new[]
+            {
+                ("This is a premium endpoint. Check your request frequency.", "EntitlementRequired"),
+                ("Our standard API rate limit is 25 requests per day. Subscribe to premium.", "ProviderLimit"),
+                ("The API key is invalid.", "KeyOrAccessInvalid"),
+                ("Unrecognized provider notice.", "ProviderRejected")
+            })
+            {
+                using var json = JsonDocument.Parse(JsonSerializer.Serialize(new { Information = text + " " + MarketFixture.Secret }));
+                ExpectMarketError(expected, () => AlphaVantageClient.Check(json.RootElement));
+            }
+        });
+        yield return ("The response body receives a deadline token and a stalled read is diagnosed as a timeout", () => InDirectory(directory =>
+        {
+            using var f = new MarketFixture(directory, "EUR");
+            using var stream = new TimeoutReadStream();
+            f.Handler.Content = new StreamContent(stream);
+            ExpectMarketError("Timeout", () => f.Market.RefreshAsync().GetAwaiter().GetResult());
+            True(stream.CancellableRead); Equal("Timeout", f.Market.Read().Report!.Requests.Single().Status); Equal(1, f.Handler.Calls);
+        }));
         yield return ("Market cache corruption fails closed without blocking household records", () => InDirectory(directory =>
         {
             using var coordinator = new AdministrationCoordinator(directory, initialize: true);
@@ -339,6 +555,7 @@ internal static class InvestmentTests
                 True(html.Contains(language == "nl-NL" ? "sinds vorige handelsafsluiting" : "since previous trading close"));
                 True(!html.Contains("<canvas")); True(!html.Contains("InvestmentSinceBuys"));
                 True(!html.Contains("ProtectedKey")); True(!html.Contains("fictionalkey12345"));
+                True(!html.Contains("marketActionError"));
                 True(html.Contains("class=\"investment-settings-grid\""));
                 True(html.Contains("<legend>" + (language == "nl-NL" ? "Verbinding" : "Connection") + "</legend>"));
                 True(html.Contains("<legend>" + (language == "nl-NL" ? "Updateschema" : "Update schedule") + "</legend>"));
@@ -357,6 +574,40 @@ internal static class InvestmentTests
             var home = await client.GetStringAsync("/");
             True(home.Contains("investment-holding")); True(home.Contains("Fictional stock"));
             Equal(0, market.Read().RequestsToday);
+            var store = app.Services.GetRequiredService<InvestmentMarketStore>();
+            foreach (var language in new[] { "nl-NL", "en-GB" })
+            foreach (var status in new[] { "PartialUpdate", "UpdateFailed", "Updated", "Requesting", "Interrupted", "NoSymbols", "ConnectionOk", "SearchOk" })
+            {
+                store.Update(s => s.Report = new("Refresh", DateTime.UtcNow, status == "Requesting" ? null : DateTime.UtcNow, status,
+                    [new("Fx", "USD→EUR", "EntitlementRequired", InvestmentDataState.Missing, HttpStatusCode: 200),
+                     new("Quote", "AMZN", "Updated", InvestmentDataState.Updated, PriceDate: Portfolio.Today),
+                     new("Quote", "IBM", "EmptyQuote", InvestmentDataState.Retained, PriceDate: Portfolio.Today)]));
+                using var request = new HttpRequestMessage(HttpMethod.Get, "/beleggingen");
+                request.Headers.Add("Cookie", ".AspNetCore.Culture=" + Uri.EscapeDataString("c=" + language + "|uic=" + language));
+                using var response = await client.SendAsync(request);
+                var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+                True(response.IsSuccessStatusCode);
+                True(html.Contains(language == "nl-NL" ? "Resultaat laatste API-actie" : "Latest API action result"));
+                True(html.Contains(language == "nl-NL" ? "aanvullende betaalde gegevensrechten" : "additional paid data entitlements"));
+                True(html.Contains(language == "nl-NL" ? "geen koers terug voor dit symbool" : "no price for this symbol"));
+                True(html.Contains(language == "nl-NL" ? "Laatst opgeslagen gegevens behouden" : "Previously stored data retained"));
+                True(html.Contains("AMZN")); True(html.Contains("USD→EUR")); True(html.Contains("HTTP 200"));
+                True(html.Contains("GLOBAL_QUOTE")); True(html.Contains("CURRENCY_EXCHANGE_RATE"));
+                True(!html.Contains("InvestmentStatus")); True(!html.Contains("InvestmentDataState"));
+                True(!html.Contains(MarketFixture.Secret)); True(!html.Contains("apikey="));
+                if (status == "UpdateFailed") True(html.Contains(language == "nl-NL" ? "Geen gegevens bijgewerkt." : "No data updated."));
+                if (status == "Requesting") True(html.Contains(language == "nl-NL" ? "API-actie wordt uitgevoerd" : "API action is running"));
+            }
+            await using var scope = app.Services.CreateAsyncScope();
+            await using var renderer = new HtmlRenderer(scope.ServiceProvider, app.Services.GetRequiredService<ILoggerFactory>());
+            var feedback = await renderer.Dispatcher.InvokeAsync(async () =>
+            {
+                var output = await renderer.RenderComponentAsync<Huishoudboek.Web.Components.Shared.InvestmentMarketFeedback>(ParameterView.FromDictionary(
+                    new Dictionary<string, object?> { ["Running"] = true, ["Error"] = "Safe local failure <details>" }));
+                return output.ToHtmlString();
+            });
+            True(feedback.Contains("role=\"alert\"")); True(feedback.Contains("role=\"status\""));
+            True(feedback.Contains("Safe local failure &lt;details&gt;")); True(!feedback.Contains("<details>"));
         }
         finally { await app.StopAsync(); }
     }
@@ -365,6 +616,11 @@ internal static class InvestmentTests
     { if (!EqualityComparer<T>.Default.Equals(expected, actual)) throw new Exception($"Expected {expected}, got {actual}."); }
     private static void True(bool value) { if (!value) throw new Exception("Assertion failed."); }
     private static void Throws(Action action) { try { action(); } catch (InvalidOperationException) { return; } throw new Exception("Expected validation failure."); }
+    private static void ExpectMarketError(string code, Action action)
+    {
+        try { action(); } catch (MarketDataException ex) { Equal(code, ex.Code); return; }
+        throw new Exception("Expected market-data failure: " + code);
+    }
     private static void InDirectory(Action<string> test)
     {
         var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp", "opencode", "investment-tests-" + Guid.NewGuid().ToString("N"));
@@ -380,11 +636,44 @@ internal static class InvestmentTests
         public int Calls { get; private set; }
         public List<Uri> Uris { get; } = [];
         public Func<Uri, string> Reply { get; set; } = reply;
+        public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.OK;
+        public HttpContent? Content { get; set; }
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Calls++; Uris.Add(request.RequestUri!);
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(Reply(request.RequestUri!)) });
+            return Task.FromResult(new HttpResponseMessage(StatusCode) { Content = Content ?? new StringContent(Reply(request.RequestUri!)) });
         }
+    }
+    private sealed class TimeoutReadStream : MemoryStream
+    {
+        public bool CancellableRead { get; private set; }
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            CancellableRead = cancellationToken.CanBeCanceled;
+            throw new OperationCanceledException(cancellationToken);
+        }
+    }
+    private sealed class MarketFixture : IDisposable
+    {
+        public const string Secret = "fictionalkey12345";
+        public AdministrationCoordinator Coordinator { get; }
+        public InvestmentMarketStore Store { get; }
+        public FakeHandler Handler { get; }
+        private readonly AlphaVantageClient _client;
+        public InvestmentMarketService Market { get; }
+        public MarketFixture(string directory, string currency = "USD")
+        {
+            var f = new Portfolio(currency); f.Instrument.ProviderSymbol = "AMZN"; f.Instrument.MappingConfirmed = true; f.Buy(1, 100);
+            Coordinator = new(directory, initialize: true);
+            Coordinator.Update(Coordinator.Read().Revision, d =>
+            { d.Owners = f.Data.Owners; d.Accounts = f.Data.Accounts; d.Instruments = f.Data.Instruments; d.InvestmentTrades = f.Data.InvestmentTrades; });
+            Store = new(directory);
+            Handler = new(uri => uri.Query.Contains("CURRENCY_EXCHANGE_RATE") ? FxJson() : QuoteJson(symbol: "AMZN"));
+            _client = new(Handler); Market = new(Store, _client, Coordinator);
+            Market.SaveSettingsAsync(new() { Enabled = true, Frequency = QuoteFrequency.Manual }, Secret, false).GetAwaiter().GetResult();
+        }
+        public void ClearCooldown() => Store.Update(s => s.LastAttemptUtc = DateTime.UtcNow.AddMinutes(-2));
+        public void Dispose() { Market.Dispose(); _client.Dispose(); Coordinator.Dispose(); }
     }
     private sealed class TestAuthentication : AuthenticationStateProvider
     {

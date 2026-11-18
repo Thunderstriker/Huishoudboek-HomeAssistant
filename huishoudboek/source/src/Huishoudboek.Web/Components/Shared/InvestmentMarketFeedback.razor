@@ -1,0 +1,57 @@
+@if (Running)
+{
+    <p class="notice" role="status" aria-live="polite">@L["InvestmentRequestRunning"]</p>
+}
+@if (!string.IsNullOrEmpty(Error))
+{
+    <p class="notice error" role="alert">@Error</p>
+}
+@if (Report is { } report)
+{
+    <section class="investment-request-report" aria-label="@L["InvestmentRequestReport"]" aria-busy="@(report.CompletedUtc == null)">
+        <h3>@L["InvestmentRequestReport"] · @L["InvestmentOperation" + report.Operation]</h3>
+        <p class="notice @(report.Status == "UpdateFailed" ? "error" : report.Status is "PartialUpdate" or "Interrupted" ? "warning" : "")" role="status" aria-live="polite">
+            @L["InvestmentStatus" + report.Status]
+        </p>
+        @if (report.ErrorCode is { } errorCode)
+        {
+            <p>@L["InvestmentStatus" + errorCode] <small class="muted">(@errorCode)</small></p>
+        }
+        <p class="muted">@L["InvestmentRequestStarted"] @Local(report.StartedUtc) · @L["InvestmentRequestCompleted"] @(report.CompletedUtc is { } completed ? Local(completed) : "—")</p>
+        @if (report.Requests.Count > 0)
+        {
+            <div class="table-scroll"><table>
+                <thead><tr><th>@L["InvestmentRequestTarget"]</th><th>@L["InvestmentRequestOutcome"]</th><th>@L["InvestmentRequestData"]</th></tr></thead>
+                <tbody>
+                    @foreach (var request in report.Requests)
+                    {
+                        <tr>
+                            <td><strong>@request.Target</strong><br />@L["InvestmentRequestKind" + request.Kind]<br /><small class="muted">@Endpoint(request.Kind)</small></td>
+                            <td>
+                                @if (request.Status is "Pending" or "Requesting" or "NotRequested" or "Updated")
+                                { @L["InvestmentRequest" + request.Status] }
+                                else
+                                { <span class="negative">@L["InvestmentStatus" + request.Status]</span><br /><small class="muted">@request.Status</small> }
+                                @if (request.HttpStatusCode is { } http) { <small class="investment-request-http">HTTP @http</small> }
+                            </td>
+                            <td>
+                                @L["InvestmentDataState" + request.DataState]
+                                @if (request.PriceDate is { } date) { <br /><small>@L["InvestmentPriceDate"]: @date.ToString("dd-MM-yyyy")</small> }
+                                @if (request.DataUtc is { } time) { <br /><small>@Local(time)</small> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table></div>
+        }
+        <p class="muted">@L["InvestmentRequestPrivacy"]</p>
+    </section>
+}
+
+@code {
+    [Parameter] public InvestmentMarketReport? Report { get; set; }
+    [Parameter] public bool Running { get; set; }
+    [Parameter] public string? Error { get; set; }
+    private static string Local(DateTime time) => time.ToLocalTime().ToString("dd-MM-yyyy HH:mm:ss");
+    private static string Endpoint(string kind) => kind switch { "Fx" => "CURRENCY_EXCHANGE_RATE", "Search" => "SYMBOL_SEARCH", _ => "GLOBAL_QUOTE" };
+}

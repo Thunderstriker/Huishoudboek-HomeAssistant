@@ -7,6 +7,7 @@ namespace Huishoudboek.Service;
 public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVantageClient client, AdministrationCoordinator administration) : IDisposable
 {
     private readonly SemaphoreSlim _operation = new(1, 1);
+    private bool _reportActive;
     public InvestmentMarketSnapshot Read() => store.Snapshot(DateTime.UtcNow);
 
     public async Task SaveSettingsAsync(InvestmentQuoteSettings settings, string? replacementKey, bool removeKey)
@@ -57,10 +58,15 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
     {
         await ExecuteAsync(async () =>
         {
-            var test = new InvestmentInstrument { ProviderSymbol = "IBM", Currency = "USD" };
-            using var json = await QueryAsync(new Dictionary<string, string> { ["function"] = "GLOBAL_QUOTE", ["symbol"] = "IBM" }, cancellationToken);
-            _ = AlphaVantageClient.ParseQuote(json.RootElement, test, QuoteFreshness.EndOfDay, DateTime.UtcNow);
-            store.Update(s => { s.LastSuccessUtc = DateTime.UtcNow; s.Status = "ConnectionOk"; });
+            BeginReport("Test", [new("Test", "IBM", "Pending", InvestmentDataState.NotApplicable)]);
+            await RunRequestAsync(0, async () =>
+            {
+                var test = new InvestmentInstrument { ProviderSymbol = "IBM", Currency = "USD" };
+                using var json = await QueryAsync(new Dictionary<string, string> { ["function"] = "GLOBAL_QUOTE", ["symbol"] = "IBM" }, cancellationToken);
+                _ = AlphaVantageClient.ParseQuote(json.RootElement, test, QuoteFreshness.EndOfDay, DateTime.UtcNow);
+                return new("Test", "IBM", "Updated", InvestmentDataState.NotApplicable);
+            });
+            CompleteReport("ConnectionOk", markSuccess: true);
         }, cancellationToken);
     }
 
@@ -70,9 +76,15 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
         IReadOnlyList<InvestmentSymbol> result = [];
         await ExecuteAsync(async () =>
         {
-            using var json = await QueryAsync(new Dictionary<string, string> { ["function"] = "SYMBOL_SEARCH", ["keywords"] = keywords.Trim() }, cancellationToken);
-            result = AlphaVantageClient.ParseSearch(json.RootElement);
-            store.Update(s => s.Status = "SearchOk");
+            // Search terms and provider response text do not belong in persistent diagnostics.
+            BeginReport("Search", [new("Search", "", "Pending", InvestmentDataState.NotApplicable)]);
+            await RunRequestAsync(0, async () =>
+            {
+                using var json = await QueryAsync(new Dictionary<string, string> { ["function"] = "SYMBOL_SEARCH", ["keywords"] = keywords.Trim() }, cancellationToken);
+                result = AlphaVantageClient.ParseSearch(json.RootElement);
+                return new("Search", "", "Updated", InvestmentDataState.NotApplicable);
+            });
+            CompleteReport("SearchOk");
         }, cancellationToken);
         return result;
     }
@@ -84,66 +96,136 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
             var state = store.Read(s => s);
             var now = DateTime.UtcNow;
             if (scheduled && (!state.Settings.Enabled || state.Settings.Frequency == QuoteFrequency.Manual || state.NextRefreshUtc > now)) return;
-            if (state.LastAttemptUtc > now.AddSeconds(-30)) throw new MarketDataException("RefreshCooldown");
-            // Persist the next run BEFORE any outbound request; never replay missed runs after a restart.
-            store.Update(s => s.NextRefreshUtc = NextRefresh(s.Settings, now));
             var data = administration.Read().Data;
             var held = Investments.Positions(data, [], [], DateOnly.FromDateTime(DateTime.Today)).Where(p => p.Quantity > 0).ToArray();
             var instruments = held.Select(p => p.Instrument).Where(i => i.ProviderSymbol.Length > 0).DistinctBy(i => i.Id).ToArray();
-            if (instruments.Length == 0 && held.All(p => p.Instrument.Currency == "EUR")) { store.Update(s => s.Status = "NoSymbols"); return; }
-            var failed = false;
-            // Currency rates are shared by every holding; fetching them first avoids a fully priced but unconvertible portfolio.
-            foreach (var currency in held.Select(p => p.Instrument.Currency).Where(c => c != "EUR").Distinct())
+            var currencies = held.Select(p => p.Instrument.Currency).Where(c => c != "EUR").Distinct().ToArray();
+            var groups = instruments.GroupBy(i => (i.ProviderSymbol, i.Currency, i.IsUsListing))
+                .OrderBy(g => g.Select(i => state.Quotes.FirstOrDefault(q => q.InstrumentId == i.Id && q.Symbol == i.ProviderSymbol && q.Currency == i.Currency)?.RetrievedUtc ?? DateTime.MinValue).Min()).ToArray();
+            var requests = new List<InvestmentRequestResult>();
+            foreach (var currency in currencies)
             {
-                try
+                var cached = state.Rates.FirstOrDefault(r => r.Currency == currency);
+                requests.Add(new("Fx", currency + "→EUR", "Pending", cached == null ? InvestmentDataState.Missing : InvestmentDataState.Retained, DataUtc: cached?.RetrievedUtc));
+            }
+            foreach (var group in groups)
+            {
+                var cached = state.Quotes.Where(q => group.Any(i => i.Id == q.InstrumentId && i.ProviderSymbol == q.Symbol && i.Currency == q.Currency)).OrderByDescending(q => q.PriceDate).FirstOrDefault();
+                requests.Add(new("Quote", group.Key.ProviderSymbol, "Pending", cached == null ? InvestmentDataState.Missing : InvestmentDataState.Retained, PriceDate: cached?.PriceDate));
+            }
+            BeginReport("Refresh", requests);
+            if (state.LastAttemptUtc > now.AddSeconds(-30)) throw new MarketDataException("RefreshCooldown");
+            // Persist the next run BEFORE any outbound request; never replay missed runs after a restart.
+            store.Update(s => s.NextRefreshUtc = NextRefresh(s.Settings, now));
+            if (requests.Count == 0) { CompleteReport("NoSymbols"); return; }
+            var index = 0;
+            // An unsupported FX endpoint must not hide an otherwise available native stock quote.
+            // Account/key, quota and connection failures still stop the entire request lane.
+            foreach (var currency in currencies)
+            {
+                await RunRequestAsync(index++, async () =>
                 {
                     using var json = await QueryAsync(new Dictionary<string, string> { ["function"] = "CURRENCY_EXCHANGE_RATE", ["from_currency"] = currency, ["to_currency"] = "EUR" }, cancellationToken);
                     var rate = AlphaVantageClient.ParseFx(json.RootElement, currency, DateTime.UtcNow);
                     store.Update(s =>
                     {
                         var old = s.Rates.FirstOrDefault(r => r.Currency == currency);
-                        if (old != null && old.RetrievedUtc > rate.RetrievedUtc) { failed = true; return; }
+                        if (old != null && old.RetrievedUtc > rate.RetrievedUtc) throw new MarketDataException("OlderData");
                         s.Rates.RemoveAll(r => r.Currency == currency); s.Rates.Add(rate);
                     });
-                }
-                catch (MarketDataException ex) when (ex.Code is "InvalidResponse" or "SymbolUnavailable") { failed = true; }
+                    return new("Fx", currency + "→EUR", "Updated", InvestmentDataState.Updated, DataUtc: rate.RetrievedUtc);
+                }, continueOnUnavailable: true);
             }
-            foreach (var group in instruments.GroupBy(i => (i.ProviderSymbol, i.Currency, i.IsUsListing))
-                .OrderBy(g => g.Select(i => state.Quotes.FirstOrDefault(q => q.InstrumentId == i.Id && q.Symbol == i.ProviderSymbol && q.Currency == i.Currency)?.RetrievedUtc ?? DateTime.MinValue).Min()))
+            foreach (var group in groups)
             {
                 var first = group.First();
                 var freshness = first.IsUsListing ? state.Settings.Freshness : QuoteFreshness.EndOfDay;
                 var parameters = new Dictionary<string, string> { ["function"] = "GLOBAL_QUOTE", ["symbol"] = first.ProviderSymbol };
                 if (freshness != QuoteFreshness.EndOfDay) parameters["entitlement"] = freshness == QuoteFreshness.Realtime ? "realtime" : "delayed";
-                try
+                await RunRequestAsync(index++, async () =>
                 {
                     using var json = await QueryAsync(parameters, cancellationToken);
                     var quote = AlphaVantageClient.ParseQuote(json.RootElement, first, freshness, DateTime.UtcNow);
                     store.Update(s =>
                     {
+                        if (s.Quotes.Any(q => group.Any(i => i.Id == q.InstrumentId) && q.Symbol == quote.Symbol && q.Currency == quote.Currency && q.PriceDate > quote.PriceDate))
+                            throw new MarketDataException("OlderData");
                         foreach (var instrument in group)
                         {
-                            var old = s.Quotes.FirstOrDefault(q => q.InstrumentId == instrument.Id && q.Symbol == quote.Symbol && q.Currency == quote.Currency);
-                            if (old != null && old.PriceDate > quote.PriceDate) { failed = true; continue; }
                             s.Quotes.RemoveAll(q => q.InstrumentId == instrument.Id);
                             s.Quotes.Add(quote with { InstrumentId = instrument.Id });
                         }
                     });
-                }
-                catch (MarketDataException ex) when (ex.Code is "SymbolUnavailable" or "InvalidResponse") { failed = true; }
+                    return new("Quote", first.ProviderSymbol, "Updated", InvestmentDataState.Updated, PriceDate: quote.PriceDate);
+                }, continueOnUnavailable: true);
             }
-            store.Update(s => { s.LastSuccessUtc = failed ? s.LastSuccessUtc : DateTime.UtcNow; s.Status = failed ? "PartialUpdate" : "Updated";
-                s.Quotes.RemoveAll(q => !data.Instruments.Any(i => i.Id == q.InstrumentId)); });
+            store.Update(s => s.Quotes.RemoveAll(q => !data.Instruments.Any(i => i.Id == q.InstrumentId)));
+            CompleteReport("Updated", markSuccess: true);
         }, cancellationToken);
+    }
+
+    private void BeginReport(string operation, IReadOnlyList<InvestmentRequestResult> requests)
+    {
+        store.Update(s => s.Report = new(operation, DateTime.UtcNow, null, "Requesting", requests));
+        _reportActive = true;
+    }
+
+    private void UpdateRequest(int index, Func<InvestmentRequestResult, InvestmentRequestResult> update) => store.Update(s =>
+    {
+        var report = s.Report!;
+        var requests = report.Requests.ToArray();
+        requests[index] = update(requests[index]);
+        s.Report = report with { Requests = requests };
+    });
+
+    private async Task RunRequestAsync(int index, Func<Task<InvestmentRequestResult>> request, bool continueOnUnavailable = false)
+    {
+        UpdateRequest(index, r => r with { Status = "Requesting" });
+        try { var result = await request(); UpdateRequest(index, _ => result); }
+        catch (Exception ex) when (ex is MarketDataException or JsonException or KeyNotFoundException or FormatException or InvalidOperationException)
+        {
+            var error = ex as MarketDataException ?? new MarketDataException("InvalidResponse");
+            UpdateRequest(index, r => r with { Status = error.Code, HttpStatusCode = error.HttpStatusCode });
+            if (!continueOnUnavailable || error.Code is not ("InvalidResponse" or "SymbolUnavailable" or "EmptyQuote" or "SymbolMismatch" or "OlderData" or "EntitlementRequired"))
+                throw error;
+        }
+    }
+
+    private void CompleteReport(string successStatus, bool markSuccess = false)
+    {
+        store.Update(s =>
+        {
+            var report = s.Report!;
+            var failed = report.Requests.Any(r => r.Status != "Updated");
+            s.Status = failed ? report.Requests.Any(r => r.Status == "Updated") ? "PartialUpdate" : "UpdateFailed" : successStatus;
+            s.Report = report with { Status = s.Status, CompletedUtc = DateTime.UtcNow };
+            if (!failed && markSuccess) s.LastSuccessUtc = DateTime.UtcNow;
+        });
+        _reportActive = false;
+    }
+
+    private void FailReport(string code)
+    {
+        if (!_reportActive) return;
+        store.Update(s =>
+        {
+            var report = s.Report!;
+            s.Report = report with { CompletedUtc = DateTime.UtcNow, ErrorCode = code,
+                Status = report.Requests.Any(r => r.Status == "Updated") ? "PartialUpdate" : "UpdateFailed",
+                Requests = report.Requests.Select(r => r.Status is "Pending" or "Requesting" ? r with { Status = "NotRequested" } : r).ToArray() };
+        });
+        _reportActive = false;
     }
 
     private async Task ExecuteAsync(Func<Task> action, CancellationToken cancellationToken)
     {
         // Fail concurrent UI actions rather than queueing multiple refreshes and wasting quota.
         if (!await _operation.WaitAsync(0, cancellationToken)) throw new MarketDataException("Busy");
+        _reportActive = false;
         try { await action(); }
         catch (MarketDataException ex)
         {
+            FailReport(ex.Code);
             store.Update(s =>
             {
                 s.Status = ex.Code;
@@ -154,8 +236,10 @@ public sealed class InvestmentMarketService(InvestmentMarketStore store, AlphaVa
             throw;
         }
         catch (Exception ex) when (ex is JsonException or KeyNotFoundException or FormatException or InvalidOperationException)
-        { store.Update(s => s.Status = "InvalidResponse"); throw new MarketDataException("InvalidResponse"); }
-        finally { _operation.Release(); }
+        { FailReport("InvalidResponse"); store.Update(s => s.Status = "InvalidResponse"); throw new MarketDataException("InvalidResponse"); }
+        catch (OperationCanceledException)
+        { FailReport("Interrupted"); store.Update(s => s.Status = "Interrupted"); throw; }
+        finally { _reportActive = false; _operation.Release(); }
     }
 
     private async Task<System.Text.Json.JsonDocument> QueryAsync(Dictionary<string, string> parameters, CancellationToken cancellationToken)
