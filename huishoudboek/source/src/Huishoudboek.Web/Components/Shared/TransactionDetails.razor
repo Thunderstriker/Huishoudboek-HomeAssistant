@@ -1,7 +1,7 @@
 @inject WebState State
 
 <Modal Title="@L["TransactionHandling"]" Cancel="Cancel">
-    <p><strong>@Transaction.Date.ToString("dd-MM-yyyy") · @State.AccountName(Transaction.AccountId) · @WebState.Money(Transaction.Amount)</strong><br />@Transaction.Description</p>
+    <p><strong>@Transaction.Date.ToString("dd-MM-yyyy") · @State.AccountName(Transaction.AccountId) · @WebState.Money(Transaction.Amount)</strong></p><div class="description"><TransactionDescription Transaction="Transaction" /></div>
     <p class="muted">@L["TransactionHandlingNote"]</p>
     @if (State.Data.PurchaseReceipts.Any(r => r.IsApplied && r.TransactionId == Transaction.Id))
     { <p class="notice">@L["PurchaseAppliedSplitsHelp"] <a href="@($"aankopen?transaction={Transaction.Id:D}")">@L["PurchasesTitle"] →</a></p> }
@@ -93,11 +93,11 @@
     {
         if (treatment == AllocationTreatment.Reimbursement)
             foreach (var claim in State.Data.ReimbursementClaims.Where(c => State.Data.Transactions.Single(t => t.Id == c.ExpenseTransactionId).Date <= Transaction.Date))
-                yield return new("claim:" + claim.Id, $"{claim.Counterparty} · {WebState.Money(TransactionAccounting.Outstanding(State.Data, claim, State.Today))} · {State.Data.Transactions.Single(t => t.Id == claim.ExpenseTransactionId).Description}");
+                yield return new("claim:" + claim.Id, $"{claim.Counterparty} · {WebState.Money(TransactionAccounting.Outstanding(State.Data, claim, State.Today))} · {TransactionRecognition.DisplayName(State.Data, State.Data.Transactions.Single(t => t.Id == claim.ExpenseTransactionId))}");
         foreach (var line in TransactionAccounting.Lines(State.Data, State.Data.Transactions.Where(t => t.Date <= Transaction.Date && t.Kind == TransactionKind.Normal && t.Amount < 0))
             .Where(l => l.Spending > 0).OrderByDescending(l => l.Transaction.Date))
             yield return new(TransactionDetailsDraft.SourceKey(line.Transaction.Id, line.AllocationId),
-                $"{line.Transaction.Date:dd-MM-yyyy} · {line.Transaction.Description} · {State.CategoryName(line.CategoryId)} · {WebState.Money(line.Spending)}");
+                $"{line.Transaction.Date:dd-MM-yyyy} · {TransactionRecognition.DisplayName(State.Data, line.Transaction)} · {State.CategoryName(line.CategoryId)} · {WebState.Money(line.Spending)}");
     }
     private Task Cancel() => State.Busy ? Task.CompletedTask : Closed.InvokeAsync();
     private async Task Save()

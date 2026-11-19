@@ -244,7 +244,7 @@
     }
     private Transaction? LinkedTransaction => State.Data.Transactions.FirstOrDefault(t => t.Id == draft?.TransactionId);
     private static string DocumentUrl(Guid id) => $"website/receipts/{id:D}/document";
-    private string BankLabel(Transaction entry) => $"{entry.Date:dd-MM-yyyy} · {State.AccountName(entry.AccountId)} · {entry.Description} · {Money(entry.Amount)}";
+    private string BankLabel(Transaction entry) => $"{entry.Date:dd-MM-yyyy} · {State.AccountName(entry.AccountId)} · {TransactionRecognition.DisplayName(State.Data, entry)} · {Money(entry.Amount)}";
     private IEnumerable<Transaction> EligibleTransactions => State.Data.Transactions.Where(t => t.Kind == TransactionKind.Normal && t.Amount < 0 && State.Scope.Contains(t.AccountId) && (draft?.AccountId == null || t.AccountId == draft.AccountId));
     private IEnumerable<Transaction> BankChoices => ReceiptBankSearch.Find(EligibleTransactions, bankSearch, draft?.TransactionId);
     private IEnumerable<Transaction> BankSuggestions => !HasInvalidNumbers && draft is { } receipt && PurchaseReceipts.HasValidMealVoucherAmount(receipt) && PurchaseReceipts.AmountDue(receipt) is { } due && due > 0 && receipt.PurchaseDate is { } date && receipt.TransactionId == null

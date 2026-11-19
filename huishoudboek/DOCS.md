@@ -957,6 +957,57 @@ kan nog wel de oude saldo-/rapportagewerking verwijderen; de bevestiging waarsch
 daarvoor. Bij een gekoppeld paar blijft de andere bankboeking bestaan: controleer en
 categoriseer die overgebleven zijde. Maak altijd eerst een volledige back-up.
 
+## Transactieherkenning: één instelling, optioneel met planning
+
+Open **Transacties → Herkennen als…** of **Transactieherkenning** in de navigatie.
+De oude automatische categorisatie en vaste-postherkenning staan voortaan in één
+beheerlijst en gebruiken dezelfde instelling; u hoeft de banktekst niet opnieuw in te voeren.
+
+1. Vul bij **Omschrijving bevat** een vast, onderscheidend stuk van de banktekst in.
+   Bijvoorbeeld `01051832244` voor een polis, niet de volledige bankomschrijving met
+   iedere maand een andere datum. De oorspronkelijke banktekst staat bij het formulier;
+   bij een nieuwe herkenning vanuit een boeking kiest u dit tekstfragment expliciet.
+2. Kies optioneel **Tonen als**, bijvoorbeeld ‘AXA – autoverzekering’, en een categorie.
+   Alleen een naam of alleen een categorie mag ook. Een lege categorie betekent geen
+   automatische categorietoewijzing, niet dat bestaande categorieën worden gewist.
+   Beperk desgewenst op rekening en betaalrichting. Er is geen AI, fuzzy matching of
+   automatische afleiding van veranderende nummers.
+3. Kies optioneel **Vaste-postplanning toevoegen**. Naam, categorie en herkenning
+   worden gedeeld met die planning. Bestaande vaste posten hebben al een eigen gedeelde
+   instelling: kies deze bij **Nieuwe of bestaande herkenning** om haar opnieuw te gebruiken.
+   Wisselen vervangt de niet-opgeslagen formulierinvoer; het voegt geen bestaande regels samen.
+4. Kies **Voorbeeld bekijken**. Controleer de passende bankteksten, overlappende namen,
+   voorrang van eerdere categorieregels en voorgestelde historische wijzigingen.
+   **Alleen instellingen opslaan** laat de bankhistorie ongewijzigd. Selecteer expliciet
+   welke oude boekingen u wel wilt bijwerken; bij openen vanuit een transactie is alleen
+   die bronboeking voorgeselecteerd als zij een geldige wijziging heeft.
+
+Nieuwe Excel/CSV-imports tonen direct de herkende naam. De originele bankomschrijving
+blijft beschikbaar onder **Oorspronkelijke omschrijving**; een eigen omschrijving heeft
+altijd voorrang. Zoeken ondersteunt zowel banktekst als herkende/eigen namen. CSV-export
+bewaart banktekst en herkende naam in afzonderlijke kolommen; een databaseback-up bewaart
+ook de volledige instellingen en herkenningsverwijzingen.
+
+Herkennen wat een betaling is, staat los van vaststellen welke geplande betaling zij
+vervult. Een afwijkend bedrag of een late bankdatum blokkeert de naam en categorie niet.
+Alleen een eenduidige match binnen de ingestelde planningsmarges wordt automatisch
+gekoppeld. De maandstatus **Gekoppeld** betekent dat een echte bankboeking de schatting
+vervangt. Niet gekoppeld betekent niet dat de identiteit onbekend is of dat de betaling
+niet is gedaan. Importkoppelingen worden bij opslaan opnieuw gecontroleerd op basis van
+de geselecteerde boekingen en categorieën.
+
+Bestaande categorieregels behouden hun volgorde: de eerste passende regel met een
+categorie wint. Verschillende passende namen worden niet willekeurig gekozen. Een
+bevestigde planningskoppeling blijft leidend voor de identiteit. Regels en planningen
+worden niet automatisch samengevoegd. Verwijderen van een herkenningsregel behoudt
+bestaande herkende namen en categorieën; verwijderen van een planning behoudt de
+tekstherkenning wanneer deze een herkenningstekst heeft.
+
+Via **Historische herkenning controleren** kunt u ook later oude boekingen selecteren.
+Bestaande categorieën, eigen omschrijvingen, splitsingen, vergoedingen en bevestigde
+koppelingen worden niet overschreven. Herkende namen kunnen na selectie worden vernieuwd;
+de banktekst, bankdatum, bedragen en saldi veranderen nooit door herkenning.
+
 ## Bestedingsruimte en vaste inkomsten/lasten
 
 Op **Financiële vooruitblik → Hoeveel kan ik verantwoord uitgeven?** staat een schatting
@@ -978,7 +1029,8 @@ andere rekening of spaarrekening dekt een rekeninggebonden betaling niet automat
    bijvoorbeeld energierekeningen of variabel salaris. Het bedrag blijft de schatting
    voor de volgende betaling. Herkenning vereist nog steeds dezelfde rekening,
    betaalrichting, passende verwerking en een eenduidige geplande betaling.
-3. Eenduidige matches worden bij import automatisch gekoppeld. Afwijkende vaste bedragen
+3. Naam en categorie worden onafhankelijk van de planning herkend. Eenduidige matches
+   worden bij import automatisch gekoppeld. Afwijkende vaste bedragen
    en nabije bankdatums buiten de automatische marge blijven voorstellen. Bij opslaan
    van een vaste post verschijnt een lijst historische matches met datum, bedrag en
    selectievakjes. Selecteer de juiste boekingen en bevestig samen, of sla zonder koppelen op.
@@ -1013,7 +1065,7 @@ betaalrekeningen gebruikt deze dagelijkse schatting; het maandresultaat behoudt 
 maandgebonden daggemiddelde en is daarom niet dezelfde prognose.
 
 De maandlijst op **Vaste posten** onderscheidt **Verwacht**, **Wacht op bankgegevens**,
-**Herkend**, **Te controleren** en **Niet gevonden · controleer betaling**. Geen koppeling
+**Gekoppeld**, **Te controleren** en **Niet gevonden · controleer betaling**. Geen koppeling
 betekent niet onbetaald: pas na de volledige herkenningsperiode én volledige bevestigde
 bankdekking wordt een betaling zonder match een controlepunt. Een bestaand voorstel
 kan wel direct worden gecontroleerd. Zonder volledige dekking krijgt u één neutrale
@@ -1248,11 +1300,15 @@ Controleer de herkenningskwaliteit met uw eigen winkelbonnen voordat u daarop ve
   `/data` is de private, permanente app-opslag van de Supervisor, geen Windows-pad.
 - Normale herstarts en updates behouden `/data`. Een bestaande ontbrekende of
   beschadigde database wordt nooit automatisch vervangen door een lege database.
-- Bij een Home Assistant-update worden ondersteunde schema's 1–13 na validatie
-  onder de exclusieve schrijfvergrendeling bijgewerkt naar schema 14. Vooraf wordt
-  een SQLite-bewuste `.voor-versie-14-….db`-veiligheidskopie naast de database gemaakt.
+- Bij een Home Assistant-update worden ondersteunde schema's 1–15 na validatie
+  onder de exclusieve schrijfvergrendeling automatisch bijgewerkt naar schema 16. Vooraf wordt
+  een SQLite-bewuste `.voor-versie-16-….db`-veiligheidskopie naast de database gemaakt.
+  De schemawijziging gebeurt in één transactie; bij een fout worden die wijzigingen teruggedraaid.
+  Bestaande categorisatieregels behouden hun ID, tekst, categorie en volgorde. Voor vaste
+  posten wordt een gedeelde herkenningsinstelling toegevoegd achter de bestaande regels,
+  zonder samenvoegen, herimporteren, hercategoriseren of opnieuw koppelen van bankhistorie.
   Onbekende schema's worden geweigerd. Teruggaan naar een oude appversie vereist
-  herstel van een passende oude back-up; schema-14-back-ups zijn niet leesbaar in
+  herstel van een passende oude back-up; schema-16-back-ups zijn niet leesbaar in
   oudere apps. De normale Windows-service blijft automatische upgrades weigeren.
 - Alleen een werkelijk nieuwe installatie begint met een lege administratie en
   standaardcategorieën, zonder fictieve bedragen. U kunt ook zelf rekeningen aanmaken.

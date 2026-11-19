@@ -1,0 +1,40 @@
+@inject WebState State
+<Modal Title="@L["PreviewExistingRecognition"]" Cancel="() => Closed.InvokeAsync()">
+    <p>@L["RecognitionHistoryHelp"]</p>
+    <p class="notice">@L["RecognitionHistoryCount", changes.Count, selected.Count]</p>
+    <div class="actions"><button @onclick="() => selected = changes.Select(c => c.Before.Id).ToHashSet()">@L["SelectAllRecognition"]</button><button @onclick="() => selected.Clear()">@L["ClearSelection"]</button></div>
+    <div class="table-scroll"><table><thead><tr><th>@L["Select"]</th><th>@L["BankEntry"]</th><th>@L["RecognizeAsName"]</th><th>@L["Category"]</th><th>@L["PlanningLink"]</th></tr></thead><tbody>
+    @foreach (var change in changes.Skip(page * 50).Take(50))
+    {
+        <tr @key="change.Before.Id"><td><input type="checkbox" aria-label="@L["SelectPayment"]" checked="@selected.Contains(change.Before.Id)" @onchange="e => Select(change.Before.Id, (bool)e.Value!)" /></td>
+            <td class="description">@change.Before.Date.ToString("dd-MM-yyyy") · @State.AccountName(change.Before.AccountId) · @Money(change.Before.Amount)<small>@change.Before.Description</small></td>
+            <td>@change.After.RecognizedName @if (change.Before.RecognizedName != change.After.RecognizedName && change.Before.RecognizedName.Length > 0) { <small>@L["Previously"]: @change.Before.RecognizedName</small> } @if (change.Before.UserDescription.Length > 0) { <small>@L["OwnDescriptionPreserved"]</small> }</td>
+            <td>@State.CategoryName(change.After.CategoryId) @if (change.Before.CategoryId != change.After.CategoryId) { <small>@L["Previously"]: @State.CategoryName(change.Before.CategoryId)</small> }</td>
+            <td>@if (change.After.RecurringPaymentId != change.Before.RecurringPaymentId) { <span>@change.PlanningName</span><small>@change.After.RecurringOccurrenceDate?.ToString("dd-MM-yyyy")</small> } else { <span>—</span> }</td>
+        </tr>
+    }
+    </tbody></table></div><Pager Count="changes.Count" Size="50" @bind-Page="page" />
+    <div class="actions"><button @onclick="() => Closed.InvokeAsync()">@L["Cancel"]</button><button class="primary" disabled="@(selected.Count == 0 || State.Busy)" @onclick="Apply">@L["ApplyRecognitionRows", selected.Count]</button></div>
+</Modal>
+@code {
+    [Parameter] public Guid? RuleId { get; set; }
+    [Parameter] public EventCallback Closed { get; set; }
+    private IReadOnlyList<RecognitionChange> changes = [];
+    private HashSet<Guid> selected = [];
+    private HashSet<Guid> scope = [];
+    private string revision = "";
+    private DateOnly today;
+    private int page;
+    protected override void OnInitialized()
+    {
+        revision = State.Revision; today = State.Today; scope = State.Scope;
+        changes = TransactionRecognition.PreviewHistory(State.Data, today, RuleId, scope);
+    }
+    private void Select(Guid id, bool value) { if (value) selected.Add(id); else selected.Remove(id); }
+    private async Task Apply()
+    {
+        var ids = selected.ToHashSet();
+        if (await State.RunAsync(() => State.SaveAsync(d => TransactionRecognition.ApplyHistory(d, ids, today, RuleId, scope), revision), L["RecognitionRowsApplied", ids.Count]))
+            await Closed.InvokeAsync();
+    }
+}

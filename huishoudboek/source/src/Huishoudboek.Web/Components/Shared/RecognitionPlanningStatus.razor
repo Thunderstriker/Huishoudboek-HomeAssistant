@@ -1,0 +1,11 @@
+@inject WebState State
+@if (State.Data.RecurringPayments.FirstOrDefault(p => p.Id == Transaction.RecurringPaymentId) is { } linked)
+{
+    <span class="badge">@L["ScheduledPaymentLinked"]</span><small>@linked.Name · @RecurringSchedule.LinkedDate(linked, Transaction).ToString("dd-MM-yyyy")</small>
+}
+else if (State.Data.Rules.FirstOrDefault(r => r.Id == Transaction.RecognitionRuleId)?.RecurringPaymentId is { } payment)
+{
+    <span>@State.Data.RecurringPayments.FirstOrDefault(p => p.Id == payment)?.Name</span><small>@L["RecognizedNotLinked"]</small><a href="vaste-posten#koppelen">@L["ReviewRecurringMatches"]</a>
+}
+else { <span>—</span> }
+@code { [Parameter, EditorRequired] public Transaction Transaction { get; set; } = null!; }

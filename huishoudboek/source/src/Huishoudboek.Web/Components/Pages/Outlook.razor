@@ -35,7 +35,7 @@
         var largest = TransactionAccounting.Lines(State.Data, State.Data.Transactions.Where(t => t.Date.Year == State.Year &&
             t.Date.Month == State.Month && t.Date <= State.Today && State.Scope.Contains(t.AccountId)))
             .Where(l => l.Spending > 0 && big.Any(c => c.Id == l.CategoryId)).OrderByDescending(l => l.Spending).Take(2).ToList();
-        if (largest.Count > 0) parts.Add(L["LargestPayments", string.Join("; ", largest.Select(l => $"{l.Transaction.Description} ({Money(l.Spending)})"))]);
+        if (largest.Count > 0) parts.Add(L["LargestPayments", string.Join("; ", largest.Select(l => $"{TransactionRecognition.DisplayName(State.Data, l.Transaction)} ({Money(l.Spending)})"))]);
         return string.Join(" ", parts);
     }
 }

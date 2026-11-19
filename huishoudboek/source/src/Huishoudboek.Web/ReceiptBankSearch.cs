@@ -13,7 +13,7 @@ public static class ReceiptBankSearch
         var choices = eligible.Where(t =>
         {
             if (t.Id == selectedId || terms.Length == 0) return true;
-            var text = $"{t.Description} {t.Date:dd-MM-yyyy} {t.Date:yyyy-MM-dd} {t.Date.ToString("d MMMM yyyy", dutch)} {t.Date.ToString("d MMMM yyyy", english)} {t.Amount.ToString("F2", dutch)} {t.Amount.ToString("F2", CultureInfo.InvariantCulture)}";
+            var text = $"{t.Description} {t.UserDescription} {t.RecognizedName} {t.Date:dd-MM-yyyy} {t.Date:yyyy-MM-dd} {t.Date.ToString("d MMMM yyyy", dutch)} {t.Date.ToString("d MMMM yyyy", english)} {t.Amount.ToString("F2", dutch)} {t.Amount.ToString("F2", CultureInfo.InvariantCulture)}";
             return terms.All(term => text.Contains(term, StringComparison.OrdinalIgnoreCase));
         }).OrderByDescending(t => t.Id == selectedId).ThenByDescending(t => t.Date);
         return terms.Length == 0 ? choices.Take(80) : choices;

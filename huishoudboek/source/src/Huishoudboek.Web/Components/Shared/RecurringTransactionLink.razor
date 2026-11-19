@@ -1,6 +1,6 @@
 @inject WebState State
 <Modal Title="@L["LinkToRecurringPayment"]" Cancel="() => Closed.InvokeAsync()">
-    <p>@Transaction.Date.ToString("dd-MM-yyyy") · @Transaction.Description · @WebState.Money(Transaction.Amount)</p>
+    <p>@Transaction.Date.ToString("dd-MM-yyyy") · @TransactionRecognition.DisplayName(State.Data, Transaction) · @WebState.Money(Transaction.Amount)</p>
     <p class="muted">@L["RecurringEntryLinkNote"]</p>
     <fieldset class="page-fieldset" disabled="@State.Busy">
         <div class="fields">

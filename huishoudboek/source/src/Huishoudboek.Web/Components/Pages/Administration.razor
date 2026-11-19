@@ -40,12 +40,7 @@
     </tr>
 }
 </tbody></table></div></section>
-<section class="card"><h2>@L["AutomaticCategorization"]</h2><div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Rule(State)">+ @L["Rule"]</button><button @onclick="ApplyRules">@L["ApplyExistingTransactions"]</button></div>
-<p class="muted">@L["RulesOrderNote"]</p>
-<div class="table-scroll"><table><thead><tr><th>@L["Order"]</th><th>@L["DescriptionContains"]</th><th>@L["Category"]</th><th></th></tr></thead><tbody>
-@foreach (var r in State.Data.Rules)
-{ <tr><td>@(State.Data.Rules.IndexOf(r) + 1)</td><td>@r.Contains</td><td>@State.CategoryName(r.CategoryId)</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Rule(State, r)">@L["Edit"]</button><button @onclick="() => DeleteRule(r)">@L["Delete"]</button></div></td></tr> }
-</tbody></table></div></section>
+<section class="card"><h2>@L["TransactionRecognition"]</h2><p>@L["RecognitionPurposeHelp"]</p><a class="button" href="herkenning">@L["ManageRecognition"] →</a></section>
 <EditDialogs Page="this" />
 @if (restoreConfirm)
 { <Confirm Title="@L["ImportDatabase"]" Text="@L["RestoreDatabaseQuestion"]" ActionLabel="@L["ImportDatabase"]" Cancel="() => restoreConfirm = false" Accept="Restore" /> }
@@ -53,8 +48,6 @@
     private IBrowserFile? restoreFile; private string restoreRevision = ""; private bool restoreConfirm;
     private void SelectBackup(InputFileChangeEventArgs args) { restoreFile = args.File; restoreRevision = State.Revision; }
     private void Undo(ImportBatch batch) => Ask(L["UndoImport"], L["UndoImportQuestion"], d => HouseholdEdits.UndoImport(d, batch.Id), L["UndoImport"]);
-    private void DeleteRule(CategorizationRule rule) => Ask(L["DeleteRule"], L["DeleteRuleQuestion"], d => d.Rules.RemoveAll(r => r.Id == rule.Id), L["DeleteRule"]);
-    private void ApplyRules() => Ask(L["ApplyRules"], L["ApplyRulesQuestion"], HouseholdEdits.ApplyRules, L["ApplyRules"]);
     private async Task Restore()
     {
         if (restoreFile == null) return;

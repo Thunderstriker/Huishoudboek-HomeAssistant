@@ -53,7 +53,7 @@
                         var transaction = row.Transaction;
                         <li class="activity-row" @key="transaction.Id">
                             <span class="activity-icon @(row.Amount > 0 ? "incoming" : "")"><DashboardIcon Name="@(row.Amount > 0 ? "arrow-down" : "arrow-up")" /></span>
-                            <div class="activity-copy"><strong>@(transaction.UserDescription.Length > 0 ? transaction.UserDescription : transaction.Description)</strong><small>@transaction.Date.ToString("dd MMM", UiCulture.Culture) · @State.AccountName(row.AccountId)</small><small><TransactionAllocationSummary Transaction="transaction" /></small></div>
+                            <div class="activity-copy"><strong>@TransactionRecognition.DisplayName(State.Data, transaction)</strong><small>@transaction.Date.ToString("dd MMM", UiCulture.Culture) · @State.AccountName(row.AccountId)</small><small><TransactionAllocationSummary Transaction="transaction" /></small></div>
                             <strong class="activity-amount @(row.Amount > 0 ? "positive" : "")">@Money(row.Amount)</strong>
                         </li>
                     }

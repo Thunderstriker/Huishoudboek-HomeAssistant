@@ -13,7 +13,9 @@ public sealed record AdjustImportRequest(Guid PreviewId, int RowNumber, Guid? Co
 public sealed record CommitImportRequest(Guid PreviewId, ImportSelection[] Rows, bool ConfirmCompletePeriod = false);
 public sealed record UploadResponse(Guid UploadId, IReadOnlyList<string> Worksheets);
 public sealed record PreviewRow(int RowNumber, DateOnly? Date, string Description, decimal? Amount,
-    decimal? StatementBalance, bool IsValid, bool Include, string Note, Guid? CategoryId, Guid? CounterAccountId, string Kind);
+    decimal? StatementBalance, bool IsValid, bool Include, string Note, Guid? CategoryId, Guid? CounterAccountId, string Kind,
+    string RecognizedName = "", Guid? RecurringPaymentId = null, DateOnly? RecurringOccurrenceDate = null, bool HasPlannedIdentity = false,
+    bool AmbiguousIdentity = false);
 public sealed record PreviewResponse(Guid PreviewId, string Revision, ImportProfile Profile,
     IReadOnlyList<string> Headers, IReadOnlyList<ImportCategoryChoice> Categories, IReadOnlyList<PreviewRow> Rows);
 public sealed record CommitImportResponse(Guid BatchId, int Count, string Revision, ImportBalanceCheck Balance);

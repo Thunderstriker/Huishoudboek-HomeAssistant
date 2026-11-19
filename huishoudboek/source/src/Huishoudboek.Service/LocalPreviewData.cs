@@ -78,6 +78,7 @@ public static class LocalPreviewData
                 SecuritiesValue = 12000 + ((month.Year - start.Year) * 12 + month.Month - start.Month) * 180 });
         }
         data.Rules.Add(new CategorizationRule { Contains = "Demo supermarkt", CategoryId = categories["Voeding"].Id });
+        TransactionRecognition.UpgradeLegacy(data);
         Validation.Validate(data);
         return data;
     }

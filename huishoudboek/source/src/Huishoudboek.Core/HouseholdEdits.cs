@@ -56,6 +56,19 @@ public static class HouseholdEdits
             item.RecurringOccurrenceDate = RecurringSchedule.Occurrence(recurring, item.Date.Year, item.Date.Month)
                 ?? throw new InvalidOperationException("Geen geplande betaling in deze bankmaand. Kies de geplande betaaldatum of koppel via Vaste posten.");
         }
+        if (item.Kind == TransactionKind.Transfer)
+            item = item with { RecognizedName = "", RecognitionRuleId = null };
+        else if (original != null && (original.AccountId != item.AccountId || original.Description != item.Description ||
+            Math.Sign(original.Amount) != Math.Sign(item.Amount) || item.RecurringPaymentId != null && original.RecurringPaymentId != item.RecurringPaymentId))
+        {
+            item = item with { RecognizedName = "", RecognitionRuleId = null };
+            if (data.RecurringPayments.FirstOrDefault(p => p.Id == item.RecurringPaymentId) is { } linked)
+            {
+                item.RecognizedName = linked.Name;
+                item.RecognitionRuleId = data.Rules.FirstOrDefault(r => r.RecurringPaymentId == linked.Id)?.Id;
+            }
+            else TransactionRecognition.ApplyName(data, item);
+        }
         Put(data.Transactions, item, x => x.Id);
     }
 
@@ -68,20 +81,46 @@ public static class HouseholdEdits
         data.Transactions.RemoveAll(t => t.Id == id);
     }
 
-    public static void SaveRecurring(HouseholdData data, RecurringPayment item) => Put(data.RecurringPayments,
-        item with { Name = item.Name.Trim(), MatchText = item.MatchText.Trim() }, x => x.Id);
+    public static void SaveRecurring(HouseholdData data, RecurringPayment item, CategorizationRule? recognition = null)
+    {
+        item = item with { Name = item.Name.Trim(), MatchText = item.MatchText.Trim() };
+        Put(data.RecurringPayments, item, x => x.Id);
+        var rule = recognition ?? data.Rules.FirstOrDefault(r => r.RecurringPaymentId == item.Id) ?? new CategorizationRule { NormalizeText = true };
+        SaveRule(data, rule with { Name = item.Name, Contains = item.MatchText, CategoryId = item.CategoryId,
+            AccountId = item.AccountId, Direction = (PaymentDirection)Math.Sign(item.Amount), RecurringPaymentId = item.Id });
+    }
     public static void DeleteRecurring(HouseholdData data, Guid id)
     {
+        var name = data.RecurringPayments.FirstOrDefault(r => r.Id == id)?.Name ?? "";
         data.RecurringPayments.RemoveAll(r => r.Id == id);
+        foreach (var rule in data.Rules.Where(r => r.RecurringPaymentId == id).ToList())
+        {
+            rule.RecurringPaymentId = null;
+            if (string.IsNullOrWhiteSpace(rule.Contains)) TransactionRecognition.DeleteRule(data, rule.Id);
+        }
         foreach (var t in data.Transactions.Where(t => t.RecurringPaymentId == id))
-        { t.RecurringPaymentId = null; t.RecurringOccurrenceDate = null; }
+        { if (t.RecognizedName.Length == 0) t.RecognizedName = name; t.RecurringPaymentId = null; t.RecurringOccurrenceDate = null; }
     }
     public static void SaveValuation(HouseholdData data, InvestmentValuation item) => Put(data.Valuations, item, x => x.Id);
     public static void SaveRule(HouseholdData data, CategorizationRule item)
     {
-        if (data.Rules.Any(r => r.Id != item.Id && r.Contains.Trim().Equals(item.Contains.Trim(), StringComparison.OrdinalIgnoreCase) && r.CategoryId != item.CategoryId))
+        if (data.Rules.FirstOrDefault(r => r.Id == item.Id)?.RecurringPaymentId is { } existingPlan && item.RecurringPaymentId != existingPlan)
+            throw new InvalidOperationException("Verwijder de bestaande planning via Vaste posten om de herkenning zonder planning te behouden.");
+        if (data.Rules.Any(r => r.Id != item.Id && r.RecurringPaymentId == null && item.RecurringPaymentId == null &&
+            r.AccountId == item.AccountId && r.Direction == item.Direction &&
+            r.Contains.Trim().Equals(item.Contains.Trim(), StringComparison.OrdinalIgnoreCase) && r.CategoryId != item.CategoryId))
             throw new InvalidOperationException("Deze herkenningstekst heeft al een andere categorie.");
-        Put(data.Rules, item with { Contains = item.Contains.Trim() }, x => x.Id);
+        item = item with { Contains = item.Contains.Trim(), Name = item.Name.Trim() };
+        if (item.RecurringPaymentId is { } paymentId)
+        {
+            var payment = data.RecurringPayments.Single(r => r.Id == paymentId);
+            if (data.Rules.Any(r => r.Id != item.Id && r.RecurringPaymentId == paymentId))
+                throw new InvalidOperationException("Deze planning heeft al herkenning. Bewerk die bestaande herkenning.");
+            item = item with { Name = item.Name.Length > 0 ? item.Name : payment.Name, AccountId = payment.AccountId,
+                Direction = (PaymentDirection)Math.Sign(payment.Amount) };
+            Put(data.RecurringPayments, payment with { Name = item.Name, MatchText = item.Contains, CategoryId = item.CategoryId }, r => r.Id);
+        }
+        Put(data.Rules, item, x => x.Id);
     }
     public static void ApplyRules(HouseholdData data)
     {

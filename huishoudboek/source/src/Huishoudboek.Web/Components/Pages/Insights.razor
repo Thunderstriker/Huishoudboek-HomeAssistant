@@ -43,7 +43,7 @@
                 <p class="muted">@L["FingerprintEvidenceHelp"]</p>
                 <div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th>@L["Description"]</th><th class="money">@L["Spent"]</th></tr></thead><tbody>
                     @foreach (var evidence in discovery.Evidence.Take(100))
-                    { <tr><td>@evidence.Transaction.Date.ToString("dd-MM-yyyy")</td><td>@(evidence.Transaction.UserDescription.Length > 0 ? evidence.Transaction.UserDescription : evidence.Transaction.Description)</td><td class="money">@Money(evidence.Spending)</td></tr> }
+                    { <tr><td>@evidence.Transaction.Date.ToString("dd-MM-yyyy")</td><td><TransactionDescription Transaction="evidence.Transaction" /></td><td class="money">@Money(evidence.Spending)</td></tr> }
                 </tbody></table></div>
                 @if (discovery.Evidence.Count > 100) { <p class="muted">@L["FingerprintEvidenceLimited"]</p> }
             </details>

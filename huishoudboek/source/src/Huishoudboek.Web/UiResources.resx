@@ -617,7 +617,7 @@ Deze boeking vervangt alleen deze geplande betaling. Controleer dat het dezelfde
   <data name="RemoveRecurringMatch" xml:space="preserve"><value>Vaste-postkoppeling verwijderen</value></data>
   <data name="RemoveRecurringMatchQuestion" xml:space="preserve"><value>De bankboeking blijft ongewijzigd. De geplande betaling wordt weer apart geschat; controleer op dubbeltelling.</value></data>
   <data name="DeleteRecurring" xml:space="preserve"><value>Vaste post verwijderen</value></data>
-  <data name="DeleteRecurringQuestion" xml:space="preserve"><value>Werkelijke transacties blijven bestaan; hun koppeling aan deze vaste post wordt verwijderd.</value></data>
+  <data name="DeleteRecurringQuestion" xml:space="preserve"><value>Werkelijke transacties en tekstherkenning blijven behouden; de planning en de koppelingen aan geplande betalingen worden verwijderd.</value></data>
   <data name="TransferMatchNote" xml:space="preserve"><value>Koppel twee bestaande bankboekingen na controle. Bedragen, bankdatums, omschrijvingen en rekeningsaldi blijven ongewijzigd. Bevestigde paren tellen niet als inkomsten of uitgaven. Er wordt nooit een ontvangst of een extra boeking aangemaakt.</value></data>
   <data name="PossibleTransfers" xml:space="preserve"><value>Mogelijke transfers</value></data>
   <data name="ConfirmedMatches" xml:space="preserve"><value>Bevestigde koppelingen</value></data>
@@ -881,7 +881,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="RecurringDefinitions" xml:space="preserve"><value>Planningen en herkenning beheren</value></data>
   <data name="RecurringStatusExpected" xml:space="preserve"><value>Verwacht</value></data>
   <data name="RecurringStatusAwaitingBankData" xml:space="preserve"><value>Wacht op bankgegevens</value></data>
-  <data name="RecurringStatusRecognized" xml:space="preserve"><value>Herkend</value></data>
+  <data name="RecurringStatusRecognized" xml:space="preserve"><value>Gekoppeld</value></data>
   <data name="RecurringStatusNeedsReview" xml:space="preserve"><value>Te controleren</value></data>
   <data name="RecurringStatusNotFound" xml:space="preserve"><value>Niet gevonden · controleer betaling</value></data>
   <data name="ReviewRecurringMatches" xml:space="preserve"><value>Koppelingen controleren</value></data>
@@ -1382,4 +1382,48 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="InvestmentProviderReasonMissingEntitlement" xml:space="preserve"><value>De melding zegt expliciet dat vereiste toegang of entitlement ontbreekt.</value></data>
   <data name="InvestmentProviderReasonUnrecognizedNotice" xml:space="preserve"><value>Geen concrete sleutel-, quota- of rechtenfout herkend; een premiumverwijzing alleen is onvoldoende.</value></data>
   <data name="InvestmentProviderReasonProviderErrorMessage" xml:space="preserve"><value>De provider heeft een Error Message teruggestuurd in plaats van bruikbare gegevens.</value></data>
+  <data name="TransactionRecognition" xml:space="preserve"><value>Transactieherkenning</value></data>
+  <data name="RecognitionSetup" xml:space="preserve"><value>Herkenning en optionele planning</value></data>
+  <data name="RecognizeAs" xml:space="preserve"><value>Herkennen als…</value></data>
+  <data name="RecognizeAsName" xml:space="preserve"><value>Tonen als (optioneel)</value></data>
+  <data name="OptionalRecognitionCategory" xml:space="preserve"><value>Categorie (optioneel)</value></data>
+  <data name="RecognitionAccount" xml:space="preserve"><value>Rekening · bij planning verplicht</value></data>
+  <data name="PaymentDirection" xml:space="preserve"><value>Betaalrichting</value></data>
+  <data name="BothDirections" xml:space="preserve"><value>Inkomsten en uitgaven</value></data>
+  <data name="OptionalPlanning" xml:space="preserve"><value>Planning (optioneel)</value></data>
+  <data name="NoPlanning" xml:space="preserve"><value>Geen planning</value></data>
+  <data name="CreatePlanning" xml:space="preserve"><value>Vaste-postplanning toevoegen</value></data>
+  <data name="ExistingSharedPlanning" xml:space="preserve"><value>Gedeelde vaste-postplanning</value></data>
+  <data name="RecognitionEditorNote" xml:space="preserve"><value>Stel één keer de leesbare naam, categorie en eventueel planning in. Gebruik een vast stuk banktekst, zoals een polisnummer; neem geen veranderende datums of referenties over. Naam en categorie werken ook buiten de bedrag-/datummarges van een planning. Leeg bij categorie betekent: geen automatische categorie toewijzen. Bestaande categorieën en koppelingen blijven behouden. Bekijk vóór opslaan de voorbeelden; historische wijzigingen vereisen uw selectie. Een planning vereist een naam, rekening en bedrag (negatief voor uitgaven).</value></data>
+  <data name="RecognitionPurposeHelp" xml:space="preserve"><value>Herken onbekende banktekst als een leesbare naam, met optioneel een categorie en vaste-postplanning. Eén instelling voor herkenning, categorisatie en planning; de oorspronkelijke banktekst blijft bewaard.</value></data>
+  <data name="RecognitionCompatibilityHelp" xml:space="preserve"><value>Bestaande categorisatieregels behouden hun volgorde: de eerste passende regel met een categorie wint. Vaste-postherkenning staat in dezelfde lijst. Overlap wordt niet automatisch samengevoegd; verschillende passende namen worden niet geraden. Instellingen wijzigen past de historie niet automatisch aan.</value></data>
+  <data name="ManageRecognition" xml:space="preserve"><value>Herkenning beheren</value></data>
+  <data name="NewRecognition" xml:space="preserve"><value>Nieuwe herkenning</value></data>
+  <data name="UseExistingRecognition" xml:space="preserve"><value>Nieuwe of bestaande herkenning</value></data>
+  <data name="ExistingRecognitionHelp" xml:space="preserve"><value>Kies een bestaande instelling om deze opnieuw te gebruiken, ook voor een bestaande vaste post. Er wordt geen tweede regel aangemaakt of bestaande regel samengevoegd. Wisselen vervangt de niet-opgeslagen formulierinvoer.</value></data>
+  <data name="CategoryOnlyRecognition" xml:space="preserve"><value>Alleen categorie</value></data>
+  <data name="PreviewRecognition" xml:space="preserve"><value>Voorbeeld bekijken</value></data>
+  <data name="PreviewExistingRecognition" xml:space="preserve"><value>Historische herkenning controleren</value></data>
+  <data name="RecognitionPreviewCount" xml:space="preserve"><value>{0} passende boekingen; {1} historische boekingen kunnen worden bijgewerkt.</value></data>
+  <data name="RecognitionHistoryCount" xml:space="preserve"><value>{0} mogelijke wijzigingen; {1} geselecteerd.</value></data>
+  <data name="RecognitionHistoryHelp" xml:space="preserve"><value>Alleen geselecteerde boekingen worden bijgewerkt. Banktekst, bedragen, datums, eigen omschrijvingen, bestaande categorieën, splitsingen en bevestigde koppelingen blijven behouden. Herkende namen kunnen worden vernieuwd. Alleen eenduidige planningsmatches worden gekoppeld; afwijkingen blijven ter controle. Zonder selectie blijft de historie ongewijzigd.</value></data>
+  <data name="RecognitionAmbiguousWarning" xml:space="preserve"><value>{0} boekingen passen bij verschillende namen. Er wordt geen nieuwe naam gekozen. Controleer en verfijn de overlappende herkenningsteksten.</value></data>
+  <data name="RecognitionCategoryOrderWarning" xml:space="preserve"><value>Bij {0} boekingen heeft een eerdere regel een andere categorie. Die bestaande regelvolgorde blijft gelden; er wordt niet automatisch samengevoegd.</value></data>
+  <data name="RecognitionAmbiguousImport" xml:space="preserve"><value>Meerdere herkenningsnamen passen; controleer de regels.</value></data>
+  <data name="MatchingExamples" xml:space="preserve"><value>Voorbeelden van passende banktekst</value></data>
+  <data name="SelectAllRecognition" xml:space="preserve"><value>Alle wijzigingen selecteren</value></data>
+  <data name="ClearSelection" xml:space="preserve"><value>Selectie wissen</value></data>
+  <data name="Previously" xml:space="preserve"><value>Voorheen</value></data>
+  <data name="OwnDescriptionPreserved" xml:space="preserve"><value>Uw eigen omschrijving blijft voorrang houden.</value></data>
+  <data name="PlanningLink" xml:space="preserve"><value>Planningskoppeling</value></data>
+  <data name="ScheduledPaymentLinked" xml:space="preserve"><value>Gekoppeld aan geplande betaling</value></data>
+  <data name="RecognizedNotLinked" xml:space="preserve"><value>Herkenning staat los van de planning; nog niet aan een geplande betaling gekoppeld.</value></data>
+  <data name="SaveSettingsOnly" xml:space="preserve"><value>Alleen instellingen opslaan</value></data>
+  <data name="SaveAndRecognizeRows" xml:space="preserve"><value>Opslaan en {0} boekingen bijwerken</value></data>
+  <data name="ApplyRecognitionRows" xml:space="preserve"><value>{0} geselecteerde boekingen bijwerken</value></data>
+  <data name="RecognitionRowsApplied" xml:space="preserve"><value>Herkenning toegepast op {0} geselecteerde boekingen.</value></data>
+  <data name="DeleteRecognitionQuestion" xml:space="preserve"><value>Deze herkenning verwijderen? Bestaande herkende namen, categorieën en bankboekingen blijven behouden.</value></data>
+  <data name="RecognitionCategorizeHelp" xml:space="preserve"><value>Gebruik ‘Herkennen als…’ om de naam en optionele categorie voor volgende imports te onthouden.</value></data>
+  <data name="ManagePlanning" xml:space="preserve"><value>Planningen beheren</value></data>
+  <data name="SharedRecognitionHelp" xml:space="preserve"><value>Dit zijn de planningsinstellingen, geen tweede set herkenningsregels. Bewerken opent dezelfde gedeelde instelling.</value></data>
 </root>

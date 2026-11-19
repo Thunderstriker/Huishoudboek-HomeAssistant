@@ -14,6 +14,12 @@ komma/punt, geldigheid en getalgrenzen,
 de gedeelde maaltijdchequeregistratie, volledige bonkosten, categoriesplitsingen,
 afronding, eigenaarfilters, retourkoppelingen, herhaald toepassen, verwijderen, importherstel,
 CSV-export, atomaire opslag en migratie/herstel van oudere SQLite-schema's.
+Transactieherkenning test wisselende AXA-omschrijvingen, onafhankelijke naam/categorie en
+planning, overlappende regels, scopes, persoonlijke omschrijvingen, expliciete historische
+selecties en importvoorbeeld/opslag. De automatische schema-16-upgrade wordt getest met
+283 bestaande regels, 32 vaste posten en twee jaar boekingen, inclusief behoud van
+bankhistorie, splitsingen, vergoedingen en bankdekking, idempotentie, veiligheidskopie,
+rollback bij migratiefouten en herstel van oude/nieuwe back-ups.
 Daarnaast: gewogen effectenlots, FIFO-verkopen, kosten/TOB, historische versus huidige FX,
 splitsingen, onvolledige historie, handmatige koersen, schema 15, private sleutelopslag,
 blijvende gedeelde API-budgetten, providerfouten en authenticatie. Een tijdelijke lokale

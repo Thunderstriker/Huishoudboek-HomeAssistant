@@ -1,0 +1,34 @@
+@page "/herkenning"
+@attribute [Authorize]
+@inherits EditPageBase
+<PageTitle>@L["TransactionRecognition"] · Huishoudboek</PageTitle>
+<h1>@L["TransactionRecognition"]</h1>
+<p>@L["RecognitionPurposeHelp"]</p>
+<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Rule(State)">+ @L["NewRecognition"]</button><button @onclick="() => OpenHistory(null)">@L["PreviewExistingRecognition"]</button><a class="button" href="vaste-posten">@L["RecurringPayments"]</a></div>
+<p class="muted">@L["RecognitionCompatibilityHelp"]</p>
+<label>@L["Search"]<input type="search" @bind="search" @bind:event="oninput" @bind:after="() => page = 0" /></label>
+@{ var rules = VisibleRules.ToList(); page = Math.Min(page, Math.Max(0, (rules.Count - 1) / 50)); }
+<section class="card"><div class="table-scroll"><table><thead><tr><th>@L["Order"]</th><th>@L["RecognizeAsName"]</th><th>@L["DescriptionContains"]</th><th>@L["Category"]</th><th>@L["Account"] / @L["PaymentDirection"]</th><th>@L["OptionalPlanning"]</th><th>@L["Actions"]</th></tr></thead><tbody>
+@foreach (var rule in rules.Skip(page * 50).Take(50))
+{
+    <tr @key="rule.Id"><td>@(State.Data.Rules.IndexOf(rule) + 1)</td><td>@(TransactionRecognition.RuleName(State.Data, rule) is { Length: > 0 } name ? name : L["CategoryOnlyRecognition"].Value)</td>
+        <td class="description">@rule.Contains</td><td>@State.CategoryName(rule.CategoryId)</td><td>@(rule.AccountId == null ? L["AllAccounts"].Value : State.AccountName(rule.AccountId))<small>@Direction(rule.Direction)</small></td>
+        <td>@if (rule.RecurringPaymentId is { } plan) { <a href="vaste-posten">@State.Data.RecurringPayments.Single(p => p.Id == plan).Name</a> } else { @L["NoPlanning"] }</td>
+        <td><div class="actions"><button @onclick="() => Draft = EditorDraft.Rule(State, rule)">@L["Edit"]</button><button @onclick="() => OpenHistory(rule.Id)">@L["PreviewRecognition"]</button>
+            @if (rule.RecurringPaymentId == null) { <button @onclick="() => DeleteRule(rule)">@L["Delete"]</button> }</div></td>
+    </tr>
+}
+</tbody></table></div><Pager Count="rules.Count" Size="50" @bind-Page="page" /></section>
+<EditDialogs Page="this" />
+@if (historyOpen) { <RecognitionHistory @key="historyRuleId" RuleId="historyRuleId" Closed="() => historyOpen = false" /> }
+@code {
+    private string search = "";
+    private int page;
+    private bool historyOpen;
+    private Guid? historyRuleId;
+    private IEnumerable<CategorizationRule> VisibleRules => State.Data.Rules.Where(r => (r.AccountId == null || State.Scope.Contains(r.AccountId.Value)) &&
+        (string.IsNullOrWhiteSpace(search) || $"{r.Contains} {TransactionRecognition.RuleName(State.Data, r)} {State.CategoryName(r.CategoryId)} {State.AccountName(r.AccountId)}".Contains(search, StringComparison.OrdinalIgnoreCase)));
+    private string Direction(PaymentDirection direction) => L[direction == PaymentDirection.Any ? "BothDirections" : direction == PaymentDirection.Incoming ? "IncomeSingle" : "Expense"];
+    private void OpenHistory(Guid? ruleId) { historyRuleId = ruleId; historyOpen = true; }
+    private void DeleteRule(CategorizationRule rule) => Ask(L["DeleteRule"], L["DeleteRecognitionQuestion"], d => TransactionRecognition.DeleteRule(d, rule.Id), L["Delete"]);
+}

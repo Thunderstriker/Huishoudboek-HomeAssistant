@@ -201,16 +201,19 @@ public static class Finance
     public static void ApplySuggestions(HouseholdData data, IReadOnlyList<Transaction> transactions, bool suggestCategory = true)
     {
         var transfers = TransferMatching.ConfirmedTransactionIds(data);
+        var recognition = new RecognitionMatcher(data);
         foreach (var transaction in transactions)
         {
-            if (transfers.Contains(transaction.Id) || TransactionAccounting.HasDetails(data, transaction.Id)) continue;
+            if (transfers.Contains(transaction.Id)) continue;
+            TransactionRecognition.ApplyName(data, transaction, recognition);
+            if (TransactionAccounting.HasDetails(data, transaction.Id)) continue;
             // Import-save rechecks must preserve a deliberately empty category too.
             if (transaction.Kind == TransactionKind.Transfer)
             {
                 if (suggestCategory) TransferCategories.ApplyDefault(data, transaction);
                 continue;
             }
-            if (suggestCategory) transaction.CategoryId ??= Categorization.Match(data, transaction.Description)?.CategoryId;
+            if (suggestCategory) transaction.CategoryId ??= recognition.Category(transaction)?.CategoryId;
         }
 
         if (transactions.Count == 0 || data.RecurringPayments.Count == 0) return;
@@ -225,6 +228,9 @@ public static class Finance
             var match = candidate.Payment;
             transaction.RecurringPaymentId = match.Id;
             transaction.RecurringOccurrenceDate = candidate.DueDate;
+            // A newly established, unambiguous link is authoritative over an older automatic label.
+            transaction.RecognizedName = match.Name;
+            transaction.RecognitionRuleId = data.Rules.FirstOrDefault(r => r.RecurringPaymentId == match.Id)?.Id;
             if (suggestCategory) transaction.CategoryId ??= match.CategoryId;
             if (match.IsMortgage && transaction.Amount < 0) transaction.Kind = TransactionKind.Mortgage;
         }

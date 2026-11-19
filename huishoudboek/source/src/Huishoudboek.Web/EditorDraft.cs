@@ -8,7 +8,13 @@ namespace Huishoudboek.Web;
 public sealed record FieldOption(string Value, string Label);
 public sealed record EditorSaveProposal(int MatchCount, Action<HouseholdData> SaveOnly, Action<HouseholdData> SaveAndLink)
 {
-    public IReadOnlyList<RecurringCandidate> Matches { get; init; } = [];
+    public bool ReviewRecognition { get; init; }
+    public IReadOnlyList<RecognitionChange> Changes { get; init; } = [];
+    public IReadOnlyList<Transaction> Samples { get; init; } = [];
+    public int PreviewCount { get; init; }
+    public int AmbiguousNameCount { get; init; }
+    public int EarlierCategoryCount { get; init; }
+    public IReadOnlySet<Guid> InitialSelection { get; init; } = new HashSet<Guid>();
     public Action<HouseholdData, IReadOnlySet<Guid>>? SaveSelected { get; init; }
 }
 public sealed class EditorField(string key, string label, string type, string value = "", bool required = true)
@@ -34,16 +40,22 @@ public sealed class EditorDraft(string title, string revision)
     public string SuccessMessage { get; private set; } = UiCulture.Text("ChangesSaved");
     public List<EditorField> Fields { get; } = [];
     public Action<HouseholdData> Apply { get; private set; } = _ => { };
-    private Guid? _recurringPaymentId;
     private Guid? _seedTransactionId;
+    private Guid? _recognitionRuleId;
+    private IReadOnlySet<Guid>? _recognitionScope;
+    public bool IsRecognition => _recognitionRuleId != null;
+    public Guid? RecognitionRuleId => _recognitionRuleId;
+    public Guid? SeedTransactionId => _seedTransactionId;
     private bool _transaction;
     private bool _category;
     private bool _mortgage;
     public string Label(EditorField field) => _category && field.Key == "budget" && Text("purpose") == "Savings"
         ? UiCulture.Text("DefaultMonthlyTargetEuro") : field.Label;
-    public bool IsFieldVisible(EditorField field) => _category && field.Key is "essential" or "exceptional"
-        ? Text("purpose") == "Normal" : _recurringPaymentId != null && field.Key == "tolerance"
-        ? Text("amountMode") == "Fixed" : _category && field.Key == "budget"
+    public bool IsFieldVisible(EditorField field) => IsRecognition && field.Key is "amount" or "day" or "frequency" or "amountMode" or "start" or "end" or "mortgage" or "window"
+        ? Text("planning").Length > 0 : IsRecognition && field.Key == "tolerance"
+        ? Text("planning").Length > 0 && Text("amountMode") == "Fixed" : IsRecognition && field.Key == "direction"
+        ? Text("planning").Length == 0 : _category && field.Key is "essential" or "exceptional"
+        ? Text("purpose") == "Normal" : _category && field.Key == "budget"
         ? Text("purpose") != "OwnAccountMovement" : _mortgage && field.Key == "monthlyRate"
         ? Text("rateConvention") == "Monthly" : !_transaction || field.Key switch
     {
@@ -56,36 +68,28 @@ public sealed class EditorDraft(string title, string revision)
     public IEnumerable<FieldOption> Options(EditorField field) => field.Options;
     public EditorSaveProposal PrepareSave(HouseholdData data, DateOnly today)
     {
-        if (_recurringPaymentId is not { } paymentId) return new(0, Apply, Apply);
-        // Preview on an isolated copy; neither the plan nor its links are saved before consent.
+        if (_recognitionRuleId is not { } ruleId) return new(0, Apply, Apply);
+        // Preview on an isolated copy. Saving settings alone never applies them to history.
         var candidate = JsonSerializer.Deserialize<HouseholdData>(JsonSerializer.SerializeToUtf8Bytes(data))!;
         Apply(candidate);
         Validation.Validate(candidate);
-        var payment = candidate.RecurringPayments.Single(r => r.Id == paymentId);
-        var matches = RecurringSchedule.BatchCandidates(candidate, paymentId, today).ToList();
-        if (_seedTransactionId is { } seedId && candidate.Transactions.Single(t => t.Id == seedId) is { } seed &&
-            !matches.Any(m => m.Transaction.Id == seedId))
-        {
-            var due = RecurringSchedule.Occurrences(payment, seed.Date.AddDays(-payment.MatchWindowDays), seed.Date.AddDays(payment.MatchWindowDays))
-                .OrderBy(d => Math.Abs(d.DayNumber - seed.Date.DayNumber)).Select(d => (DateOnly?)d).FirstOrDefault();
-            if (due != null && seed.AccountId == payment.AccountId && Math.Sign(seed.Amount) == Math.Sign(payment.Amount) &&
-                !RecurringSchedule.IsLinked(candidate, payment, due.Value))
-            {
-                // This is an explicit choice of source entry, not an automatic match. Check it on the isolated preview too.
-                RecurringSchedule.Link(candidate, seed.Id, paymentId, due.Value);
-                matches.RemoveAll(m => m.DueDate == due);
-                matches.Add(new(payment, seed, due.Value));
-            }
-        }
-        void SaveOnly(HouseholdData d) => HouseholdEdits.SaveRecurring(d, payment);
+        var rule = candidate.Rules.Single(r => r.Id == ruleId);
+        var recognition = new RecognitionMatcher(candidate);
+        var changes = TransactionRecognition.PreviewHistory(candidate, today, ruleId, _recognitionScope);
+        var transfers = TransferMatching.ConfirmedTransactionIds(candidate);
+        var matches = candidate.Transactions.Where(t => t.Kind != TransactionKind.Transfer && !transfers.Contains(t.Id) &&
+            (_recognitionScope == null || _recognitionScope.Contains(t.AccountId)) && recognition.Matches(rule, t)).ToList();
         void SaveSelected(HouseholdData d, IReadOnlySet<Guid> selected)
         {
-            SaveOnly(d);
-            RecurringSchedule.LinkBatch(d, matches.Where(m => selected.Contains(m.Transaction.Id))
-                .Select(m => (m.Transaction.Id, paymentId, m.DueDate)));
+            Apply(d);
+            TransactionRecognition.ApplyHistory(d, selected, today, ruleId, _recognitionScope);
         }
-        void SaveAndLink(HouseholdData d) => SaveSelected(d, matches.Select(m => m.Transaction.Id).ToHashSet());
-        return new(matches.Count, SaveOnly, SaveAndLink) { Matches = matches, SaveSelected = SaveSelected };
+        void SaveAndApply(HouseholdData d) => SaveSelected(d, changes.Select(m => m.Before.Id).ToHashSet());
+        return new(changes.Count, Apply, SaveAndApply) { ReviewRecognition = true, Changes = changes, SaveSelected = SaveSelected,
+            PreviewCount = matches.Count, Samples = matches.OrderByDescending(t => t.Date).Take(5).ToList(),
+            AmbiguousNameCount = matches.Count(recognition.Ambiguous),
+            EarlierCategoryCount = matches.Count(t => rule.CategoryId != null && recognition.Category(t) is { } first && first.CategoryId != rule.CategoryId),
+            InitialSelection = changes.Where(c => c.Before.Id == _seedTransactionId).Select(c => c.Before.Id).ToHashSet() };
     }
     public string Text(string key) => Fields.Single(f => f.Key == key).Value.Trim();
     public Guid Id(string key) => Guid.TryParse(Text(key), out var id) ? id : throw new InvalidOperationException(UiCulture.Text("InvalidAccountCategory"));
@@ -276,37 +280,24 @@ public sealed class EditorDraft(string title, string revision)
     public static EditorDraft Recurring(WebState s, RecurringPayment? original = null)
     {
         var item = original ?? new RecurringPayment { AccountId = s.Data.Accounts.FirstOrDefault()?.Id ?? Guid.Empty, StartDate = s.Today, DayOfMonth = s.Today.Day };
-        var draft = new EditorDraft(UiCulture.Text("RecurringPayment"), s.Revision)
-        { Note = UiCulture.Text("RecurringEditorNote"), _recurringPaymentId = item.Id };
-        draft.Field("name", "Name", "text", item.Name); draft.Choice("account", "Account", Accounts(s.Data), item.AccountId.ToString());
-        draft.Money("amount", "RecurringAmountEuro", item.Amount); draft.Field("day", "RecurringDay", "number", item.DayOfMonth.ToString(CultureInfo.InvariantCulture));
-        draft.Choice("frequency", "Frequency", Enum.GetValues<PaymentFrequency>().Select(f => new FieldOption(f.ToString(), Frequency(f))), item.Frequency.ToString());
-        draft.Choice("amountMode", "RecurringAmountMode", [new("Fixed", UiCulture.Text("FixedPaymentAmount")),
-            new("Variable", UiCulture.Text("VariablePaymentAmount"))], item.AmountMode.ToString());
-        draft.Choice("category", "Category", Categories(s.Data), item.CategoryId?.ToString() ?? "");
-        draft.DateField("start", "StartDate", item.StartDate); draft.DateField("end", "OptionalEndDate", item.EndDate, false);
-        draft.Field("text", "OptionalMatchText", "text", item.MatchText, false); draft.Field("mortgage", "IsMortgagePayment", "checkbox", item.IsMortgage.ToString());
-        draft.Money("tolerance", "MatchToleranceEuro", item.MatchTolerance);
-        draft.Field("window", "MatchWindowDays", "number", item.MatchWindowDays.ToString(CultureInfo.InvariantCulture));
-        draft.Apply = d => HouseholdEdits.SaveRecurring(d, item with { Name = draft.Text("name"), AccountId = draft.Id("account"), Amount = draft.Number("amount"),
-            DayOfMonth = int.TryParse(draft.Text("day"), out var day) ? day : 0, CategoryId = draft.OptionalId("category"), StartDate = draft.Date("start"),
-            EndDate = draft.Text("end").Length == 0 ? null : draft.Date("end"), MatchText = draft.Text("text"), IsMortgage = bool.Parse(draft.Text("mortgage")),
-            Frequency = Enum.Parse<PaymentFrequency>(draft.Text("frequency")), MatchTolerance = draft.Number("tolerance"),
-            AmountMode = Enum.Parse<PaymentAmountMode>(draft.Text("amountMode")),
-            MatchWindowDays = int.TryParse(draft.Text("window"), out var window) ? window : -1 }); return draft;
+        return Rule(s, s.Data.Rules.FirstOrDefault(r => r.RecurringPaymentId == item.Id), scheduled: item);
     }
     public static bool CanCreateRecurring(HouseholdData data, Transaction transaction) => transaction.RecurringPaymentId == null &&
         !TransferMatching.IsInternal(data, transaction) && !TransactionAccounting.HasDetails(data, transaction.Id);
 
+    public static EditorDraft RecognitionFromTransaction(WebState state, Transaction transaction) => Rule(state,
+        state.Data.Rules.FirstOrDefault(r => r.Id == transaction.RecognitionRuleId) ??
+        state.Data.Rules.FirstOrDefault(r => r.RecurringPaymentId != null && r.RecurringPaymentId == transaction.RecurringPaymentId) ??
+        TransactionRecognition.Identity(state.Data, transaction), transaction);
+
     public static EditorDraft RecurringFromTransaction(WebState s, Transaction transaction)
     {
         if (!CanCreateRecurring(s.Data, transaction)) throw new InvalidOperationException(UiCulture.Text("RecurringSeedUnavailable"));
-        var draft = Recurring(s, new RecurringPayment { Name = transaction.UserDescription.Length > 0 ? transaction.UserDescription : transaction.Description,
+        var draft = Rule(s, seed: transaction, scheduled: new RecurringPayment { Name = transaction.UserDescription.Length > 0 ? transaction.UserDescription : transaction.RecognizedName,
             AccountId = transaction.AccountId, Amount = transaction.Amount, DayOfMonth = transaction.Date.Day,
             StartDate = new(transaction.Date.Year, transaction.Date.Month, 1), CategoryId = transaction.CategoryId,
-            MatchText = transaction.Description, IsMortgage = transaction.Kind == TransactionKind.Mortgage });
+            MatchText = "", IsMortgage = transaction.Kind == TransactionKind.Mortgage });
         draft._seedTransactionId = transaction.Id;
-        draft.Note = UiCulture.Text("RecurringFromEntryNote");
         return draft;
     }
 
@@ -354,12 +345,47 @@ public sealed class EditorDraft(string title, string revision)
     }
     public static string Frequency(PaymentFrequency frequency) => frequency switch
     { PaymentFrequency.Monthly => UiCulture.Text("Monthly"), PaymentFrequency.Quarterly => UiCulture.Text("Quarterly"), PaymentFrequency.Yearly => UiCulture.Text("Yearly"), _ => UiCulture.Text("Once") };
-    public static EditorDraft Rule(WebState s, CategorizationRule? original = null)
+    public static EditorDraft Rule(WebState s, CategorizationRule? original = null, Transaction? seed = null, RecurringPayment? scheduled = null)
     {
-        var item = original ?? new CategorizationRule(); var draft = new EditorDraft(UiCulture.Text("CategorizationRule"), s.Revision) { Note = UiCulture.Text("RuleEditorNote") };
-        draft.Field("text", "DescriptionContains", "text", item.Contains);
-        draft.Choice("category", "Category", s.Data.Categories.Select(c => new FieldOption(c.Id.ToString(), c.Name)), item.CategoryId.ToString());
-        draft.Apply = d => HouseholdEdits.SaveRule(d, item with { Contains = draft.Text("text"), CategoryId = draft.Id("category") }); return draft;
+        scheduled ??= s.Data.RecurringPayments.FirstOrDefault(p => p.Id == original?.RecurringPaymentId);
+        var item = original ?? new CategorizationRule { Name = scheduled?.Name ?? seed?.UserDescription ?? "", Contains = scheduled?.MatchText ?? "",
+            CategoryId = scheduled?.CategoryId ?? seed?.CategoryId, AccountId = scheduled?.AccountId ?? seed?.AccountId,
+            Direction = scheduled != null ? (PaymentDirection)Math.Sign(scheduled.Amount) : seed != null ? (PaymentDirection)Math.Sign(seed.Amount) : PaymentDirection.Any,
+            NormalizeText = scheduled != null };
+        var plan = scheduled ?? new RecurringPayment { AccountId = seed?.AccountId ?? s.Data.Accounts.FirstOrDefault()?.Id ?? Guid.Empty,
+            Amount = seed?.Amount ?? 0, StartDate = seed == null ? s.Today : new(seed.Date.Year, seed.Date.Month, 1),
+            DayOfMonth = seed?.Date.Day ?? s.Today.Day, IsMortgage = seed?.Kind == TransactionKind.Mortgage };
+        var draft = new EditorDraft(UiCulture.Text("RecognitionSetup"), s.Revision) { Note = UiCulture.Text("RecognitionEditorNote"),
+            _recognitionRuleId = item.Id, _seedTransactionId = seed?.Id, _recognitionScope = s.Scope };
+        draft.Field("name", "RecognizeAsName", "text", item.Name, false);
+        draft.Field("text", "DescriptionContains", "text", item.Contains, scheduled == null || seed != null && original == null);
+        draft.Choice("category", "OptionalRecognitionCategory", Categories(s.Data), item.CategoryId?.ToString() ?? "");
+        draft.Choice("account", "RecognitionAccount", new[] { new FieldOption("", UiCulture.Text("AllAccounts")) }.Concat(Accounts(s.Data)), item.AccountId?.ToString() ?? "");
+        draft.Choice("direction", "PaymentDirection", [new("Any", UiCulture.Text("BothDirections")), new("Outgoing", UiCulture.Text("Expense")),
+            new("Incoming", UiCulture.Text("IncomeSingle"))], item.Direction.ToString());
+        draft.Choice("planning", "OptionalPlanning", scheduled == null ? [new("", UiCulture.Text("NoPlanning")), new("new", UiCulture.Text("CreatePlanning"))]
+            : [new(plan.Id.ToString(), UiCulture.Text("ExistingSharedPlanning"))], scheduled == null ? "" : plan.Id.ToString());
+        draft.Fields.Single(f => f.Key == "planning").ReadOnly = scheduled != null;
+        draft.Money("amount", "RecurringAmountEuro", plan.Amount); draft.Field("day", "RecurringDay", "number", plan.DayOfMonth.ToString(CultureInfo.InvariantCulture));
+        draft.Choice("frequency", "Frequency", Enum.GetValues<PaymentFrequency>().Select(f => new FieldOption(f.ToString(), Frequency(f))), plan.Frequency.ToString());
+        draft.Choice("amountMode", "RecurringAmountMode", [new("Fixed", UiCulture.Text("FixedPaymentAmount")), new("Variable", UiCulture.Text("VariablePaymentAmount"))], plan.AmountMode.ToString());
+        draft.DateField("start", "StartDate", plan.StartDate); draft.DateField("end", "OptionalEndDate", plan.EndDate, false);
+        draft.Field("mortgage", "IsMortgagePayment", "checkbox", plan.IsMortgage.ToString());
+        draft.Money("tolerance", "MatchToleranceEuro", plan.MatchTolerance);
+        draft.Field("window", "MatchWindowDays", "number", plan.MatchWindowDays.ToString(CultureInfo.InvariantCulture));
+        draft.Apply = d =>
+        {
+            var rule = item with { Name = draft.Text("name"), Contains = draft.Text("text"), CategoryId = draft.OptionalId("category"),
+                AccountId = draft.OptionalId("account"), Direction = Enum.Parse<PaymentDirection>(draft.Text("direction")) };
+            if (draft.Text("planning").Length == 0) HouseholdEdits.SaveRule(d, rule);
+            else HouseholdEdits.SaveRecurring(d, plan with { Name = rule.Name, MatchText = rule.Contains, CategoryId = rule.CategoryId,
+                AccountId = draft.Id("account"), Amount = draft.Number("amount"), DayOfMonth = int.TryParse(draft.Text("day"), out var day) ? day : 0,
+                StartDate = draft.Date("start"), EndDate = draft.Text("end").Length == 0 ? null : draft.Date("end"),
+                IsMortgage = bool.Parse(draft.Text("mortgage")), Frequency = Enum.Parse<PaymentFrequency>(draft.Text("frequency")),
+                AmountMode = Enum.Parse<PaymentAmountMode>(draft.Text("amountMode")), MatchTolerance = draft.Number("tolerance"),
+                MatchWindowDays = int.TryParse(draft.Text("window"), out var window) ? window : -1 }, rule);
+        };
+        return draft;
     }
     public static EditorDraft Valuation(WebState s, InvestmentValuation? original = null)
     {

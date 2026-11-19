@@ -617,7 +617,7 @@ This entry replaces only this planned payment. Check that it is the same payment
   <data name="RemoveRecurringMatch" xml:space="preserve"><value>Remove recurring payment match</value></data>
   <data name="RemoveRecurringMatchQuestion" xml:space="preserve"><value>The bank entry remains unchanged. The planned payment is estimated separately again; check for double counting.</value></data>
   <data name="DeleteRecurring" xml:space="preserve"><value>Delete recurring payment</value></data>
-  <data name="DeleteRecurringQuestion" xml:space="preserve"><value>Actual transactions remain; their match to this recurring payment is removed.</value></data>
+  <data name="DeleteRecurringQuestion" xml:space="preserve"><value>Actual transactions and text recognition are preserved; the plan and links to scheduled payments are removed.</value></data>
   <data name="TransferMatchNote" xml:space="preserve"><value>Match two existing bank entries after checking them. Amounts, bank dates, descriptions and account balances remain unchanged. Confirmed pairs do not count as income or spending. No receipt or extra entry is ever created.</value></data>
   <data name="PossibleTransfers" xml:space="preserve"><value>Possible transfers</value></data>
   <data name="ConfirmedMatches" xml:space="preserve"><value>Confirmed matches</value></data>
@@ -881,7 +881,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="RecurringDefinitions" xml:space="preserve"><value>Manage schedules and recognition</value></data>
   <data name="RecurringStatusExpected" xml:space="preserve"><value>Expected</value></data>
   <data name="RecurringStatusAwaitingBankData" xml:space="preserve"><value>Awaiting bank data</value></data>
-  <data name="RecurringStatusRecognized" xml:space="preserve"><value>Recognized</value></data>
+  <data name="RecurringStatusRecognized" xml:space="preserve"><value>Linked</value></data>
   <data name="RecurringStatusNeedsReview" xml:space="preserve"><value>Needs review</value></data>
   <data name="RecurringStatusNotFound" xml:space="preserve"><value>Not found · check payment</value></data>
   <data name="ReviewRecurringMatches" xml:space="preserve"><value>Review matches</value></data>
@@ -1382,4 +1382,48 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="InvestmentProviderReasonMissingEntitlement" xml:space="preserve"><value>The notice explicitly states that required access or entitlement is missing.</value></data>
   <data name="InvestmentProviderReasonUnrecognizedNotice" xml:space="preserve"><value>No concrete key, quota or entitlement error recognized; a premium reference alone is insufficient.</value></data>
   <data name="InvestmentProviderReasonProviderErrorMessage" xml:space="preserve"><value>The provider returned an Error Message instead of usable data.</value></data>
+  <data name="TransactionRecognition" xml:space="preserve"><value>Transaction recognition</value></data>
+  <data name="RecognitionSetup" xml:space="preserve"><value>Recognition and optional planning</value></data>
+  <data name="RecognizeAs" xml:space="preserve"><value>Recognize as…</value></data>
+  <data name="RecognizeAsName" xml:space="preserve"><value>Show as (optional)</value></data>
+  <data name="OptionalRecognitionCategory" xml:space="preserve"><value>Category (optional)</value></data>
+  <data name="RecognitionAccount" xml:space="preserve"><value>Account · required for planning</value></data>
+  <data name="PaymentDirection" xml:space="preserve"><value>Payment direction</value></data>
+  <data name="BothDirections" xml:space="preserve"><value>Income and expenses</value></data>
+  <data name="OptionalPlanning" xml:space="preserve"><value>Planning (optional)</value></data>
+  <data name="NoPlanning" xml:space="preserve"><value>No planning</value></data>
+  <data name="CreatePlanning" xml:space="preserve"><value>Add a recurring-payment plan</value></data>
+  <data name="ExistingSharedPlanning" xml:space="preserve"><value>Shared recurring-payment plan</value></data>
+  <data name="RecognitionEditorNote" xml:space="preserve"><value>Set the readable name, category and optional plan once. Use a stable part of the bank text, such as a policy number; leave out changing dates or references. Names and categories also work outside a plan's amount/date margins. Leaving the category empty means no automatic category assignment. Existing categories and links are preserved. Check the examples before saving; historical changes require your selection. A plan requires a name, account and amount (negative for expenses).</value></data>
+  <data name="RecognitionPurposeHelp" xml:space="preserve"><value>Recognize unfamiliar bank text as a readable name, with an optional category and recurring-payment plan. One setup for recognition, categorization and planning; original bank text is preserved.</value></data>
+  <data name="RecognitionCompatibilityHelp" xml:space="preserve"><value>Existing category rules retain their order: the first matching rule with a category wins. Recurring-payment recognition is in the same list. Overlaps are not merged automatically; different matching names are not guessed. Changing settings does not automatically change history.</value></data>
+  <data name="ManageRecognition" xml:space="preserve"><value>Manage recognition</value></data>
+  <data name="NewRecognition" xml:space="preserve"><value>New recognition</value></data>
+  <data name="UseExistingRecognition" xml:space="preserve"><value>New or existing recognition</value></data>
+  <data name="ExistingRecognitionHelp" xml:space="preserve"><value>Select an existing setup to reuse it, including an existing recurring payment. This does not create a second rule or merge existing rules. Switching replaces unsaved form input.</value></data>
+  <data name="CategoryOnlyRecognition" xml:space="preserve"><value>Category only</value></data>
+  <data name="PreviewRecognition" xml:space="preserve"><value>Preview recognition</value></data>
+  <data name="PreviewExistingRecognition" xml:space="preserve"><value>Review historical recognition</value></data>
+  <data name="RecognitionPreviewCount" xml:space="preserve"><value>{0} matching entries; {1} historical entries can be updated.</value></data>
+  <data name="RecognitionHistoryCount" xml:space="preserve"><value>{0} possible changes; {1} selected.</value></data>
+  <data name="RecognitionHistoryHelp" xml:space="preserve"><value>Only selected entries are updated. Bank text, amounts, dates, personal descriptions, existing categories, splits and confirmed links are preserved. Recognized names can be refreshed. Only unambiguous scheduled-payment matches are linked; exceptions remain for review. Without a selection, history is unchanged.</value></data>
+  <data name="RecognitionAmbiguousWarning" xml:space="preserve"><value>{0} entries match different names. No new name is chosen. Review and refine the overlapping recognition text.</value></data>
+  <data name="RecognitionCategoryOrderWarning" xml:space="preserve"><value>For {0} entries an earlier rule has a different category. The existing rule order still applies; rules are not merged automatically.</value></data>
+  <data name="RecognitionAmbiguousImport" xml:space="preserve"><value>Multiple recognition names match; review the rules.</value></data>
+  <data name="MatchingExamples" xml:space="preserve"><value>Examples of matching bank text</value></data>
+  <data name="SelectAllRecognition" xml:space="preserve"><value>Select all changes</value></data>
+  <data name="ClearSelection" xml:space="preserve"><value>Clear selection</value></data>
+  <data name="Previously" xml:space="preserve"><value>Previously</value></data>
+  <data name="OwnDescriptionPreserved" xml:space="preserve"><value>Your personal description keeps precedence.</value></data>
+  <data name="PlanningLink" xml:space="preserve"><value>Planning link</value></data>
+  <data name="ScheduledPaymentLinked" xml:space="preserve"><value>Linked to scheduled payment</value></data>
+  <data name="RecognizedNotLinked" xml:space="preserve"><value>Recognition is independent of planning; not linked to a scheduled payment yet.</value></data>
+  <data name="SaveSettingsOnly" xml:space="preserve"><value>Save settings only</value></data>
+  <data name="SaveAndRecognizeRows" xml:space="preserve"><value>Save and update {0} entries</value></data>
+  <data name="ApplyRecognitionRows" xml:space="preserve"><value>Update {0} selected entries</value></data>
+  <data name="RecognitionRowsApplied" xml:space="preserve"><value>Recognition applied to {0} selected entries.</value></data>
+  <data name="DeleteRecognitionQuestion" xml:space="preserve"><value>Delete this recognition setup? Existing recognized names, categories and bank entries are preserved.</value></data>
+  <data name="RecognitionCategorizeHelp" xml:space="preserve"><value>Use ‘Recognize as…’ to remember the name and optional category for future imports.</value></data>
+  <data name="ManagePlanning" xml:space="preserve"><value>Manage plans</value></data>
+  <data name="SharedRecognitionHelp" xml:space="preserve"><value>These are the planning settings, not a second set of recognition rules. Editing opens the same shared setup.</value></data>
 </root>

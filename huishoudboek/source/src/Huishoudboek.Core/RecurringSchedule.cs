@@ -1,6 +1,3 @@
-using System.Text;
-using System.Text.RegularExpressions;
-
 namespace Huishoudboek.Core;
 
 public enum RecurringPaymentStatus { Expected, AwaitingBankData, Recognized, NeedsReview, NotFound }
@@ -66,12 +63,7 @@ public static class RecurringSchedule
     }
 
     // Keep digits and words intact: changing references are not safe to silently strip.
-    private static string Normalize(string text) => string.Join(" ", Regex.Matches(text.Normalize(NormalizationForm.FormKC),
-        @"[\p{L}\p{N}]+").Select(m => m.Value)).ToUpperInvariant();
-
-    private static bool Recognizes(string description, string text) => !string.IsNullOrWhiteSpace(text) &&
-        (description.Contains(text, StringComparison.OrdinalIgnoreCase) ||
-         Normalize(text) is { Length: > 0 } normalized && (" " + Normalize(description) + " ").Contains(" " + normalized + " ", StringComparison.Ordinal));
+    private static string Normalize(string text) => TransactionRecognition.Normalize(text);
 
     public static IReadOnlyList<RecurringCandidate> Candidates(HouseholdData data, DateOnly today)
     {
@@ -106,7 +98,7 @@ public static class RecurringSchedule
         foreach (var item in data.RecurringPayments.Where(r => r.AccountId == transaction.AccountId &&
             CompatiblePurpose(data, transaction, r) &&
             Math.Sign(r.Amount) == Math.Sign(transaction.Amount) &&
-            (Recognizes(transaction.Description, r.MatchText) || description.Length > 0 && known.TryGetValue(r.Id, out var examples) && examples.Contains(description))))
+            (TransactionRecognition.RecognizesPlan(data, r, transaction) || description.Length > 0 && known.TryGetValue(r.Id, out var examples) && examples.Contains(description))))
         {
             var review = item.AmountMode == PaymentAmountMode.Fixed && Math.Abs(item.Amount - transaction.Amount) > item.MatchTolerance;
             var dates = Occurrences(item, transaction.Date.AddDays(-item.MatchWindowDays), transaction.Date.AddDays(item.MatchWindowDays)).ToList();

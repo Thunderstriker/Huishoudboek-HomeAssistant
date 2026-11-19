@@ -1,0 +1,10 @@
+@inject WebState State
+@if (TransactionRecognition.DisplayName(State.Data, Transaction) is { } name && name != Transaction.Description)
+{
+    <strong>@name</strong>
+    <details class="bank-description"><summary>@L["OriginalDescription"]</summary><span>@Transaction.Description</span></details>
+}
+else { @Transaction.Description }
+@code {
+    [Parameter, EditorRequired] public Transaction Transaction { get; set; } = null!;
+}

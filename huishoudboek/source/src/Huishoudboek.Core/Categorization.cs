@@ -62,13 +62,21 @@ public static class Categorization
         foreach (var r in data.PurchaseReceipts.Where(r => r.DefaultCategoryId == categoryId)) r.DefaultCategoryId = null;
         foreach (var i in data.PurchaseReceiptItems.Where(i => i.CategoryId == categoryId)) i.CategoryId = null;
         foreach (var fallback in receiptFallbacks) fallback.Allocation.CategoryId = fallback.Category;
-        data.Rules.RemoveAll(r => r.CategoryId == categoryId);
+        foreach (var rule in data.Rules.Where(r => r.CategoryId == categoryId).ToList())
+        {
+            if (rule.Name.Length > 0 || rule.RecurringPaymentId != null) rule.CategoryId = null;
+            else TransactionRecognition.DeleteRule(data, rule.Id);
+        }
         data.BudgetOverrides.RemoveAll(b => b.CategoryId == categoryId);
         data.Categories.RemoveAll(c => c.Id == categoryId);
     }
 
     public static CategorizationRule? Match(HouseholdData data, string description) =>
-        data.Rules.FirstOrDefault(r => description.Contains(r.Contains, StringComparison.OrdinalIgnoreCase));
+        data.Rules.FirstOrDefault(r => r.CategoryId != null && r.AccountId == null && r.Direction == PaymentDirection.Any &&
+            TransactionRecognition.Contains(description, r.Contains, r.NormalizeText));
+
+    public static CategorizationRule? Match(HouseholdData data, Transaction transaction) =>
+        new RecognitionMatcher(data).Category(transaction);
 
     public static CategorizationPreview Preview(HouseholdData data, string text, Guid? categoryId,
         IReadOnlySet<Guid>? scope = null)
@@ -79,8 +87,9 @@ public static class Categorization
             !linked.Contains(t.Id) && !data.TransactionAllocations.Any(a => a.TransactionId == t.Id) &&
             (scope == null || scope.Contains(t.Id)) && t.Description.Contains(text, StringComparison.OrdinalIgnoreCase)).ToList();
         var exact = data.Rules.Where(r => string.Equals(r.Contains.Trim(), text, StringComparison.OrdinalIgnoreCase)).ToList();
+        var recognition = new RecognitionMatcher(data);
         return new(matches, matches.Count(t => t.CategoryId == null),
-            matches.Count(t => Match(data, t.Description) is { } rule && rule.CategoryId != categoryId),
+            matches.Count(t => recognition.Category(t) is { } rule && rule.CategoryId != categoryId),
             exact.Any(r => r.CategoryId != categoryId), exact.Any(r => r.CategoryId == categoryId));
     }
 

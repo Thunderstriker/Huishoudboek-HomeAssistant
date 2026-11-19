@@ -69,6 +69,7 @@ public static class Validation
         {
             Require(accounts.Contains(t.AccountId) && !string.IsNullOrWhiteSpace(t.Description), "Transactie mist een rekening of omschrijving.");
             Require(t.UserDescription != null, "Laat de eigen omschrijving leeg als u geen toelichting wilt toevoegen.");
+            Require(t.RecognizedName != null && (t.RecognitionRuleId == null || data.Rules.Any(r => r.Id == t.RecognitionRuleId)), "Ongeldige transactieherkenning.");
             Require(t.Amount != 0 && decimal.Round(t.Amount, 2) == t.Amount, "Transactiebedrag moet ongelijk aan nul zijn en maximaal twee decimalen hebben.");
             Require(Enum.IsDefined(t.Kind), "Onbekend transactietype.");
             Require(t.CategoryId == null || categories.Contains(t.CategoryId.Value), "Onbekende categorie.");
@@ -133,7 +134,17 @@ public static class Validation
         }
         Require(data.BudgetOverrides.All(b => categories.Contains(b.CategoryId) && b.Year is >= 1900 and <= 2200 && b.Month is >= 1 and <= 12 && b.Amount >= 0 && Money(b.Amount)), "Ongeldig maandbudget.");
         Require(data.BudgetOverrides.Select(b => (b.CategoryId, b.Year, b.Month)).Distinct().Count() == data.BudgetOverrides.Count, "Dubbel maandbudget.");
-        Require(data.Rules.All(r => !string.IsNullOrWhiteSpace(r.Contains) && categories.Contains(r.CategoryId)), "Ongeldige categorisatieregel.");
+        Require(data.Rules.All(r => r.Contains != null && r.Name != null &&
+            (!string.IsNullOrWhiteSpace(r.Contains) || r.RecurringPaymentId != null) &&
+            (!string.IsNullOrWhiteSpace(r.Name) || r.CategoryId != null || r.RecurringPaymentId != null) &&
+            (r.CategoryId == null || categories.Contains(r.CategoryId.Value)) &&
+            (r.AccountId == null || accounts.Contains(r.AccountId.Value)) && Enum.IsDefined(r.Direction) &&
+            (r.RecurringPaymentId == null || recurring.Contains(r.RecurringPaymentId.Value))), "Ongeldige herkenningsregel.");
+        Require(data.Rules.Where(r => r.RecurringPaymentId != null).Select(r => r.RecurringPaymentId).Distinct().Count() ==
+            data.Rules.Count(r => r.RecurringPaymentId != null), "Per planning is er één gedeelde herkenning.");
+        Require(data.Rules.Where(r => r.RecurringPaymentId != null).All(r => data.RecurringPayments.Any(p =>
+            p.Id == r.RecurringPaymentId && p.AccountId == r.AccountId && (int)r.Direction == Math.Sign(p.Amount))),
+            "Herkenning bij een planning vereist dezelfde rekening en betaalrichting.");
         Require(data.Valuations.All(v => data.Accounts.Any(a => a.Id == v.AccountId && a.Kind == AccountKind.Investment && v.Date >= a.OpeningDate) && v.SecuritiesValue >= 0 && Money(v.SecuritiesValue)), "Ongeldige effectenwaardering.");
         Require(data.Valuations.Select(v => (v.AccountId, v.Date)).Distinct().Count() == data.Valuations.Count, "Per rekening en datum is één waardering toegestaan.");
         Require(data.ImportBatches.All(b => accounts.Contains(b.AccountId) && b.RowCount >= 0), "Ongeldige importgeschiedenis.");

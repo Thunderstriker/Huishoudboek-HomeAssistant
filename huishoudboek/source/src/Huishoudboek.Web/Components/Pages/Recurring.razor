@@ -4,7 +4,7 @@
 <PageTitle>@L["RecurringPayments"] · Huishoudboek</PageTitle>
 <h1>@L["RecurringIncomeBills"]</h1>
 @{ var allCandidates = RecurringSchedule.Candidates(State.Data, State.Today); }
-<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Recurring(State)">+ @L["RecurringPayment"]</button></div>
+<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Recurring(State)">+ @L["RecurringPayment"]</button><a class="button" href="herkenning">@L["ManageRecognition"]</a></div>
 <p class="muted">@L["RecurringPlanningNote"] <a href="#koppelen">@L["MatchBankEntries"]</a> @L["AvoidDuplicateEstimates"]</p>
 <section class="card" id="payment-status"><h2>@L["MonthlyPaymentStatus"] · @(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
     <p class="muted">@L["RecurringStatusNote"] <a href="beheer">@L["ConfirmExistingStatementPeriods"]</a></p>
@@ -26,9 +26,9 @@
     }
     </tbody></table></div>
 </section>
-<section class="card"><details><summary>@L["RecurringDefinitions"]</summary><div class="table-scroll"><table><thead><tr><th>@L["Name"]</th><th>@L["Account"]</th><th class="money">@L["AmountPerPayment"]</th><th>@L["FrequencyDay"]</th><th>@L["Category"]</th><th>@L["Period"]</th><th>@L["Recognition"]</th><th></th></tr></thead><tbody>
+<section class="card"><details><summary>@L["ManagePlanning"]</summary><p class="muted">@L["SharedRecognitionHelp"] <a href="herkenning">@L["ManageRecognition"]</a></p><div class="table-scroll"><table><thead><tr><th>@L["Name"]</th><th>@L["Account"]</th><th class="money">@L["AmountPerPayment"]</th><th>@L["FrequencyDay"]</th><th>@L["Category"]</th><th>@L["Period"]</th><th></th></tr></thead><tbody>
 @foreach (var r in State.Data.RecurringPayments.Where(r => State.Scope.Contains(r.AccountId)))
-{ <tr><td>@r.Name @if (r.IsMortgage) { <span class="badge">@L["Mortgage"]</span> }</td><td>@State.AccountName(r.AccountId)</td><td class="money">@Money(r.Amount)</td><td>@EditorDraft.Frequency(r.Frequency) @(r.Frequency == PaymentFrequency.Once ? "" : L["PaymentDay", r.DayOfMonth].Value)</td><td>@State.CategoryName(r.CategoryId)</td><td>@r.StartDate.ToString("dd-MM-yyyy") – @(r.EndDate?.ToString("dd-MM-yyyy") ?? L[r.Frequency == PaymentFrequency.Once ? "Once" : "Ongoing"].Value)</td><td>@r.MatchText<small>@(r.AmountMode == PaymentAmountMode.Variable ? L["VariablePaymentAmount"].Value : $"± {Money(r.MatchTolerance)}") / @L["Days", r.MatchWindowDays]</small></td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Recurring(State, r)">@L["Edit"]</button><button @onclick="() => AskDelete(r)">@L["Delete"]</button></div></td></tr> }
+{ <tr><td>@r.Name @if (r.IsMortgage) { <span class="badge">@L["Mortgage"]</span> }</td><td>@State.AccountName(r.AccountId)</td><td class="money">@Money(r.Amount)</td><td>@EditorDraft.Frequency(r.Frequency) @(r.Frequency == PaymentFrequency.Once ? "" : L["PaymentDay", r.DayOfMonth].Value)</td><td>@State.CategoryName(r.CategoryId)</td><td>@r.StartDate.ToString("dd-MM-yyyy") – @(r.EndDate?.ToString("dd-MM-yyyy") ?? L[r.Frequency == PaymentFrequency.Once ? "Once" : "Ongoing"].Value)</td><td><div class="actions"><button @onclick="() => Draft = EditorDraft.Recurring(State, r)">@L["Edit"]</button><button @onclick="() => AskDelete(r)">@L["Delete"]</button></div></td></tr> }
 </tbody></table></div></details></section>
 <section class="card" id="koppelen"><h2>@L["MatchScheduledPayment"]</h2>
     <p class="muted">@L["RecurringMatchNote"]</p>
@@ -105,7 +105,7 @@
     }
     protected override void OnStateChanged()
     { if (lastRevision != State.Revision || SelectedTransaction != null && !State.Scope.Contains(SelectedTransaction.AccountId)) { lastRevision = State.Revision; transactionId = null; ResetPayment(); selected.Clear(); } selected.RemoveWhere(k => !State.Data.RecurringPayments.Any(r => r.Id == k.PaymentId && State.Scope.Contains(r.AccountId))); }
-    private bool InSearch(string name, Transaction t) => string.IsNullOrWhiteSpace(search) || $"{name} {State.AccountName(t.AccountId)} {t.Description} {t.UserDescription}".Contains(search, StringComparison.OrdinalIgnoreCase);
+    private bool InSearch(string name, Transaction t) => string.IsNullOrWhiteSpace(search) || $"{name} {State.AccountName(t.AccountId)} {TransactionRecognition.SearchText(State.Data, t)}".Contains(search, StringComparison.OrdinalIgnoreCase);
     private IEnumerable<Transaction> AvailableTransactions
     {
         get { var transfers = TransferMatching.ConfirmedTransactionIds(State.Data); return State.Data.Transactions.Where(t => t.Date <= State.Today && t.Kind != TransactionKind.Transfer && t.RecurringPaymentId == null && State.Scope.Contains(t.AccountId) && !transfers.Contains(t.Id)); }
@@ -113,7 +113,7 @@
     private Transaction? SelectedTransaction => AvailableTransactions.FirstOrDefault(t => t.Id == transactionId);
     private IEnumerable<RecurringPayment> AvailablePayments => SelectedTransaction is { } t ? State.Data.RecurringPayments.Where(r => r.AccountId == t.AccountId && Math.Sign(r.Amount) == Math.Sign(t.Amount)) : [];
     private RecurringPayment? SelectedPayment => AvailablePayments.FirstOrDefault(r => r.Id == paymentId);
-    private string EntryLabel(Transaction t) => $"{t.Date:dd-MM-yyyy} · {State.AccountName(t.AccountId)} · {Money(t.Amount)} · {t.Description}";
+    private string EntryLabel(Transaction t) => $"{t.Date:dd-MM-yyyy} · {State.AccountName(t.AccountId)} · {Money(t.Amount)} · {TransactionRecognition.DisplayName(State.Data, t)}";
     private void ConfirmLink(Transaction t, RecurringPayment r, DateOnly due) => Ask(L["LinkPlannedPayment"],
         L["LinkPlannedPaymentQuestion", r.Name, due.ToString("dd-MM-yyyy"), Money(r.Amount), EntryLabel(t)],
         d => RecurringSchedule.Link(d, t.Id, r.Id, due), L["ConfirmMatch"]);

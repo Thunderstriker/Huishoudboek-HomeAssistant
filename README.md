@@ -51,7 +51,8 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   toont zes verklaarbare gedragspatronen en onderbouwde ontdekkingen met bronboekingen.
   Een compacte vrijheidskaart staat op het dashboard. Essentiële en uitzonderlijke
   categorieën, toegankelijke reserverekeningen en extra gereserveerd geld zijn instelbaar.
-- **Transacties en budgetten:** categorieën, categorisatieregels, maandafwijkingen,
+- **Transacties en budgetten:** gedeelde herkenning met leesbare transactienamen,
+  optionele categorieën en vaste-postplanning, maandafwijkingen,
   vaste posten en filters per eigenaar.
 - **Splitsingen, retouren en vergoedingen:** verdeel één bankboeking over categorieën,
   verwerk ontvangsten als vermindering van uitgaven en volg verwachte terugbetalingen

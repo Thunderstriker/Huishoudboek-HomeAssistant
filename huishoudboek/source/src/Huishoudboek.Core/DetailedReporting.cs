@@ -66,7 +66,7 @@ public static class DetailedReporting
         var largest = TransactionAccounting.ReportLines(data, new DateOnly(year, month, 1), asOf, scope, includeShared: ownerId == null)
             .Where(l => l.Spending > 0 && big.Any(c => c.Id == l.CategoryId))
             .OrderByDescending(l => l.Spending).Take(2).ToList();
-        if (largest.Count > 0) reason += " Grootste betalingen: " + string.Join("; ", largest.Select(l => $"{l.Transaction.Description} ({Money(l.Spending)})")) + ".";
+        if (largest.Count > 0) reason += " Grootste betalingen: " + string.Join("; ", largest.Select(l => $"{TransactionRecognition.DisplayName(data, l.Transaction)} ({Money(l.Spending)})")) + ".";
         var note = $"Schatting: geboekte bedragen + nog niet gekoppelde vaste posten + {Money(report.Forecast.VariableEstimate)} extra variabele uitgaven op basis van het daggemiddelde. " +
             (report.Forecast.OverdueCount > 0 ? $"{report.Forecast.OverdueCount} vervallen vaste post(en) nog niet gekoppeld; controleer op dubbeltelling. " : "") +
             "Alleen geregistreerde en geplande spaarbijdragen worden meegenomen. " +

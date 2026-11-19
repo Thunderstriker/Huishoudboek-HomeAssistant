@@ -159,10 +159,10 @@ internal static class InvestmentTests
         {
             var f = new Portfolio(); var path = Path.Combine(directory, "old.db"); new SqliteHouseholdStore(path).Save(f.Data);
             using (var c = new SqliteConnection($"Data Source={path};Pooling=False"))
-            { c.Open(); using var cmd = c.CreateCommand(); cmd.CommandText = "DROP TABLE InvestmentTrade; DROP TABLE InvestmentInstrument; PRAGMA user_version=14;"; cmd.ExecuteNonQuery(); }
+            { c.Open(); using var cmd = c.CreateCommand(); cmd.CommandText = RecognitionTests.RemoveSchema16Columns + "DROP TABLE InvestmentTrade; DROP TABLE InvestmentInstrument; PRAGMA user_version=14;"; cmd.ExecuteNonQuery(); }
             var old = SqliteHouseholdStore.ReadBackup(path); Equal(0, old.Instruments.Count);
             var upgraded = new SqliteHouseholdStore(path, allowCreate: false); Equal(0, upgraded.Load().InvestmentTrades.Count);
-            var backup = Directory.GetFiles(directory, "*.voor-versie-15-*.db").Single();
+            var backup = Directory.GetFiles(directory, "*.voor-versie-16-*.db").Single();
             upgraded.Save(f.Data); upgraded.Restore(backup); Equal(0, upgraded.Load().Instruments.Count);
         }));
         yield return ("Alpha Vantage parses previous close and rejects zero prices, wrong symbols and HTTP-200 errors", () =>

@@ -29,6 +29,8 @@ public sealed class ImportRow : INotifyPropertyChanged
     }
     public DateOnly? Date => Transaction?.Date ?? SourceDate;
     public string Description => Transaction?.Description ?? "";
+    public bool HasPlannedIdentity { get; internal set; }
+    public bool AmbiguousIdentity { get; internal set; }
     public decimal? Amount => Transaction?.Amount;
     public string Note { get => string.Join(" ", new[] { _statusNote,
         Transaction?.Kind == TransactionKind.Mortgage ? "Hypotheek herkend; vul na import de werkelijke aflossing in." : "" }.Where(s => s.Length > 0)); init => _statusNote = value; }
@@ -218,6 +220,13 @@ public static class ImportService
             }
         }
         Finance.ApplySuggestions(data, result.Where(r => r.IsValid).Select(r => r.Transaction!).ToList());
+        var recognition = new RecognitionMatcher(data);
+        foreach (var row in result.Where(r => r.IsValid))
+        {
+            var identities = recognition.NamedMatches(row.Transaction!);
+            row.HasPlannedIdentity = identities.Any(r => r.RecurringPaymentId != null);
+            row.AmbiguousIdentity = recognition.Ambiguous(row.Transaction!);
+        }
         return result;
     }
 
@@ -286,7 +295,7 @@ public static class ImportService
     {
         using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
         using var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.GetCultureInfo("nl-NL")) { Delimiter = ";" });
-        foreach (var h in new[] { "Datum", "Rekening", "Omschrijving", "Bedrag", "Categorie", "Type", "Tegenrekening", "Aflossing", "Eigen omschrijving", "Transactie-ID", "Transferkoppeling", "Gekoppelde transactie-ID", "Vaste-post-ID", "Vaste post", "Geplande betaaldatum", "Splitsingen (JSON)", "Vergoedingsverwachtingen (JSON)", "Categorie telt als", "Categorie-instellingen (JSON)", "Aankoopbon-ID", "Maaltijdchequeontvangst (JSON)" }) csv.WriteField(h);
+        foreach (var h in new[] { "Datum", "Rekening", "Omschrijving", "Bedrag", "Categorie", "Type", "Tegenrekening", "Aflossing", "Eigen omschrijving", "Transactie-ID", "Transferkoppeling", "Gekoppelde transactie-ID", "Vaste-post-ID", "Vaste post", "Geplande betaaldatum", "Splitsingen (JSON)", "Vergoedingsverwachtingen (JSON)", "Categorie telt als", "Categorie-instellingen (JSON)", "Aankoopbon-ID", "Maaltijdchequeontvangst (JSON)", "Herkende naam", "Herkenningsregel-ID" }) csv.WriteField(h);
         csv.NextRecord();
         var matches = data.TransferMatches.Where(m => m.IsConfirmed).SelectMany(m => new[] { (Id: m.DebitTransactionId, Match: m), (Id: m.CreditTransactionId, Match: m) })
             .ToDictionary(p => p.Id, p => p.Match);
@@ -324,6 +333,7 @@ public static class ImportService
             csv.WriteField(System.Text.Json.JsonSerializer.Serialize(data.Categories.Where(c => categoryIds.Contains(c.Id))));
             csv.WriteField(receipts.FirstOrDefault(r => r.Id == t.Id || r.TransactionId == t.Id)?.Id.ToString() ?? "");
             csv.WriteField(credits.TryGetValue(t.Id, out var credit) ? System.Text.Json.JsonSerializer.Serialize(credit) : "");
+            csv.WriteField(Safe(t.RecognizedName)); csv.WriteField(t.RecognitionRuleId?.ToString() ?? "");
             csv.NextRecord();
         }
     }

@@ -61,7 +61,7 @@ public static class CashFlow
         foreach (var t in data.Transactions.Where(t => t.Date > today && t.Date <= searchEnd))
         {
             var effect = Finance.AccountEffect(t, account.Id);
-            if (effect != 0) events.Add(new(account.Id, t.Date, t.Date, t.Description, effect, t.Id, t.RecurringPaymentId));
+            if (effect != 0) events.Add(new(account.Id, t.Date, t.Date, TransactionRecognition.DisplayName(data, t), effect, t.Id, t.RecurringPaymentId));
         }
         foreach (var item in data.RecurringPayments.Where(r => r.AccountId == account.Id))
         {

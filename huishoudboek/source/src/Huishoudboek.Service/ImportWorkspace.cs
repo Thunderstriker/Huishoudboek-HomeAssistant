@@ -104,7 +104,8 @@ public sealed class ImportWorkspace : IDisposable
             return new(upload.PreviewId, snapshot.Revision, profile, table.Headers,
                 rows.FirstOrDefault(r => r.CategoryChoices.Count > 0)?.CategoryChoices ?? [], rows.Select(r =>
                     new PreviewRow(r.RowNumber, r.Date, r.Description, r.Amount, r.Transaction?.StatementBalance,
-                        r.IsValid, r.Include, r.Note, r.CategoryId, null, r.Kind)).ToList());
+                        r.IsValid, r.Include, r.Note, r.CategoryId, null, r.Kind, r.Transaction?.RecognizedName ?? "",
+                        r.Transaction?.RecurringPaymentId, r.Transaction?.RecurringOccurrenceDate, r.HasPlannedIdentity, r.AmbiguousIdentity)).ToList());
         }
     }
 
@@ -176,7 +177,8 @@ public sealed class ImportWorkspace : IDisposable
                 ?? throw new InvalidOperationException("Onbekende voorbeeldregel.");
             if (request.SetCategory) row.CategoryId = request.CategoryId;
             return new(row.RowNumber, row.Date, row.Description, row.Amount, row.Transaction?.StatementBalance,
-                row.IsValid, row.Include, row.Note, row.CategoryId, null, row.Kind);
+                row.IsValid, row.Include, row.Note, row.CategoryId, null, row.Kind, row.Transaction?.RecognizedName ?? "",
+                row.Transaction?.RecurringPaymentId, row.Transaction?.RecurringOccurrenceDate, row.HasPlannedIdentity, row.AmbiguousIdentity);
         }
     }
 

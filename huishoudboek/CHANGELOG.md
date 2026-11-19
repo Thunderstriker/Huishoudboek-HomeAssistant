@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.1
+
+- Eén herkenningsinstelling voor een leesbare transactienaam, optionele categorie en
+  optionele vaste-postplanning. Herkenning blijft werken bij afwijkende bedragen of
+  bankdatums; alleen de planningskoppeling kan controle vereisen.
+- Herkende namen zichtbaar bij import en transacties, met behoud van de oorspronkelijke
+  banktekst en voorrang voor eigen omschrijvingen. Historische wijzigingen alleen na
+  een voorbeeld met expliciet geselecteerde boekingen; bestaande categorieën en koppelingen blijven behouden.
+- Automatische database-upgrade naar schema 16 met veiligheidskopie vooraf. Bestaande
+  regels, volgorde, vaste posten en transactiehistorie blijven behouden; overlappende
+  instellingen worden niet stilzwijgend samengevoegd.
+- App- en containerversie bijgewerkt naar 0.3.1 voor installatie en updates via Home Assistant.
+
 ## 0.3.0.4
 
 - Hypotheekrente expliciet instelbaar als nominale jaarrente, effectieve jaarrente

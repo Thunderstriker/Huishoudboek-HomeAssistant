@@ -14,7 +14,7 @@ namespace Huishoudboek.Infrastructure;
 public sealed class SqliteHouseholdStore : IAdministrationStore
 {
     public const long MaximumRestoreBytes = 256L * 1024 * 1024;
-    private const int SchemaVersion = 15;
+    private const int SchemaVersion = 16;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -112,7 +112,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
     {
         // Validate first, then take a SQLite-aware backup (including WAL) before any schema change.
         var version = Version(connection);
-        ReadData(connection, version);
+        var previous = ReadData(connection, version);
         Backup(_path + $".voor-versie-{SchemaVersion}-{DateTime.Now:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}.db");
         using var tx = connection.BeginTransaction();
         if (version == 1)
@@ -173,6 +173,20 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             CreateTable(connection, tx, typeof(InvestmentInstrument));
             CreateTable(connection, tx, typeof(InvestmentTrade));
         }
+        if (version < 16)
+        {
+            Execute(connection, tx, "ALTER TABLE [Transaction] ADD COLUMN [RecognizedName] TEXT NOT NULL DEFAULT ''");
+            Execute(connection, tx, "ALTER TABLE [Transaction] ADD COLUMN [RecognitionRuleId] TEXT NULL");
+            Execute(connection, tx, "ALTER TABLE [CategorizationRule] ADD COLUMN [Name] TEXT NOT NULL DEFAULT ''");
+            Execute(connection, tx, "ALTER TABLE [CategorizationRule] ADD COLUMN [AccountId] TEXT NULL");
+            Execute(connection, tx, "ALTER TABLE [CategorizationRule] ADD COLUMN [Direction] INTEGER NOT NULL DEFAULT 0");
+            Execute(connection, tx, "ALTER TABLE [CategorizationRule] ADD COLUMN [RecurringPaymentId] TEXT NULL");
+            Execute(connection, tx, "ALTER TABLE [CategorizationRule] ADD COLUMN [NormalizeText] INTEGER NOT NULL DEFAULT 0");
+            TransactionRecognition.UpgradeLegacy(previous);
+            Validation.Validate(previous);
+            // Existing IDs, rule order and all bank rows remain intact. Plan rules are appended, never merged.
+            Write(connection, tx, previous.Rules);
+        }
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -208,7 +222,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             Owners = Read<Owner>(connection, tx), Accounts = Read<Account>(connection, tx, version),
             Categories = Read<Category>(connection, tx, version), BudgetOverrides = Read<BudgetOverride>(connection, tx),
             Transactions = Read<Transaction>(connection, tx, version), RecurringPayments = Read<RecurringPayment>(connection, tx, version),
-            Rules = Read<CategorizationRule>(connection, tx), Valuations = Read<InvestmentValuation>(connection, tx),
+            Rules = Read<CategorizationRule>(connection, tx, version), Valuations = Read<InvestmentValuation>(connection, tx),
             ImportBatches = Read<ImportBatch>(connection, tx, version), ImportProfiles = Read<ImportProfile>(connection, tx, version),
             TransferMatches = version >= 4 ? Read<TransferMatch>(connection, tx) : [],
             TransactionAllocations = version >= 6 ? Read<TransactionAllocation>(connection, tx) : [],
@@ -289,7 +303,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         command.Transaction = tx;
         var properties = typeof(T).GetProperties();
         command.CommandText = $"SELECT {string.Join(",", properties.Select(p =>
-            PreviousDefault(typeof(T), p.Name, version) is { } fallback ? $"{fallback} AS [{p.Name}]" : $"[{p.Name}]"))} FROM [{typeof(T).Name}]";
+            PreviousDefault(typeof(T), p.Name, version) is { } fallback ? $"{fallback} AS [{p.Name}]" : $"[{p.Name}]"))} FROM [{typeof(T).Name}] ORDER BY rowid";
         using var reader = command.ExecuteReader();
         var result = new List<T>();
         while (reader.Read())
@@ -319,6 +333,17 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
 
     private static string? PreviousDefault(Type type, string property, int version)
     {
+        if (version < 16 && type == typeof(Transaction))
+        {
+            if (property == nameof(Transaction.RecognizedName)) return "''";
+            if (property == nameof(Transaction.RecognitionRuleId)) return "NULL";
+        }
+        if (version < 16 && type == typeof(CategorizationRule))
+        {
+            if (property == nameof(CategorizationRule.Name)) return "''";
+            if (property is nameof(CategorizationRule.AccountId) or nameof(CategorizationRule.RecurringPaymentId)) return "NULL";
+            if (property is nameof(CategorizationRule.Direction) or nameof(CategorizationRule.NormalizeText)) return "0";
+        }
         if (version < 14 && type == typeof(PurchaseReceipt) && property == nameof(PurchaseReceipt.IsApplied)) return "0";
         if (version < 13 && type == typeof(PurchaseReceipt))
         {
@@ -449,6 +474,8 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         if (version == 1)
             foreach (var profile in data.ImportProfiles.Where(p => p.AccountReferenceColumn == "Rekening opdrachtgever"))
                 profile.CounterAccountReferenceColumn = "Rekening tegenpartij";
+        if (version < 16) TransactionRecognition.UpgradeLegacy(data);
+        Validation.Validate(data);
         return data;
     }
 

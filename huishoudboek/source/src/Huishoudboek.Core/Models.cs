@@ -60,6 +60,8 @@ public sealed record Transaction
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     public string Description { get; set; } = "";
     public string UserDescription { get; set; } = "";
+    public string RecognizedName { get; set; } = "";
+    public Guid? RecognitionRuleId { get; set; }
     public decimal Amount { get; set; }
     public Guid? CategoryId { get; set; }
     public TransactionKind Kind { get; set; }
@@ -129,8 +131,16 @@ public sealed record CategorizationRule
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Contains { get; set; } = "";
-    public Guid CategoryId { get; set; }
+    public Guid? CategoryId { get; set; }
+    public string Name { get; set; } = "";
+    public Guid? AccountId { get; set; }
+    public PaymentDirection Direction { get; set; }
+    public Guid? RecurringPaymentId { get; set; }
+    // Retains legacy planning normalization; ordinary category rules use literal substrings.
+    public bool NormalizeText { get; set; }
 }
+
+public enum PaymentDirection { Any = 0, Outgoing = -1, Incoming = 1 }
 
 public sealed record InvestmentValuation
 {

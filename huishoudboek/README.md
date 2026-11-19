@@ -49,7 +49,8 @@ beleggingen bewaren ook hun handelsvaluta. Optionele koersaanvragen vereisen int
 - Negatieve bedragen staan onder de nullijn; exacte bedragen blijven beschikbaar
   in tabellen of samenvattingen. De grafieken passen zich aan de schermbreedte aan.
   Chart.js is lokaal meegeleverd onder de MIT-licentie.
-- Excel/CSV-import met automatische Argenta-herkenning, categorisatieregels,
+- Excel/CSV-import met automatische Argenta-herkenning, gedeelde transactieherkenning
+  met leesbare namen, optionele categorieën en vaste-postplanning,
   CSV-export en volledige databaseback-ups met herstel.
 - Elke bankimport werkt alleen de gekozen rekening bij, met de bedragen uit het
   bestand. Gebruik voor elke rekening het eigen bestand; geen automatische koppelingen.
