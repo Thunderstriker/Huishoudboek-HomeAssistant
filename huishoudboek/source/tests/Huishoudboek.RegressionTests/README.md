@@ -20,6 +20,9 @@ selecties en importvoorbeeld/opslag. De automatische schema-16-upgrade wordt get
 283 bestaande regels, 32 vaste posten en twee jaar boekingen, inclusief behoud van
 bankhistorie, splitsingen, vergoedingen en bankdekking, idempotentie, veiligheidskopie,
 rollback bij migratiefouten en herstel van oude/nieuwe back-ups.
+Actiemenu's bij desktop-/mobiele transacties en transactieherkenning worden in beide talen
+gerenderd, met unieke menukoppelingen, behoud van beschikbare acties en bonverwijzingen,
+en zonder verwijderactie bij gedeelde vaste-postplanningen.
 Daarnaast: gewogen effectenlots, FIFO-verkopen, kosten/TOB, historische versus huidige FX,
 splitsingen, onvolledige historie, handmatige koersen, schema 15, private sleutelopslag,
 blijvende gedeelde API-budgetten, providerfouten en authenticatie. Een tijdelijke lokale

@@ -22,13 +22,7 @@
             @if (row.StatementBalance is { } balance) { <dt>@L["StatementBalance"]</dt><dd>@Money(balance)</dd> }
             @if (row.RecurringPaymentId == null && row.RecognitionRuleId != null) { <dt>@L["PlanningLink"]</dt><dd><RecognitionPlanningStatus Transaction="row" /></dd> }
         </dl>
-        <div class="actions"><button @onclick="() => Edit.InvokeAsync(row)">@L["Edit"]</button>
-            @if (Recognize.HasDelegate && !TransferMatching.IsInternal(State.Data, row)) { <button @onclick="() => Recognize.InvokeAsync(row)">@L["RecognizeAs"]</button> }
-            <PurchaseReceiptLink Transaction="row" />
-            @if (row.Kind == TransactionKind.Normal && !TransferMatching.IsInternal(State.Data, row)) { <button @onclick="() => Handle.InvokeAsync(row)">@L["TransactionHandling"]</button> }
-            @if (Recurring.HasDelegate && EditorDraft.CanCreateRecurring(State.Data, row)) { <button @onclick="() => Recurring.InvokeAsync(row)">@L["LinkToRecurringPayment"]</button> }
-            <button @onclick="() => Delete.InvokeAsync(row)">@L["Delete"]</button>
-        </div>
+        <TransactionActions Transaction="row" Edit="Edit" Recognize="Recognize" Handle="Handle" Recurring="Recurring" Delete="Delete" />
     </details>
 }
 </div>

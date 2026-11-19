@@ -395,7 +395,7 @@ var tests = new (string Name, Action Run)[]
         Equal(saved.Revision, coordinator.Read().Revision);
         Equal(100m, Finance.Report(coordinator.Read().Data, 2026, 11, Fixture.Today).Outflow);
     }))
-}.Concat(InvestmentTests.All()).Concat(MortgageTests.All()).Concat(RecognitionTests.All()).ToArray();
+}.Concat(InvestmentTests.All()).Concat(MortgageTests.All()).Concat(RecognitionTests.All()).Concat(ActionMenuTests.All()).ToArray();
 
 var failed = 0;
 foreach (var test in tests)

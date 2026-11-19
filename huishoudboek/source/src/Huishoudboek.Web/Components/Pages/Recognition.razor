@@ -14,8 +14,11 @@
     <tr @key="rule.Id"><td>@(State.Data.Rules.IndexOf(rule) + 1)</td><td>@(TransactionRecognition.RuleName(State.Data, rule) is { Length: > 0 } name ? name : L["CategoryOnlyRecognition"].Value)</td>
         <td class="description">@rule.Contains</td><td>@State.CategoryName(rule.CategoryId)</td><td>@(rule.AccountId == null ? L["AllAccounts"].Value : State.AccountName(rule.AccountId))<small>@Direction(rule.Direction)</small></td>
         <td>@if (rule.RecurringPaymentId is { } plan) { <a href="vaste-posten">@State.Data.RecurringPayments.Single(p => p.Id == plan).Name</a> } else { @L["NoPlanning"] }</td>
-        <td><div class="actions"><button @onclick="() => Draft = EditorDraft.Rule(State, rule)">@L["Edit"]</button><button @onclick="() => OpenHistory(rule.Id)">@L["PreviewRecognition"]</button>
-            @if (rule.RecurringPaymentId == null) { <button @onclick="() => DeleteRule(rule)">@L["Delete"]</button> }</div></td>
+        <td><ActionMenu Label="@L["ActionsFor", rule.Contains]">
+            <button type="button" role="menuitem" tabindex="-1" @onclick="() => Draft = EditorDraft.Rule(State, rule)">@L["Edit"]</button>
+            <button type="button" role="menuitem" tabindex="-1" @onclick="() => OpenHistory(rule.Id)">@L["PreviewRecognition"]</button>
+            @if (rule.RecurringPaymentId == null) { <button type="button" class="menu-delete" role="menuitem" tabindex="-1" @onclick="() => DeleteRule(rule)">@L["Delete"]</button> }
+        </ActionMenu></td>
     </tr>
 }
 </tbody></table></div><Pager Count="rules.Count" Size="50" @bind-Page="page" /></section>

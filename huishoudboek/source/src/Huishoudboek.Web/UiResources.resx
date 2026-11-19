@@ -1426,4 +1426,6 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="RecognitionCategorizeHelp" xml:space="preserve"><value>Gebruik ‘Herkennen als…’ om de naam en optionele categorie voor volgende imports te onthouden.</value></data>
   <data name="ManagePlanning" xml:space="preserve"><value>Planningen beheren</value></data>
   <data name="SharedRecognitionHelp" xml:space="preserve"><value>Dit zijn de planningsinstellingen, geen tweede set herkenningsregels. Bewerken opent dezelfde gedeelde instelling.</value></data>
+  <data name="MoreActions" xml:space="preserve"><value>Meer acties</value></data>
+  <data name="ActionsFor" xml:space="preserve"><value>Acties voor {0}</value></data>
 </root>

@@ -2,6 +2,9 @@
 @if (Transaction.Kind == TransactionKind.Normal && Transaction.Amount < 0)
 {
     var count = State.Data.PurchaseReceipts.Count(r => r.TransactionId == Transaction.Id);
-    <a class="button" href="@($"aankopen?transaction={Transaction.Id:D}")">@L[count > 0 ? "PurchaseViewForTransaction" : "PurchaseNew"]@(count > 0 ? $" ({count})" : "")</a>
+    <a class="button" href="@($"aankopen?transaction={Transaction.Id:D}")" role="@(MenuItem ? "menuitem" : null)" tabindex="@(MenuItem ? "-1" : null)">@L[count > 0 ? "PurchaseViewForTransaction" : "PurchaseNew"]@(count > 0 ? $" ({count})" : "")</a>
 }
-@code { [Parameter, EditorRequired] public Transaction Transaction { get; set; } = null!; }
+@code {
+    [Parameter, EditorRequired] public Transaction Transaction { get; set; } = null!;
+    [Parameter] public bool MenuItem { get; set; }
+}

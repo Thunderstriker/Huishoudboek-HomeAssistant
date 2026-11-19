@@ -957,6 +957,14 @@ kan nog wel de oude saldo-/rapportagewerking verwijderen; de bevestiging waarsch
 daarvoor. Bij een gekoppeld paar blijft de andere bankboeking bestaan: controleer en
 categoriseer die overgebleven zijde. Maak altijd eerst een volledige back-up.
 
+## Acties bij transacties en transactieherkenning
+
+Open de **⋯**-knop rechts op een rij voor de beschikbare acties, zoals **Bewerken**,
+**Herkennen als…** of **Verwijderen**. Bij mobiele transacties klapt u eerst de boeking open.
+Het menu sluit na een keuze, bij buiten het menu klikken of met Escape; verwijderen
+vraagt nog steeds om bevestiging. Gebruik het toetsenbord met Enter of spatie om te
+openen, de pijltjestoetsen om een actie te kiezen en Enter om deze uit te voeren.
+
 ## Transactieherkenning: één instelling, optioneel met planning
 
 Open **Transacties → Herkennen als…** of **Transactieherkenning** in de navigatie.

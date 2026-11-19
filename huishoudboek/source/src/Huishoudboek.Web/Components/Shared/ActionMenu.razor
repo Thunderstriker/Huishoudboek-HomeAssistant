@@ -1,0 +1,11 @@
+<div class="row-actions">
+    <button type="button" class="row-actions-toggle" popovertarget="@menuId" aria-haspopup="menu" aria-expanded="false" aria-controls="@menuId" aria-label="@Label" title="@L["MoreActions"]"><span aria-hidden="true">⋯</span></button>
+    <div id="@menuId" class="row-actions-menu" popover="auto" role="menu" aria-label="@Label">
+        @ChildContent
+    </div>
+</div>
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = null!;
+    private readonly string menuId = "row-actions-" + Guid.NewGuid().ToString("N");
+}

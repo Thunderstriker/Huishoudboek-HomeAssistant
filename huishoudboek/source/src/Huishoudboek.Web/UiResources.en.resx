@@ -1426,4 +1426,6 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="RecognitionCategorizeHelp" xml:space="preserve"><value>Use ‘Recognize as…’ to remember the name and optional category for future imports.</value></data>
   <data name="ManagePlanning" xml:space="preserve"><value>Manage plans</value></data>
   <data name="SharedRecognitionHelp" xml:space="preserve"><value>These are the planning settings, not a second set of recognition rules. Editing opens the same shared setup.</value></data>
+  <data name="MoreActions" xml:space="preserve"><value>More actions</value></data>
+  <data name="ActionsFor" xml:space="preserve"><value>Actions for {0}</value></data>
 </root>

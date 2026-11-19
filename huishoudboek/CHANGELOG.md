@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2
+
+- Compact actiemenu via de ⋯-knop bij transacties en transactieherkenning, ook op mobiel.
+  Bestaande acties en verwijderbevestigingen blijven behouden; het menu is met het
+  toetsenbord te bedienen en sluit bij een keuze, buiten het menu klikken of Escape.
+- App- en containerversie bijgewerkt naar 0.3.2 voor installatie en updates via Home Assistant.
+
 ## 0.3.1
 
 - Eén herkenningsinstelling voor een leesbare transactienaam, optionele categorie en

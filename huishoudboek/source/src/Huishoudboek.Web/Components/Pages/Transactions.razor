@@ -16,10 +16,7 @@
         <td class="description"><TransactionDescription Transaction="row" /></td><td class="money">@Money(row.Amount)</td>
         <td><TransactionAllocationSummary Transaction="row" /><small class="badge">@TransactionType(row)</small></td><td class="money">@Money(row.PrincipalComponent)</td>
         <td><RecognitionPlanningStatus Transaction="row" /></td><td class="money">@(row.StatementBalance is { } balance ? Money(balance) : "—")</td>
-        <td><div class="actions"><button @onclick="() => Draft = EditorDraft.Transaction(State, row)">@L["Edit"]</button>
-            @if (!TransferMatching.IsInternal(State.Data, row)) { <button @onclick="() => Recognize(row)">@L["RecognizeAs"]</button> }
-            <PurchaseReceiptLink Transaction="row" />@if (row.Kind == TransactionKind.Normal && !TransferMatching.IsInternal(State.Data, row)) { <button @onclick="() => OpenDetails(row)">@L["TransactionHandling"]</button> }
-            @if (EditorDraft.CanCreateRecurring(State.Data, row)) { <button @onclick="() => OpenRecurring(row)">@L["LinkToRecurringPayment"]</button> }<button @onclick="() => AskDelete(row)">@L["Delete"]</button></div></td>
+        <td><TransactionActions Transaction="row" Edit="row => Draft = EditorDraft.Transaction(State, row)" Recognize="Recognize" Handle="OpenDetails" Recurring="OpenRecurring" Delete="AskDelete" /></td>
     </tr>
 }
 </tbody></table></div>@if (rows.Count == 0) { <p class="empty">@L["NoTransactions"]</p> }<Pager Count="rows.Count" @bind-Page="page" /></section>

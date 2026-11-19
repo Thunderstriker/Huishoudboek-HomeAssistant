@@ -1,0 +1,20 @@
+@inject WebState State
+<ActionMenu Label="@L["ActionsFor", TransactionRecognition.DisplayName(State.Data, Transaction)]">
+    <button type="button" role="menuitem" tabindex="-1" @onclick="() => Edit.InvokeAsync(Transaction)">@L["Edit"]</button>
+    @if (Recognize.HasDelegate && !TransferMatching.IsInternal(State.Data, Transaction))
+    { <button type="button" role="menuitem" tabindex="-1" @onclick="() => Recognize.InvokeAsync(Transaction)">@L["RecognizeAs"]</button> }
+    <PurchaseReceiptLink Transaction="Transaction" MenuItem="true" />
+    @if (Transaction.Kind == TransactionKind.Normal && !TransferMatching.IsInternal(State.Data, Transaction))
+    { <button type="button" role="menuitem" tabindex="-1" @onclick="() => Handle.InvokeAsync(Transaction)">@L["TransactionHandling"]</button> }
+    @if (Recurring.HasDelegate && EditorDraft.CanCreateRecurring(State.Data, Transaction))
+    { <button type="button" role="menuitem" tabindex="-1" @onclick="() => Recurring.InvokeAsync(Transaction)">@L["LinkToRecurringPayment"]</button> }
+    <button type="button" class="menu-delete" role="menuitem" tabindex="-1" @onclick="() => Delete.InvokeAsync(Transaction)">@L["Delete"]</button>
+</ActionMenu>
+@code {
+    [Parameter, EditorRequired] public Transaction Transaction { get; set; } = null!;
+    [Parameter] public EventCallback<Transaction> Edit { get; set; }
+    [Parameter] public EventCallback<Transaction> Recognize { get; set; }
+    [Parameter] public EventCallback<Transaction> Handle { get; set; }
+    [Parameter] public EventCallback<Transaction> Recurring { get; set; }
+    [Parameter] public EventCallback<Transaction> Delete { get; set; }
+}
