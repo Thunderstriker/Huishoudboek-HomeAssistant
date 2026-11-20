@@ -1,5 +1,5 @@
 name: "Huishoudboek"
-version: "0.3.3"
+version: "0.3.3.2"
 slug: "huishoudboek"
 description: "Volledig lokaal huishoudboek met database-import, budgetten en prognoses"
 arch:

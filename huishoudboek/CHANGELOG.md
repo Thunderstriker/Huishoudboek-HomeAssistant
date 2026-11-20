@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3.2
+
+- App- en containerversie bijgewerkt naar 0.3.3.2 voor installatie en updates via Home Assistant.
+
 ## 0.3.3.1
 
 - Financiële kalender toont geraamde uitgaven bij toekomstige saldi, met aparte
