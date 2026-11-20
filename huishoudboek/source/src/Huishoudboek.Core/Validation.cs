@@ -68,6 +68,9 @@ public static class Validation
             "Kies essentieel óf uitzonderlijk, alleen voor gewone categorieën.");
         Require(data.InsightSettings != null && data.InsightSettings.BufferTargetMonths is >= 1 and <= 36,
             "Kies een bufferdoel van 1 tot 36 maanden.");
+        Require(data.InsightSettings!.SpendingForecastCategoryIds is not { } forecastCategories ||
+            forecastCategories.Distinct().Count() == forecastCategories.Count && forecastCategories.All(categories.Contains),
+            "Ongeldige of dubbele categorie voor de uitgavenraming.");
         foreach (var t in data.Transactions)
         {
             Require(accounts.Contains(t.AccountId) && !string.IsNullOrWhiteSpace(t.Description), "Transactie mist een rekening of omschrijving.");

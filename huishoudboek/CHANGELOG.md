@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.3.3
+
+- Automatische uitgavenramingen beperken tot gekozen categorieën, standaard Voeding
+  en Medische kosten. Uitgesloten categorieën tellen ook niet meer mee in de
+  dagreserve; bekende betalingen, inkomsten en vaste posten blijven behouden.
+- Terugkerende aankoopdagen herkennen op basis van herhaling, met afzonderlijke ramingen
+  per weekdag. Incidentele aankopen worden geen wekelijks patroon; geleerde bedragen
+  vervangen hun deel van de dagraming zonder dubbele aftrek.
+- Kalender en Financiële vooruitblik tonen de ramingsscope; leerpatronen tonen
+  herkende dagen en concrete uitleg bij ontbrekende dekking, aankoopdatums of
+  acceptatie. Categorievoorkeuren blijven bewaard in databaseback-ups.
+
 ## 0.3.3.2
 
 - App- en containerversie bijgewerkt naar 0.3.3.2 voor installatie en updates via Home Assistant.

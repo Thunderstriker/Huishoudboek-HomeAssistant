@@ -383,6 +383,7 @@ internal static class RecognitionTests
     private static WebState State(HouseholdData data)
     {
         var state = new WebState(null!); state.Data.Owners = data.Owners; state.Data.Accounts = data.Accounts; state.Data.Categories = data.Categories;
+        state.Data.InsightSettings = data.InsightSettings;
         state.Data.Transactions = data.Transactions; state.Data.Rules = data.Rules; state.Data.RecurringPayments = data.RecurringPayments;
         state.Data.TransactionAllocations = data.TransactionAllocations; state.Data.ReimbursementClaims = data.ReimbursementClaims;
         return state;

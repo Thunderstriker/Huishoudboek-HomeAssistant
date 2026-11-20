@@ -257,6 +257,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
                     data.InsightSettings = JsonSerializer.Deserialize<InsightSettings>(reader.GetString(1)) ?? new();
             }
         }
+        SpendingForecast.InitializeDefaults(data);
         if (version >= 12) CheckReceiptDocuments(connection, tx, data);
         tx.Commit();
         Validation.Validate(data);

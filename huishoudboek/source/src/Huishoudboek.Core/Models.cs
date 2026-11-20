@@ -42,6 +42,8 @@ public sealed record Category
 public sealed record InsightSettings
 {
     public int BufferTargetMonths { get; set; } = 6;
+    // Null is a legacy setting; an empty selection deliberately disables automatic spending estimates.
+    public List<Guid>? SpendingForecastCategoryIds { get; set; }
 }
 
 public sealed record BudgetOverride
@@ -237,16 +239,21 @@ public sealed class HouseholdData
     public Mortgage? Mortgage { get; set; }
     public InsightSettings InsightSettings { get; set; } = new();
 
-    public static HouseholdData CreateEmpty() => new()
+    public static HouseholdData CreateEmpty()
     {
-        Categories = new[] { "Huishouden", "Wonen & hypotheek", "Voeding", "Verjaardagen & cadeaus",
-            "Vrije tijd", "Verzekeringen", "Auto & vervoer", "Medische kosten", "Energie & water",
-            "Abonnementen", "Kleding", "Overig", "Salaris", "Dividend & rente" }
-            .Select(name => new Category { Name = name }).Concat(new[] {
-                new Category { Name = "Sparen & beleggen", Purpose = CategoryPurpose.Savings },
-                new Category { Name = "Tussen eigen rekeningen", Purpose = CategoryPurpose.OwnAccountMovement }
-            }).ToList()
-    };
+        var data = new HouseholdData
+        {
+            Categories = new[] { "Huishouden", "Wonen & hypotheek", "Voeding", "Verjaardagen & cadeaus",
+                "Vrije tijd", "Verzekeringen", "Auto & vervoer", "Medische kosten", "Energie & water",
+                "Abonnementen", "Kleding", "Overig", "Salaris", "Dividend & rente" }
+                .Select(name => new Category { Name = name }).Concat(new[] {
+                    new Category { Name = "Sparen & beleggen", Purpose = CategoryPurpose.Savings },
+                    new Category { Name = "Tussen eigen rekeningen", Purpose = CategoryPurpose.OwnAccountMovement }
+                }).ToList()
+        };
+        SpendingForecast.InitializeDefaults(data);
+        return data;
+    }
 }
 
 public interface IHouseholdStore

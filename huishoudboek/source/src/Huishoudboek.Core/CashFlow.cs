@@ -59,9 +59,11 @@ public static class CashFlow
         var awaitingBankData = 0;
         var reviewPayments = 0;
         var events = new List<CashFlowEvent>();
+        var forecastCategories = SpendingForecast.CategoryIds(data);
         // Classification changes reporting, never cash. Only the ordinary expense part
         // of a bank debit belongs in the everyday-spending estimate.
         var spending = TransactionAccounting.Lines(data, data.Transactions.Where(t => t.Amount < 0))
+            .Where(l => l.CategoryId is { } category && forecastCategories.Contains(category))
             .GroupBy(l => l.Transaction.Id).ToDictionary(g => g.Key, g => Math.Max(0, g.Sum(l => l.TypicalSpending)));
         bool Variable(Transaction t) => t.Amount < 0 && t.Kind == TransactionKind.Normal &&
             t.RecurringPaymentId == null && !transfers.Contains(t.Id) && spending.GetValueOrDefault(t.Id) > 0;
@@ -120,7 +122,7 @@ public static class CashFlow
         var history = data.Transactions.Where(t => t.AccountId == account.Id && t.Date >= historyStart && t.Date <= historyEnd && Variable(t)).ToList();
         var observedDays = historyEnd.DayNumber - historyStart.DayNumber + 1;
         var dailyVariable = observedDays > 0 ? decimal.Round(history.Sum(t => spending[t.Id]) / observedDays, 2, MidpointRounding.AwayFromZero) : 0;
-        var limited = observedDays < 14 || history.Count < 3;
+        var limited = forecastCategories.Count > 0 && (observedDays < 14 || history.Count < 3);
         if (limited) warnings.Add("Weinig variabele uitgavenhistorie: het daggemiddelde kan noodzakelijke dagelijkse kosten onderschatten.");
         if (account.MinimumCashBuffer == 0) warnings.Add("Geen minimale cashbuffer ingesteld. Stel via Buffer instellen een reserve in voor onverwachte kosten.");
         if (nextIncome == null) warnings.Add($"Geen volgende inkomensdatum bekend binnen {IncomeSearchDays} dagen; bestedingsruimte berekend voor {minimumDays} dagen, niet tot een bekende betaaldag.");
@@ -130,10 +132,14 @@ public static class CashFlow
             warnings.Add("Een geaccepteerd bestedingspatroon heeft onvoldoende bewijs en is tijdelijk niet toegepast. Controleer afschriftdekking en aankoopdatums.");
         if (learning.Patterns.Any(p => p.Active && !p.Strong))
             warnings.Add("De prognose gebruikt een voorlopig bestedingspatroon. Controleer de bewijsperiode, aankoopdagen en bedragvariatie.");
-        var active = learning.Patterns.Where(p => p.Active).Select(p => p.CategoryId).ToHashSet();
+        var activePatterns = learning.Patterns.Where(p => p.Active).ToDictionary(p => p.CategoryId);
+        var active = activePatterns.Keys.ToHashSet();
         var residual = Math.Max(0, decimal.Round(dailyVariable - learning.Patterns.Where(p => p.Active).Sum(p => p.BaselineDaily), 2, MidpointRounding.AwayFromZero));
         var variableLines = active.Count > 0 ? SpendingLearning.VariableLines(data, account.Id).ToLookup(l => l.Transaction.Id) : null;
         var purchaseDates = new Dictionary<Guid, DateOnly?>();
+        bool UsesDatedPattern(AccountingLine line) => line.CategoryId is { } category &&
+            activePatterns.TryGetValue(category, out var pattern) && purchaseDates.GetValueOrDefault(line.Transaction.Id) is { } date &&
+            pattern.AmountOn(date) > 0;
         if (active.Count > 0)
         {
             // Planning protects money from the known purchase date, while bank records keep their booking date.
@@ -154,7 +160,8 @@ public static class CashFlow
             foreach (var group in events.Where(e => e.TransactionId != null).GroupBy(e => e.Date))
             {
                 var explicitLines = group.SelectMany(e => variableLines![e.TransactionId!.Value]).ToList();
-                var residualCapacity = Math.Max(0, residual - explicitLines.Where(l => l.CategoryId is not { } c || !active.Contains(c)).Sum(l => l.TypicalSpending));
+                var residualCapacity = Math.Max(0, residual - explicitLines.Where(l => l.CategoryId is not { } c || !active.Contains(c) ||
+                    purchaseDates.GetValueOrDefault(l.Transaction.Id).HasValue && !UsesDatedPattern(l)).Sum(l => l.TypicalSpending));
                 foreach (var category in explicitLines.Where(l => l.CategoryId is { } c && active.Contains(c) &&
                     !purchaseDates.GetValueOrDefault(l.Transaction.Id).HasValue).GroupBy(l => l.CategoryId!.Value))
                 {
@@ -198,8 +205,7 @@ public static class CashFlow
             else
             {
                 var explicitLines = entries.Where(e => e.TransactionId != null).SelectMany(e => variableLines![e.TransactionId!.Value]).ToList();
-                var extra = explicitLines.Where(l => l.CategoryId is not { } category || !active.Contains(category) ||
-                    !purchaseDates.GetValueOrDefault(l.Transaction.Id).HasValue).Sum(l => l.TypicalSpending);
+                var extra = explicitLines.Where(l => !UsesDatedPattern(l)).Sum(l => l.TypicalSpending);
                 variable = Math.Max(0, residual - extra);
                 foreach (var estimate in plannedByDate[date])
                 {

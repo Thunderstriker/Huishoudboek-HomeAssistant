@@ -9,6 +9,7 @@
     }
     else
     {
+        <SpendingForecastCategories Editable="false" />
         <div class="metrics">
             <div><div class="metric-label">@L["EstimatedSpendable"]</div><div class="metric-value">@Money(forecast.EstimatedSpendable)</div><small>@L["SpendableSumNote"]</small></div>
             <div><div class="metric-label">@L["BillsNextDays", 7]</div><div class="metric-value">@Money(forecast.Bills7Days)</div></div>

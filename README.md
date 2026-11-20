@@ -41,6 +41,8 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   Aankoopdatums uit bankteksten of gecontroleerde bonnen onderscheiden weekendinkopen
   van hun latere bankboeking. Controleer en accepteer voorstellen één keer; daarna
   leren ze verder bij imports, zonder dubbele dagelijkse uitgavenschatting.
+  Automatische ramingen gebruiken alleen gekozen categorieën (standaard Voeding en
+  Medische kosten); uitgesloten categorieën krijgen ook geen dagelijkse reserve.
   Zie [de handleiding](huishoudboek/DOCS.md#financiële-kalender-en-geleerde-bestedingen)
   en [het ontwerp](FINANCIAL-CALENDAR.md).
 - **Vaste inkomsten en lasten:** plan maand-, kwartaal-, jaar- en eenmalige betalingen.

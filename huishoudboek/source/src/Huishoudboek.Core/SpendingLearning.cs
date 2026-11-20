@@ -39,6 +39,8 @@ public sealed record SpendingPattern(Guid AccountId, Guid CategoryId, SpendingHa
     int CoveredWeeks, DateOnly? From, DateOnly? Through, decimal DatedShare, bool Ready, bool Strong,
     decimal BaselineDaily, IReadOnlyList<WeekdaySpending> Weekdays, IReadOnlyList<SpendingEvidence> Evidence)
 {
+    public IReadOnlyList<DayOfWeek> DetectedWeekdays { get; init; } = [];
+    public int RequiredActiveWeeks { get; init; }
     public bool Active => Ready && Preference?.Enabled == true;
     public decimal WeeklyAmount => Weekdays.Sum(w => w.ExpectedAmount);
     public decimal AmountOn(DateOnly date) => Weekdays.Single(w => w.Day == date.DayOfWeek).ExpectedAmount;
@@ -52,6 +54,7 @@ public static partial class SpendingLearning
     public const int HistoryWeeks = 12;
     public const int MinimumWeeks = 6;
     public const int BookingWindowDays = 7;
+    public const decimal MinimumDatedShare = .7m;
 
     [GeneratedRegex(@"(?<!\d)(?<date>\d{2}[-/.]\d{2}[-/.]\d{4})\s+(?<hour>\d{2}):(?<minute>\d{2})(?::(?<second>\d{2}))?(?![\d:])", RegexOptions.CultureInvariant)]
     private static partial Regex Timestamp();
@@ -90,10 +93,14 @@ public static partial class SpendingLearning
         return DateFromDescription(transaction);
     }
 
-    public static IReadOnlyList<AccountingLine> VariableLines(HouseholdData data, Guid accountId) =>
-        TransactionAccounting.Lines(data, data.Transactions.Where(t => t.AccountId == accountId && t.Amount < 0 &&
+    public static IReadOnlyList<AccountingLine> VariableLines(HouseholdData data, Guid accountId)
+    {
+        var selected = SpendingForecast.CategoryIds(data);
+        return TransactionAccounting.Lines(data, data.Transactions.Where(t => t.AccountId == accountId && t.Amount < 0 &&
             t.Kind == TransactionKind.Normal && t.RecurringPaymentId == null))
-        .Where(l => l.Treatment == AllocationTreatment.Ordinary && l.TypicalSpending > 0).ToList();
+            .Where(l => l.Treatment == AllocationTreatment.Ordinary && l.TypicalSpending > 0 &&
+                l.CategoryId is { } category && selected.Contains(category)).ToList();
+    }
 
     public static SpendingAnalysis Analyze(HouseholdData data, Account account, DateOnly today,
         DateOnly historyStart, DateOnly historyEnd)
@@ -107,9 +114,10 @@ public static partial class SpendingLearning
         var firstDate = weeks.Count > 0 && weeks[0] < historyStart ? weeks[0] : historyStart;
         var lines = VariableLines(data, account.Id).Where(l => l.Transaction.Date >= firstDate && l.Transaction.Date <= historyEnd).ToList();
         var dated = lines.GroupBy(l => l.Transaction.Id).ToDictionary(g => g.Key, g => PurchaseDate(data, g.First().Transaction));
+        var selected = SpendingForecast.CategoryIds(data);
         var categories = lines.Where(l => l.Transaction.Date >= historyStart && l.Transaction.Date <= historyEnd && l.CategoryId != null)
             .Select(l => l.CategoryId!.Value).Concat(data.SpendingHabits.Where(h => h.AccountId == account.Id).Select(h => h.CategoryId))
-            .Distinct().Where(id => data.Categories.Any(c => c.Id == id && c.Purpose == CategoryPurpose.Normal && !c.IsExceptional));
+            .Distinct().Where(selected.Contains);
         var patterns = new List<SpendingPattern>();
         var observedDays = Math.Max(1, historyEnd.DayNumber - historyStart.DayNumber + 1);
         foreach (var categoryId in categories)
@@ -119,7 +127,6 @@ public static partial class SpendingLearning
             var knownAmount = historical.Where(l => dated[l.Transaction.Id].Date != null).Sum(l => l.TypicalSpending);
             var total = historical.Sum(l => l.TypicalSpending);
             var share = total > 0 ? knownAmount / total : 0;
-            var daily = knownAmount / observedDays;
             var preference = data.SpendingHabits.SingleOrDefault(h => h.AccountId == account.Id && h.CategoryId == categoryId);
             var byDate = category.Where(l => l.Transaction.Date <= historyEnd && dated[l.Transaction.Id].Date != null)
                 .GroupBy(l => dated[l.Transaction.Id].Date!.Value).ToDictionary(g => g.Key, g => g.Sum(l => l.TypicalSpending));
@@ -134,7 +141,18 @@ public static partial class SpendingLearning
                 // Limit a single unusual trip's influence on weekday timing, not the cash total.
                 weights[day] = values.Select((v, i) => (positive.Count >= 3 ? Math.Min(v, median * 3) : v) * (i + 1)).Sum();
             }
-            var ready = weeks.Count >= MinimumWeeks && share >= .7m && active.Max() >= 4 && daily > 0;
+            // A one-off purchase is not a weekly habit. Require at least four occurrences and half the covered weeks.
+            var requiredActiveWeeks = Math.Max(4, (weeks.Count + 1) / 2);
+            var recurringDays = Enumerable.Range(0, 7).Where(i => active[i] >= requiredActiveWeeks).ToList();
+            var detected = recurringDays.Select(i => (DayOfWeek)((i + 1) % 7)).ToList();
+            var automatic = preference?.Weekdays is null or 0;
+            if (automatic)
+                for (var i = 0; i < 7; i++) if (!recurringDays.Contains(i)) weights[i] = 0;
+            // Irregular dated purchases stay in the selected categories' unscheduled reserve, not invented weekly trips.
+            var scheduledAmount = automatic ? historical.Where(l => dated[l.Transaction.Id].Date is { } date &&
+                detected.Contains(date.DayOfWeek)).Sum(l => l.TypicalSpending) : knownAmount;
+            var daily = scheduledAmount / observedDays;
+            var ready = weeks.Count >= MinimumWeeks && share >= MinimumDatedShare && detected.Count > 0 && daily > 0;
             if (preference?.Weekdays > 0)
             {
                 for (var i = 0; i < 7; i++) if ((preference.Weekdays & (1 << i)) == 0) weights[i] = 0;
@@ -154,7 +172,7 @@ public static partial class SpendingLearning
             patterns.Add(new(account.Id, categoryId, preference, weeks.Count, weeks.Count > 0 ? weeks[0] : null,
                 weeks.Count > 0 ? weeks[^1].AddDays(6) : null, share, ready,
                 ready && weeks.Count >= 8 && share >= .9m && active.Max() >= weeks.Count * .6m && stableAmounts,
-                daily, weekdays, evidence));
+                daily, weekdays, evidence) { DetectedWeekdays = detected, RequiredActiveWeeks = requiredActiveWeeks });
         }
         return new(weeks.Count, patterns.OrderByDescending(p => p.Active).ThenByDescending(p => p.WeeklyAmount).ToList());
     }
@@ -173,7 +191,8 @@ public static partial class SpendingLearning
     public static IReadOnlyList<ExpectedSpending> Project(HouseholdData data, SpendingAnalysis analysis, DateOnly today, DateOnly end)
     {
         var result = new List<ExpectedSpending>();
-        foreach (var pattern in analysis.Patterns.Where(p => p.Active))
+        var selected = SpendingForecast.CategoryIds(data);
+        foreach (var pattern in analysis.Patterns.Where(p => p.Active && selected.Contains(p.CategoryId)))
         {
             var habit = pattern.Preference!;
             var lines = VariableLines(data, pattern.AccountId).Where(l => l.CategoryId == pattern.CategoryId &&

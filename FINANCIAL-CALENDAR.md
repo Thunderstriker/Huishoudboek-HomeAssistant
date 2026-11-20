@@ -33,17 +33,22 @@ never creates transactions or changes recorded bank balances.
 - Use ordinary bank-funded spending allocations, excluding fixed-payment links,
   transfers, mortgages, savings and exceptional categories. Voucher-funded receipt
   costs never increase bank spending estimates. Respect mixed-category purchases.
+- Automatic learning and the residual daily estimate use only selected category
+  IDs. Default new/legacy selections to Voeding and Medische kosten once; renaming
+  categories must preserve their selection. Excluded categories contribute no
+  automatic deduction or optional reserve. Known future transactions, scheduled
+  costs and income always retain their cash effect regardless of category.
 - Combine purchases on the same day. Show frequency, average on active days and
   expected weekday amounts (including covered zero days). Weight recent weeks more
   heavily when distributing spending across weekdays.
-- Unknown purchase dates remain in the ordinary daily estimate. They must neither
+- Unknown purchase dates in selected categories remain in the ordinary daily estimate. They must neither
   teach false Monday habits nor disappear from the forecast.
 - Suggestions require acceptance once; accepted patterns recalculate after imports.
   Users can pause a pattern, choose weekdays, override its weekly amount, skip or
   adjust individual occurrences and return to automatic estimates.
 - Learned spending replaces its own portion of the daily run-rate rather than
-  adding to it. Preserve the existing overall historical spending level unless the
-  user explicitly overrides it. Estimates do not affect actual expenses or budgets.
+  adding to it. Preserve the selected categories' overall historical spending level
+  unless the user explicitly overrides it. Estimates do not affect actual expenses or budgets.
 - Recent unconfirmed occurrences are short-lived planning reserves, not overdue
   bills. Account for already recorded spending without linking unrelated payments;
   permit dismissing a skipped trip. No accumulating historical shopping debt.
@@ -102,3 +107,29 @@ never creates transactions or changes recorded bank balances.
   matching icons in day details, and compact mobile summaries as described above.
 - Record this display enhancement in the Dutch changelog under 0.3.3.1 without
   changing application/container version metadata or the forecast calculations.
+
+## Selected-category and recurring-day follow-up — 0.3.3.3
+
+- The category selection applies to all accounts and both calendar/outlook; pattern
+  evidence, acceptance and amounts remain account-local and respect the owner scope.
+  Explicitly empty selections disable automatic spending but not known payments.
+- Infer regular purchase weekdays from local SQLite-backed history, not the supplied
+  spreadsheet, chat examples or synthetic tests. Retain up to 12 complete covered
+  weeks, the seven-day booking window and the purchase-date evidence precedence.
+- Require purchases on each automatic weekday in at least four and at least half
+  the covered weeks. A Wednesday/Saturday habit should allocate different expected
+  amounts to those days; a single purchase on Monday must not create Monday shopping.
+- Only the historical recurring portion moves to those weekdays. Irregular selected
+  spending and unknown dates stay in an explicitly labelled unscheduled daily reserve.
+  An irregular medical bill must not invent recurring appointments. Preserve total
+  selected spending, explicit-payment offsets, manual overrides and occurrence skips.
+- Keep one-time acceptance. Show detected days and amounts, and explain separately
+  missing coverage, missing purchase dates, insufficient repetition and paused or
+  unaccepted patterns. Make unapplied patterns discoverable from the calendar.
+- Persist category IDs inside the existing insights metadata, included in normal
+  SQLite backup/restore. Missing legacy preferences get defaults; an explicit empty
+  list remains empty. No schema migration or application/container version bump.
+- Cover defaults, renames/deletion, excluded history and future payments, mixed
+  allocations, year-long Wednesday/Saturday history, rare off-day purchases, medical
+  irregularity, no double deduction, empty/legacy settings and both UI languages
+  with synthetic regression tests. Record Dutch release notes under 0.3.3.3.

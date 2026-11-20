@@ -22,6 +22,220 @@ internal static class FinancialCalendarTests
     private static readonly DateOnly Today = new(2026, 11, 16);
     public static IEnumerable<(string Name, Action Run)> All()
     {
+        yield return ("Automatic forecasts default to food and medical categories, using stable IDs after renames", () =>
+        {
+            var f = new History(); var medical = f.Data.Categories.Single(c => c.Name == "Medische kosten");
+            var selected = SpendingForecast.CategoryIds(f.Data);
+            Equal(2, selected.Count); True(selected.Contains(f.Food.Id)); True(selected.Contains(medical.Id));
+            var before = f.Forecast(); Categorization.RenameCategory(f.Data, f.Food.Id, "Synthetic groceries renamed");
+            True(SpendingForecast.CategoryIds(f.Data).Contains(f.Food.Id));
+            Equal(before.DailyVariableEstimate, f.Forecast().DailyVariableEstimate);
+        });
+        yield return ("Excluded leisure and holiday history never leak into learned spending or the daily reserve", () =>
+        {
+            var f = new History(); f.Accept(); var before = f.Forecast();
+            var leisure = f.Data.Categories.Single(c => c.Name == "Vrije tijd");
+            var holiday = new Category { Name = "Synthetic holiday" }; f.Data.Categories.Add(holiday);
+            foreach (var t in f.Data.Transactions.ToList())
+            {
+                f.Data.Transactions.Add(t with { Id = Guid.NewGuid(), CategoryId = leisure.Id, Amount = t.Amount * 10 });
+                f.Data.Transactions.Add(t with { Id = Guid.NewGuid(), CategoryId = holiday.Id, Amount = t.Amount * 20 });
+            }
+            SpendingLearning.SaveHabit(f.Data, new() { AccountId = f.Account.Id, CategoryId = leisure.Id });
+            SpendingLearning.SaveHabit(f.Data, new() { AccountId = f.Account.Id, CategoryId = holiday.Id });
+            var after = f.Forecast();
+            Equal(before.DailyVariableEstimate, after.DailyVariableEstimate);
+            Equal(before.DailyUnscheduledEstimate, after.DailyUnscheduledEstimate);
+            True(before.Days.Select(d => d.VariableSpending).SequenceEqual(after.Days.Select(d => d.VariableSpending)));
+            True(after.Learning.Patterns.All(p => p.CategoryId == f.Food.Id));
+            True(after.ExpectedSpending.All(e => e.CategoryId == f.Food.Id));
+            True(after.CurrentBalance < before.CurrentBalance); // Recorded debits still affect actual bank cash.
+            var bank = JsonSerializer.Serialize(f.Data.Transactions);
+            SpendingForecast.SetIncluded(f.Data, leisure.Id, true); True(f.Forecast().DailyVariableEstimate > after.DailyVariableEstimate);
+            SpendingForecast.SetIncluded(f.Data, leisure.Id, false);
+            Equal(after.DailyVariableEstimate, f.Forecast().DailyVariableEstimate); Equal(bank, JsonSerializer.Serialize(f.Data.Transactions));
+        });
+        yield return ("Category selection filters mixed allocations and excluded future payments do not consume grocery reserves", () =>
+        {
+            var f = new History(); var leisure = f.Data.Categories.Single(c => c.Name == "Vrije tijd");
+            var mixed = f.Data.Transactions[0];
+            f.Data.TransactionAllocations.Add(new() { TransactionId = mixed.Id, Amount = -10, CategoryId = f.Food.Id });
+            f.Data.TransactionAllocations.Add(new() { TransactionId = mixed.Id, Amount = mixed.Amount + 10, CategoryId = leisure.Id });
+            Equal(10m, SpendingLearning.VariableLines(f.Data, f.Account.Id).Where(l => l.Transaction.Id == mixed.Id).Sum(l => l.TypicalSpending));
+            var before = f.Forecast();
+            var excluded = f.Add(Today.AddDays(1), 1000, 0); excluded.CategoryId = leisure.Id;
+            var after = f.Forecast(); var tomorrow = after.Days.First();
+            Equal(1000m, tomorrow.Payments); Equal(before.Days.First().VariableSpending, tomorrow.VariableSpending);
+            var future = f.Add(Today.AddDays(2), 100, 0);
+            f.Data.TransactionAllocations.Add(new() { TransactionId = future.Id, Amount = -5, CategoryId = f.Food.Id });
+            f.Data.TransactionAllocations.Add(new() { TransactionId = future.Id, Amount = -95, CategoryId = leisure.Id });
+            var day = f.Forecast().Days.Single(d => d.Date == future.Date);
+            Equal(100m, day.Payments); Equal(Math.Max(0, before.DailyVariableEstimate - 5), day.VariableSpending);
+        });
+        yield return ("Excluding all automatic categories removes reserves but never known bank or scheduled payments", () =>
+        {
+            var f = new History(); f.Accept();
+            foreach (var id in SpendingForecast.CategoryIds(f.Data)) SpendingForecast.SetIncluded(f.Data, id, false);
+            f.Add(Today.AddDays(2), 123, 0);
+            var leisure = f.Data.Categories.Single(c => c.Name == "Vrije tijd");
+            f.Data.RecurringPayments.Add(new() { AccountId = f.Account.Id, CategoryId = leisure.Id, Name = "Synthetic planned trip",
+                Amount = -200, Frequency = PaymentFrequency.Once, StartDate = Today.AddDays(3), DayOfMonth = Today.AddDays(3).Day });
+            f.Data.RecurringPayments.Add(new() { AccountId = f.Account.Id, Name = "Synthetic salary", Amount = 1000,
+                Frequency = PaymentFrequency.Once, StartDate = Today.AddDays(4), DayOfMonth = Today.AddDays(4).Day });
+            var forecast = f.Forecast(); Equal(0m, forecast.DailyVariableEstimate); Equal(0m, forecast.DailyUnscheduledEstimate);
+            Equal(0m, forecast.PendingHabitReserve); Equal(0, forecast.Learning.Patterns.Count);
+            True(forecast.Days.All(d => d.VariableSpending == 0)); True(!forecast.LimitedHistory);
+            Equal(123m, forecast.Days.Single(d => d.Date == Today.AddDays(2)).Payments);
+            Equal(200m, forecast.Days.Single(d => d.Date == Today.AddDays(3)).Payments);
+            Equal(1000m, forecast.Days.Single(d => d.Date == Today.AddDays(4)).Income);
+        });
+        yield return ("Wednesday and Saturday groceries are inferred from year-long local history and deducted only on those days", () =>
+        {
+            var f = new History(); var start = new DateOnly(Today.Year, 1, 1);
+            f.Account.OpeningDate = start; f.Data.ImportBatches[0].CoverageFrom = start;
+            var firstPurchase = f.Data.Transactions.Min(t => SpendingLearning.PurchaseDate(f.Data, t).Date!.Value);
+            for (var date = start; date < firstPurchase; date = date.AddDays(1))
+                if (date.DayOfWeek is DayOfWeek.Wednesday or DayOfWeek.Saturday)
+                    f.Add(date, date.DayOfWeek == DayOfWeek.Wednesday ? 50 : 100, date.DayOfWeek == DayOfWeek.Saturday ? 2 : 0);
+            var before = f.Forecast(); var pattern = before.Learning.Patterns.Single();
+            True(pattern.Ready); True(pattern.DetectedWeekdays.SequenceEqual(new[] { DayOfWeek.Wednesday, DayOfWeek.Saturday }));
+            f.Accept(); var after = f.Forecast(); Equal(0m, after.DailyUnscheduledEstimate);
+            foreach (var day in after.Days)
+            {
+                var shopping = day.Date.DayOfWeek is DayOfWeek.Wednesday or DayOfWeek.Saturday;
+                Equal(shopping, day.VariableSpending > 0);
+                Equal(day.OpeningBalance - day.Payments - day.VariableSpending + day.Income, day.ClosingBalance);
+            }
+            True(pattern.Weekdays.Single(w => w.Day == DayOfWeek.Saturday).ExpectedAmount >
+                pattern.Weekdays.Single(w => w.Day == DayOfWeek.Wednesday).ExpectedAmount);
+            Near(before.Days.Take(7).Sum(d => d.VariableSpending), after.Days.Take(7).Sum(d => d.VariableSpending), .05m);
+            True(after.Learning.Patterns.Single().Weekdays.Single(w => w.Day == DayOfWeek.Monday).ExpectedAmount == 0);
+        });
+        yield return ("Isolated off-day purchases do not become weekly habits or disappear from the selected cash estimate", () =>
+        {
+            var f = new History(); var original = f.Pattern();
+            f.Add(Today.AddDays(-14), 600, 0); // One Monday, not a Monday habit.
+            var before = f.Forecast(); f.Accept(); var after = f.Forecast(); var pattern = after.Learning.Patterns.Single();
+            True(pattern.DetectedWeekdays.SequenceEqual(new[] { DayOfWeek.Wednesday, DayOfWeek.Saturday }));
+            Equal(0m, pattern.Weekdays.Single(w => w.Day == DayOfWeek.Monday).ExpectedAmount);
+            Equal(original.BaselineDaily, pattern.BaselineDaily); True(after.DailyUnscheduledEstimate > 0);
+            Near(before.Days.Take(7).Sum(d => d.VariableSpending), after.Days.Take(7).Sum(d => d.VariableSpending), .05m);
+            True(!after.ExpectedSpending.Any(e => e.Date > Today && e.Date.DayOfWeek == DayOfWeek.Monday));
+        });
+        yield return ("A regular weekday needs repetition in half the covered weeks, not a handful of exceptions", () =>
+        {
+            var f = new History(); var wednesdays = f.Data.Transactions.Select(t => SpendingLearning.PurchaseDate(f.Data, t).Date!.Value)
+                .Where(d => d.DayOfWeek == DayOfWeek.Wednesday).Distinct().Order().ToList();
+            var keep = wednesdays.TakeLast(4).ToHashSet();
+            f.Data.Transactions.RemoveAll(t => SpendingLearning.PurchaseDate(f.Data, t).Date is { } date &&
+                date.DayOfWeek == DayOfWeek.Wednesday && !keep.Contains(date));
+            var pattern = f.Pattern(); Equal(12, pattern.CoveredWeeks); Equal(6, pattern.RequiredActiveWeeks);
+            True(pattern.DetectedWeekdays.SequenceEqual(new[] { DayOfWeek.Saturday }));
+            Equal(0m, pattern.Weekdays.Single(w => w.Day == DayOfWeek.Wednesday).ExpectedAmount);
+        });
+        yield return ("A known off-day grocery purchase offsets its unscheduled reserve without removing a regular shopping day", () =>
+        {
+            var f = new History(); f.Add(Today.AddDays(-14), 600, 0); f.Accept(); var before = f.Forecast();
+            var future = f.Add(Today.AddDays(7), 1, 0); var after = f.Forecast();
+            var monday = after.Days.Single(d => d.Date == future.Date);
+            Equal(1m, monday.Payments); Equal(before.DailyUnscheduledEstimate - 1, monday.VariableSpending);
+            True(before.ExpectedSpending.Where(e => !e.IsPending).SequenceEqual(after.ExpectedSpending.Where(e => !e.IsPending)));
+        });
+        yield return ("Irregular medical costs remain a reserve without inventing weekly appointments", () =>
+        {
+            var f = new History(); var medical = f.Data.Categories.Single(c => c.Name == "Medische kosten");
+            var visit = f.Add(Today.AddDays(-11), 80, 0); visit.CategoryId = medical.Id;
+            SpendingLearning.SaveHabit(f.Data, new() { AccountId = f.Account.Id, CategoryId = medical.Id }); f.Accept();
+            var forecast = f.Forecast(); var pattern = forecast.Learning.Patterns.Single(p => p.CategoryId == medical.Id);
+            True(!pattern.Ready); Equal(0, pattern.DetectedWeekdays.Count); Equal(1m, pattern.DatedShare);
+            True(forecast.DailyUnscheduledEstimate > 0); True(!forecast.ExpectedSpending.Any(e => e.CategoryId == medical.Id));
+        });
+        yield return ("Forecast categories survive SQLite backup, restore, renames and an explicitly empty selection", () => InDirectory(directory =>
+        {
+            var f = new History(); var leisure = f.Data.Categories.Single(c => c.Name == "Vrije tijd");
+            SpendingForecast.SetIncluded(f.Data, f.Food.Id, false); SpendingForecast.SetIncluded(f.Data, leisure.Id, true);
+            Categorization.RenameCategory(f.Data, leisure.Id, "Synthetic regular leisure");
+            var source = new SqliteHouseholdStore(Path.Combine(directory, "source.db")); source.Save(f.Data);
+            var backup = Path.Combine(directory, "backup.db"); source.Backup(backup);
+            var target = new SqliteHouseholdStore(Path.Combine(directory, "target.db")); target.Restore(backup);
+            var loaded = target.Load(); True(SpendingForecast.CategoryIds(loaded).Contains(leisure.Id));
+            True(!SpendingForecast.CategoryIds(loaded).Contains(f.Food.Id)); Equal(17L, Scalar(target.DatabasePath, "PRAGMA user_version"));
+            foreach (var id in SpendingForecast.CategoryIds(loaded)) SpendingForecast.SetIncluded(loaded, id, false);
+            target.Save(loaded); loaded = target.Load(); Equal(0, SpendingForecast.CategoryIds(loaded).Count);
+            var emptyBackup = Path.Combine(directory, "empty.db"); target.Backup(emptyBackup); source.Restore(emptyBackup);
+            Equal(0, SpendingForecast.CategoryIds(source.Load()).Count);
+        }));
+        yield return ("Existing SQLite settings initialize default category IDs without a schema change or resetting other settings", () => InDirectory(directory =>
+        {
+            var f = new History(); var path = Path.Combine(directory, "existing.db"); new SqliteHouseholdStore(path).Save(f.Data);
+            Sql(path, "UPDATE app_metadata SET insights='{\"BufferTargetMonths\":9}' WHERE id=1;");
+            var store = new SqliteHouseholdStore(path, allowCreate: false); var loaded = store.Load();
+            Equal(9, loaded.InsightSettings.BufferTargetMonths); Equal(2, SpendingForecast.CategoryIds(loaded).Count);
+            True(SpendingForecast.CategoryIds(loaded).Contains(f.Food.Id));
+            Categorization.RenameCategory(loaded, f.Food.Id, "Synthetic renamed food"); store.Save(loaded);
+            True(SpendingForecast.CategoryIds(store.Load()).Contains(f.Food.Id));
+            Equal(17L, Scalar(path, "PRAGMA user_version")); Equal(0, Directory.GetFiles(directory, "*.voor-versie-*.db").Length);
+        }));
+        yield return ("Forecast category choices validate IDs and are cleaned on category deletion", () =>
+        {
+            var f = new History(); var savings = f.Data.Categories.Single(c => c.Purpose == CategoryPurpose.Savings);
+            Throws(() => SpendingForecast.SetIncluded(f.Data, savings.Id, true));
+            Throws(() => SpendingForecast.SetIncluded(f.Data, Guid.NewGuid(), true));
+            SpendingForecast.SetIncluded(f.Data, f.Food.Id, true); SpendingForecast.SetIncluded(f.Data, f.Food.Id, true);
+            var selected = f.Data.InsightSettings.SpendingForecastCategoryIds!;
+            Validation.Validate(f.Data); Equal(1, selected.Count(id => id == f.Food.Id));
+            selected.Add(Guid.NewGuid()); Throws(() => Validation.Validate(f.Data));
+            selected.RemoveAt(selected.Count - 1);
+            Categorization.DeleteCategory(f.Data, f.Food.Id); Validation.Validate(f.Data);
+            True(!selected.Contains(f.Food.Id));
+        });
+        yield return ("Editing the buffer target preserves an explicitly empty spending forecast selection", () =>
+        {
+            var f = new History(); f.Data.InsightSettings.SpendingForecastCategoryIds = [];
+            var draft = EditorDraft.FreedomTarget(State(f.Data)); draft.Fields.Single(field => field.Key == "months").Value = "9";
+            draft.Apply(f.Data); Validation.Validate(f.Data);
+            Equal(9, f.Data.InsightSettings.BufferTargetMonths); Equal(0, f.Data.InsightSettings.SpendingForecastCategoryIds!.Count);
+        });
+        yield return ("Forecast category edits retain revision protection and survive legacy editor replacements", () => InDirectory(directory =>
+        {
+            using var coordinator = new AdministrationCoordinator(directory, initialize: true);
+            var f = new History(); var initial = coordinator.Read(); var current = coordinator.Replace(initial.Revision, f.Data);
+            True(SpendingForecast.CategoryIds(current.Data).Contains(f.Food.Id));
+            var leisure = f.Data.Categories.Single(c => c.Name == "Vrije tijd");
+            current = coordinator.Update(current.Revision, d => SpendingForecast.SetIncluded(d, leisure.Id, true));
+            var selectedRevision = current.Revision;
+            Throws(() => coordinator.Update(initial.Revision, d => SpendingForecast.SetIncluded(d, f.Food.Id, false)));
+            var legacy = JsonSerializer.Deserialize<HouseholdData>(JsonSerializer.Serialize(current.Data))!;
+            legacy.InsightSettings.SpendingForecastCategoryIds = null;
+            current = coordinator.Replace(current.Revision, legacy);
+            True(SpendingForecast.CategoryIds(current.Data).Contains(leisure.Id));
+            current = coordinator.Update(current.Revision, d => d.InsightSettings.SpendingForecastCategoryIds = []);
+            current = coordinator.Replace(current.Revision, legacy); Equal(0, SpendingForecast.CategoryIds(current.Data).Count);
+            Throws(() => coordinator.Update(selectedRevision, d => SpendingForecast.SetIncluded(d, f.Food.Id, true)));
+        }));
+        yield return ("Calendar explains selected categories, detected shopping days and each learning blocker in both languages", () => WithCultures(() =>
+        {
+            var now = DateOnly.FromDateTime(DateTime.Today); var f = new History(now); var state = State(f.Data);
+            var forecast = CashFlow.Project(f.Data, now, minimumDays: 90).Accounts.Single();
+            var scope = WebUtility.HtmlDecode(Render<SpendingForecastCategories>(state));
+            True(scope.Contains(UiCulture.Text("ForecastCategoriesScope"))); True(scope.Contains("<fieldset"));
+            True(scope.Contains($"{f.Food.Name}, Medische kosten"));
+            Equal(2, Regex.Matches(scope, " checked").Count);
+            var learning = WebUtility.HtmlDecode(Render<SpendingHabits>(state, new Dictionary<string, object?> { [nameof(SpendingHabits.Analysis)] = forecast.Learning }));
+            True(learning.Contains(UiCulture.Text("HabitAwaitingAcceptance")));
+            var days = string.Join(", ", new[] { DayOfWeek.Wednesday, DayOfWeek.Saturday }.Select(d => UiCulture.Culture.DateTimeFormat.GetDayName(d)));
+            True(learning.Contains(UiCulture.Text("HabitDetectedDays", days)));
+            True(RenderCalendar(state, forecast, now).Contains(UiCulture.Text("CalendarLearningNotApplied")));
+            var outlook = WebUtility.HtmlDecode(Render<SafeSpending>(state)); True(outlook.Contains(UiCulture.Text("ForecastCategoriesScope")));
+            True(!outlook.Contains("<fieldset"));
+            f.Data.ImportBatches[0].CoverageFrom = null; f.Data.ImportBatches[0].CoverageThrough = null;
+            foreach (var t in f.Data.Transactions) t.Description = "SYNTHETIC UNKNOWN PURCHASE DATE";
+            forecast = CashFlow.Project(f.Data, now).Accounts.Single();
+            learning = WebUtility.HtmlDecode(Render<SpendingHabits>(state, new Dictionary<string, object?> { [nameof(SpendingHabits.Analysis)] = forecast.Learning }));
+            True(learning.Contains(UiCulture.Text("HabitMissingCoverage", 0, SpendingLearning.MinimumWeeks)));
+            True(learning.Contains(UiCulture.Text("HabitMissingDates", 0m.ToString("P0", UiCulture.Culture), SpendingLearning.MinimumDatedShare.ToString("P0", UiCulture.Culture))));
+            True(learning.Contains(UiCulture.Text("HabitMissingRepetition", 4)));
+        }));
         yield return ("Purchase timestamps recover weekend dates without changing bank data", () =>
         {
             foreach (var separator in new[] { "-", "/", "." })
@@ -119,7 +333,7 @@ internal static class FinancialCalendarTests
             var fixedEntry = f.Data.Transactions[1]; fixedEntry.RecurringPaymentId = Guid.NewGuid();
             var transfer = f.Data.Transactions[2]; transfer.Kind = TransactionKind.Transfer;
             True(!SpendingLearning.VariableLines(f.Data, f.Account.Id).Any(l => l.Transaction.Id == fixedEntry.Id || l.Transaction.Id == transfer.Id));
-            var receipt = new Fixture(); receipt.Save();
+            var receipt = new Fixture(); SpendingForecast.SetIncluded(receipt.Data, receipt.House.Id, true); receipt.Save();
             var lines = SpendingLearning.VariableLines(receipt.Data, receipt.Account.Id);
             Equal(40m, lines.Sum(l => l.TypicalSpending)); Equal(0, lines.Count(l => l.Transaction.Id == receipt.Receipt.Id));
         });
@@ -270,7 +484,7 @@ internal static class FinancialCalendarTests
         {
             using var coordinator = new AdministrationCoordinator(directory, initialize: true);
             var f = new History(); var initial = coordinator.Read();
-            var current = coordinator.Update(initial.Revision, d => { d.Owners = f.Data.Owners; d.Accounts = f.Data.Accounts; d.Categories = f.Data.Categories; d.Transactions = f.Data.Transactions; d.ImportBatches = f.Data.ImportBatches; });
+            var current = coordinator.Update(initial.Revision, d => { d.Owners = f.Data.Owners; d.Accounts = f.Data.Accounts; d.Categories = f.Data.Categories; d.InsightSettings = f.Data.InsightSettings; d.Transactions = f.Data.Transactions; d.ImportBatches = f.Data.ImportBatches; });
             var habit = new SpendingHabit { AccountId = f.Account.Id, CategoryId = f.Food.Id };
             coordinator.Update(current.Revision, d => SpendingLearning.SaveHabit(d, habit));
             Throws(() => coordinator.Update(current.Revision, d => SpendingLearning.SaveHabit(d, habit with { Enabled = false })));
@@ -318,6 +532,7 @@ internal static class FinancialCalendarTests
         {
             var now = DateOnly.FromDateTime(DateTime.Today); var date = now.AddDays(1); var f = new History(now);
             var other = new Category { Name = "Synthetic transport" }; f.Data.Categories.Add(other);
+            SpendingForecast.SetIncluded(f.Data, other.Id, true);
             foreach (var t in f.Data.Transactions.ToList())
                 f.Data.Transactions.Add(t with { Id = Guid.NewGuid(), CategoryId = other.Id, Amount = t.Amount / 2 });
             foreach (var t in f.Data.Transactions.Where(t => t.CategoryId == f.Food.Id).Where((_, i) => i % 10 == 0))

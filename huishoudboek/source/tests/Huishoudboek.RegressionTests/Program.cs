@@ -250,7 +250,8 @@ var tests = new (string Name, Action Run)[]
     }),
     ("Negative balances do not invent income or bank cash", () =>
     {
-        var f = new Fixture(); var before = CashFlow.Project(f.Data, Fixture.Today).Accounts.Single(); f.Save();
+        var f = new Fixture(); SpendingForecast.SetIncluded(f.Data, f.House.Id, true);
+        var before = CashFlow.Project(f.Data, Fixture.Today).Accounts.Single(); f.Save();
         var after = CashFlow.Project(f.Data, Fixture.Today).Accounts.Single();
         Equal(-60m, MealVouchers.Balance(f.Data, Fixture.Today)); Equal(0m, f.Report().Income);
         Equal(before.CurrentBalance, after.CurrentBalance); Equal(before.DailyVariableEstimate, after.DailyVariableEstimate);
@@ -350,7 +351,7 @@ var tests = new (string Name, Action Run)[]
         var f = new Fixture(); f.Receipt.PurchaseDate = new(2026, 1, 15); f.Bank.Date = f.Receipt.PurchaseDate.Value;
         var start = coordinator.Read();
         var purchaseRevision = coordinator.Update(start.Revision, d =>
-        { d.Owners = f.Data.Owners; d.Accounts = f.Data.Accounts; d.Categories = f.Data.Categories; d.Transactions = f.Data.Transactions; }).Revision;
+        { d.Owners = f.Data.Owners; d.Accounts = f.Data.Accounts; d.Categories = f.Data.Categories; d.InsightSettings = f.Data.InsightSettings; d.Transactions = f.Data.Transactions; }).Revision;
         var credit = new MealVoucherCredit { Date = new(2026, 1, 1), Quantity = 20, UnitValue = 8 };
         var credited = coordinator.Update(purchaseRevision, d => MealVouchers.SaveCredit(d, credit));
         Equal(0, credited.Data.PurchaseReceipts.Count);
@@ -367,7 +368,7 @@ var tests = new (string Name, Action Run)[]
         using var coordinator = new AdministrationCoordinator(directory, initialize: true);
         var f = new Fixture(); var start = coordinator.Read();
         var snapshot = coordinator.Update(start.Revision, d =>
-        { d.Owners = f.Data.Owners; d.Accounts = f.Data.Accounts; d.Categories = f.Data.Categories; d.Transactions = f.Data.Transactions; });
+        { d.Owners = f.Data.Owners; d.Accounts = f.Data.Accounts; d.Categories = f.Data.Categories; d.InsightSettings = f.Data.InsightSettings; d.Transactions = f.Data.Transactions; });
         var credit = new MealVoucherCredit { Date = new(2026, 1, 1), Quantity = 20, UnitValue = 8, IsOpeningBalance = true };
         var credited = coordinator.Update(snapshot.Revision, d => MealVouchers.SaveCredit(d, credit));
         Throws(() => coordinator.Update(snapshot.Revision, d => MealVouchers.SaveCredit(d, credit with { Id = Guid.NewGuid(), IsOpeningBalance = false })));
@@ -386,7 +387,7 @@ var tests = new (string Name, Action Run)[]
     {
         using var coordinator = new AdministrationCoordinator(directory, initialize: true);
         var f = new Fixture(); f.Credit(); var start = coordinator.Read();
-        var snapshot = coordinator.Update(start.Revision, d => { d.Owners = f.Data.Owners; d.Accounts = f.Data.Accounts; d.Categories = f.Data.Categories; d.Transactions = f.Data.Transactions; d.MealVoucherCredits = f.Data.MealVoucherCredits; });
+        var snapshot = coordinator.Update(start.Revision, d => { d.Owners = f.Data.Owners; d.Accounts = f.Data.Accounts; d.Categories = f.Data.Categories; d.InsightSettings = f.Data.InsightSettings; d.Transactions = f.Data.Transactions; d.MealVoucherCredits = f.Data.MealVoucherCredits; });
         f.Receipt.IsApplied = true;
         var saved = coordinator.SaveReceipt(snapshot.Revision, f.Receipt, f.Items, false, null);
         Throws(() => coordinator.SaveReceipt(snapshot.Revision, f.Receipt, f.Items, false, null));

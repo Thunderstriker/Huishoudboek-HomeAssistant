@@ -15,6 +15,8 @@
     { <p class="notice warning" role="status">@L["CalendarUncertain"] <a href="importeren">@L["ImportExcelCsv"] →</a></p> }
     @if (Forecast.Learning.Patterns.Any(p => p.Preference?.Enabled == true && (!p.Ready || !p.Strong)))
     { <p class="notice warning" role="status">@L["CalendarLearningUncertain"] <a href="#spending-habits-title">@L["HabitTitle"] →</a></p> }
+    @if (Forecast.Learning.Patterns.Any(p => !p.Active))
+    { <p class="notice" role="status">@L["CalendarLearningNotApplied"] <a href="#spending-habits-title">@L["HabitTitle"] →</a></p> }
     <div class="calendar-summary">
         <div><span>@L["CalendarNextRisk"]</span><strong>@(nextRisk?.ToString("dd-MM-yyyy") ?? L["None"].Value)</strong></div>
         <div><span>@L["CalendarLowest"]</span><strong>@Money(calendarLowest)</strong><small>@calendarLowestDate.ToString("dd-MM-yyyy")</small></div>

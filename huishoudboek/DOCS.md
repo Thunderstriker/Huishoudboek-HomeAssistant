@@ -7,10 +7,20 @@ en geleerde bestedingspatronen staan op deze eigen pagina, ook bereikbaar vanuit
 **Financiële vooruitblik**. Aankoopcontrole en gedetailleerde prognosetabellen blijven
 daar beschikbaar en gebruiken dezelfde berekening. De kalender heeft een eigen
 maandkeuze en toont maximaal 90 dagen vooruit, los van de maand in de werkbalk.
-Vaste posten en inkomsten verschijnen direct; de overige dagelijkse raming blijft
-in de saldo's meetellen, ook zonder geaccepteerde bestedingspatronen.
+Vaste posten en inkomsten verschijnen direct. Bij **Categorieën voor automatische
+raming** kiest u welke variabele kosten de prognose mag schatten: standaard
+**Voeding** en **Medische kosten**. De keuze geldt voor alle rekeningen en voor zowel
+kalender als Financiële vooruitblik; de leerpatronen blijven per rekening.
+Uitgesloten categorieën worden niet automatisch afgetrokken, ook niet via een
+dagreserve. Bekende toekomstige bankbetalingen en vaste posten blijven altijd
+meetellen, ongeacht hun categorie. Werkelijke uitgaven, budgetten en banksaldi
+veranderen niet. Zonder optionele categorieën kan het geraamde saldo hoger zijn dan
+wanneer u uw volledige bestedingspatroon zou voortzetten. Een lege selectie schakelt
+alleen de automatische variabele ramingen uit.
 
-Bij **Geleerde bestedingspatronen** staan voorstellen per categorie en rekening:
+Bij **Geleerde bestedingspatronen** staan voorstellen per geselecteerde categorie en
+rekening. De app berekent deze lokaal uit de eigen SQLite-database in Home Assistant,
+niet uit voorbeeldlijsten, een los spreadsheet of een externe AI:
 
 1. Importeer en categoriseer de bankboekingen. Bevestig complete afschriftperioden
    via de import of **Rekeningen → Rekeningperiode bevestigen**. Een eerste en
@@ -21,23 +31,34 @@ Bij **Geleerde bestedingspatronen** staan voorstellen per categorie en rekening:
    gekoppelde bon en daarna een eenduidige datum met tijd uit de banktekst.
    Banktekstdatums zijn kandidaten, geen onafhankelijk bevestigd aankoopbewijs.
    Ongeldige, tegenstrijdige, toekomstige en te oude datums worden niet gebruikt.
-3. Accepteer een voorstel één keer. Daarna herberekenen weekdagen en bedragen na
-   imports. Pauzeren herstelt de gewone dagraming. Bij onvoldoende bewijs wordt een
-   eerder geaccepteerd patroon tijdelijk niet toegepast. Kies desgewenst zelf dagen
+3. Bekijk de automatisch herkende vaste dagen en hun afzonderlijke bedragen. Een
+   terugkerend woensdag-/zaterdagpatroon wordt uit de aankopen afgeleid; u hoeft
+   deze dagen niet vooraf op te geven. Accepteer een voorstel één keer. Daarna
+   herberekenen weekdagen en bedragen na imports. Pauzeren herstelt de dagreserve
+   voor die geselecteerde categorie; sluit de categorie uit om ook deze reserve te
+    verwijderen. Bij onvoldoende bewijs wordt een eerder geaccepteerd patroon
+    tijdelijk niet toegepast. Kies desgewenst zelf dagen
    en een weekbedrag; leeg betekent automatisch, 0 betekent geen gedateerd weekdeel.
 4. Kies een kalenderdag om een verwachte aankoop aan te passen of over te slaan.
    **Automatisch herstellen** verwijdert die afwijking. Dit maakt of wijzigt geen
    bankboekingen en verandert geen werkelijk bestede budgetten.
 
-Een patroon vereist herhaling op een weekdag in minstens vier complete leerweken
-en bruikbare aankoopdatums voor minstens 70% van het historische categoriebedrag.
+Een automatische weekdag vereist aankopen in minstens vier én minstens de helft
+van de complete gedekte leerweken. Minstens 70% van het historische categoriebedrag
+moet een bruikbare aankoopdatum hebben. Ontbrekende dekking, aankoopdatums, herhaling
+of acceptatie krijgen een afzonderlijke uitleg bij de categorie. De kalender
+verwijst naar deze uitleg als een dagpatroon nog niet wordt toegepast.
 De tabel onderscheidt het gemiddelde op aankoopdagen van de verwachting inclusief
 stille dagen. Recentere weken wegen zwaarder bij de verdeling; een uitschieter krijgt
 beperkte invloed op de dagverdeling, maar verdwijnt niet uit het geraamde totaal.
 Splitsingen tellen per categorie; uitzonderlijke uitgaven, vaste posten, transfers,
 beleggingen en maaltijdchequebetalingen worden geen gewone bankbestedingspatronen.
-Onbekend gedateerde uitgaven blijven in de overige dagelijkse raming. Geleerde
-bedragen vervangen hun deel van die raming en worden er niet bovenop geteld.
+Een eenmalige aankoop op een andere weekdag wordt geen vast wekelijks winkelmoment.
+Incidentele geselecteerde kosten en onbekend gedateerde uitgaven blijven in de
+**Dagreserve uitgaven**: een onzekere planningsraming, geen voorspelde aankoop op
+die dag. Dit geldt ook voor medische kosten zonder terugkerend dagpatroon. Geleerde
+bedragen worden op de herkende dagen van het verwachte saldo afgetrokken en vervangen
+hun deel van de dagreserve; ze worden er niet bovenop geteld.
 
 De kalenderkleuren hebben tekst en symbolen: **groen** boven de beschermde buffer,
 **geel** daguitgaven boven tweemaal het gewone daggemiddelde (minimaal €25), **oranje**
@@ -59,10 +80,13 @@ onbekend gedateerde categorie-uitgaven verminderen deze gezamenlijke reserve zon
 automatische bankkoppeling. Een overgeslagen aankoop kunt u afvinken; oudere
 verwachtingen stapelen niet op. Bij oude imports blijft voorzichtigheid nodig.
 
-Leerinstellingen, losse afwijkingen en aankoopdatumcorrecties gaan mee in volledige
-databaseback-ups (schema 17), niet in de gewone transactie-CSV. Bij de automatische
+Categorievoorkeuren, leerinstellingen, losse afwijkingen en aankoopdatumcorrecties
+gaan mee in volledige databaseback-ups (schema 17), niet in de gewone transactie-CSV. Bij de automatische
 schema-upgrade wordt vooraf een veiligheidskopie gemaakt. Een oude databaseback-up
-herstelt zonder leerinstellingen. Er is geen externe AI, telemetrie of cloudverwerking.
+herstelt zonder leerinstellingen. De categorievoorkeuren staan in bestaande
+instellingenmetadata en vereisen geen schema-upgrade. Oudere back-ups zonder deze
+voorkeur krijgen de standaardselectie; een bewust lege selectie blijft leeg.
+Hernoemen behoudt de categorievoorkeur. Er is geen externe AI, telemetrie of cloudverwerking.
 
 ## Voorwaarden
 

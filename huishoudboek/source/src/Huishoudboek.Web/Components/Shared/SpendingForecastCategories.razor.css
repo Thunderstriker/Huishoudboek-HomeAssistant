@@ -1,0 +1,5 @@
+.forecast-scope { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: 10px; }
+.forecast-scope p { margin: 0 0 .6rem; }.forecast-scope p:last-child { margin-bottom: 0; }
+.forecast-scope summary { cursor: pointer; }.forecast-scope fieldset { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; margin: .8rem 0; padding: .8rem; border: 1px solid var(--border); border-radius: 7px; }
+.forecast-scope legend { padding: 0 .4rem; }.forecast-scope .check { min-height: 32px; }
+@media(max-width:650px) { .forecast-scope .check { min-height: 44px; } }

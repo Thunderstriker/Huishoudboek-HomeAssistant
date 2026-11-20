@@ -68,6 +68,7 @@ public static class Categorization
             else TransactionRecognition.DeleteRule(data, rule.Id);
         }
         data.BudgetOverrides.RemoveAll(b => b.CategoryId == categoryId);
+        data.InsightSettings.SpendingForecastCategoryIds?.RemoveAll(id => id == categoryId);
         SpendingLearning.RemoveForCategories(data, categoryId);
         data.Categories.RemoveAll(c => c.Id == categoryId);
     }

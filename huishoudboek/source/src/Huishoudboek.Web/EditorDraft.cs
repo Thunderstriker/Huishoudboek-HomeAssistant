@@ -217,7 +217,7 @@ public sealed class EditorDraft(string title, string revision)
     {
         var draft = new EditorDraft(UiCulture.Text("FreedomTarget"), s.Revision) { Note = UiCulture.Text("FreedomTargetHelp") };
         draft.Field("months", "FreedomTargetMonths", "number", s.Data.InsightSettings.BufferTargetMonths.ToString(CultureInfo.InvariantCulture));
-        draft.Apply = d => d.InsightSettings = new() { BufferTargetMonths = int.TryParse(draft.Text("months"), out var months) ? months : 0 };
+        draft.Apply = d => d.InsightSettings = d.InsightSettings with { BufferTargetMonths = int.TryParse(draft.Text("months"), out var months) ? months : 0 };
         return draft;
     }
     public static EditorDraft Budget(WebState s, Category item)

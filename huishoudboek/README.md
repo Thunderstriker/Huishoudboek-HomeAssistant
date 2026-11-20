@@ -33,7 +33,9 @@ beleggingen bewaren ook hun handelsvaluta. Optionele koersaanvragen vereisen int
   geaccepteerde weekpatronen tot 90 dagen vooruit. De app leert aankoopdagen uit bankteksten en
   gecontroleerde bonnen, ook wanneer weekendinkopen pas maandag zijn geboekt.
   Controleer en accepteer voorstellen bij **Geleerde bestedingspatronen**;
-  complete afschriftperioden en minimaal zes leerweken zijn vereist.
+   complete afschriftperioden en minimaal zes leerweken zijn vereist.
+   Kies de ramingscategorieën (standaard Voeding en Medische kosten); uitgesloten
+   categorieën tellen ook niet mee in de dagelijkse reserve.
   Zie [Financiële kalender](DOCS.md#financiële-kalender-en-geleerde-bestedingen).
 - **Vaste posten:** maand-, kwartaal-, jaar- en eenmalige inkomsten/lasten vooraf
   plannen, met vaste of wisselende bedragen. Koppelen of een vaste post maken kan

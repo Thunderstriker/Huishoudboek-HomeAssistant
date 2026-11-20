@@ -1,13 +1,33 @@
 @inherits PageBase
 
 <details class="habit-card">
-    <summary><span><strong>@State.CategoryName(Pattern.CategoryId)</strong><small>@L[StatusKey] · @L["HabitDatedShare", Pattern.DatedShare.ToString("P0", UiCulture.Culture)]</small></span>
+    <summary><span><strong>@State.CategoryName(Pattern.CategoryId)</strong><small>@L[StatusKey] · @L["HabitDatedShare", Pattern.DatedShare.ToString("P0", UiCulture.Culture)]</small>
+        @if (Pattern.DetectedWeekdays.Count > 0) { <small>@L["HabitDetectedDays", string.Join(", ", Pattern.DetectedWeekdays.Select(DayName))]</small> }
+        </span>
         @if (Pattern.Ready) { <strong>@L["HabitPerWeek", Money(Pattern.WeeklyAmount)]</strong> }
     </summary>
     @if (Pattern.From is { } from && Pattern.Through is { } through)
     { <p class="muted">@L["HabitEvidencePeriod", from.ToString("dd-MM-yyyy"), through.ToString("dd-MM-yyyy"), Pattern.CoveredWeeks]</p> }
-    @if (!Pattern.Ready) { <p class="notice">@L["HabitNotReady"]</p> }
-    else { <p>@L[Pattern.Strong ? "HabitStrong" : "HabitTentative"]</p> }
+    @if (!Pattern.Ready)
+    {
+        <div class="notice" role="status">
+            <p>@L["HabitNotReady"]</p>
+            <ul>
+                @if (Pattern.CoveredWeeks < SpendingLearning.MinimumWeeks)
+                { <li>@L["HabitMissingCoverage", Pattern.CoveredWeeks, SpendingLearning.MinimumWeeks] <a href="rekeningen#statement-periods">@L["ConfirmAccountPeriod"] →</a></li> }
+                @if (Pattern.DatedShare < SpendingLearning.MinimumDatedShare)
+                { <li>@L["HabitMissingDates", Pattern.DatedShare.ToString("P0", UiCulture.Culture), SpendingLearning.MinimumDatedShare.ToString("P0", UiCulture.Culture)]</li> }
+                @if (Pattern.DetectedWeekdays.Count == 0)
+                { <li>@L["HabitMissingRepetition", Pattern.RequiredActiveWeeks]</li> }
+            </ul>
+        </div>
+    }
+    else
+    {
+        <p>@L[Pattern.Strong ? "HabitStrong" : "HabitTentative"]</p>
+        @if (!Pattern.Active) { <p class="notice" role="status">@L[Pattern.Preference == null ? "HabitAwaitingAcceptance" : "HabitPausedExplanation"]</p> }
+        <p>@L["HabitScheduledAmounts", string.Join(" · ", Pattern.Weekdays.Where(w => w.ExpectedAmount > 0).Select(w => $"{DayName(w.Day)}: {Money(w.ExpectedAmount)}"))]</p>
+    }
     <div class="table-scroll"><table class="habit-weekdays"><caption class="sr-only">@L["HabitWeekdayAmounts"]</caption>
         <thead><tr><th>@L["HabitWeekday"]</th><th>@L["HabitFrequency"]</th><th class="money">@L["HabitActiveAverage"]</th><th class="money">@L["HabitExpected"]</th></tr></thead>
         <tbody>@foreach (var day in Pattern.Weekdays)

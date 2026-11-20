@@ -65,7 +65,14 @@ public sealed class AdministrationCoordinator : IDisposable
     public AdministrationSnapshot Replace(string? expected, HouseholdData data) => Update(expected, candidate =>
     {
         // The desktop compatibility endpoint is intentionally editor-only and guarded by an exact revision.
+        var replacingCategories = !candidate.Categories.Any(c => data.Categories.Any(incoming => incoming.Id == c.Id));
         candidate.Owners = data.Owners; candidate.Accounts = data.Accounts; candidate.Categories = data.Categories;
+        // Keep web-only forecast settings on desktop edits; a wholly replaced administration brings its own IDs.
+        if (replacingCategories)
+            candidate.InsightSettings.SpendingForecastCategoryIds = data.InsightSettings.SpendingForecastCategoryIds?.ToList();
+        else
+            candidate.InsightSettings.SpendingForecastCategoryIds?.RemoveAll(id => !candidate.Categories.Any(c => c.Id == id));
+        SpendingForecast.InitializeDefaults(candidate);
         candidate.Transactions = data.Transactions; candidate.RecurringPayments = data.RecurringPayments;
         candidate.TransferMatches = data.TransferMatches;
         candidate.TransactionAllocations = data.TransactionAllocations;
