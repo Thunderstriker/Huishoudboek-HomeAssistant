@@ -14,7 +14,7 @@ namespace Huishoudboek.Infrastructure;
 public sealed class SqliteHouseholdStore : IAdministrationStore
 {
     public const long MaximumRestoreBytes = 256L * 1024 * 1024;
-    private const int SchemaVersion = 16;
+    private const int SchemaVersion = 17;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -59,7 +59,8 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         typeof(InvestmentValuation), typeof(ImportBatch), typeof(ImportProfile), typeof(TransferMatch),
         typeof(TransactionAllocation), typeof(ReimbursementClaim), typeof(AccountReview), typeof(AccountStatementPeriod),
         typeof(PurchaseReceipt), typeof(PurchaseReceiptItem), typeof(MealVoucherCredit),
-        typeof(InvestmentInstrument), typeof(InvestmentTrade)];
+        typeof(InvestmentInstrument), typeof(InvestmentTrade), typeof(SpendingHabit),
+        typeof(PurchaseDateDecision), typeof(SpendingAdjustment)];
 
     private static SqliteConnection Open(string path, bool readOnly = false)
     {
@@ -187,6 +188,12 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             // Existing IDs, rule order and all bank rows remain intact. Plan rules are appended, never merged.
             Write(connection, tx, previous.Rules);
         }
+        if (version < 17)
+        {
+            CreateTable(connection, tx, typeof(SpendingHabit));
+            CreateTable(connection, tx, typeof(PurchaseDateDecision));
+            CreateTable(connection, tx, typeof(SpendingAdjustment));
+        }
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -233,7 +240,10 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             PurchaseReceiptItems = version >= 12 ? Read<PurchaseReceiptItem>(connection, tx) : [],
             MealVoucherCredits = version >= 14 ? Read<MealVoucherCredit>(connection, tx) : [],
             Instruments = version >= 15 ? Read<InvestmentInstrument>(connection, tx) : [],
-            InvestmentTrades = version >= 15 ? Read<InvestmentTrade>(connection, tx) : []
+            InvestmentTrades = version >= 15 ? Read<InvestmentTrade>(connection, tx) : [],
+            SpendingHabits = version >= 17 ? Read<SpendingHabit>(connection, tx) : [],
+            PurchaseDateDecisions = version >= 17 ? Read<PurchaseDateDecision>(connection, tx) : [],
+            SpendingAdjustments = version >= 17 ? Read<SpendingAdjustment>(connection, tx) : []
         };
         using var command = connection.CreateCommand();
         command.Transaction = tx;
@@ -274,6 +284,8 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         Write(connection, tx, data.PurchaseReceipts); Write(connection, tx, data.PurchaseReceiptItems);
         Write(connection, tx, data.MealVoucherCredits);
         Write(connection, tx, data.Instruments); Write(connection, tx, data.InvestmentTrades);
+        Write(connection, tx, data.SpendingHabits); Write(connection, tx, data.PurchaseDateDecisions);
+        Write(connection, tx, data.SpendingAdjustments);
         if (restoreFrom != null)
         {
             Execute(connection, tx, "DELETE FROM receipt_documents");

@@ -18,6 +18,9 @@ public static class Validation
         Unique(data.Owners.Select(x => x.Id), "eigenaren");
         Unique(data.Accounts.Select(x => x.Id), "rekeningen");
         Unique(data.Categories.Select(x => x.Id), "categorieën");
+        Unique(data.SpendingHabits.Select(x => x.Id), "bestedingspatronen");
+        Unique(data.PurchaseDateDecisions.Select(x => x.Id), "aankoopdatumbeslissingen");
+        Unique(data.SpendingAdjustments.Select(x => x.Id), "bestedingsafwijkingen");
         Unique(data.Transactions.Select(x => x.Id), "transacties");
         Unique(data.TransactionAllocations.Select(x => x.Id), "transactiesplitsingen");
         Unique(data.ReimbursementClaims.Select(x => x.Id), "vergoedingsverwachtingen");
@@ -101,6 +104,18 @@ public static class Validation
             Require(affected.All(a => t.Date >= a.OpeningDate), "Transactie ligt vóór de openingsdatum van een rekening. Pas eerst de openingsdatum en het beginsaldo aan.");
         }
         var transactions = data.Transactions.ToDictionary(t => t.Id);
+        Require(data.SpendingHabits.Select(h => (h.AccountId, h.CategoryId)).Distinct().Count() == data.SpendingHabits.Count &&
+            data.SpendingHabits.All(h => accounts.Contains(h.AccountId) && categories.Contains(h.CategoryId) &&
+                h.Weekdays is >= 0 and <= 127 && (h.WeeklyAmount == null || h.WeeklyAmount >= 0 && h.WeeklyAmount <= 1_000_000_000m && Money(h.WeeklyAmount.Value))),
+            "Ongeldig bestedingspatroon of weekbedrag.");
+        Require(data.PurchaseDateDecisions.Select(d => d.TransactionId).Distinct().Count() == data.PurchaseDateDecisions.Count &&
+            data.PurchaseDateDecisions.All(d => transactions.TryGetValue(d.TransactionId, out var t) &&
+                (d.PurchaseDate == null || d.PurchaseDate <= t.Date && t.Date.DayNumber - d.PurchaseDate.Value.DayNumber <= 31)),
+            "Ongeldige aankoopdatum of verwijzing naar een bankboeking.");
+        var habits = data.SpendingHabits.Select(h => h.Id).ToHashSet();
+        Require(data.SpendingAdjustments.Select(a => (a.HabitId, a.Date)).Distinct().Count() == data.SpendingAdjustments.Count &&
+            data.SpendingAdjustments.All(a => habits.Contains(a.HabitId) && a.Amount >= 0 && a.Amount <= 1_000_000_000m && Money(a.Amount)),
+            "Ongeldige afwijking op een bestedingspatroon.");
         var confirmedEntries = new HashSet<Guid>();
         Require(data.TransferMatches.Select(m => (m.DebitTransactionId, m.CreditTransactionId)).Distinct().Count() == data.TransferMatches.Count,
             "Dubbele transferbeslissing.");

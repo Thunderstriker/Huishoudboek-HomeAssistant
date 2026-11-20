@@ -214,6 +214,9 @@ public sealed class HouseholdData
     public List<Owner> Owners { get; set; } = [];
     public List<Account> Accounts { get; set; } = [];
     public List<Category> Categories { get; set; } = [];
+    public List<SpendingHabit> SpendingHabits { get; set; } = [];
+    public List<PurchaseDateDecision> PurchaseDateDecisions { get; set; } = [];
+    public List<SpendingAdjustment> SpendingAdjustments { get; set; } = [];
     public List<BudgetOverride> BudgetOverrides { get; set; } = [];
     public List<Transaction> Transactions { get; set; } = [];
     public List<TransactionAllocation> TransactionAllocations { get; set; } = [];

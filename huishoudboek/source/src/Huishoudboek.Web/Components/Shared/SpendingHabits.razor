@@ -1,0 +1,13 @@
+<section class="spending-habits" aria-labelledby="spending-habits-title">
+    <h2 id="spending-habits-title">@L["HabitTitle"]</h2>
+    <p class="muted">@L["HabitIntro"]</p>
+    <p>@L["HabitCoverage", Analysis.CoveredWeeks, SpendingLearning.MinimumWeeks, SpendingLearning.HistoryWeeks]
+        <a href="rekeningen#statement-periods">@L["ConfirmAccountPeriod"] →</a></p>
+    @if (Analysis.Patterns.Count == 0) { <p class="muted">@L["HabitNoPatterns"]</p> }
+    @foreach (var pattern in Analysis.Patterns)
+    { <SpendingHabitEditor @key="(pattern.AccountId, pattern.CategoryId)" Pattern="pattern" /> }
+    <details class="habit-method"><summary>@L["CalculationDetails"]</summary><p>@L["HabitMethod", SpendingLearning.BookingWindowDays]</p><p>@L["HabitUnknownHelp"]</p></details>
+</section>
+@code {
+    [Parameter, EditorRequired] public SpendingAnalysis Analysis { get; set; } = null!;
+}

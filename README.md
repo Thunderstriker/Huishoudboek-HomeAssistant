@@ -35,6 +35,14 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   bekende betalingen over 7/30 dagen en dagelijkse saldi per betaalrekening,
   met het laagste saldo en zijn datum. Stel een minimale cashbuffer in en controleer
   een aankoopbedrag. Verouderde imports en ontbrekende gegevens krijgen waarschuwingen.
+- **Financiële kalender:** eigen pagina onder **Overzichten**, met vaste posten,
+  inkomsten en lokaal geleerde weekpatronen tot 90 dagen vooruit, met kleur én tekst
+  voor betaaldruk en mogelijke tekorten.
+  Aankoopdatums uit bankteksten of gecontroleerde bonnen onderscheiden weekendinkopen
+  van hun latere bankboeking. Controleer en accepteer voorstellen één keer; daarna
+  leren ze verder bij imports, zonder dubbele dagelijkse uitgavenschatting.
+  Zie [de handleiding](huishoudboek/DOCS.md#financiële-kalender-en-geleerde-bestedingen)
+  en [het ontwerp](FINANCIAL-CALENDAR.md).
 - **Vaste inkomsten en lasten:** plan maand-, kwartaal-, jaar- en eenmalige betalingen.
   Herken vaste of wisselende bedragen, koppel vanuit een bankboeking en controleer
   voorstellen in één selectie. Een maandlijst onderscheidt herkende betalingen,

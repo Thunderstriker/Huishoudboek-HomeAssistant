@@ -1,0 +1,201 @@
+@inherits PageBase
+
+<section class="cash-calendar" aria-labelledby="cash-calendar-title">
+    <div class="calendar-heading">
+        <div><h2 id="cash-calendar-title">@L["CalendarTitle"]</h2><p class="muted">@Forecast.Account.Name · @L["CalendarHorizon", End.ToString("dd-MM-yyyy")]</p></div>
+        <div class="calendar-navigation" role="group" aria-label="@L["CalendarNavigation"]">
+            <button type="button" @onclick="() => MoveMonth(-1)" disabled="@(month <= FirstMonth)" aria-label="@L["PreviousMonth"]">←</button>
+            <button type="button" @onclick="Today">@L["CalendarToday"]</button>
+            <strong aria-live="polite">@month.ToString("MMMM yyyy", UiCulture.Culture)</strong>
+            <button type="button" @onclick="() => MoveMonth(1)" disabled="@(month.AddMonths(1) > End)" aria-label="@L["NextMonth"]">→</button>
+        </div>
+    </div>
+    <p class="muted">@L["CalendarIntro"]</p>
+    @if (Forecast.StaleImports || Forecast.LimitedHistory)
+    { <p class="notice warning" role="status">@L["CalendarUncertain"] <a href="importeren">@L["ImportExcelCsv"] →</a></p> }
+    @if (Forecast.Learning.Patterns.Any(p => p.Preference?.Enabled == true && (!p.Ready || !p.Strong)))
+    { <p class="notice warning" role="status">@L["CalendarLearningUncertain"] <a href="#spending-habits-title">@L["HabitTitle"] →</a></p> }
+    <div class="calendar-summary">
+        <div><span>@L["CalendarNextRisk"]</span><strong>@(nextRisk?.ToString("dd-MM-yyyy") ?? L["None"].Value)</strong></div>
+        <div><span>@L["CalendarLowest"]</span><strong>@Money(calendarLowest)</strong><small>@calendarLowestDate.ToString("dd-MM-yyyy")</small></div>
+        <div><span>@L["CalendarShortfallDays"]</span><strong>@shortfallDays</strong></div>
+    </div>
+    <ul class="calendar-legend" aria-label="@L["CalendarLegend"]">
+        @foreach (var risk in Enum.GetValues<FinancialDayRisk>())
+        { <li><span class="risk-dot @RiskClass(risk)" aria-hidden="true">@RiskSymbol(risk)</span>@L[RiskKey(risk)]</li> }
+    </ul>
+    <div class="calendar-weekdays" aria-hidden="true">
+        @for (var i = 0; i < 7; i++)
+        { <span>@(new DateOnly(2026, 11, 16).AddDays(i).ToString("ddd", UiCulture.Culture))</span> }
+    </div>
+    <div class="calendar-grid" role="group" aria-label="@month.ToString("MMMM yyyy", UiCulture.Culture)">
+        @foreach (var date in GridDates())
+        {
+            var available = date.Month == month.Month && date >= FirstMonth && date <= End && date >= Forecast.Account.OpeningDate;
+            var balance = Balance(date);
+            var risk = date > State.Today && balance != null ? Risk(date, balance) : (FinancialDayRisk?)null;
+            var items = Items(date).ToList();
+            <button type="button" class="calendar-day @(risk is { } level ? RiskClass(level) : "actual-day") @(date == selectedDate ? "selected" : "") @(date == State.Today ? "today" : "")"
+                    disabled="@(!available)" aria-pressed="@(date == selectedDate ? "true" : "false")" aria-current="@(date == State.Today ? "date" : null)"
+                    aria-label="@DayLabel(date, balance, risk, items.Count)" @onclick="() => SelectDay(date)">
+                <span class="day-heading"><time datetime="@date.ToString("yyyy-MM-dd")">@date.Day</time><span aria-hidden="true">@(risk is { } r ? RiskSymbol(r) : "")</span></span>
+                @if (available)
+                {
+                    <span class="day-items">
+                        @foreach (var item in items.Take(2))
+                        { <span class="day-chip"><span>@item.Name</span><b>@(item.Estimated ? "≈ " : "")@SignedMoney(item.Amount)</b></span> }
+                        @if (items.Count > 2) { <span class="day-more">@L["CalendarMore", items.Count - 2]</span> }
+                    </span>
+                    @if (balance != null) { <span class="day-balance">@Money(balance.ClosingBalance)</span> }
+                    <span class="mobile-count">@(items.Count > 0 ? L["CalendarItemCount", items.Count].Value : "")</span>
+                }
+            </button>
+        }
+    </div>
+    <p class="muted">@L["CalendarBalanceNote"]</p>
+
+    @if (Forecast.UncertainReserve > 0)
+    { <p class="notice">@L["RecurringReserveNote", Money(Forecast.UncertainReserve)]</p> }
+    @if (CommittedReserve > 0)
+    { <p class="notice">@L["CalendarCommittedReserve", Money(CommittedReserve)]</p> }
+    @if (Forecast.PendingHabitReserve > 0)
+    {
+        <details class="notice warning"><summary>@L["CalendarPendingReserve", Money(Forecast.PendingHabitReserve)]</summary>
+            <p>@L["CalendarPendingHelp", SpendingLearning.BookingWindowDays]</p>
+            @foreach (var pending in Forecast.ExpectedSpending.Where(e => e.IsPending).OrderBy(e => e.Date))
+            {
+                <div class="pending-row"><span>@pending.Date.ToString("dd-MM-yyyy") · @State.CategoryName(pending.CategoryId) · ≈ @Money(pending.Amount)</span>
+                    <button type="button" disabled="@State.Busy" @onclick="() => Skip(pending)">@L["CalendarSkip"]</button></div>
+            }
+        </details>
+    }
+
+    <section class="calendar-detail" aria-labelledby="calendar-detail-title" aria-live="polite">
+        <h3 id="calendar-detail-title">@selectedDate.ToString("dddd d MMMM yyyy", UiCulture.Culture)</h3>
+        @if (Balance(selectedDate) is { } selected)
+        {
+            @if (selectedDate > State.Today) { <p><strong>@L[RiskKey(Risk(selectedDate, selected))]</strong> · @Reason(selectedDate, selected)</p> }
+            <dl class="day-metrics">
+                <div><dt>@L["OpeningBalance"]</dt><dd>@Money(selected.OpeningBalance)</dd></div>
+                @if (selectedDate > State.Today) { <div><dt>@L["LowestBalance"]</dt><dd>@Money(selected.LowestBalance)</dd></div> }
+                <div><dt>@L[selectedDate > State.Today ? "ClosingBalance" : "BalanceToday"]</dt><dd>@Money(selected.ClosingBalance)</dd></div>
+            </dl>
+            @if (!Items(selectedDate).Any()) { <p class="muted">@L["CalendarNoItems"]</p> }
+            <ul class="calendar-item-list">
+                @foreach (var item in Items(selectedDate))
+                {
+                    <li><div><strong>@item.Name</strong><small>@L[item.Source]
+                        @if (item.BookingDate is { } booked && booked != selectedDate) { <span> · @L["CalendarBookedOn", booked.ToString("dd-MM-yyyy")]</span> }
+                        @if (item.TransactionId != null) { <a href="transacties?allDates=true">@L["Transactions"] →</a> }
+                    </small></div><strong>@(item.Estimated ? "≈ " : "")@SignedMoney(item.Amount)</strong></li>
+                }
+            </ul>
+            @if (selectedDate > State.Today)
+            { <p class="muted">@L["CalendarResidual", Money(Math.Max(0, selected.VariableSpending - Forecast.ExpectedSpending.Where(e => !e.IsPending && e.Date == selectedDate).Sum(e => e.Amount)))]</p> }
+            @foreach (var estimate in Forecast.ExpectedSpending.Where(e => e.Date == selectedDate))
+            {
+                <div class="estimate-adjustment">
+                    <label>@L["CalendarAdjust", State.CategoryName(estimate.CategoryId)]<input type="text" inputmode="decimal" value="@AdjustmentText(estimate)" @oninput="e => adjustments[estimate.HabitId] = e.Value?.ToString() ?? string.Empty" /></label>
+                    <button type="button" disabled="@State.Busy" @onclick="() => Adjust(estimate)">@L["Save"]</button>
+                    <button type="button" disabled="@State.Busy" @onclick="() => Skip(estimate)">@L["CalendarSkip"]</button>
+                </div>
+            }
+            @foreach (var adjustment in State.Data.SpendingAdjustments.Where(a => a.Date == selectedDate && State.Data.SpendingHabits.Any(h => h.Id == a.HabitId && h.AccountId == Forecast.Account.Id)))
+            { <p>@L["CalendarAdjusted", State.CategoryName(State.Data.SpendingHabits.Single(h => h.Id == adjustment.HabitId).CategoryId), Money(adjustment.Amount)] <button type="button" disabled="@State.Busy" @onclick="() => Reset(adjustment.Id)">@L["CalendarReset"]</button></p> }
+        }
+    </section>
+    <details class="calendar-method"><summary>@L["CalendarMethodTitle"]</summary><p>@L["CalendarMethod"]</p><p>@L["CalendarThreshold", Money(Math.Max(25, Forecast.DailyVariableEstimate * 2))]</p></details>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public AccountCashFlow Forecast { get; set; } = null!;
+    private DateOnly month, selectedDate;
+    private Guid accountId;
+    private Dictionary<DateOnly, DailyBalance> days = [];
+    private Dictionary<DateOnly, List<CalendarItem>> items = [];
+    private readonly Dictionary<Guid, string> adjustments = [];
+    private DateOnly? nextRisk;
+    private int shortfallDays;
+    private decimal calendarLowest;
+    private DateOnly calendarLowestDate;
+    private DateOnly FirstMonth => new(State.Today.Year, State.Today.Month, 1);
+    private DateOnly End => State.Today.AddDays(90);
+    private decimal CommittedReserve => -Forecast.Events.Where(e => e.PurchaseDate <= State.Today && e.Amount < 0).Sum(e => e.Amount);
+
+    protected override void OnParametersSet()
+    {
+        if (month == default || month < FirstMonth || month > End) month = FirstMonth;
+        if (selectedDate == default || accountId != Forecast.Account.Id) { selectedDate = month == FirstMonth ? State.Today : month; adjustments.Clear(); }
+        accountId = Forecast.Account.Id;
+        days = Forecast.Days.Where(d => d.Date <= End).ToDictionary(d => d.Date);
+        items = [];
+        foreach (var e in Forecast.Events.Where(e => !e.IsUncertain && e.Date <= End))
+        {
+            var committed = e.PurchaseDate is { } purchase && purchase <= State.Today;
+            Add(committed ? e.PurchaseDate!.Value : e.Date, new(e.Name, e.Amount,
+                committed ? "CalendarCommitted" : e.TransactionId == null ? "RecurringEstimate" : "RecordedEntry", false, e.TransactionId,
+                e.TransactionId == null ? null : e.DueDate));
+        }
+        foreach (var e in Forecast.ExpectedSpending.Where(e => !e.IsPending && e.Date <= End))
+            Add(e.Date, new(State.CategoryName(e.CategoryId), -e.Amount, "CalendarLearned", true));
+        foreach (var t in State.Data.Transactions.Where(t => t.Date <= State.Today &&
+            (t.AccountId == Forecast.Account.Id || t.CounterAccountId == Forecast.Account.Id)))
+        {
+            var date = t.Kind == TransactionKind.Normal && t.Amount < 0 && t.RecurringPaymentId == null
+                ? SpendingLearning.PurchaseDate(State.Data, t).Date ?? t.Date : t.Date;
+            if (date >= FirstMonth && date <= State.Today)
+                Add(date, new(TransactionRecognition.DisplayName(State.Data, t), Finance.AccountEffect(t, Forecast.Account.Id), "RecordedEntry", false, t.Id, t.Date));
+        }
+        shortfallDays = days.Values.Count(d => d.LowestBalance < 0);
+        nextRisk = days.Values.Where(d => Risk(d.Date, d) >= FinancialDayRisk.BufferRisk).Select(d => (DateOnly?)d.Date).Min();
+        var low = days.Values.OrderBy(d => d.LowestBalance).ThenBy(d => d.Date).FirstOrDefault();
+        calendarLowest = low != null ? Math.Min(Forecast.CurrentBalance, low.LowestBalance) : Forecast.CurrentBalance;
+        calendarLowestDate = low != null && low.LowestBalance < Forecast.CurrentBalance ? low.Date : State.Today;
+    }
+    private void Add(DateOnly date, CalendarItem item)
+    { if (!items.TryGetValue(date, out var list)) items[date] = list = []; list.Add(item); }
+    private IEnumerable<CalendarItem> Items(DateOnly date) => items.GetValueOrDefault(date) ?? Enumerable.Empty<CalendarItem>();
+    private IEnumerable<DateOnly> GridDates()
+    {
+        var first = month.AddDays(-(((int)month.DayOfWeek + 6) % 7));
+        return Enumerable.Range(0, 42).Select(first.AddDays);
+    }
+    private DailyBalance? Balance(DateOnly date)
+    {
+        if (date > State.Today) return days.GetValueOrDefault(date);
+        if (date < FirstMonth || date < Forecast.Account.OpeningDate) return null;
+        var closing = Finance.Balance(State.Data, Forecast.Account, date);
+        return new(date, date > Forecast.Account.OpeningDate ? Finance.Balance(State.Data, Forecast.Account, date.AddDays(-1)) : Forecast.Account.OpeningBalance, 0, 0, 0, closing, closing);
+    }
+    private FinancialDayRisk Risk(DateOnly date, DailyBalance balance)
+    {
+        // Reserves affect available cash, but are not evidence of high dated spending tomorrow.
+        var dated = date == State.Today.AddDays(1) ? balance with
+        { Payments = Math.Max(0, balance.Payments - Forecast.UncertainReserve - Forecast.PendingHabitReserve - CommittedReserve) } : balance;
+        return Huishoudboek.Core.FinancialCalendar.Risk(dated, Forecast.Account, Forecast.DailyVariableEstimate, Items(date).Count(i => i.Amount < 0));
+    }
+    private static string RiskClass(FinancialDayRisk risk) => risk switch { FinancialDayRisk.Comfortable => "risk-green", FinancialDayRisk.Busy => "risk-yellow", FinancialDayRisk.BufferRisk => "risk-orange", _ => "risk-red" };
+    private static string RiskKey(FinancialDayRisk risk) => "CalendarRisk" + risk;
+    private static string RiskSymbol(FinancialDayRisk risk) => risk switch { FinancialDayRisk.Comfortable => "✓", FinancialDayRisk.Busy => "↑", FinancialDayRisk.BufferRisk => "!", _ => "×" };
+    private static string SignedMoney(decimal amount) => amount > 0 ? "+ " + Money(amount) : Money(amount);
+    private string Reason(DateOnly date, DailyBalance balance) => balance.LowestBalance < 0 ? L["CalendarReasonShortfall"] :
+        balance.LowestBalance < Forecast.Account.MinimumCashBuffer + Forecast.Account.EarmarkedAmount ? L["CalendarReasonBuffer"] :
+        Items(date).Count(i => i.Amount < 0) >= 3 ? L["CalendarReasonMultiple"] :
+        Risk(date, balance) == FinancialDayRisk.Busy ? L["CalendarReasonBusy"] : L["CalendarReasonComfortable"];
+    private string DayLabel(DateOnly date, DailyBalance? balance, FinancialDayRisk? risk, int count) =>
+        $"{date.ToString("D", UiCulture.Culture)} · {(risk is { } r ? L[RiskKey(r)].Value : L["CalendarActual"].Value)} · {L["CalendarItemCount", count]} · {(balance != null ? Money(balance.ClosingBalance) : L["CalendarOutside"].Value)}";
+    private void MoveMonth(int offset) { month = month.AddMonths(offset); SelectDay(month < State.Today ? State.Today : month); }
+    private void Today() { month = FirstMonth; SelectDay(State.Today); }
+    private void SelectDay(DateOnly date) { selectedDate = date; adjustments.Clear(); }
+    private string AdjustmentText(ExpectedSpending estimate) => adjustments.GetValueOrDefault(estimate.HabitId) ?? estimate.Amount.ToString(UiCulture.Culture);
+    private Task Skip(ExpectedSpending estimate) => State.RunAsync(() => State.SaveAsync(d => SpendingLearning.SetAdjustment(d, estimate.HabitId, estimate.Date, 0)));
+    private Task Reset(Guid id) => State.RunAsync(() => State.SaveAsync(d => d.SpendingAdjustments.RemoveAll(a => a.Id == id)));
+    private Task Adjust(ExpectedSpending estimate) => State.RunAsync(async () =>
+    {
+        var input = new ReceiptNumberDraft(null, UiCulture.Culture, minimum: 0) { Text = AdjustmentText(estimate) };
+        if (!input.IsValid || input.Value == null) throw new InvalidOperationException(L["CalendarInvalidAmount"]);
+        await State.SaveAsync(d => SpendingLearning.SetAdjustment(d, estimate.HabitId, estimate.Date, input.Value.Value));
+        adjustments.Clear();
+    });
+    private sealed record CalendarItem(string Name, decimal Amount, string Source, bool Estimated, Guid? TransactionId = null, DateOnly? BookingDate = null);
+}

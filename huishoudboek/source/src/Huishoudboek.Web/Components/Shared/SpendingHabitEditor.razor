@@ -1,0 +1,108 @@
+@inherits PageBase
+
+<details class="habit-card">
+    <summary><span><strong>@State.CategoryName(Pattern.CategoryId)</strong><small>@L[StatusKey] · @L["HabitDatedShare", Pattern.DatedShare.ToString("P0", UiCulture.Culture)]</small></span>
+        @if (Pattern.Ready) { <strong>@L["HabitPerWeek", Money(Pattern.WeeklyAmount)]</strong> }
+    </summary>
+    @if (Pattern.From is { } from && Pattern.Through is { } through)
+    { <p class="muted">@L["HabitEvidencePeriod", from.ToString("dd-MM-yyyy"), through.ToString("dd-MM-yyyy"), Pattern.CoveredWeeks]</p> }
+    @if (!Pattern.Ready) { <p class="notice">@L["HabitNotReady"]</p> }
+    else { <p>@L[Pattern.Strong ? "HabitStrong" : "HabitTentative"]</p> }
+    <div class="table-scroll"><table class="habit-weekdays"><caption class="sr-only">@L["HabitWeekdayAmounts"]</caption>
+        <thead><tr><th>@L["HabitWeekday"]</th><th>@L["HabitFrequency"]</th><th class="money">@L["HabitActiveAverage"]</th><th class="money">@L["HabitExpected"]</th></tr></thead>
+        <tbody>@foreach (var day in Pattern.Weekdays)
+        { <tr><th scope="row">@DayName(day.Day)</th><td>@L["HabitWeeksCount", day.ActiveWeeks, day.ObservedWeeks]</td><td class="money">@Money(day.AverageWhenActive)</td><td class="money">@(Pattern.Ready ? Money(day.ExpectedAmount) : "—")</td></tr> }</tbody>
+    </table></div>
+    <p class="muted">@L["HabitExpectedHelp"]</p>
+    <div class="habit-settings">
+        <div>
+            <label class="check"><input type="checkbox" @bind="automaticDays" />@L["HabitAutomaticDays"]</label>
+            @if (!automaticDays)
+            {
+                <fieldset class="habit-day-picker"><legend>@L["HabitChooseDays"]</legend>
+                    @for (var index = 0; index < 7; index++)
+                    {
+                        var bit = 1 << index; var day = (DayOfWeek)((index + 1) % 7);
+                        <label class="check"><input type="checkbox" checked="@((weekdays & bit) != 0)" @onchange="e => Toggle(bit, e.Value is true)" />@DayName(day)</label>
+                    }
+                </fieldset>
+            }
+        </div>
+        <label>@L["HabitWeeklyOverride"]<input type="text" inputmode="decimal" @bind="weeklyAmount" placeholder="@L["HabitAutomaticAmount"]" /><small>@L["HabitOverrideHelp"]</small></label>
+    </div>
+    <div class="actions">
+        <button type="button" class="primary" disabled="@(State.Busy || !Pattern.Ready)" @onclick="Save">@L[Pattern.Preference?.Enabled == true ? "HabitSave" : "HabitAccept"]</button>
+        @if (Pattern.Preference?.Enabled == true) { <button type="button" disabled="@State.Busy" @onclick="Pause">@L["HabitPause"]</button> }
+        <button type="button" disabled="@State.Busy" @onclick="Automatic">@L["HabitResetSettings"]</button>
+    </div>
+    <details class="habit-evidence"><summary>@L["HabitReviewDates", Pattern.Evidence.Count]</summary>
+        <p class="muted">@L["HabitDateHelp"]</p>
+        <div class="table-scroll"><table><thead><tr><th>@L["Description"]</th><th>@L["HabitBookingDate"]</th><th>@L["HabitPurchaseDate"]</th><th>@L["Source"]</th><th class="money">@L["Amount"]</th><th>@L["Actions"]</th></tr></thead><tbody>
+            @foreach (var evidence in Pattern.Evidence.Take(evidenceLimit))
+            {
+                var transaction = evidence.Transaction;
+                <tr><td class="evidence-description"><TransactionDescription Transaction="transaction" /></td><td>@transaction.Date.ToString("dd-MM-yyyy")</td>
+                    <td><input type="date" aria-label="@L["HabitDateFor", TransactionRecognition.DisplayName(State.Data, transaction)]" value="@(evidence.Purchase.Date?.ToString("yyyy-MM-dd"))" min="@transaction.Date.AddDays(-31).ToString("yyyy-MM-dd")" max="@transaction.Date.ToString("yyyy-MM-dd")" disabled="@State.Busy" @onchange="e => ChangeDate(transaction.Id, e.Value?.ToString())" /></td>
+                    <td>@L["HabitSource" + evidence.Purchase.Source]</td><td class="money">@Money(evidence.Amount)</td>
+                    <td><div class="actions"><button type="button" disabled="@State.Busy" @onclick="() => ExcludeDate(transaction.Id)">@L["HabitExcludeDate"]</button>
+                        @if (evidence.Purchase.Source is PurchaseDateSource.Manual or PurchaseDateSource.Excluded)
+                        { <button type="button" disabled="@State.Busy" @onclick="() => ResetDate(transaction.Id)">@L["CalendarReset"]</button> }
+                    </div></td></tr>
+            }
+        </tbody></table></div>
+        @if (Pattern.Evidence.Count > evidenceLimit) { <button type="button" @onclick="() => evidenceLimit += 50">@L["HabitMoreEvidence"]</button> }
+    </details>
+    @if (Pattern.Preference is { } preference && State.Data.SpendingAdjustments.Any(a => a.HabitId == preference.Id))
+    {
+        <details class="habit-evidence"><summary>@L["HabitAdjustments"]</summary>
+            @foreach (var adjustment in State.Data.SpendingAdjustments.Where(a => a.HabitId == preference.Id).OrderByDescending(a => a.Date))
+            { <p>@adjustment.Date.ToString("dd-MM-yyyy") · @Money(adjustment.Amount) <button type="button" disabled="@State.Busy" @onclick="() => ResetAdjustment(adjustment.Id)">@L["CalendarReset"]</button></p> }
+        </details>
+    }
+</details>
+
+@code {
+    [Parameter, EditorRequired] public SpendingPattern Pattern { get; set; } = null!;
+    private bool automaticDays = true;
+    private int weekdays;
+    private int evidenceLimit = 50;
+    private string weeklyAmount = "", preferenceKey = "";
+    private string StatusKey => !Pattern.Ready ? "HabitStatusInsufficient" : Pattern.Active ? "HabitStatusActive" :
+        Pattern.Preference != null ? "HabitStatusPaused" : "HabitStatusSuggestion";
+    protected override void OnParametersSet()
+    {
+        var key = $"{Pattern.AccountId}:{Pattern.CategoryId}:{Pattern.Preference?.Id}:{Pattern.Preference?.Weekdays}:{Pattern.Preference?.WeeklyAmount}";
+        if (key == preferenceKey) return;
+        preferenceKey = key;
+        automaticDays = Pattern.Preference?.Weekdays is null or 0;
+        weekdays = Pattern.Preference?.Weekdays > 0 ? Pattern.Preference.Weekdays : Pattern.Weekdays.Where(w => w.ExpectedAmount > 0).Sum(w => 1 << (((int)w.Day + 6) % 7));
+        weeklyAmount = Pattern.Preference?.WeeklyAmount?.ToString(UiCulture.Culture) ?? "";
+    }
+    private static string DayName(DayOfWeek day) => UiCulture.Culture.DateTimeFormat.GetDayName(day);
+    private void Toggle(int bit, bool enabled) { weekdays = enabled ? weekdays | bit : weekdays & ~bit; }
+    private Task Save() => State.RunAsync(async () =>
+    {
+        var input = new ReceiptNumberDraft(null, UiCulture.Culture, minimum: 0) { Text = weeklyAmount };
+        if (!input.IsValid) throw new InvalidOperationException(L["CalendarInvalidAmount"]);
+        if (!automaticDays && weekdays == 0) throw new InvalidOperationException(L["HabitSelectDay"]);
+        var habit = (Pattern.Preference ?? new SpendingHabit { AccountId = Pattern.AccountId, CategoryId = Pattern.CategoryId }) with
+        { Enabled = true, Weekdays = automaticDays ? 0 : weekdays, WeeklyAmount = input.Value };
+        await State.SaveAsync(d => SpendingLearning.SaveHabit(d, habit));
+    });
+    private Task Pause() => State.RunAsync(() => State.SaveAsync(d => SpendingLearning.SaveHabit(d, Pattern.Preference! with { Enabled = false })));
+    private void Automatic() { automaticDays = true; weeklyAmount = ""; }
+    private Task ChangeDate(Guid transactionId, string? text) => State.RunAsync(async () =>
+    {
+        DateOnly? date = null;
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            if (!DateOnly.TryParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+                throw new InvalidOperationException(L["HabitInvalidDate"]);
+            date = parsed;
+        }
+        await State.SaveAsync(d => SpendingLearning.SetPurchaseDate(d, transactionId, date));
+    });
+    private Task ExcludeDate(Guid transactionId) => State.RunAsync(() => State.SaveAsync(d => SpendingLearning.SetPurchaseDate(d, transactionId, null)));
+    private Task ResetDate(Guid transactionId) => State.RunAsync(() => State.SaveAsync(d => d.PurchaseDateDecisions.RemoveAll(p => p.TransactionId == transactionId)));
+    private Task ResetAdjustment(Guid id) => State.RunAsync(() => State.SaveAsync(d => d.SpendingAdjustments.RemoveAll(a => a.Id == id)));
+}

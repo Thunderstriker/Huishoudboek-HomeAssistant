@@ -28,6 +28,13 @@ beleggingen bewaren ook hun handelsvaluta. Optionele koersaanvragen vereisen int
 - **Financiële vooruitblik:** maanduitleg en bestedingsruimte tot het volgende inkomen,
   komende betalingen over 7/30 dagen en dagelijkse saldi per betaalrekening. Met
   minimale cashbuffer, aankoopcontrole, laagste saldo/datum en waarschuwingen bij oude imports.
+- **Financiële kalender:** eigen pagina onder **Overzichten**, ook bereikbaar vanuit
+  Financiële vooruitblik. De maandkalender combineert vaste posten en inkomsten met
+  geaccepteerde weekpatronen tot 90 dagen vooruit. De app leert aankoopdagen uit bankteksten en
+  gecontroleerde bonnen, ook wanneer weekendinkopen pas maandag zijn geboekt.
+  Controleer en accepteer voorstellen bij **Geleerde bestedingspatronen**;
+  complete afschriftperioden en minimaal zes leerweken zijn vereist.
+  Zie [Financiële kalender](DOCS.md#financiële-kalender-en-geleerde-bestedingen).
 - **Vaste posten:** maand-, kwartaal-, jaar- en eenmalige inkomsten/lasten vooraf
   plannen, met vaste of wisselende bedragen. Koppelen of een vaste post maken kan
   direct vanuit een bankboeking; historische voorstellen zijn samen te controleren.

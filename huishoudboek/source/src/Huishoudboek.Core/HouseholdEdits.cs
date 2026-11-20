@@ -40,7 +40,10 @@ public static class HouseholdEdits
         item = item with { Description = item.Description.Trim(), UserDescription = item.UserDescription.Trim() };
         if (original != null && (original.AccountId != item.AccountId || original.Amount != item.Amount ||
             original.Date != item.Date || original.Description != item.Description || original.ImportBatchId != item.ImportBatchId))
+        {
             BankImportCoverage.Invalidate(data, original.ImportBatchId);
+            data.PurchaseDateDecisions.RemoveAll(d => d.TransactionId == item.Id);
+        }
         if (item.Kind != TransactionKind.Transfer) item.CounterAccountId = null;
         else
         {
@@ -79,6 +82,7 @@ public static class HouseholdEdits
         TransferMatching.RemoveForTransactions(data, new HashSet<Guid> { id });
         BankImportCoverage.Invalidate(data, data.Transactions.FirstOrDefault(t => t.Id == id)?.ImportBatchId);
         data.Transactions.RemoveAll(t => t.Id == id);
+        data.PurchaseDateDecisions.RemoveAll(d => d.TransactionId == id);
     }
 
     public static void SaveRecurring(HouseholdData data, RecurringPayment item, CategorizationRule? recognition = null)
@@ -136,6 +140,7 @@ public static class HouseholdEdits
         TransactionAccounting.RemoveForTransactions(data, removed);
         TransferMatching.RemoveForTransactions(data, removed);
         data.Transactions.RemoveAll(t => t.ImportBatchId == id);
+        data.PurchaseDateDecisions.RemoveAll(d => removed.Contains(d.TransactionId));
         batch.Undone = true;
     }
 }

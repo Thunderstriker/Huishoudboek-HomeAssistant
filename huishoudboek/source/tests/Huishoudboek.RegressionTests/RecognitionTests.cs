@@ -23,7 +23,8 @@ internal static class RecognitionTests
     private static readonly DateOnly Today = new(2026, 11, 19);
     private const string September = "AXA 0105183224401042026-09-1020260900000010518322440";
     private const string November = "AXA 0105183224401042026-11-1020261100000010518322440";
-    internal const string RemoveSchema16Columns = """
+    internal const string RemoveSchema17Tables = "DROP TABLE SpendingAdjustment; DROP TABLE PurchaseDateDecision; DROP TABLE SpendingHabit;";
+    internal const string RemoveSchema16Columns = RemoveSchema17Tables + """
         ALTER TABLE [Transaction] DROP COLUMN RecognizedName;
         ALTER TABLE [Transaction] DROP COLUMN RecognitionRuleId;
         ALTER TABLE CategorizationRule DROP COLUMN Name;
@@ -240,11 +241,11 @@ internal static class RecognitionTests
                 Equal(transactionJson, JsonSerializer.Serialize(loaded.Transactions));
                 Equal(f.OtherCategory.Id, new RecognitionMatcher(loaded).Category(new Transaction { AccountId = f.Account.Id, Description = November, Amount = -100 })!.CategoryId!.Value);
             }
-            var backup = Directory.GetFiles(directory, "*.voor-versie-16-*.db").Single();
+            var backup = Directory.GetFiles(directory, "*.voor-versie-17-*.db").Single();
             Equal(15L, Scalar(backup, "PRAGMA user_version")); Equal(283L, Scalar(backup, "SELECT count(*) FROM CategorizationRule"));
             var first = new SqliteHouseholdStore(path, allowCreate: false).Load(); var second = new SqliteHouseholdStore(path, allowCreate: false).Load();
             True(first.Rules.Select(r => r.Id).SequenceEqual(second.Rules.Select(r => r.Id)));
-            Equal(1, Directory.GetFiles(directory, "*.voor-versie-16-*.db").Length);
+            Equal(1, Directory.GetFiles(directory, "*.voor-versie-17-*.db").Length);
             Equal(transactionJson, JsonSerializer.Serialize(second.Transactions));
             var restored = new SqliteHouseholdStore(Path.Combine(directory, "restored.db")); restored.Restore(backup);
             Equal(transactionJson, JsonSerializer.Serialize(restored.Load().Transactions)); Equal(315, restored.Load().Rules.Count);
@@ -258,7 +259,7 @@ internal static class RecognitionTests
             catch (SqliteException) { }
             Equal(15L, Scalar(path, "PRAGMA user_version"));
             Equal(0L, Scalar(path, "SELECT count(*) FROM pragma_table_info('Transaction') WHERE name='RecognizedName'"));
-            Equal(1, Directory.GetFiles(directory, "*.voor-versie-16-*.db").Length);
+            Equal(1, Directory.GetFiles(directory, "*.voor-versie-17-*.db").Length);
         }));
         yield return ("Recognition names, rule scopes and provenance survive SQLite backup, restore and CSV export", () => InDirectory(directory =>
         {

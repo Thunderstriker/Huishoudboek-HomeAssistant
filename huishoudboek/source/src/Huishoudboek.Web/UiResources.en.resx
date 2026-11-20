@@ -1428,4 +1428,94 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="SharedRecognitionHelp" xml:space="preserve"><value>These are the planning settings, not a second set of recognition rules. Editing opens the same shared setup.</value></data>
   <data name="MoreActions" xml:space="preserve"><value>More actions</value></data>
   <data name="ActionsFor" xml:space="preserve"><value>Actions for {0}</value></data>
+  <data name="CalendarTitle" xml:space="preserve"><value>Financial calendar</value></data>
+  <data name="CalendarHorizon" xml:space="preserve"><value>Forecast through {0}</value></data>
+  <data name="CalendarNavigation" xml:space="preserve"><value>Choose calendar month</value></data>
+  <data name="CalendarToday" xml:space="preserve"><value>Today</value></data>
+  <data name="CalendarIntro" xml:space="preserve"><value>Scheduled income and payments alongside accepted spending patterns. Select a day for amounts and explanations. The calendar has its own month selection.</value></data>
+  <data name="CalendarUncertain" xml:space="preserve"><value>The forecast is uncertain because bank data is old or limited. Green does not guarantee that all costs are known.</value></data>
+  <data name="CalendarNextRisk" xml:space="preserve"><value>Next day needing attention</value></data>
+  <data name="CalendarLowest" xml:space="preserve"><value>Lowest forecast balance</value></data>
+  <data name="CalendarShortfallDays" xml:space="preserve"><value>Possible shortfall days</value></data>
+  <data name="CalendarLegend" xml:space="preserve"><value>Meaning of risk colours</value></data>
+  <data name="CalendarRiskComfortable" xml:space="preserve"><value>Green · buffer protected</value></data>
+  <data name="CalendarRiskBusy" xml:space="preserve"><value>Yellow · higher outgoings</value></data>
+  <data name="CalendarRiskBufferRisk" xml:space="preserve"><value>Orange · payment pressure or low buffer</value></data>
+  <data name="CalendarRiskShortfall" xml:space="preserve"><value>Red · possible shortfall</value></data>
+  <data name="CalendarMore" xml:space="preserve"><value>+ {0} more</value></data>
+  <data name="CalendarItemCount" xml:space="preserve"><value>{0} items</value></data>
+  <data name="CalendarBalanceNote" xml:space="preserve"><value>The bottom figure is the projected closing balance; past days and today show the posted bank balance. Purchases can precede their bank booking. Colours use the lowest projected balance, including before income on the same day.</value></data>
+  <data name="CalendarPendingReserve" xml:space="preserve"><value>Still uncertain spending reserve: {0}</value></data>
+  <data name="CalendarPendingHelp" xml:space="preserve"><value>Expectations from the last {0} days without an identifiable recorded purchase. These are not unpaid bills. The reserve is conservatively included at the start of the forecast, not as a payment due tomorrow. Undated posted spending offsets the aggregate reserve without linking bank entries. Skip a purchase that did not happen; older expectations do not accumulate.</value></data>
+  <data name="CalendarSkip" xml:space="preserve"><value>Skipped</value></data>
+  <data name="CalendarLearned" xml:space="preserve"><value>Estimated from spending pattern</value></data>
+  <data name="CalendarCommitted" xml:space="preserve"><value>Recorded purchase, bank booking follows</value></data>
+  <data name="CalendarCommittedReserve" xml:space="preserve"><value>Already recorded purchases with later bank dates: {0}. These appear on their purchase day and protect money at the start of the forecast; they are not new payments for tomorrow.</value></data>
+  <data name="CalendarBookedOn" xml:space="preserve"><value>Bank date {0}</value></data>
+  <data name="CalendarNoItems" xml:space="preserve"><value>No individual payments or spending expectations on this day.</value></data>
+  <data name="CalendarResidual" xml:space="preserve"><value>Other expected everyday spending: {0}. This is separate from the individually displayed patterns.</value></data>
+  <data name="CalendarAdjust" xml:space="preserve"><value>Adjust expectation · {0}</value></data>
+  <data name="CalendarAdjusted" xml:space="preserve"><value>{0}: custom expectation {1} (0 = skipped).</value></data>
+  <data name="CalendarReset" xml:space="preserve"><value>Restore automatic</value></data>
+  <data name="CalendarMethodTitle" xml:space="preserve"><value>How does the calendar work?</value></data>
+  <data name="CalendarMethod" xml:space="preserve"><value>Red takes precedence over orange, yellow and green. A balance below zero is red; below the cash buffer plus earmarked funds or at least three outgoing items is orange. Historical days have no forecast colour. Risk is account-specific: money in other accounts is not implicitly transferred. Unconfirmed reserves appear separately, without an invented payment date.</value></data>
+  <data name="CalendarThreshold" xml:space="preserve"><value>Yellow means expected daily outgoings exceed {0}: twice the ordinary daily average, with a minimum threshold of €25.</value></data>
+  <data name="CalendarReasonShortfall" xml:space="preserve"><value>The lowest projected balance is negative, possibly before income on the same day.</value></data>
+  <data name="CalendarReasonBuffer" xml:space="preserve"><value>The lowest projected balance falls below the cash buffer plus earmarked funds.</value></data>
+  <data name="CalendarReasonMultiple" xml:space="preserve"><value>At least three outgoing items on the same day.</value></data>
+  <data name="CalendarReasonBusy" xml:space="preserve"><value>Expected outgoings exceed the explained daily threshold.</value></data>
+  <data name="CalendarReasonComfortable" xml:space="preserve"><value>The projected balance stays at or above the protected buffer, based on known information.</value></data>
+  <data name="CalendarActual" xml:space="preserve"><value>Recorded activity</value></data>
+  <data name="CalendarOutside" xml:space="preserve"><value>Outside the available period</value></data>
+  <data name="CalendarInvalidAmount" xml:space="preserve"><value>Enter a non-negative amount with at most two decimal places and no thousands separators.</value></data>
+  <data name="HabitTitle" xml:space="preserve"><value>Learned spending patterns</value></data>
+  <data name="CalendarLearningUncertain" xml:space="preserve"><value>An accepted pattern is tentative or lacks enough evidence to apply. Review learning settings; green is not a guarantee.</value></data>
+  <data name="HabitPausedWarning" xml:space="preserve"><value>An accepted spending pattern is temporarily not applied because evidence is insufficient. The ordinary daily estimate remains in use; review statement coverage and purchase dates.</value></data>
+  <data name="HabitTentativeWarning" xml:space="preserve"><value>The forecast uses a tentative spending pattern. Review its evidence period, shopping days and amount variability.</value></data>
+  <data name="HabitIntro" xml:space="preserve"><value>Show expected groceries and other ordinary spending on their usual days. Review purchase dates and accept a suggestion once; it then continues learning locally after imports. No bank transactions are created.</value></data>
+  <data name="HabitCoverage" xml:space="preserve"><value>{0} complete learning weeks available; at least {1}, up to the latest {2}. Confirm complete account statements to include quiet days.</value></data>
+  <data name="HabitNoPatterns" xml:space="preserve"><value>No ordinary categorized spending to learn from yet. Import, categorize and confirm complete statement periods.</value></data>
+  <data name="HabitMethod" xml:space="preserve"><value>Only complete confirmed weeks are included, allowing {0} days for delayed bank bookings. Purchases on the same day are added per account/category; confirmed days without purchases count as zero. Recent weeks carry more weight in the weekday distribution. This replaces the dated part of the existing historical daily average rather than adding to it. Fixed payments, transfers, mortgages, savings, exceptional spending and voucher-funded costs are excluded from ordinary bank-spending learning.</value></data>
+  <data name="HabitUnknownHelp" xml:space="preserve"><value>Unknown purchase dates stay in the other everyday estimate; Monday bookings do not become Saturday purchases without evidence. At least 70% of the historical category amount must have a usable purchase date, with purchases on the same weekday in at least four learning weeks. Insufficient evidence also suspends a previously accepted pattern; the ordinary daily estimate then remains in use.</value></data>
+  <data name="HabitDatedShare" xml:space="preserve"><value>{0} with purchase date</value></data>
+  <data name="HabitPerWeek" xml:space="preserve"><value>≈ {0} per week</value></data>
+  <data name="HabitEvidencePeriod" xml:space="preserve"><value>Evidence period {0} through {1} · {2} complete weeks; any gaps are excluded.</value></data>
+  <data name="HabitNotReady" xml:space="preserve"><value>Not enough complete or dated evidence for a reliable weekly pattern yet. Review statement coverage and purchase dates. This pattern does not currently change the forecast.</value></data>
+  <data name="HabitStrong" xml:space="preserve"><value>Clearly recurring pattern: at least eight learning weeks, at least 90% dated spending, repetition on a weekday in at least 60% of weeks and limited amount variability. Amounts remain estimates.</value></data>
+  <data name="HabitTentative" xml:space="preserve"><value>Tentative pattern: enough repetition for a suggestion, but less complete or less regular evidence. Review amounts and days.</value></data>
+  <data name="HabitWeekdayAmounts" xml:space="preserve"><value>Evidence and expected amounts by weekday</value></data>
+  <data name="HabitWeekday" xml:space="preserve"><value>Weekday</value></data>
+  <data name="HabitFrequency" xml:space="preserve"><value>Shopping weeks</value></data>
+  <data name="HabitActiveAverage" xml:space="preserve"><value>Average on shopping days</value></data>
+  <data name="HabitExpected" xml:space="preserve"><value>Expected per weekday</value></data>
+  <data name="HabitWeeksCount" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="HabitExpectedHelp" xml:space="preserve"><value>The expected amount includes weeks without a purchase and distributes the dated historical spending level over the week. A custom weekly amount or weekday selection replaces that automatic setting.</value></data>
+  <data name="HabitAutomaticDays" xml:space="preserve"><value>Continue learning weekdays automatically</value></data>
+  <data name="HabitChooseDays" xml:space="preserve"><value>Use these weekdays</value></data>
+  <data name="HabitWeeklyOverride" xml:space="preserve"><value>Custom weekly amount (€), optional</value></data>
+  <data name="HabitAutomaticAmount" xml:space="preserve"><value>Automatic from history</value></data>
+  <data name="HabitOverrideHelp" xml:space="preserve"><value>Leave blank to keep learning; 0 sets this dated spending component to zero. Spending without a purchase date is still estimated separately. A custom amount is distributed over the selected weekdays.</value></data>
+  <data name="HabitSave" xml:space="preserve"><value>Save pattern</value></data>
+  <data name="HabitAccept" xml:space="preserve"><value>Accept and use</value></data>
+  <data name="HabitPause" xml:space="preserve"><value>Pause</value></data>
+  <data name="HabitResetSettings" xml:space="preserve"><value>Set fields to automatic</value></data>
+  <data name="HabitReviewDates" xml:space="preserve"><value>Review purchase dates ({0} entries)</value></data>
+  <data name="HabitDateHelp" xml:space="preserve"><value>Priority: your correction, reviewed linked receipt, then an unambiguous date with time in the original bank text. Description dates are candidates: review before accepting. Changes affect learning only, never bank dates, balances or accounting. A blank date excludes the inferred date; restore automatic removes your correction.</value></data>
+  <data name="HabitBookingDate" xml:space="preserve"><value>Bank date</value></data>
+  <data name="HabitPurchaseDate" xml:space="preserve"><value>Purchase date</value></data>
+  <data name="HabitDateFor" xml:space="preserve"><value>Purchase date for {0}</value></data>
+  <data name="HabitSourceUnknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="HabitSourceDescription" xml:space="preserve"><value>Bank text (candidate)</value></data>
+  <data name="HabitSourceReceipt" xml:space="preserve"><value>Reviewed receipt</value></data>
+  <data name="HabitSourceManual" xml:space="preserve"><value>Manual correction</value></data>
+  <data name="HabitSourceExcluded" xml:space="preserve"><value>Excluded</value></data>
+  <data name="HabitExcludeDate" xml:space="preserve"><value>Do not use date</value></data>
+  <data name="HabitMoreEvidence" xml:space="preserve"><value>Show next 50 entries</value></data>
+  <data name="HabitAdjustments" xml:space="preserve"><value>Individual adjustments and skipped purchases</value></data>
+  <data name="HabitStatusInsufficient" xml:space="preserve"><value>Insufficient evidence</value></data>
+  <data name="HabitStatusActive" xml:space="preserve"><value>Active · keeps learning</value></data>
+  <data name="HabitStatusPaused" xml:space="preserve"><value>Paused</value></data>
+  <data name="HabitStatusSuggestion" xml:space="preserve"><value>Suggestion · not yet applied</value></data>
+  <data name="HabitSelectDay" xml:space="preserve"><value>Choose at least one weekday or use automatic days.</value></data>
+  <data name="HabitInvalidDate" xml:space="preserve"><value>Choose a valid purchase date.</value></data>
 </root>

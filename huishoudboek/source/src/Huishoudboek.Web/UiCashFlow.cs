@@ -17,5 +17,9 @@ public static class UiCashFlow
         if (forecast.Account.MinimumCashBuffer == 0) yield return UiCulture.Text("NoBufferWarning");
         if (forecast.NextIncomeDate == null)
             yield return UiCulture.Text("NoNextIncomeWarning", CashFlow.IncomeSearchDays, forecast.SpendableUntil.DayNumber - today.DayNumber);
+        if (forecast.Learning.Patterns.Any(p => p.Preference?.Enabled == true && !p.Ready))
+            yield return UiCulture.Text("HabitPausedWarning");
+        if (forecast.Learning.Patterns.Any(p => p.Active && !p.Strong))
+            yield return UiCulture.Text("HabitTentativeWarning");
     }
 }

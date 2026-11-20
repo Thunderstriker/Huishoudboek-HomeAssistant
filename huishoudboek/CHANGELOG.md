@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.3
+
+- Financiële kalender bij Financiële vooruitblik met vaste posten, inkomsten,
+  verwachte bestedingen en dagelijkse saldi tot 90 dagen vooruit. Kleuren en
+  tekst tonen betaaldruk, bufferproblemen en mogelijke tekorten per rekening.
+- Financiële kalender en geleerde bestedingspatronen op een eigen pagina onder
+  Overzichten, met een koppeling vanuit Financiële vooruitblik. Aankoopcontrole
+  en gedetailleerde prognosetabellen blijven bij Financiële vooruitblik.
+- Lokale leerpatronen per categorie en betaalrekening, met aankoopdatums uit
+  bankteksten of gecontroleerde bonnen. Na eenmalige acceptatie leren bedragen
+  en weekdagen verder; eigen dagen/bedragen, pauzeren en losse aankopen overslaan
+  blijven mogelijk. Onvolledige afschriften gelden niet als stille weken.
+- Bankdatums en werkelijke bedragen blijven behouden. Geleerde bestedingen
+  vervangen hun deel van de dagelijkse raming; splitsingen, maaltijdcheques,
+  geboekte aankopen en onzekere reserves blijven gescheiden van werkelijke bankkosten.
+- Databaseschema 17 bewaart leerinstellingen en aankoopdatumcorrecties in
+  databaseback-ups, met veiligheidskopie vóór migratie en behoud van oudere back-ups.
+- App- en containerversie bijgewerkt naar 0.3.3 voor installatie en updates via Home Assistant.
+
 ## 0.3.2
 
 - Compact actiemenu via de ⋯-knop bij transacties en transactieherkenning, ook op mobiel.

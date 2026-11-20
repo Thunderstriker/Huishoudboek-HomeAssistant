@@ -14,6 +14,7 @@ public sealed record HomeOverview(DateOnly Today, MonthlyReport Month, IReadOnly
     CashFlowOverview CashFlow, IReadOnlyList<HomeTransaction> Recent, int UncategorizedCount)
 {
     public IReadOnlyList<CashFlowEvent> Upcoming => CashFlow.Accounts.SelectMany(a => a.Events)
+        .Select(e => e.PurchaseDate is { } purchase && purchase <= Today ? e with { Date = e.DueDate } : e)
         .Where(e => e.Amount < 0 && !e.IsUncertain && e.Date > Today && e.Date <= Today.AddDays(7))
         .OrderBy(e => e.Date).ThenBy(e => e.Name).ThenBy(e => e.AccountId).ToArray();
 

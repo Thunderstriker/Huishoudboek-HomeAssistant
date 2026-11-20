@@ -1,5 +1,69 @@
 # Installeren en gebruiken
 
+## Financiële kalender en geleerde bestedingen
+
+Open **Overzichten → Financiële kalender** en kies een betaalrekening. De kalender
+en geleerde bestedingspatronen staan op deze eigen pagina, ook bereikbaar vanuit
+**Financiële vooruitblik**. Aankoopcontrole en gedetailleerde prognosetabellen blijven
+daar beschikbaar en gebruiken dezelfde berekening. De kalender heeft een eigen
+maandkeuze en toont maximaal 90 dagen vooruit, los van de maand in de werkbalk.
+Vaste posten en inkomsten verschijnen direct; de overige dagelijkse raming blijft
+in de saldo's meetellen, ook zonder geaccepteerde bestedingspatronen.
+
+Bij **Geleerde bestedingspatronen** staan voorstellen per categorie en rekening:
+
+1. Importeer en categoriseer de bankboekingen. Bevestig complete afschriftperioden
+   via de import of **Rekeningen → Rekeningperiode bevestigen**. Een eerste en
+   laatste boeking bewijzen geen complete historie. Minimaal zes van de laatste
+   twaalf leerweken zijn nodig, met zeven dagen ruimte voor latere bankboekingen.
+2. Open een categorie en controleer **Aankoopdatums controleren**. De oorspronkelijke
+   bankdatum blijft intact. Een eigen correctie gaat vóór een gecontroleerde,
+   gekoppelde bon en daarna een eenduidige datum met tijd uit de banktekst.
+   Banktekstdatums zijn kandidaten, geen onafhankelijk bevestigd aankoopbewijs.
+   Ongeldige, tegenstrijdige, toekomstige en te oude datums worden niet gebruikt.
+3. Accepteer een voorstel één keer. Daarna herberekenen weekdagen en bedragen na
+   imports. Pauzeren herstelt de gewone dagraming. Bij onvoldoende bewijs wordt een
+   eerder geaccepteerd patroon tijdelijk niet toegepast. Kies desgewenst zelf dagen
+   en een weekbedrag; leeg betekent automatisch, 0 betekent geen gedateerd weekdeel.
+4. Kies een kalenderdag om een verwachte aankoop aan te passen of over te slaan.
+   **Automatisch herstellen** verwijdert die afwijking. Dit maakt of wijzigt geen
+   bankboekingen en verandert geen werkelijk bestede budgetten.
+
+Een patroon vereist herhaling op een weekdag in minstens vier complete leerweken
+en bruikbare aankoopdatums voor minstens 70% van het historische categoriebedrag.
+De tabel onderscheidt het gemiddelde op aankoopdagen van de verwachting inclusief
+stille dagen. Recentere weken wegen zwaarder bij de verdeling; een uitschieter krijgt
+beperkte invloed op de dagverdeling, maar verdwijnt niet uit het geraamde totaal.
+Splitsingen tellen per categorie; uitzonderlijke uitgaven, vaste posten, transfers,
+beleggingen en maaltijdchequebetalingen worden geen gewone bankbestedingspatronen.
+Onbekend gedateerde uitgaven blijven in de overige dagelijkse raming. Geleerde
+bedragen vervangen hun deel van die raming en worden er niet bovenop geteld.
+
+De kalenderkleuren hebben tekst en symbolen: **groen** boven de beschermde buffer,
+**geel** daguitgaven boven tweemaal het gewone daggemiddelde (minimaal €25), **oranje**
+onder de buffer of minstens drie uitgaande posten, **rood** een laagste verwacht
+saldo onder nul. Afschrijvingen gaan voorzichtig vóór ontvangsten op dezelfde dag.
+Een positieve eindstand kan dus toch een rode dag hebben. Andere rekeningen vullen
+een tekort niet automatisch aan. Verouderde of beperkte gegevens krijgen een
+waarschuwing; een groene schatting garandeert geen volledige boekhouding.
+
+Weekendinkopen kunnen op zaterdag worden geleerd terwijl de bankdatum maandag
+blijft. Geregistreerde toekomstige aankopen met zo'n datum beschermen het geld al
+vanaf de aankoopdag in de planning. Historische kalenderbedragen onderaan blijven
+geboekte banksaldi, niet gereconstrueerde beschikbare kaarttegoeden.
+
+Nog niet herkenbaar geboekte verwachtingen uit de laatste zeven dagen blijven een
+aparte, onzekere reserve aan het begin van de prognose. Ze zijn geen achterstallige
+rekeningen en staan niet als morgen verschuldigd in de kalender. Reeds geboekte,
+onbekend gedateerde categorie-uitgaven verminderen deze gezamenlijke reserve zonder
+automatische bankkoppeling. Een overgeslagen aankoop kunt u afvinken; oudere
+verwachtingen stapelen niet op. Bij oude imports blijft voorzichtigheid nodig.
+
+Leerinstellingen, losse afwijkingen en aankoopdatumcorrecties gaan mee in volledige
+databaseback-ups (schema 17), niet in de gewone transactie-CSV. Bij de automatische
+schema-upgrade wordt vooraf een veiligheidskopie gemaakt. Een oude databaseback-up
+herstelt zonder leerinstellingen. Er is geen externe AI, telemetrie of cloudverwerking.
+
 ## Voorwaarden
 
 - Home Assistant OS met Supervisor, architectuur **amd64** (x64 VM).

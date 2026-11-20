@@ -35,3 +35,14 @@ Hypotheekcontroles vergelijken nominale en effectieve jaarrente met exacte maand
 behouden oude berekeningen en rente-precisie, toetsen invoer en SQLite-opslag en scheiden
 het volledige theoretische schema van werkelijke aflossingen, inclusief een afwijkende
 eerste bankbetaling. Beide talen van de hypotheekpagina worden lokaal gerenderd.
+
+De financiële kalender en het lokale weekdagleren worden met synthetische aankopen
+getest: aankoopdatums uit bankteksten, weekendboekingen op maandag, datumcorrecties
+en bonvoorrang, complete stille weken versus ontbrekende afschriften, splitsingen
+en maaltijdcheques, eenmalige acceptatie/pauze, behoud van het totale uitgavenniveau,
+toekomstige bankboekingen, reserves en overgeslagen aankopen. Risicoprioriteit,
+eigenaarfilters, schema-17-migratie/back-ups, revisieconflicten en Nederlandse/Engelse
+kalender- en leercomponenten worden eveneens gecontroleerd. De eigen kalenderpagina
+onder Overzichten wordt in beide talen getest, inclusief actieve navigatie, lege
+rekeningen, eigenaarfilters en behoud van aankoopcontrole en tabellen op Financiële
+vooruitblik. Persoonlijke spreadsheets zijn geen testafhankelijkheid en worden niet geïmporteerd.

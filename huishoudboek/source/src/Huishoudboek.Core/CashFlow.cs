@@ -1,7 +1,10 @@
 namespace Huishoudboek.Core;
 
 public sealed record CashFlowEvent(Guid AccountId, DateOnly Date, DateOnly DueDate, string Name, decimal Amount,
-    Guid? TransactionId, Guid? RecurringPaymentId, bool IsOverdue = false, bool IsUncertain = false);
+    Guid? TransactionId, Guid? RecurringPaymentId, bool IsOverdue = false, bool IsUncertain = false)
+{
+    public DateOnly? PurchaseDate { get; init; }
+}
 public sealed record DailyBalance(DateOnly Date, decimal OpeningBalance, decimal Income, decimal Payments,
     decimal VariableSpending, decimal LowestBalance, decimal ClosingBalance);
 public sealed record AccountCashFlow(Account Account, decimal CurrentBalance, DateOnly? NextIncomeDate,
@@ -12,10 +15,14 @@ public sealed record AccountCashFlow(Account Account, decimal CurrentBalance, Da
 {
     public int AwaitingBankDataCount { get; init; }
     public int PaymentsToReviewCount { get; init; }
+    public SpendingAnalysis Learning { get; init; } = new(0, []);
+    public IReadOnlyList<ExpectedSpending> ExpectedSpending { get; init; } = [];
+    public decimal DailyUnscheduledEstimate { get; init; }
+    public decimal PendingHabitReserve => ExpectedSpending.Where(e => e.IsPending).Sum(e => e.Amount);
     public decimal UncertainReserve => -Events.Where(e => e.IsUncertain && e.Amount < 0).Sum(e => e.Amount);
     public decimal BillsUntil(DateOnly date) => -Events.Where(e => e.Amount < 0 && !e.IsUncertain && e.Date <= date).Sum(e => e.Amount);
     public bool BufferAtRisk => LowestBalance < Account.MinimumCashBuffer + Account.EarmarkedAmount;
-    public bool HasUncertainty => Warnings.Count > 0 || AwaitingBankDataCount > 0 || PaymentsToReviewCount > 0;
+    public bool HasUncertainty => Warnings.Count > 0 || AwaitingBankDataCount > 0 || PaymentsToReviewCount > 0 || PendingHabitReserve > 0;
     public bool CanAfford(decimal amount) => amount > 0 && amount <= EstimatedSpendable &&
         LowestBalance - amount >= Account.MinimumCashBuffer + Account.EarmarkedAmount;
 }
@@ -96,7 +103,6 @@ public static class CashFlow
             .Select(e => (DateOnly?)e.Date).Min();
         var until = nextIncome ?? today.AddDays(minimumDays);
         var end = until > today.AddDays(minimumDays) ? until : today.AddDays(minimumDays);
-        events = events.Where(e => e.Date <= end).OrderBy(e => e.Date).ThenBy(e => e.Amount).ToList();
 
         var batches = data.ImportBatches.Where(b => b.AccountId == account.Id && !b.Undone).ToList();
         var statementThrough = FirstWeek.ImportedThrough(data, account.Id, today);
@@ -119,6 +125,58 @@ public static class CashFlow
         if (account.MinimumCashBuffer == 0) warnings.Add("Geen minimale cashbuffer ingesteld. Stel via Buffer instellen een reserve in voor onverwachte kosten.");
         if (nextIncome == null) warnings.Add($"Geen volgende inkomensdatum bekend binnen {IncomeSearchDays} dagen; bestedingsruimte berekend voor {minimumDays} dagen, niet tot een bekende betaaldag.");
 
+        var learning = SpendingLearning.Analyze(data, account, today, historyStart, historyEnd);
+        if (learning.Patterns.Any(p => p.Preference?.Enabled == true && !p.Ready))
+            warnings.Add("Een geaccepteerd bestedingspatroon heeft onvoldoende bewijs en is tijdelijk niet toegepast. Controleer afschriftdekking en aankoopdatums.");
+        if (learning.Patterns.Any(p => p.Active && !p.Strong))
+            warnings.Add("De prognose gebruikt een voorlopig bestedingspatroon. Controleer de bewijsperiode, aankoopdagen en bedragvariatie.");
+        var active = learning.Patterns.Where(p => p.Active).Select(p => p.CategoryId).ToHashSet();
+        var residual = Math.Max(0, decimal.Round(dailyVariable - learning.Patterns.Where(p => p.Active).Sum(p => p.BaselineDaily), 2, MidpointRounding.AwayFromZero));
+        var variableLines = active.Count > 0 ? SpendingLearning.VariableLines(data, account.Id).ToLookup(l => l.Transaction.Id) : null;
+        var purchaseDates = new Dictionary<Guid, DateOnly?>();
+        if (active.Count > 0)
+        {
+            // Planning protects money from the known purchase date, while bank records keep their booking date.
+            events = events.Select(e =>
+            {
+                if (e.TransactionId is not { } id || !variableLines![id].Any(l => l.CategoryId is { } category && active.Contains(category))) return e;
+                var purchase = SpendingLearning.PurchaseDate(data, transactions[id]).Date;
+                purchaseDates[id] = purchase;
+                return purchase is { } date ? e with { Date = date > today ? date : today.AddDays(1), PurchaseDate = date } : e;
+            }).ToList();
+        }
+        events = events.Where(e => e.Date <= end).OrderBy(e => e.Date).ThenBy(e => e.Amount).ToList();
+        var expected = SpendingLearning.Project(data, learning, today, end).ToList();
+        if (active.Count > 0)
+        {
+            // An undated future bank entry still occupies the category's spending budget.
+            // Offset nearby future expectations without inventing a purchase date or bank link.
+            foreach (var group in events.Where(e => e.TransactionId != null).GroupBy(e => e.Date))
+            {
+                var explicitLines = group.SelectMany(e => variableLines![e.TransactionId!.Value]).ToList();
+                var residualCapacity = Math.Max(0, residual - explicitLines.Where(l => l.CategoryId is not { } c || !active.Contains(c)).Sum(l => l.TypicalSpending));
+                foreach (var category in explicitLines.Where(l => l.CategoryId is { } c && active.Contains(c) &&
+                    !purchaseDates.GetValueOrDefault(l.Transaction.Id).HasValue).GroupBy(l => l.CategoryId!.Value))
+                {
+                    var amount = category.Sum(l => l.TypicalSpending);
+                    var coveredByResidual = Math.Min(amount, residualCapacity);
+                    residualCapacity -= coveredByResidual; amount -= coveredByResidual;
+                    for (var i = 0; i < expected.Count && amount > 0; i++)
+                    {
+                        var estimate = expected[i];
+                        if (estimate.IsPending || estimate.CategoryId != category.Key || estimate.Date > group.Key ||
+                            estimate.Date < group.Key.AddDays(-SpendingLearning.BookingWindowDays)) continue;
+                        var used = Math.Min(amount, estimate.Amount);
+                        expected[i] = estimate with { Amount = estimate.Amount - used }; amount -= used;
+                    }
+                }
+            }
+            expected.RemoveAll(e => e.Amount == 0);
+        }
+        var pendingReserve = expected.Where(e => e.IsPending).Sum(e => e.Amount);
+        var plannedByDate = expected.Where(e => !e.IsPending).ToLookup(e => e.Date);
+        var appliedSpending = expected.Where(e => e.IsPending).ToList();
+
         var balance = Finance.Balance(data, account, today);
         var current = balance;
         var lowest = balance;
@@ -131,10 +189,27 @@ public static class CashFlow
             var entries = byDate[date].ToList();
             var income = entries.Where(e => e.Amount > 0).Sum(e => e.Amount);
             var payments = -entries.Where(e => e.Amount < 0).Sum(e => e.Amount);
+            if (date == today.AddDays(1)) payments += pendingReserve;
             // Explicit future everyday spending occupies the run-rate, rather than being counted twice.
             var explicitVariable = entries.Where(e => e.TransactionId is { } id && transactions[id].AccountId == account.Id && Variable(transactions[id]))
                 .Sum(e => spending[e.TransactionId!.Value]);
-            var variable = Math.Max(0, dailyVariable - explicitVariable);
+            decimal variable;
+            if (active.Count == 0) variable = Math.Max(0, dailyVariable - explicitVariable);
+            else
+            {
+                var explicitLines = entries.Where(e => e.TransactionId != null).SelectMany(e => variableLines![e.TransactionId!.Value]).ToList();
+                var extra = explicitLines.Where(l => l.CategoryId is not { } category || !active.Contains(category) ||
+                    !purchaseDates.GetValueOrDefault(l.Transaction.Id).HasValue).Sum(l => l.TypicalSpending);
+                variable = Math.Max(0, residual - extra);
+                foreach (var estimate in plannedByDate[date])
+                {
+                    var recorded = explicitLines.Any(l => l.CategoryId == estimate.CategoryId &&
+                        purchaseDates.GetValueOrDefault(l.Transaction.Id) == date);
+                    var topup = recorded ? 0 : estimate.Amount;
+                    if (topup > 0) appliedSpending.Add(estimate with { Amount = topup });
+                    variable += topup;
+                }
+            }
             // Conservative within-day ordering: all debits before credits, including on payday.
             var trough = balance - payments - variable;
             if (trough < lowest) { lowest = trough; lowestDate = date; }
@@ -144,6 +219,7 @@ public static class CashFlow
         }
         return new(account, current, nextIncome, until, Math.Max(0, spendableFloor - account.MinimumCashBuffer - account.EarmarkedAmount),
             lowest, lowestDate, dailyVariable, statementThrough, lastImport, stale, limited, warnings, events, days)
-            { AwaitingBankDataCount = awaitingBankData, PaymentsToReviewCount = reviewPayments };
+             { AwaitingBankDataCount = awaitingBankData, PaymentsToReviewCount = reviewPayments,
+                 Learning = learning, ExpectedSpending = appliedSpending, DailyUnscheduledEstimate = active.Count > 0 ? residual : dailyVariable };
     }
 }
