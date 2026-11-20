@@ -1432,7 +1432,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="CalendarHorizon" xml:space="preserve"><value>Prognose t/m {0}</value></data>
   <data name="CalendarNavigation" xml:space="preserve"><value>Kalendermaand kiezen</value></data>
   <data name="CalendarToday" xml:space="preserve"><value>Vandaag</value></data>
-  <data name="CalendarIntro" xml:space="preserve"><value>Geplande inkomsten en betalingen samen met geaccepteerde bestedingspatronen. Kies een dag voor bedragen en uitleg. De kalender heeft een eigen maandkeuze.</value></data>
+  <data name="CalendarIntro" xml:space="preserve"><value>Geplande inkomsten en betalingen, geaccepteerde bestedingspatronen en overige dagelijkse ramingen. Kies een dag voor bedragen en uitleg. De kalender heeft een eigen maandkeuze.</value></data>
   <data name="CalendarUncertain" xml:space="preserve"><value>De prognose is onzeker door oude of beperkte bankgegevens. Groen is geen garantie dat alle kosten bekend zijn.</value></data>
   <data name="CalendarNextRisk" xml:space="preserve"><value>Volgende aandachtsdag</value></data>
   <data name="CalendarLowest" xml:space="preserve"><value>Laagste saldo in prognose</value></data>
@@ -1449,11 +1449,14 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="CalendarPendingHelp" xml:space="preserve"><value>Verwachtingen uit de laatste {0} dagen waarvoor nog geen herkenbare aankoop is geregistreerd. Dit zijn geen onbetaalde rekeningen. De reserve telt voorzichtig aan het begin van de prognose mee, niet als betaling die morgen verschuldigd is. Onbekend gedateerde boekingen verminderen de gezamenlijke reserve zonder bankkoppeling. Sla een niet-gedane aankoop over; oudere verwachtingen stapelen niet op.</value></data>
   <data name="CalendarSkip" xml:space="preserve"><value>Overgeslagen</value></data>
   <data name="CalendarLearned" xml:space="preserve"><value>Geschat uit bestedingspatroon</value></data>
+  <data name="CalendarEstimateLegend" xml:space="preserve"><value>Betekenis van de prognose-iconen en onderbroken randen</value></data>
+  <data name="CalendarLearnedGroup" xml:space="preserve"><value>Bestedingspatronen</value></data>
+  <data name="CalendarEverydayName" xml:space="preserve"><value>Overige uitgaven</value></data>
+  <data name="CalendarEveryday" xml:space="preserve"><value>Geschat uit historisch daggemiddelde, geen geleerd dagpatroon</value></data>
   <data name="CalendarCommitted" xml:space="preserve"><value>Geregistreerde aankoop, bankboeking volgt</value></data>
   <data name="CalendarCommittedReserve" xml:space="preserve"><value>Al geregistreerde aankopen met een latere bankdatum: {0}. Deze staan op hun aankoopdag en beschermen het geld aan het begin van de prognose; het zijn geen nieuwe betalingen voor morgen.</value></data>
   <data name="CalendarBookedOn" xml:space="preserve"><value>Bankdatum {0}</value></data>
   <data name="CalendarNoItems" xml:space="preserve"><value>Geen afzonderlijke betalingen of bestedingsverwachtingen op deze dag.</value></data>
-  <data name="CalendarResidual" xml:space="preserve"><value>Overige verwachte dagelijkse uitgaven: {0}. Deze staan los van de afzonderlijk getoonde patronen.</value></data>
   <data name="CalendarAdjust" xml:space="preserve"><value>Verwachting aanpassen · {0}</value></data>
   <data name="CalendarAdjusted" xml:space="preserve"><value>{0}: eigen verwachting {1} (0 = overgeslagen).</value></data>
   <data name="CalendarReset" xml:space="preserve"><value>Automatisch herstellen</value></data>

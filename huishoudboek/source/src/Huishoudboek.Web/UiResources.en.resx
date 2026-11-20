@@ -1432,7 +1432,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="CalendarHorizon" xml:space="preserve"><value>Forecast through {0}</value></data>
   <data name="CalendarNavigation" xml:space="preserve"><value>Choose calendar month</value></data>
   <data name="CalendarToday" xml:space="preserve"><value>Today</value></data>
-  <data name="CalendarIntro" xml:space="preserve"><value>Scheduled income and payments alongside accepted spending patterns. Select a day for amounts and explanations. The calendar has its own month selection.</value></data>
+  <data name="CalendarIntro" xml:space="preserve"><value>Scheduled income and payments, accepted spending patterns and other everyday estimates. Select a day for amounts and explanations. The calendar has its own month selection.</value></data>
   <data name="CalendarUncertain" xml:space="preserve"><value>The forecast is uncertain because bank data is old or limited. Green does not guarantee that all costs are known.</value></data>
   <data name="CalendarNextRisk" xml:space="preserve"><value>Next day needing attention</value></data>
   <data name="CalendarLowest" xml:space="preserve"><value>Lowest forecast balance</value></data>
@@ -1449,11 +1449,14 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="CalendarPendingHelp" xml:space="preserve"><value>Expectations from the last {0} days without an identifiable recorded purchase. These are not unpaid bills. The reserve is conservatively included at the start of the forecast, not as a payment due tomorrow. Undated posted spending offsets the aggregate reserve without linking bank entries. Skip a purchase that did not happen; older expectations do not accumulate.</value></data>
   <data name="CalendarSkip" xml:space="preserve"><value>Skipped</value></data>
   <data name="CalendarLearned" xml:space="preserve"><value>Estimated from spending pattern</value></data>
+  <data name="CalendarEstimateLegend" xml:space="preserve"><value>Meaning of forecast icons and dashed outlines</value></data>
+  <data name="CalendarLearnedGroup" xml:space="preserve"><value>Spending patterns</value></data>
+  <data name="CalendarEverydayName" xml:space="preserve"><value>Other spending</value></data>
+  <data name="CalendarEveryday" xml:space="preserve"><value>Estimated from historical daily average, not a learned weekday pattern</value></data>
   <data name="CalendarCommitted" xml:space="preserve"><value>Recorded purchase, bank booking follows</value></data>
   <data name="CalendarCommittedReserve" xml:space="preserve"><value>Already recorded purchases with later bank dates: {0}. These appear on their purchase day and protect money at the start of the forecast; they are not new payments for tomorrow.</value></data>
   <data name="CalendarBookedOn" xml:space="preserve"><value>Bank date {0}</value></data>
   <data name="CalendarNoItems" xml:space="preserve"><value>No individual payments or spending expectations on this day.</value></data>
-  <data name="CalendarResidual" xml:space="preserve"><value>Other expected everyday spending: {0}. This is separate from the individually displayed patterns.</value></data>
   <data name="CalendarAdjust" xml:space="preserve"><value>Adjust expectation · {0}</value></data>
   <data name="CalendarAdjusted" xml:space="preserve"><value>{0}: custom expectation {1} (0 = skipped).</value></data>
   <data name="CalendarReset" xml:space="preserve"><value>Restore automatic</value></data>

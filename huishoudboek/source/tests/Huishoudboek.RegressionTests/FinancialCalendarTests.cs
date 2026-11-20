@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Huishoudboek.Core;
@@ -289,6 +290,112 @@ internal static class FinancialCalendarTests
             True(learning.Contains("type=\"date\"")); True(WebUtility.HtmlDecode(learning).Contains(UiCulture.Text("HabitPause")));
             True(!html.Contains("CalendarRiskShortfall</")); True(!learning.Contains("HabitSourceDescription</"));
         }));
+        yield return ("Calendar shows only the applied daily remainder, including empty days and recorded-spending offsets", () => WithCultures(() =>
+        {
+            var now = DateOnly.FromDateTime(DateTime.Today); var f = new History(now); var date = now.AddDays(1);
+            f.Add(date, 5, 0); f.Add(date.AddDays(2), 100, 0);
+            var forecast = CashFlow.Project(f.Data, now, minimumDays: 90).Accounts.Single(); var state = State(f.Data);
+            var before = JsonSerializer.Serialize(f.Data); var projection = JsonSerializer.Serialize(forecast);
+            var day = forecast.Days.Single(d => d.Date == date);
+            Equal(forecast.DailyUnscheduledEstimate - 5, day.VariableSpending);
+            var html = RenderCalendar(state, forecast, date); var tile = DayHtml(html, date); var detail = DayDetail(html);
+            True(tile.Contains(UiCulture.Text("CalendarEverydayName"))); True(tile.Contains("≈"));
+            True(HasAmount(tile, -day.VariableSpending));
+            True(Regex.IsMatch(tile, $"<span class=\"day-balance\"[^>]*>{Regex.Escape(WebState.Money(day.ClosingBalance))}</span>"));
+            True(!tile.Contains(UiCulture.Text("CalendarLearned"))); Equal(1, Regex.Matches(detail, "class=\"estimate-item\"").Count);
+            True(detail.Contains(UiCulture.Text("CalendarEveryday"))); True(!detail.Contains(UiCulture.Text("CalendarNoItems")));
+            // A day with no bank/scheduled entries still explains the full daily deduction.
+            var empty = RenderCalendar(state, forecast, date.AddDays(1));
+            True(HasAmount(DayHtml(empty, date.AddDays(1)), -forecast.DailyUnscheduledEstimate));
+            True(!DayDetail(empty).Contains(UiCulture.Text("CalendarNoItems")));
+            Equal(0m, forecast.Days.Single(d => d.Date == date.AddDays(2)).VariableSpending);
+            True(!DayHtml(RenderCalendar(state, forecast, date.AddDays(2)), date.AddDays(2)).Contains("estimate-chip"));
+            True(!DayHtml(RenderCalendar(state, forecast, now), now).Contains("estimate-chip"));
+            Equal(before, JsonSerializer.Serialize(f.Data));
+            Equal(projection, JsonSerializer.Serialize(CashFlow.Project(f.Data, now, minimumDays: 90).Accounts.Single()));
+        }));
+        yield return ("Calendar keeps learned totals and daily remainders visible beside payment overflow, with individual day details", () => WithCultures(() =>
+        {
+            var now = DateOnly.FromDateTime(DateTime.Today); var date = now.AddDays(1); var f = new History(now);
+            var other = new Category { Name = "Synthetic transport" }; f.Data.Categories.Add(other);
+            foreach (var t in f.Data.Transactions.ToList())
+                f.Data.Transactions.Add(t with { Id = Guid.NewGuid(), CategoryId = other.Id, Amount = t.Amount / 2 });
+            foreach (var t in f.Data.Transactions.Where(t => t.CategoryId == f.Food.Id).Where((_, i) => i % 10 == 0))
+                t.Description = "SYNTHETIC UNKNOWN PURCHASE DATE";
+            var weekdays = 1 << (((int)date.DayOfWeek + 6) % 7); var habit = f.Accept();
+            SpendingLearning.SaveHabit(f.Data, habit with { Weekdays = weekdays, WeeklyAmount = 70 });
+            SpendingLearning.SaveHabit(f.Data, new() { AccountId = f.Account.Id, CategoryId = other.Id, Weekdays = weekdays, WeeklyAmount = 35 });
+            foreach (var amount in new[] { -1m, -2m, 100m })
+                f.Data.RecurringPayments.Add(new() { AccountId = f.Account.Id, Name = "Synthetic scheduled " + amount,
+                    Amount = amount, Frequency = PaymentFrequency.Once, StartDate = date, DayOfMonth = date.Day });
+            var forecast = CashFlow.Project(f.Data, now, minimumDays: 90).Accounts.Single();
+            var expected = forecast.ExpectedSpending.Where(e => !e.IsPending && e.Date == date).ToList(); Equal(2, expected.Count);
+            var learned = expected.Sum(e => e.Amount); var day = forecast.Days.Single(d => d.Date == date);
+            var residual = day.VariableSpending - learned; True(residual > 0);
+            var html = RenderCalendar(State(f.Data), forecast, date); var tile = DayHtml(html, date); var detail = DayDetail(html);
+            Equal(2, Regex.Matches(tile, "class=\"day-chip estimate-chip\"").Count);
+            True(tile.Contains(UiCulture.Text("CalendarMore", 1)));
+            True(tile.IndexOf("class=\"day-estimates\"", StringComparison.Ordinal) > tile.IndexOf("class=\"day-more\"", StringComparison.Ordinal));
+            True(tile.Contains(UiCulture.Text("CalendarLearnedGroup"))); True(tile.Contains("<svg")); True(tile.Contains("≈"));
+            True(HasAmount(tile, -learned)); True(HasAmount(tile, -residual));
+            True(tile.Contains($"{f.Food.Name}: {WebState.Money(-70)}")); True(tile.Contains($"{other.Name}: {WebState.Money(-35)}"));
+            True(tile.Contains(UiCulture.Text("CalendarLearned"))); True(tile.Contains(UiCulture.Text("CalendarEveryday")));
+            True(html.Contains($"aria-label=\"{UiCulture.Text("CalendarEstimateLegend")}\""));
+            Equal(3, Regex.Matches(detail, "class=\"estimate-item\"").Count);
+            foreach (var estimate in expected) True(detail.Contains(WebState.Money(-estimate.Amount)));
+            True(detail.Contains(WebState.Money(-residual))); True(detail.Contains("<svg")); True(detail.Contains("≈"));
+        }));
+        yield return ("Displaying the daily remainder leaves payment-count risks and reasons unchanged", () => WithCultures(() =>
+        {
+            var now = DateOnly.FromDateTime(DateTime.Today); var date = now.AddDays(1); var f = new History(now);
+            foreach (var amount in new[] { -1m, -2m })
+                f.Data.RecurringPayments.Add(new() { AccountId = f.Account.Id, Name = "Synthetic bill " + amount,
+                    Amount = amount, Frequency = PaymentFrequency.Once, StartDate = date, DayOfMonth = date.Day });
+            var forecast = CashFlow.Project(f.Data, now, minimumDays: 90).Accounts.Single();
+            var day = forecast.Days.Single(d => d.Date == date);
+            Equal(FinancialDayRisk.Comfortable, FinancialCalendar.Risk(day, f.Account, forecast.DailyVariableEstimate, 2));
+            var html = RenderCalendar(State(f.Data), forecast, date);
+            True(DayHtml(html, date).Contains("calendar-day risk-green"));
+            True(DayDetail(html).Contains(UiCulture.Text("CalendarReasonComfortable")));
+            True(!DayDetail(html).Contains(UiCulture.Text("CalendarReasonMultiple")));
+            // Learned dated occurrences still count, unlike the generic daily remainder.
+            var habit = f.Accept(); SpendingLearning.SaveHabit(f.Data, habit with { Weekdays = 1 << (((int)date.DayOfWeek + 6) % 7), WeeklyAmount = 1 });
+            forecast = CashFlow.Project(f.Data, now, minimumDays: 90).Accounts.Single();
+            html = RenderCalendar(State(f.Data), forecast, date);
+            True(DayHtml(html, date).Contains("calendar-day risk-orange"));
+            True(DayDetail(html).Contains(UiCulture.Text("CalendarReasonMultiple")));
+        }));
+        yield return ("Recorded purchases and skipped learned occurrences remove their forecast chips without a guessed remainder", () => WithCultures(() =>
+        {
+            var now = DateOnly.FromDateTime(DateTime.Today); var date = now.AddDays(1); var f = new History(now); var habit = f.Accept();
+            SpendingLearning.SaveHabit(f.Data, habit with { Weekdays = 1 << (((int)date.DayOfWeek + 6) % 7), WeeklyAmount = 70 });
+            f.Add(date, 10, 2); SpendingLearning.SetAdjustment(f.Data, habit.Id, date.AddDays(7), 0);
+            var forecast = CashFlow.Project(f.Data, now, minimumDays: 90).Accounts.Single();
+            var html = RenderCalendar(State(f.Data), forecast, date); var tile = DayHtml(html, date);
+            True(HasAmount(tile, -10)); True(!tile.Contains("estimate-chip"));
+            True(!DayDetail(html).Contains("estimate-item"));
+            var skipped = RenderCalendar(State(f.Data), forecast, date.AddDays(7));
+            True(!DayHtml(skipped, date.AddDays(7)).Contains("estimate-chip"));
+            True(DayDetail(skipped).Contains(UiCulture.Text("CalendarNoItems")));
+        }));
+        yield return ("Past days never show forecast chips and pending reserves stay separate from tomorrow's entries", () => WithCultures(() =>
+        {
+            var now = DateOnly.FromDateTime(DateTime.Today); var f = new History(now); var habit = f.Accept();
+            SpendingLearning.SaveHabit(f.Data, habit with { Weekdays = 127, WeeklyAmount = 70 });
+            f.Data.Transactions.RemoveAll(t => SpendingLearning.PurchaseDate(f.Data, t).Date >= now.AddDays(-6));
+            var forecast = CashFlow.Project(f.Data, now, minimumDays: 90).Accounts.Single(); True(forecast.PendingHabitReserve > 0);
+            var html = RenderCalendar(State(f.Data), forecast, now);
+            foreach (var past in new[] { now, now.AddDays(-1) })
+            {
+                var pastHtml = RenderCalendar(State(f.Data), forecast, past);
+                True(!DayHtml(pastHtml, past).Contains("estimate-chip")); True(!DayDetail(pastHtml).Contains("estimate-item"));
+            }
+            True(html.Contains(UiCulture.Text("CalendarPendingReserve", WebState.Money(forecast.PendingHabitReserve))));
+            var date = now.AddDays(1); var future = DayHtml(RenderCalendar(State(f.Data), forecast, date), date);
+            var applied = forecast.ExpectedSpending.Single(e => !e.IsPending && e.Date == date).Amount;
+            True(HasAmount(future, -applied));
+            True(!future.Contains(UiCulture.Text("CalendarPendingReserve", WebState.Money(forecast.PendingHabitReserve))));
+        }));
         yield return ("The separate calendar page owns the calendar and learning while outlook keeps spending checks in both languages", () => WithCultures(() =>
         {
             var f = new History(DateOnly.FromDateTime(DateTime.Today)); f.Accept(); var state = State(f.Data);
@@ -378,6 +485,24 @@ internal static class FinancialCalendarTests
     private static WebState State(HouseholdData data)
     {
         var state = new WebState(null!); typeof(WebState).GetProperty(nameof(WebState.Data))!.SetValue(state, data); return state;
+    }
+    private static string RenderCalendar(WebState state, AccountCashFlow forecast, DateOnly date) =>
+        WebUtility.HtmlDecode(Render<CalendarAtDate>(state, new Dictionary<string, object?> { [nameof(CashCalendar.Forecast)] = forecast, [nameof(CalendarAtDate.Date)] = date }));
+    private static string DayHtml(string html, DateOnly date) => Regex.Matches(html, "<button[^>]*class=\"calendar-day [^>]*>.*?</button>", RegexOptions.Singleline)
+        .Cast<Match>().Single(m => m.Value.Contains($"datetime=\"{date:yyyy-MM-dd}\"")).Value;
+    private static string DayDetail(string html) => Regex.Match(html, "<section class=\"calendar-detail\".*?</section>", RegexOptions.Singleline).Value;
+    private static bool HasAmount(string html, decimal amount) => Regex.IsMatch(html, $"<b\\b[^>]*>{Regex.Escape(WebState.Money(amount))}</b>");
+    // Static HTML rendering has no click dispatcher. Select a day after normal setup,
+    // exercising the production grid/details without exposing test-only UI parameters.
+    private sealed class CalendarAtDate : CashCalendar
+    {
+        [Parameter] public DateOnly Date { get; set; }
+        protected override void OnParametersSet()
+        {
+            base.OnParametersSet();
+            typeof(CashCalendar).GetField("month", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(this, new DateOnly(Date.Year, Date.Month, 1));
+            typeof(CashCalendar).GetField("selectedDate", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(this, Date);
+        }
     }
     private static string Render<T>(WebState state, IDictionary<string, object?>? parameters = null) where T : IComponent
     {

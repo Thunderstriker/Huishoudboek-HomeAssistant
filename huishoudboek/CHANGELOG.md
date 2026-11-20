@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.3.1
+
+- Financiële kalender toont geraamde uitgaven bij toekomstige saldi, met aparte
+  iconen voor geleerde bestedingspatronen en overige dagelijkse ramingen. Compacte
+  bedragen blijven ook op mobiel zichtbaar; dagdetails tonen de afzonderlijke posten.
+  Saldoberekening, risicokleuren en automatisch leren blijven ongewijzigd.
+- Geraamde kalenderuitgaven hebben een lavendelkleurige achtergrond en paarse
+  onderbroken rand, ook in legenda en dagdetails, zodat ze niet op gewone betalingen lijken.
+
 ## 0.3.3
 
 - Financiële kalender bij Financiële vooruitblik met vaste posten, inkomsten,

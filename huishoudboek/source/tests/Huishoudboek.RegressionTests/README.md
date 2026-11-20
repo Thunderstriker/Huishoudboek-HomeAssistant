@@ -46,3 +46,9 @@ kalender- en leercomponenten worden eveneens gecontroleerd. De eigen kalenderpag
 onder Overzichten wordt in beide talen getest, inclusief actieve navigatie, lege
 rekeningen, eigenaarfilters en behoud van aankoopcontrole en tabellen op Financiële
 vooruitblik. Persoonlijke spreadsheets zijn geen testafhankelijkheid en worden niet geïmporteerd.
+Kalenderprognoses testen zichtbare geleerde bedragen en resterende dagramingen,
+afboekingscorrecties, gegroepeerde totalen naast betalings-overloop, afzonderlijke
+dagdetails en toegankelijke iconen/legenda in beide talen. Alleen werkelijk geraamde
+bedragen verschijnen; geboekte en overgeslagen aankopen, historische dagen en
+tijdelijke reserves blijven gescheiden. De extra dagraming verandert geen saldi,
+gegevens of aantallen gedateerde betalingen voor risicokleuren en uitleg.
