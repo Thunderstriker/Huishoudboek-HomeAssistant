@@ -11,6 +11,7 @@
 - Kalender en Financiële vooruitblik tonen de ramingsscope; leerpatronen tonen
   herkende dagen en concrete uitleg bij ontbrekende dekking, aankoopdatums of
   acceptatie. Categorievoorkeuren blijven bewaard in databaseback-ups.
+- App- en containerversie bijgewerkt naar 0.3.3.3 voor installatie en updates via Home Assistant.
 
 ## 0.3.3.2
 

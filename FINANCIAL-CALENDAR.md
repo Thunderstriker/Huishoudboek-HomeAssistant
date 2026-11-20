@@ -128,7 +128,8 @@ never creates transactions or changes recorded bank balances.
   unaccepted patterns. Make unapplied patterns discoverable from the calendar.
 - Persist category IDs inside the existing insights metadata, included in normal
   SQLite backup/restore. Missing legacy preferences get defaults; an explicit empty
-  list remains empty. No schema migration or application/container version bump.
+  list remains empty. No schema migration. Application/container release metadata
+  is synchronized to 0.3.3.3 for installation and updates via Home Assistant.
 - Cover defaults, renames/deletion, excluded history and future payments, mixed
   allocations, year-long Wednesday/Saturday history, rare off-day purchases, medical
   irregularity, no double deduction, empty/legacy settings and both UI languages
