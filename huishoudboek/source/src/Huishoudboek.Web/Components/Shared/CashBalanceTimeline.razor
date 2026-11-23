@@ -1,0 +1,57 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<section class="cash-timeline" aria-labelledby="@headingId">
+    <div class="page-heading"><h3 id="@headingId">@L["ForecastTimeline"] · @Forecast.Account.Name</h3>
+        <div class="range-buttons" role="group" aria-label="@L["HistoryPeriod"]">
+            @foreach (var length in new[] { 7, 30, 90 })
+            { <button type="button" aria-pressed="@(horizon == length ? "true" : "false")" @onclick="() => horizon = length">@L["Days", length]</button> }
+        </div>
+    </div>
+    @if (Forecast.HasUncertainty || Forecast.StaleImports || Forecast.LimitedHistory)
+    { <p class="notice warning" role="status">@L["ForecastTimelineUncertain"]</p> }
+    <div class="cash-timeline-canvas"><canvas @ref="canvas" role="img" aria-label="@L["ForecastTimeline"]" aria-describedby="@noteId"></canvas></div>
+    <p id="@noteId" class="muted">@L["ForecastTimelineNote"] <a href="#daily-forecast-table">@L["DailyBalanceForecast"] →</a></p>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public AccountCashFlow Forecast { get; set; } = null!;
+    [Parameter] public DateOnly Today { get; set; }
+    private int horizon = 30;
+    private readonly string headingId = "timeline-" + Guid.NewGuid().ToString("N");
+    private string noteId => headingId + "-note";
+    private ElementReference canvas;
+    private IJSObjectReference? module, chart;
+    private readonly SemaphoreSlim chartLock = new(1, 1);
+    private bool disposed;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await chartLock.WaitAsync();
+        try
+        {
+            if (disposed) return;
+            module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Huishoudboek.Web/cashflow-charts.js");
+            if (disposed) return;
+            chart ??= await module.InvokeAsync<IJSObjectReference>("create", canvas, new { locale = UiCulture.Culture.Name,
+                actual = L["BalanceToday"].Value, forecast = L["ClosingBalance"].Value,
+                lowest = L["LowestBalance"].Value, buffer = L["ForecastBufferLine"].Value,
+                income = L["BankCredits"].Value, payments = L["BankDebits"].Value });
+            var points = CashTimeline.Points(Forecast, Today, horizon);
+            await chart.InvokeVoidAsync("update", new {
+                labels = points.Select(p => p.Date.ToString("dd MMM", UiCulture.Culture)),
+                closing = points.Select(p => p.Closing), lowest = points.Select(p => p.Lowest),
+                income = points.Select(p => p.Income), payments = points.Select(p => p.Payments),
+                incomeAmounts = points.Select(p => p.IncomeAmount), paymentAmounts = points.Select(p => p.PaymentAmount),
+                buffer = Forecast.Account.MinimumCashBuffer + Forecast.Account.EarmarkedAmount
+            });
+        }
+        finally { chartLock.Release(); }
+    }
+    public async ValueTask DisposeAsync()
+    {
+        disposed = true; await chartLock.WaitAsync();
+        try { if (chart != null) { await chart.InvokeVoidAsync("destroy"); await chart.DisposeAsync(); } if (module != null) await module.DisposeAsync(); }
+        catch (JSDisconnectedException) { }
+        finally { chartLock.Release(); }
+    }
+}

@@ -1,0 +1,7 @@
+.category-name {
+    padding-inline-start: calc(var(--category-depth, 0) * .9rem);
+}
+
+.category-name small {
+    display: block;
+}

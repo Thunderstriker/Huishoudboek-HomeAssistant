@@ -16,7 +16,7 @@
 </div>
 @if (overview.ExceptionalOutflow != 0)
 { <p class="notice">@L["ExceptionalActualNote", Money(overview.ExceptionalOutflow)]</p> }
-<YearCharts Months="actualMonths" Categories="overview.Categories" />
+<YearCharts Months="actualMonths" Categories="overview.Categories" Year="State.Year" OwnerId="State.OwnerId" />
 <p class="muted">@L["AnnualActualNote"]</p>
 <MealVoucherReportNote />
 <details class="card"><summary>@L["ViewMonthlyAmounts"]</summary>

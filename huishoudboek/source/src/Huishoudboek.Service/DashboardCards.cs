@@ -75,7 +75,7 @@ public static class DashboardCards
             var overview = HomeOverview.Create(data, period.Year, period.Month, today, ownerId);
             var insights = widget == "freedom-map" ? FinancialInsights.Create(data, today, ownerId) : null;
             var model = new DashboardCardModel(widget, context.Request.PathBase + "/", theme, period.Year,
-                period.Month, overview, insights, selectedOwner?.Name) { CategoryHistory = history, CategoryName = categoryName };
+                period.Month, overview, insights, selectedOwner?.Name) { CategoryHistory = history, CategoryName = categoryName, OwnerId = ownerId };
             return new RazorComponentResult<CardDocument>(new { Model = model });
         }).RequireAuthorization().WithMetadata(new FrameEndpoint());
     }

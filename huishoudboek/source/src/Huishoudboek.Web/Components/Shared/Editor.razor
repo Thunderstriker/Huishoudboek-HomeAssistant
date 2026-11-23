@@ -1,4 +1,6 @@
 @inject WebState State
+@inject IJSRuntime JS
+@if (HasChanges) { <NavigationLock ConfirmExternalNavigation="true" OnBeforeInternalNavigation="BeforeNavigate" /> }
 <Modal Title="@Current.Title" Cancel="Cancel">
     <p class="muted">@Current.Note</p>
     @if (Current.Error.Length > 0) { <p class="notice error" role="alert">@Current.Error</p> }
@@ -30,7 +32,7 @@
     }
     else
     {
-    <form @onsubmit="Save" @onsubmit:preventDefault>
+    <form @ref="form" @onsubmit="Save" @onsubmit:preventDefault novalidate>
         <fieldset class="page-fieldset" disabled="@State.Busy">
             @if (Current.IsRecognition)
             {
@@ -47,20 +49,21 @@
                 {
                     @if (field.Type == "owners")
                     {
-                        <div class="field-note"><strong>@field.Label</strong><div class="owner-choices">
+                        <div class="field-note"><strong>@field.Label</strong><div class="owner-choices" role="group" tabindex="-1" aria-invalid="@(field.Error.Length > 0 ? "true" : "false")" aria-describedby="@(field.Error.Length > 0 ? field.Key + "-error" : null)">
                             @foreach (var option in field.Options)
                             { var id = Guid.Parse(option.Value); <label class="check"><input type="checkbox" checked="@field.OwnerIds.Contains(id)" @onchange="e => ToggleOwner(field, id, e)" />@option.Label</label> }
-                        </div></div>
+                        </div>@if (field.Error.Length > 0) { <small id="@(field.Key + "-error")" class="field-error">@field.Error</small> }</div>
                     }
                     else if (field.Type == "checkbox")
-                    { <label class="check"><input id="@field.Key" type="checkbox" checked="@bool.Parse(field.Value)" @onchange="e => field.Value = ((bool)e.Value!).ToString()" />@field.Label</label> }
+                    { <div><label class="check"><input id="@field.Key" type="checkbox" checked="@bool.Parse(field.Value)" @onchange="e => { field.Value = ((bool)e.Value!).ToString(); FieldChanged(field); }" aria-invalid="@(field.Error.Length > 0 ? "true" : "false")" aria-describedby="@(field.Error.Length > 0 ? field.Key + "-error" : null)" />@field.Label</label>@if (field.Error.Length > 0) { <small id="@(field.Key + "-error")" class="field-error">@field.Error</small> }</div> }
                     else
                     {
                         <label>@Current.Label(field)
                             @if (field.Type == "select")
-                            { <select id="@field.Key" @bind="field.Value" disabled="@field.ReadOnly">@foreach (var option in Current.Options(field)) { <option value="@option.Value">@option.Label</option> }</select> }
+                            { <select id="@field.Key" @bind="field.Value" @bind:after="() => FieldChanged(field)" disabled="@field.ReadOnly" aria-invalid="@(field.Error.Length > 0 ? "true" : "false")" aria-describedby="@(field.Error.Length > 0 ? field.Key + "-error" : null)">@foreach (var option in Current.Options(field)) { <option value="@option.Value">@option.Label</option> }</select> }
                             else
-                            { <input id="@field.Key" type="@(field.Type == "money" ? "text" : field.Type)" inputmode="@(field.Type == "money" ? "decimal" : null)" value="@field.Value" @onchange="e => field.Value = e.Value?.ToString() ?? string.Empty" required="@field.Required" disabled="@field.ReadOnly" maxlength="2000" /> }
+                            { <input id="@field.Key" type="@(field.Type == "money" ? "text" : field.Type)" inputmode="@(field.Type == "money" ? "decimal" : null)" value="@field.Value" @oninput="e => { field.Value = e.Value?.ToString() ?? string.Empty; FieldChanged(field); }" required="@field.Required" disabled="@field.ReadOnly" maxlength="2000" aria-invalid="@(field.Error.Length > 0 ? "true" : "false")" aria-describedby="@(field.Error.Length > 0 ? field.Key + "-error" : null)" /> }
+                            @if (field.Error.Length > 0) { <small id="@(field.Key + "-error")" class="field-error">@field.Error</small> }
                         </label>
                     }
                 }
@@ -78,8 +81,25 @@
     private EditorDraft Current => active ?? Draft;
     private int page;
     private HashSet<Guid> selected = [];
+    private ElementReference form;
+    private string baseline = "";
+    private bool allowNavigation, focusInvalid;
+    private bool HasChanges => !allowNavigation && (Current.Fingerprint != baseline || proposal != null);
+    protected override void OnInitialized() => baseline = Draft.Fingerprint;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    { if (focusInvalid) { focusInvalid = false; await JS.InvokeVoidAsync("huishoudboek.focusInvalid", form); } }
+    private void FieldChanged(EditorField field) { field.Error = ""; Current.Error = ""; }
+    private async Task BeforeNavigate(LocationChangingContext context)
+    {
+        if (State.Busy || HasChanges && !await JS.InvokeAsync<bool>("confirm", L["DraftDiscardWarning"].Value)) context.PreventNavigation();
+        else allowNavigation = true;
+    }
     private void Select(Guid id, bool value) { if (value) selected.Add(id); else selected.Remove(id); }
-    private Task Cancel() => State.Busy ? Task.CompletedTask : Closed.InvokeAsync();
+    private async Task Cancel()
+    {
+        if (State.Busy || HasChanges && !await JS.InvokeAsync<bool>("confirm", L["DraftDiscardWarning"].Value)) return;
+        allowNavigation = true; await Closed.InvokeAsync();
+    }
     private static void ToggleOwner(EditorField field, Guid id, ChangeEventArgs args) { if ((bool)args.Value!) field.OwnerIds.Add(id); else field.OwnerIds.Remove(id); }
     private void ChooseRule(ChangeEventArgs args)
     {
@@ -89,6 +109,7 @@
     }
     private async Task Save()
     {
+        if (!Current.ValidateFields()) { Current.Error = L["FixHighlightedFields"]; focusInvalid = true; return; }
         if (!await State.RunAsync(() =>
             { proposal = Current.PrepareSave(State.Data, State.Today); selected = proposal.InitialSelection.ToHashSet(); page = 0; return Task.CompletedTask; }))
         { Current.Error = State.Message; return; }
@@ -100,7 +121,7 @@
         if (proposal is not { } operation) return;
         Action<HouseholdData> apply = link && operation.SaveSelected is { } save ? d => save(d, selected) : link ? operation.SaveAndLink : operation.SaveOnly;
         if (await State.RunAsync(() => State.SaveAsync(apply, Current.Revision),
-            link ? L["RecognitionRowsApplied", selected.Count] : Current.SuccessMessage)) await Closed.InvokeAsync();
+            link ? L["RecognitionRowsApplied", selected.Count] : Current.SuccessMessage)) { allowNavigation = true; await Closed.InvokeAsync(); }
         else Current.Error = State.Message;
     }
 }

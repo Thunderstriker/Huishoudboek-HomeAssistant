@@ -14,7 +14,7 @@ namespace Huishoudboek.Infrastructure;
 public sealed class SqliteHouseholdStore : IAdministrationStore
 {
     public const long MaximumRestoreBytes = 256L * 1024 * 1024;
-    private const int SchemaVersion = 17;
+    private const int SchemaVersion = 18;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -194,6 +194,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             CreateTable(connection, tx, typeof(PurchaseDateDecision));
             CreateTable(connection, tx, typeof(SpendingAdjustment));
         }
+        if (version < 18) Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [ParentId] TEXT NULL");
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -346,6 +347,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
 
     private static string? PreviousDefault(Type type, string property, int version)
     {
+        if (version < 18 && type == typeof(Category) && property == nameof(Category.ParentId)) return "NULL";
         if (version < 16 && type == typeof(Transaction))
         {
             if (property == nameof(Transaction.RecognizedName)) return "''";

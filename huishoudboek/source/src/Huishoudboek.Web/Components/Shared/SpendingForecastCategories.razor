@@ -1,7 +1,7 @@
 @inherits PageBase
 @{ var selected = SpendingForecast.CategoryIds(State.Data); }
 <section class="forecast-scope" aria-label="@L["ForecastCategoriesTitle"]">
-    <p><strong>@L["ForecastCategoriesTitle"]:</strong> @(selected.Count == 0 ? L["ForecastNoCategories"].Value : string.Join(", ", State.Data.Categories.Where(c => selected.Contains(c.Id)).Select(c => c.Name)))</p>
+    <p><strong>@L["ForecastCategoriesTitle"]:</strong> @(selected.Count == 0 ? L["ForecastNoCategories"].Value : string.Join(", ", State.Data.Categories.Where(c => selected.Contains(c.Id)).Select(c => State.CategoryName(c.Id))))</p>
     <p class="muted">@L["ForecastCategoriesScope"]</p>
     @if (Editable)
     {
@@ -9,9 +9,9 @@
             <summary>@L["ForecastChooseCategories"]</summary>
             <fieldset>
                 <legend>@L["ForecastCategoriesLegend"]</legend>
-                @foreach (var category in State.Data.Categories.Where(SpendingForecast.Eligible).OrderBy(c => c.Name))
+                @foreach (var entry in CategoryHierarchy.Ordered(State.Data).Where(e => SpendingForecast.Eligible(e.Category)))
                 {
-                    <label class="check"><input type="checkbox" checked="@selected.Contains(category.Id)" disabled="@State.Busy" @onchange="e => Toggle(category.Id, e.Value is true)" />@category.Name</label>
+                    <label class="check"><input type="checkbox" checked="@selected.Contains(entry.Category.Id)" disabled="@State.Busy" @onchange="e => Toggle(entry.Category.Id, e.Value is true)" />@entry.Path</label>
                 }
             </fieldset>
             <p class="muted">@L["ForecastCategoriesSaved"]</p>

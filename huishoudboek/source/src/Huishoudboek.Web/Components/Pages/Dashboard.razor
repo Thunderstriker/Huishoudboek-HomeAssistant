@@ -22,10 +22,10 @@
 <MealVoucherReportNote />
 @if (report.ExceptionalOutflow != 0)
 { <p class="notice">@L["ExceptionalActualNote", Money(report.ExceptionalOutflow)] <a href="inzichten">@L["FinancialInsights"] →</a></p> }
-<MonthlyCharts Report="report" />
+<MonthlyCharts Report="report" Year="State.Year" Month="State.Month" OwnerId="State.OwnerId" />
 <section class="card"><h2>@L["CategoryBudgets"]</h2><div class="table-scroll"><table><thead><tr><th>@L["Category"]</th><th class="money">@L["Budget"]</th><th class="money">@L["Spent"]</th><th class="money">@L["Remaining"]</th><th>@L["Usage"]</th></tr></thead><tbody>
     @foreach (var category in report.Categories)
-    { <tr><td><a href="categorietrends?categorie=@category.Id">@State.CategoryName(category.Id)</a> @if (category.IsOverBudget) { <a class="badge negative" href="vooruitblik#maandstatus">@L["OverBudgetBadge"]</a> }</td><td class="money">@(category.Budget == 0 ? L["NoLimit"].Value : Money(category.Budget))</td><td class="money">@Money(category.Spent)</td><td class="money @(category.IsOverBudget ? "negative" : "")">@(category.Budget == 0 ? "—" : Money(category.Remaining))</td><td><progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@L["CategoryUsage", category.Name]"></progress></td></tr> }
+    { <tr><td><a href="@UiNavigation.Transactions(category: category.Id, from: new DateOnly(State.Year, State.Month, 1), through: overview.AsOf, owner: State.OwnerId)">@State.CategoryName(category.Id)</a> @if (category.IsOverBudget) { <a class="badge negative" href="vooruitblik#maandstatus">@L["OverBudgetBadge"]</a> }<br /><a class="text-link" href="categorietrends?categorie=@category.Id">@L["ViewTrend"]</a></td><td class="money">@(category.Budget == 0 ? L["NoLimit"].Value : Money(category.Budget))</td><td class="money">@Money(category.Spent)</td><td class="money @(category.IsOverBudget ? "negative" : "")">@(category.Budget == 0 ? "—" : Money(category.Remaining))</td><td><BudgetUsage CategoryId="category.Id" Spent="category.Spent" Budget="category.Budget" /></td></tr> }
 </tbody></table></div><details><summary>@L["BudgetDetails"]</summary><p class="muted">@L["HouseholdBudgetNote"]</p><p class="muted">@L["CategoryPurposeHelp"] <a href="budgetten">@L["CategorySettings"]</a></p></details></section>
 <SavingsOverview Report="report" />
 <section class="card"><h2>@L["MonthEndForecast"]</h2><div class="metrics">

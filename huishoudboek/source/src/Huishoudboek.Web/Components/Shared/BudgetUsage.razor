@@ -1,0 +1,14 @@
+@inject WebState State
+@{ var pace = BudgetPace.Describe(State.Data, CategoryId, Spent, Budget, State.Year, State.Month, State.Today, State.Scope); }
+<div class="budget-usage @(pace.StatusKey == "Exceeded" || pace.StatusKey == "BudgetPaceAhead" ? "budget-attention" : "")">
+    <span>@L["BudgetUsage", pace.Usage.ToString("0", UiCulture.Culture)]</span>
+    <progress value="@Math.Min(100, pace.Usage).ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@L["CategoryUsage", State.CategoryName(CategoryId)]"></progress>
+    <small>@L[pace.StatusKey]</small>
+    @if (pace.ExpectedUsage is { } expected) { <small>@L["BudgetPaceExpected", expected.ToString("0", UiCulture.Culture)]</small> }
+    @if (pace.StatusKey == "BudgetPaceScheduled") { <a class="text-link" href="vaste-posten">@L["RecurringPayments"] →</a> }
+</div>
+@code {
+    [Parameter] public Guid CategoryId { get; set; }
+    [Parameter] public decimal Spent { get; set; }
+    [Parameter] public decimal Budget { get; set; }
+}

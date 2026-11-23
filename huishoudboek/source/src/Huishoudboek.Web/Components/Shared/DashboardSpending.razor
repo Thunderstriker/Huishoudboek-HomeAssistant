@@ -16,13 +16,14 @@
                 {
                     var item = categories[index];
                     var share = item.Spent / total;
-                    <li style="--category-color:@Colors[index]" data-category-id="@item.Id">
+                    <li style="--category-color:@Color(index)" data-category-id="@item.Id">
                         <div class="category-heading">
-                            @if (item.Id != Guid.Empty) { <a href="categorietrends?categorie=@item.Id">@item.Name</a> }
+                            @if (!(hasOther && index == categories.Count - 1)) { <a href="@CategoryBookings(item.Id)">@item.Name</a> }
                             else { <span>@item.Name</span> }
                             <strong>@Money(item.Spent)</strong><small>@share.ToString("P0", UiCulture.Culture)</small>
                         </div>
-                        <div class="category-track" aria-hidden="true"><span style="width:@((share * 100).ToString("0.##", CultureInfo.InvariantCulture))%"></span></div>
+                         <div class="category-track" aria-hidden="true"><span style="width:@((share * 100).ToString("0.##", CultureInfo.InvariantCulture))%"></span></div>
+                         @if (!(hasOther && index == categories.Count - 1)) { <a class="text-link" href="categorietrends?categorie=@item.Id">@L["ViewTrend"] →</a> }
                     </li>
                 }
             </ul>
@@ -34,7 +35,15 @@
 
 @code {
     [Parameter, EditorRequired] public MonthlyReport Report { get; set; } = null!;
-    private static readonly string[] Colors = ["#32836b", "#8baada", "#dfad69", "#b3a0cf", "#a4b9ad"];
+    [Parameter] public int? Year { get; set; }
+    [Parameter] public int? Month { get; set; }
+    [Parameter] public Guid? OwnerId { get; set; }
+    private bool hasOther;
+    private string Color(int index) => hasOther && index == categories.Count - 1 ? CategoryColors.Other : CategoryColors.For(categories[index].Id);
+    private string CategoryBookings(Guid id) => UiNavigation.Transactions(category: id, owner: OwnerId,
+        from: Year is { } y && Month is { } m ? new DateOnly(y, m, 1) : null,
+        through: Year is { } year && Month is { } month ? LastActualDay(year, month) : null);
+    private static DateOnly LastActualDay(int year, int month) { var end = new DateOnly(year, month, 1).AddMonths(1).AddDays(-1); var today = DateOnly.FromDateTime(DateTime.Today); return end < today ? end : today; }
     private IReadOnlyList<CategoryResult> categories = [];
     private decimal total;
     private string gradient = "";
@@ -43,6 +52,7 @@
     {
         var spending = Report.Categories.Where(c => c.Spent > 0).OrderByDescending(c => c.Spent).ThenBy(c => c.Name).ToArray();
         var largest = spending.Take(4).Select(c => c.Id == Guid.Empty ? c with { Name = L["Uncategorized"] } : c).ToList();
+        hasOther = spending.Length > 4;
         if (spending.Length > 4)
             largest.Add(new(Guid.Empty, L["OtherCategories"], 0, spending.Skip(4).Sum(c => c.Spent)));
         categories = largest;
@@ -51,7 +61,7 @@
         gradient = string.Join(", ", categories.Select((item, index) => {
             var start = offset;
             offset += item.Spent / total * 100;
-            return $"{Colors[index]} {start.ToString("0.######", CultureInfo.InvariantCulture)}% {offset.ToString("0.######", CultureInfo.InvariantCulture)}%";
+            return $"{Color(index)} {start.ToString("0.######", CultureInfo.InvariantCulture)}% {offset.ToString("0.######", CultureInfo.InvariantCulture)}%";
         }));
     }
 }

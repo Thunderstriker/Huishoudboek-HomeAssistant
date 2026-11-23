@@ -1,5 +1,32 @@
 # Installeren en gebruiken
 
+## Categorieën en subcategorieën
+
+Open **Budgetten & categorieën** en gebruik **+ Subcategorie** bij een bestaande
+categorie, bijvoorbeeld **Wonen en Hypotheek → Elektronica → Verlichting**.
+Subcategorieën mogen zelf ook subcategorieën hebben. Bij **Categorie instellen**
+kunt u de **Bovenliggende categorie** wijzigen; kies **Geen — hoofdcategorie** om
+een categorie terug op hoofdniveau te plaatsen. De categorie en haar verdere
+subcategorieën verhuizen samen. Zichzelf of een eigen subcategorie als ouder kiezen
+is niet toegestaan.
+
+Boekingen, herkenning, bonkoppelingen, budgetten, verwerking en inzichtinstellingen
+blijven bij dezelfde categorie-id. Een nieuwe subcategorie start met budget nul en
+dezelfde verwerking als haar ouder, zonder bestaande boekingen te herverdelen.
+Budgetten, categorietotalen, trends en categoriefilters blijven **afzonderlijk per
+categorie**, zonder bedragen van subcategorieën automatisch op te tellen of
+instellingen van de ouder te erven. Volledige categoriepaden zijn zichtbaar bij
+transactie-invoer, import en boncategorieën. Via **Categoriseren** kunt u bestaande
+boekingen expliciet aan de nieuwe subcategorieën toewijzen.
+
+Verwijdert u een categorie via **Categoriseren**, dan schuiven haar directe
+subcategorieën één niveau omhoog; hun boekingen, budgetten en verdere indeling
+blijven behouden. Alleen verwijzingen naar de verwijderde categorie worden zoals
+voorheen gewist. De bevestiging vermeldt hoeveel subcategorieën omhoog schuiven.
+De indeling gaat mee in databaseback-ups. Databaseschema 18 maakt vóór de automatische
+upgrade een veiligheidskopie; bestaande categorieën en oudere herstelde back-ups
+beginnen op hoofdniveau, zonder verlies van boekingen of budgetten.
+
 ## Financiële kalender en geleerde bestedingen
 
 Open **Overzichten → Financiële kalender** en kies een betaalrekening. De kalender
@@ -964,26 +991,36 @@ ander product en is niet automatisch met deze ingress-only app verbonden.
   Gebruik dezelfde verwerking voor beide zijden als u beide rekeningen importeert.
   Twee bankboekingen koppelen is niet meer nodig. Ongecategoriseerde boekingen blijven
   gewone inkomsten/uitgaven totdat u ze categoriseert.
-- Alle geldige regels binnen de gekozen periode zijn standaard geselecteerd, ook
-  identieke betalingen en regels die overeenkomen met bestaande boekingen. Er is
-  geen automatische dubbelcontrole. Hetzelfde afschrift opnieuw importeren voegt
-  alle geselecteerde boekingen opnieuw toe. Handmatig uitvinken blijft mogelijk;
-  ongeldige regels kunnen niet worden opgeslagen.
+- Alleen nieuwe geldige regels binnen de gekozen periode zijn standaard geselecteerd.
+  Het voorbeeld toont aantallen **nieuw**, **al geïmporteerd** en **te controleren**.
+  Overeenkomende eerdere imports en onzekere overeenkomsten staan uitgevinkt.
+  De controle vergelijkt rekening, bankdatum, bedrag en oorspronkelijke banktekst;
+  als beide boekingen een saldo na boeking hebben, moet dat ook overeenkomen.
+  Gelijke betalingen worden per voorkomen gekoppeld, niet als één betaling samengevoegd.
+  Handmatige boekingen, alleen anders gespelde banktekst of hetzelfde saldo met andere
+  banktekst vragen controle. Zonder unieke bankreferentie blijft matching een vergelijking:
+  controleer deelafschriften, echt nieuwe identieke betalingen en gewijzigde exportteksten.
+  U kunt overeenkomsten afzonderlijk toch selecteren, met een extra waarschuwing bij
+  opslaan. **Alleen nieuwe regels selecteren** neemt nooit eerdere of onzekere matches mee.
+  Ongeldige regels kunnen niet worden opgeslagen; bestaande boekingen worden niet gewijzigd.
+  Een volledig herhaald afschrift kan zonder nieuwe boekingen worden afgerond.
 - Bestaande opgeslagen transfers worden niet herschreven. Het oude handmatige type
   kan nog beide saldi beïnvloeden; importeer diezelfde beweging niet nogmaals zonder
   eerst op dubbelen te controleren. De financiële velden zijn in de editor beschermd.
 - Bevestig optioneel in het voorbeeld dat het afschrift **alle bankboekingen** voor
-  de gekozen rekening en periode bevat. Dit kan alleen met alle regels geselecteerd
-  en geldig. Dekking loopt nooit voorbij vandaag; een leeg afschrift kan een periode
+  de gekozen rekening en periode bevat. Dit kan alleen als elke regel geldig en
+  geselecteerd of al geïmporteerd is; uitgevinkte onzekere matches tellen niet als dekking.
+  Dekking loopt nooit voorbij vandaag; een leeg afschrift kan een periode
   zonder activiteit bevestigen. Een gefilterde of gedeeltelijke export bevestigt u niet.
 - Bij oudere imports is de volledige periode onbekend. Controleer uw bankafschrift
   en gebruik **Beheer & import → Importgeschiedenis → Afschriftperiode bevestigen**.
-  Importeer geen bestand opnieuw alleen om de periode vast te leggen: dat maakt dubbelen.
+  U hoeft een bestand niet opnieuw te importeren alleen om de periode vast te leggen.
   Zonder import kunt u dezelfde volledigheid per rekening bevestigen onder
   **Rekeningen → Bankperioden bevestigen · ook zonder import**.
   Aaneengesloten bevestigde perioden tellen samen; gaten en teruggedraaide imports niet.
-  Wijzigen of verwijderen van bankgegevens trekt de periodebevestiging van die import in;
-  categoriseren en vaste-postkoppelingen veranderen de bevestiging niet.
+  Wijzigen of verwijderen van bankgegevens trekt de periodebevestiging van die import
+  en latere overlappende imports in. Ook terugdraaien van de oorspronkelijke import
+  maakt zulke bevestigingen ongeldig; categoriseren en vaste-postkoppelingen niet.
 
 ## Sparen en verplaatsen tussen eigen rekeningen
 

@@ -33,6 +33,7 @@ public sealed record Category
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = "";
+    public Guid? ParentId { get; set; }
     public decimal MonthlyBudget { get; set; }
     public CategoryPurpose Purpose { get; set; }
     public bool IsEssential { get; set; }

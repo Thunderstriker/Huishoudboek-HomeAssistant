@@ -8,6 +8,7 @@ public sealed class UiPreferences(IJSRuntime js)
     private Task? load;
     public bool Loaded { get; private set; }
     public bool HideWeeklyReview { get; private set; }
+    public string Theme { get; private set; } = "auto";
     // Null means the default (all current accounts); an empty list deliberately hides every card.
     public IReadOnlyList<Guid>? DashboardAccountIds { get; private set; }
     public bool CanPersist { get; private set; } = true;
@@ -33,6 +34,8 @@ public sealed class UiPreferences(IJSRuntime js)
                 DashboardAccountIds = ids.Select(Guid.Parse).Distinct().ToArray();
         }
         catch (JSException) { CanPersist = false; }
+        try { Theme = await js.InvokeAsync<string>("huishoudboek.appearance.read") ?? "auto"; }
+        catch (JSException) { CanPersist = false; }
         Loaded = true;
         Changed?.Invoke();
     }
@@ -51,6 +54,14 @@ public sealed class UiPreferences(IJSRuntime js)
         await LoadAsync();
         DashboardAccountIds = accountIds?.Distinct().ToArray();
         try { CanPersist = await js.InvokeAsync<bool>("huishoudboek.preferences.writeDashboardAccounts", new object?[] { DashboardAccountIds }); }
+        catch (JSException) { CanPersist = false; }
+        Changed?.Invoke();
+    }
+    public async Task SetThemeAsync(string theme)
+    {
+        if (theme is not ("auto" or "light" or "dark")) return;
+        await LoadAsync(); Theme = theme;
+        try { CanPersist = await js.InvokeAsync<bool>("huishoudboek.appearance.set", theme); }
         catch (JSException) { CanPersist = false; }
         Changed?.Invoke();
     }

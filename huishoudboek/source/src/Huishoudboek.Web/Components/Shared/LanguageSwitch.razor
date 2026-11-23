@@ -1,0 +1,9 @@
+@inject WebState State
+@inject NavigationManager Navigation
+<form method="post" action="website/language" data-enhance="false" class="language-switch" aria-label="@L["Language"]" title="@L["LanguageReloadWarning"]">
+    <AntiforgeryToken />
+    <input type="hidden" name="returnPath" value="@Navigation.ToBaseRelativePath(Navigation.Uri)" />
+    <button type="submit" name="language" value="nl" lang="nl" aria-label="Nederlands" aria-current="@(UiCulture.Language == "nl" ? "true" : null)" disabled="@State.Busy">NL</button>
+    <span aria-hidden="true">-</span>
+    <button type="submit" name="language" value="en" lang="en" aria-label="English" aria-current="@(UiCulture.Language == "en" ? "true" : null)" disabled="@State.Busy">EN</button>
+</form>

@@ -31,6 +31,8 @@ public sealed class ImportRow : INotifyPropertyChanged
     public string Description => Transaction?.Description ?? "";
     public bool HasPlannedIdentity { get; internal set; }
     public bool AmbiguousIdentity { get; internal set; }
+    public ImportDuplicateStatus DuplicateStatus { get; internal set; }
+    public Guid? MatchedTransactionId { get; internal set; }
     public decimal? Amount => Transaction?.Amount;
     public string Note { get => string.Join(" ", new[] { _statusNote,
         Transaction?.Kind == TransactionKind.Mortgage ? "Hypotheek herkend; vul na import de werkelijke aflossing in." : "" }.Where(s => s.Length > 0)); init => _statusNote = value; }
@@ -158,7 +160,7 @@ public static class ImportService
         var result = new List<ImportRow>();
         var account = data.Accounts.Single(a => a.Id == accountId);
         var categoryChoices = new[] { new ImportCategoryChoice(null, "Zonder categorie") }
-            .Concat(data.Categories.Select(c => new ImportCategoryChoice(c.Id, c.Name))).ToList();
+            .Concat(CategoryHierarchy.Ordered(data).Select(e => new ImportCategoryChoice(e.Category.Id, e.Path))).ToList();
         for (var i = 0; i < table.Rows.Count; i++)
         {
             DateOnly? sourceDate = null;
@@ -210,7 +212,7 @@ public static class ImportService
                     CategoryChoices = categoryChoices,
                     Note = "Gereed"
                 };
-                // Every valid statement row is selected, including identical payments and previously imported rows.
+                // Preserve identical payments in the file; existing occurrences are checked separately below.
                 preview.Include = true;
                 result.Add(preview);
             }
@@ -219,7 +221,8 @@ public static class ImportService
                 result.Add(new ImportRow { RowNumber = table.SourceRows?[i] ?? i + 2, SourceDate = sourceDate, Note = ex.Message });
             }
         }
-        Finance.ApplySuggestions(data, result.Where(r => r.IsValid).Select(r => r.Transaction!).ToList());
+        ImportDuplicates.Apply(data, accountId, result);
+        Finance.ApplySuggestions(data, result.Where(r => r.IsValid && r.Include).Select(r => r.Transaction!).ToList());
         var recognition = new RecognitionMatcher(data);
         foreach (var row in result.Where(r => r.IsValid))
         {

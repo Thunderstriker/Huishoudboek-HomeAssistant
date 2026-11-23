@@ -1,4 +1,6 @@
 window.huishoudboek = {
+    appearance: window.huishoudboekAppearance,
+    focusInvalid: function (element) { element?.querySelector('[aria-invalid="true"]')?.focus(); },
     markReady: function () { document.documentElement.dataset.interactive = "true"; },
     preferences: {
         key: function () { return "huishoudboek:" + new URL(document.baseURI).pathname + ":hide-weekly-review"; },
@@ -38,6 +40,13 @@ window.huishoudboek = {
         if (field) field.focus();
     }
 };
+
+document.addEventListener("click", function (event) {
+    if (event.target.closest('a[href="#daily-forecast-table"]')) {
+        const table = document.getElementById("daily-forecast-table");
+        if (table) table.open = true;
+    }
+});
 
 // Native auto popovers provide one-open-at-a-time behavior, outside-click dismissal
 // and a top layer that cannot be clipped by the table's overflow container.

@@ -25,6 +25,7 @@ public sealed class EditorField(string key, string label, string type, string va
     public string Value { get; set; } = value;
     public bool Required { get; } = required;
     public bool ReadOnly { get; set; }
+    public string Error { get; set; } = "";
     public List<FieldOption> Options { get; set; } = [];
     public HashSet<Guid> OwnerIds { get; set; } = [];
 }
@@ -49,6 +50,47 @@ public sealed class EditorDraft(string title, string revision)
     private bool _transaction;
     private bool _category;
     private bool _mortgage;
+    private bool _simpleTransaction;
+    public string Fingerprint => JsonSerializer.Serialize(new { Rule = _recognitionRuleId,
+        Fields = Fields.Select(f => new { f.Key, f.Value, Owners = f.OwnerIds.OrderBy(id => id) }) });
+
+    public bool ValidateFields()
+    {
+        foreach (var field in Fields) field.Error = "";
+        foreach (var field in Fields.Where(f => IsFieldVisible(f) && !f.ReadOnly))
+        {
+            var text = field.Value.Trim();
+            if (field.Type == "owners") { if (field.OwnerIds.Count == 0) field.Error = UiCulture.Text("FieldRequired"); continue; }
+            if (field.Required && text.Length == 0) { field.Error = UiCulture.Text("FieldRequired"); continue; }
+            if (field.Type == "select" && !Options(field).Any(o => o.Value == field.Value)) field.Error = UiCulture.Text("FieldInvalidChoice");
+            if (text.Length == 0) continue;
+            if (field.Type == "date" && !DateOnly.TryParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+                field.Error = UiCulture.Text("InvalidDate");
+            if (field.Type == "number" && !int.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out _))
+                field.Error = UiCulture.Text("FieldInteger");
+            if (field.Type == "money")
+            {
+                if (!TryNumber(text, out var number) || (field.Key is not ("rate" or "monthlyRate") && decimal.Round(number, 2) != number))
+                    field.Error = UiCulture.Text("InvalidAmount", Culture.NumberFormat.NumberDecimalSeparator);
+                else if (field.Key is "budget" or "buffer" or "earmarked" or "goal" or "value" or "tolerance" && number < 0)
+                    field.Error = UiCulture.Text("FieldNonnegative");
+                else if (_simpleTransaction && field.Key == "amount" && number <= 0) field.Error = UiCulture.Text("FieldPositive");
+            }
+            if (field.Key == "day" && int.TryParse(text, out var day) && day is < 1 or > 31) field.Error = UiCulture.Text("FieldDayRange");
+        }
+        if (IsRecognition && Text("planning").Length > 0 && Text("account").Length == 0)
+            Fields.Single(f => f.Key == "account").Error = UiCulture.Text("FieldRequired");
+        if (Fields.FirstOrDefault(f => f.Key == "complete") is { } consent && !bool.Parse(consent.Value))
+            consent.Error = UiCulture.Text("AccountPeriodConsentRequired");
+        var start = Fields.FirstOrDefault(f => f.Key is "start" or "from");
+        var end = Fields.FirstOrDefault(f => f.Key is "end" or "through");
+        if (start != null && end != null && IsFieldVisible(start) && IsFieldVisible(end) &&
+            DateOnly.TryParse(start.Value, out var from) && DateOnly.TryParse(end.Value, out var through) && through < from)
+            end.Error = UiCulture.Text("FieldEndBeforeStart");
+        return Fields.All(f => f.Error.Length == 0);
+    }
+    private static bool TryNumber(string text, out decimal value) => decimal.TryParse(text.Trim().Replace(',', '.'),
+        NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out value);
     public string Label(EditorField field) => _category && field.Key == "budget" && Text("purpose") == "Savings"
         ? UiCulture.Text("DefaultMonthlyTargetEuro") : field.Label;
     public bool IsFieldVisible(EditorField field) => IsRecognition && field.Key is "amount" or "day" or "frequency" or "amountMode" or "start" or "end" or "mortgage" or "window"
@@ -96,7 +138,7 @@ public sealed class EditorDraft(string title, string revision)
     public Guid? OptionalId(string key) => string.IsNullOrEmpty(Text(key)) ? null : Id(key);
     public decimal Number(string key)
     {
-        if (!decimal.TryParse(Text(key), NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, Culture, out var value))
+        if (!TryNumber(Text(key), out var value))
             throw new InvalidOperationException(UiCulture.Text("InvalidAmount", Culture.NumberFormat.NumberDecimalSeparator));
         return value;
     }
@@ -115,7 +157,9 @@ public sealed class EditorDraft(string title, string revision)
     { var field = Field(key, label, "select", value, false); field.Options = options.ToList(); }
     private static IEnumerable<FieldOption> Accounts(HouseholdData d) => d.Accounts.Select(a => new FieldOption(a.Id.ToString(), a.Name));
     private static IEnumerable<FieldOption> Categories(HouseholdData d) => new[] { new FieldOption("", UiCulture.Text("Uncategorized")) }
-        .Concat(d.Categories.Select(c => new FieldOption(c.Id.ToString(), CategoryLabel(c))));
+        .Concat(CategoryHierarchy.Ordered(d).Select(e => new FieldOption(e.Category.Id.ToString(), CategoryLabel(d, e.Category))));
+    public static string CategoryLabel(HouseholdData data, Category category) => category.Purpose == CategoryPurpose.Normal
+        ? CategoryHierarchy.Path(data, category.Id) : $"{CategoryHierarchy.Path(data, category.Id)} · {PurposeLabel(category.Purpose)}";
     public static string CategoryLabel(Category category) => category.Purpose == CategoryPurpose.Normal
         ? category.Name : $"{category.Name} · {PurposeLabel(category.Purpose)}";
     public static string PurposeLabel(CategoryPurpose purpose) => UiCulture.Text(purpose switch
@@ -178,7 +222,7 @@ public sealed class EditorDraft(string title, string revision)
     {
         var item = new Transaction { AccountId = s.Data.Accounts.FirstOrDefault(a => s.Scope.Contains(a.Id))?.Id ?? Guid.Empty, Date = s.Today };
         var draft = new EditorDraft(UiCulture.Text(income ? "AddIncome" : "AddExpense"), s.Revision)
-        { Note = UiCulture.Text("SimpleEntryNote") };
+        { Note = UiCulture.Text("SimpleEntryNote"), _simpleTransaction = true };
         draft.DateField("date", "Date", item.Date);
         draft.Choice("account", "Account", Accounts(s.Data), item.AccountId.ToString());
         draft.Field("description", "Description", "text");
@@ -193,22 +237,27 @@ public sealed class EditorDraft(string title, string revision)
         };
         return draft;
     }
-    public static EditorDraft Category(WebState s, Category? original = null, bool renameOnly = false)
+    public static EditorDraft Category(WebState s, Category? original = null, bool renameOnly = false, Guid? parentId = null)
     {
-        var item = original ?? new Category();
-        var draft = new EditorDraft(UiCulture.Text(renameOnly ? "RenameCategory" : "CategoryDefaultBudget"), s.Revision)
-        { Note = UiCulture.Text(renameOnly ? "RenameCategoryNote" : "CategoryEditorNote") + (renameOnly ? "" : " " + UiCulture.Text("CategoryInsightHelp")) };
+        var item = original ?? new Category { ParentId = parentId,
+            Purpose = s.Data.Categories.FirstOrDefault(c => c.Id == parentId)?.Purpose ?? CategoryPurpose.Normal };
+        var draft = new EditorDraft(UiCulture.Text(renameOnly ? "RenameCategory" : original == null && parentId != null ? "AddSubcategory" : "CategoryDefaultBudget"), s.Revision)
+        { Note = UiCulture.Text(renameOnly ? "RenameCategoryNote" : "CategoryEditorNote") + (renameOnly ? "" : " " + UiCulture.Text("CategoryInsightHelp") + " " + UiCulture.Text("CategoryHierarchyHelp")) };
         draft.Field("name", "Name", "text", item.Name);
         if (!renameOnly)
         {
             draft._category = true;
+            var excluded = CategoryHierarchy.SubtreeIds(s.Data, item.Id);
+            draft.Choice("parent", "ParentCategory", new[] { new FieldOption("", UiCulture.Text("RootCategory")) }
+                .Concat(CategoryHierarchy.Ordered(s.Data).Where(e => !excluded.Contains(e.Category.Id))
+                    .Select(e => new FieldOption(e.Category.Id.ToString(), CategoryLabel(s.Data, e.Category)))), item.ParentId?.ToString() ?? "");
             draft.Choice("purpose", "CountsAs", Enum.GetValues<CategoryPurpose>().Select(p => new FieldOption(p.ToString(), PurposeLabel(p))), item.Purpose.ToString());
             draft.Money("budget", "DefaultMonthlyBudgetEuro", item.MonthlyBudget);
             draft.Field("essential", "CategoryEssential", "checkbox", item.IsEssential.ToString());
             draft.Field("exceptional", "CategoryExceptional", "checkbox", item.IsExceptional.ToString());
         }
         draft.Apply = d => { if (renameOnly) Categorization.RenameCategory(d, item.Id, draft.Text("name"));
-            else HouseholdEdits.SaveCategory(d, item with { Name = draft.Text("name"), MonthlyBudget = draft.Number("budget"),
+            else HouseholdEdits.SaveCategory(d, item with { Name = draft.Text("name"), ParentId = draft.OptionalId("parent"), MonthlyBudget = draft.Number("budget"),
                 Purpose = Enum.Parse<CategoryPurpose>(draft.Text("purpose")),
                 IsEssential = draft.Text("purpose") == "Normal" && bool.Parse(draft.Text("essential")),
                 IsExceptional = draft.Text("purpose") == "Normal" && bool.Parse(draft.Text("exceptional")) }); }; return draft;

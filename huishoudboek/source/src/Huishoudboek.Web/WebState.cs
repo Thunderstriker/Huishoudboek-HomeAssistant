@@ -21,7 +21,8 @@ public sealed class WebState(IWebAdministration backend)
     public DateOnly AsOf => Today < new DateOnly(Year, Month, 1).AddMonths(1).AddDays(-1) ? Today : new DateOnly(Year, Month, 1).AddMonths(1).AddDays(-1);
     public HashSet<Guid> Scope => Data.Accounts.Where(a => OwnerId == null || a.OwnerIds.Contains(OwnerId.Value)).Select(a => a.Id).ToHashSet();
     public string AccountName(Guid? id) => Data.Accounts.FirstOrDefault(a => a.Id == id)?.Name ?? "—";
-    public string CategoryName(Guid? id) => Data.Categories.FirstOrDefault(c => c.Id == id)?.Name ?? UiCulture.Text("Uncategorized");
+    public string CategoryName(Guid? id) => id is { } categoryId && Data.Categories.Any(c => c.Id == categoryId)
+        ? CategoryHierarchy.Path(Data, categoryId) : UiCulture.Text("Uncategorized");
     public void Notify() => Changed?.Invoke();
     public async Task LoadAsync()
     {

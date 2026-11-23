@@ -11,24 +11,32 @@
     <aside class="sidebar">
         <div class="brand">huishoudboek<small>@L["Tagline"]</small></div>
         <MainNavigation />
-        <form method="post" action="website/language" data-enhance="false" class="language-switch" aria-label="@L["Language"]" title="@L["LanguageReloadWarning"]">
-            <AntiforgeryToken />
-            <input type="hidden" name="returnPath" value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
-            <button type="submit" name="language" value="nl" lang="nl" aria-label="Nederlands" aria-current="@(UiCulture.Language == "nl" ? "true" : null)" disabled="@State.Busy">NL</button>
-            <span aria-hidden="true">-</span>
-            <button type="submit" name="language" value="en" lang="en" aria-label="English" aria-current="@(UiCulture.Language == "en" ? "true" : null)" disabled="@State.Busy">EN</button>
-        </form>
+        <LanguageSwitch />
+        <label class="theme-picker">@L["Appearance"]<select value="@Preferences.Theme" @onchange="ChangeTheme" disabled="@(!Preferences.Loaded)"><option value="auto">@L["ThemeAuto"]</option><option value="light">@L["ThemeLight"]</option><option value="dark">@L["ThemeDark"]</option></select></label>
+        @if (Preferences.Loaded && !Preferences.CanPersist) { <small role="status">@L["DashboardPreferenceSessionOnly"]</small> }
         <p class="sidebar-note">@L["LocalPrivate"]<br />@L["NoBankConnection"]</p>
     </aside>
     <div class="workspace">
         <header class="topbar">
+            <button type="button" class="mobile-menu-toggle" @onclick="() => navigationOpen = true" aria-label="@L["OpenNavigation"]" aria-haspopup="dialog"><DashboardIcon Name="sliders" /></button>
             <div><strong>Huishoudboek · @(HostSettings.LocalPreview ? "demo" : HostSettings.HomeAssistant ? "Home Assistant" : "website")</strong><small>@L[State.OwnerId == null ? "HouseholdFilterNote" : "OwnerFilterNote"]</small></div>
             <div class="toolbar">
                 <button title="@L["RefreshHint"]" disabled="@State.Busy" @onclick="Reload">@L["Refresh"]</button>
-                <button aria-label="@L["PreviousMonth"]" @onclick="() => Shift(-1)">‹</button>
-                <label class="compact"><span class="sr-only">@L["Month"]</span><select @bind="State.Month" @bind:after="State.Notify">@for (var m = 1; m <= 12; m++) { <option value="@m">@UiCulture.Culture.DateTimeFormat.GetMonthName(m)</option> }</select></label>
-                <label class="compact"><span class="sr-only">@L["Year"]</span><input type="number" min="1900" max="2200" value="@State.Year" @onchange="YearChanged" class="year" /></label>
-                <button aria-label="@L["NextMonth"]" @onclick="() => Shift(1)">›</button>
+                @if (period == ToolbarPeriod.Month || period == ToolbarPeriod.Year)
+                {
+                    <div class="period-controls" role="group" aria-label="@L[period == ToolbarPeriod.Month ? "SelectedMonth" : "Year"]">
+                    @if (period == ToolbarPeriod.Month)
+                    {
+                        <button aria-label="@L["PreviousMonth"]" @onclick="() => Shift(-1)">‹</button>
+                        <label class="compact"><span class="sr-only">@L["Month"]</span><select @bind="State.Month" @bind:after="State.Notify">@for (var m = 1; m <= 12; m++) { <option value="@m">@UiCulture.Culture.DateTimeFormat.GetMonthName(m)</option> }</select></label>
+                    }
+                    <label class="compact"><span class="sr-only">@L["Year"]</span><input type="number" min="1900" max="2200" value="@State.Year" @onchange="YearChanged" class="year" /></label>
+                    @if (period == ToolbarPeriod.Month) { <button aria-label="@L["NextMonth"]" @onclick="() => Shift(1)">›</button> }
+                    <button @onclick="CurrentMonth">@L["CurrentMonth"]</button>
+                    </div>
+                }
+                else if (period != ToolbarPeriod.None)
+                { <span class="period-scope">@(period == ToolbarPeriod.Today ? L["TodayScope", State.Today.ToString("dd-MM-yyyy")] : L[period == ToolbarPeriod.History ? "HistoryScope" : "IndependentScope"])</span> }
                 <label class="compact"><span class="sr-only">@L["Owner"]</span><select @bind="State.OwnerId" @bind:after="State.Notify"><option value="">@L["AllOwners"]</option>@foreach (var owner in State.Data.Owners) { <option value="@owner.Id">@owner.Name</option> }</select></label>
                 @if (!HostSettings.HomeAssistant && !HostSettings.LocalPreview) { <a class="button" href="signout" data-enhance-nav="false">@L["SignOut"]</a> }
             </div>
@@ -39,13 +47,30 @@
             else { <h1>@L["LoadingRecords"]</h1><p>@L["LocalConnectionNote"]</p> }
         </main>
         <footer>@L["FooterNote"] <a href="beheer">@L["BackupAdministration"]</a></footer>
+        <nav class="mobile-bottom-nav" aria-label="@L["QuickNavigation"]">
+            <NavLink href="" Match="NavLinkMatch.All"><DashboardIcon Name="activity" /><span>@L["StartDashboard"]</span></NavLink>
+            <NavLink href="transacties"><DashboardIcon Name="wallet" /><span>@L["Transactions"]</span></NavLink>
+            <a href="transacties?entry=expense"><DashboardIcon Name="plus" /><span>@L["AddExpense"]</span></a>
+            <button type="button" @onclick="() => navigationOpen = true" aria-haspopup="dialog" aria-label="@L["OpenNavigation"]"><DashboardIcon Name="sliders" /><span>@L["OpenNavigation"]</span></button>
+        </nav>
     </div>
 </div>
+@if (navigationOpen)
+{
+    <Modal Title="@L["MainNavigation"]" Cancel="() => navigationOpen = false">
+        <div class="drawer-nav sidebar"><MainNavigation IdPrefix="mobile" /><LanguageSwitch /></div>
+        <label>@L["Appearance"]<select value="@Preferences.Theme" @onchange="ChangeTheme"><option value="auto">@L["ThemeAuto"]</option><option value="light">@L["ThemeLight"]</option><option value="dark">@L["ThemeDark"]</option></select></label>
+        <button type="button" @onclick="() => navigationOpen = false">@L["CloseNavigation"]</button>
+    </Modal>
+}
 
 @code {
     protected override async Task OnInitializedAsync()
     {
         State.Changed += Changed;
+        Preferences.Changed += Changed;
+        NavigationManager.LocationChanged += LocationChanged;
+        period = UiNavigation.Period(NavigationManager.ToBaseRelativePath(NavigationManager.Uri));
         if (!State.Loaded) await State.RunAsync(State.LoadAsync);
     }
     private void Changed() => _ = InvokeAsync(StateHasChanged);
@@ -60,6 +85,12 @@
         }
     }
     private async Task Reload() => await State.RunAsync(State.LoadAsync, L["RecordsRefreshed"]);
+    private ToolbarPeriod period;
+    private bool navigationOpen;
+    private void LocationChanged(object? sender, LocationChangedEventArgs args) => _ = InvokeAsync(() =>
+    { period = UiNavigation.Period(NavigationManager.ToBaseRelativePath(args.Location)); navigationOpen = false; StateHasChanged(); });
+    private void CurrentMonth() { State.Year = State.Today.Year; State.Month = State.Today.Month; State.Notify(); }
+    private async Task ChangeTheme(ChangeEventArgs args) => await Preferences.SetThemeAsync(args.Value?.ToString() ?? "auto");
     private void Shift(int step)
     {
         var date = new DateOnly(State.Year, State.Month, 1).AddMonths(step);
@@ -67,5 +98,5 @@
         State.Year = date.Year; State.Month = date.Month; State.Notify();
     }
     private void YearChanged(ChangeEventArgs args) { if (int.TryParse(args.Value?.ToString(), out var year) && year is >= 1900 and <= 2200) State.Year = year; State.Notify(); }
-    public void Dispose() => State.Changed -= Changed;
+    public void Dispose() { State.Changed -= Changed; Preferences.Changed -= Changed; NavigationManager.LocationChanged -= LocationChanged; }
 }

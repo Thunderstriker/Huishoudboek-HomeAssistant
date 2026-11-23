@@ -3,6 +3,12 @@
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
   <data name="Language" xml:space="preserve"><value>Taal</value></data>
+  <data name="ParentCategory" xml:space="preserve"><value>Bovenliggende categorie</value></data>
+  <data name="RootCategory" xml:space="preserve"><value>Geen — hoofdcategorie</value></data>
+  <data name="Subcategory" xml:space="preserve"><value>Subcategorie</value></data>
+  <data name="AddSubcategory" xml:space="preserve"><value>Subcategorie toevoegen</value></data>
+  <data name="CategoryHierarchyHelp" xml:space="preserve"><value>Voeg subcategorieën toe of wijzig de bovenliggende categorie via Categorie instellen. Kies Geen — hoofdcategorie om een categorie op hoofdniveau te plaatsen. Boekingen, budgetten, verwerking en inzichtinstellingen blijven per categorie behouden; totalen en filters gelden alleen voor de gekozen categorie, zonder subcategorieën.</value></data>
+  <data name="DeleteCategoryChildrenNote" xml:space="preserve"><value>De {0} directe subcategorie(ën) schuiven één niveau omhoog. Hun boekingen, budgetten en verdere subcategorieën blijven behouden.</value></data>
   <data name="CardSetupTitle" xml:space="preserve"><value>Home Assistant-dashboardkaarten · proefversie</value></data>
   <data name="CardSetupHelp" xml:space="preserve"><value>Plaats maandoverzicht, uitgavenverdeling, vrijheidskaart, budgetbewaking, komende betalingen, gegevensstatus, categorietrend en importstatus los op een Home Assistant-dashboard. Download het kaartbestand, bewaar het als /config/www/huishoudboek-card.js en volg de dashboardkaarten-instructies in de appdocumentatie.</value></data>
   <data name="CardDownload" xml:space="preserve"><value>Kaartbestand downloaden</value></data>
@@ -698,7 +704,7 @@ Deze boeking vervangt alleen deze geplande betaling. Controleer dat het dezelfde
 {3} regels, {4} maandbudgetten en standaardbudget {5} worden verwijderd.
 Bonstandaarden en regelcategorieën met deze categorie worden gewist; regels zonder eigen categorie volgen de bonstandaard. Aankoopgegevens en betalingen blijven behouden.
 Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden. De verwerking als sparen/eigen rekeningbeweging vervalt ook voor eerdere boekingen; rapporten veranderen. Geen directe undo; maak zo nodig eerst een back-up.</value></data>
-  <data name="ImportAccountNote" xml:space="preserve"><value>Elke import boekt alleen op de gekozen rekening, met het bedrag uit het bestand. Andere rekeningen worden niet automatisch gekoppeld of aangepast; importeer voor elke rekening het eigen bestand. Er is geen dubbelfilter: hetzelfde afschrift opnieuw importeren voegt de boekingen opnieuw toe. Controleer valuta, rekening en openingsdatum. Er wordt pas na expliciete bevestiging opgeslagen.</value></data>
+  <data name="ImportAccountNote" xml:space="preserve"><value>Elke import boekt alleen op de gekozen rekening, met het bedrag uit het bestand. Andere rekeningen worden niet automatisch gekoppeld of aangepast; importeer voor elke rekening het eigen bestand. Overeenkomende eerdere imports worden standaard overgeslagen; onzekere overeenkomsten vragen controle. Controleer valuta, rekening en openingsdatum. Er wordt pas na expliciete bevestiging opgeslagen.</value></data>
   <data name="AfterImportBothAccounts" xml:space="preserve"><value>Na import van beide rekeningen kunt u</value></data>
   <data name="ImportTransferReportingNote" xml:space="preserve"><value>voor rapportage, zonder extra boekingen of saldoaanpassingen.</value></data>
   <data name="ImportFileHint" xml:space="preserve"><value>Bestand (.xls, .xlsx of .csv; maximaal 50 MB en 100.000 niet-lege regels)</value></data>
@@ -724,14 +730,14 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="NoFileSelected" xml:space="preserve"><value>Geen bestand geselecteerd</value></data>
   <data name="UploadExpiryNote" xml:space="preserve"><value>Wijzigingen in instellingen maken het oude voorbeeld ongeldig. Verlaten uploads vervallen na 20 minuten; maximaal vier open uploads voor het huishouden.</value></data>
   <data name="UnsavedImportPreview" xml:space="preserve"><value>Importvoorbeeld · nog niet opgeslagen</value></data>
-  <data name="PreviewRowsNote" xml:space="preserve"><value>{0} regels · {1} geselecteerd. Alle geldige regels binnen de gekozen periode zijn standaard geselecteerd, ook gelijke of eerder geïmporteerde regels. U kunt regels handmatig uitvinken. Ongeldige regels kunnen niet worden opgeslagen.</value></data>
+  <data name="PreviewRowsNote" xml:space="preserve"><value>{0} regels · {1} geselecteerd. Alleen nieuwe geldige regels zijn standaard geselecteerd. Eerdere imports en onzekere overeenkomsten staan uitgevinkt; controleer deze voordat u ze toch selecteert. Ongeldige regels kunnen niet worden opgeslagen.</value></data>
   <data name="Row" xml:space="preserve"><value>Regel</value></data>
   <data name="Check" xml:space="preserve"><value>Controle</value></data>
   <data name="SelectImportRow" xml:space="preserve"><value>Importregel selecteren</value></data>
   <data name="ImportRowCategory" xml:space="preserve"><value>Categorie importregel</value></data>
   <data name="SaveSelectedRows" xml:space="preserve"><value>Geselecteerde regels definitief opslaan</value></data>
   <data name="CommitImport" xml:space="preserve"><value>Import definitief opslaan</value></data>
-  <data name="CommitImportQuestion" xml:space="preserve"><value>{0} geselecteerde regels opslaan op {1}? Andere rekeningen blijven ongewijzigd. Alle geselecteerde regels worden zonder dubbelfilter geïmporteerd. Controleer categorieën. Na opslaan verschijnt de saldocontrole.</value></data>
+  <data name="CommitImportQuestion" xml:space="preserve"><value>{0} geselecteerde regels opslaan op {1}? Alleen geselecteerde regels worden toegevoegd; bestaande boekingen en andere rekeningen blijven ongewijzigd. Controleer categorieën. Daarna verschijnt de saldocontrole.</value></data>
   <data name="SaveImport" xml:space="preserve"><value>Import opslaan</value></data>
   <data name="ImportCompleteBalanceCheck" xml:space="preserve"><value>Import voltooid — saldocontrole</value></data>
   <data name="ImportSavedCount" xml:space="preserve"><value>{0} transacties opgeslagen. {1} ongeldige of handmatig uitgevinkte regels niet geïmporteerd.</value></data>
@@ -875,7 +881,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="StatementCoverage" xml:space="preserve"><value>Bevestigde afschriftperiode</value></data>
   <data name="ExistingImportCoverageHelp" xml:space="preserve"><value>Van oudere imports is de afschriftperiode onbekend. Bevestig hier na controle van uw bankafschrift de volledige periode; importeer het bestand niet opnieuw alleen om de periode vast te leggen.</value></data>
   <data name="ImportConfirmCompletePeriod" xml:space="preserve"><value>Ik bevestig dat dit bestand alle bankboekingen voor deze rekening van {0} tot en met {1} bevat.</value></data>
-  <data name="ImportCoverageHelp" xml:space="preserve"><value>Optioneel: volledige afschriftperioden onderscheiden ontbrekende betalingen van bankgegevens die nog op import wachten. Bevestig alleen een ongefilterd afschrift met alle regels geselecteerd en geldig. Een leeg afschrift kan ook een stille periode bevestigen. Laat dit anders uitgevinkt.</value></data>
+  <data name="ImportCoverageHelp" xml:space="preserve"><value>Optioneel: volledige afschriftperioden onderscheiden ontbrekende betalingen van bankgegevens die nog op import wachten. Bevestig alleen een ongefilterd afschrift waarvan elke geldige regel geselecteerd of al geïmporteerd is. Uitgevinkte onzekere overeenkomsten verhinderen bevestiging. Een leeg afschrift kan ook een stille periode bevestigen. Laat dit anders uitgevinkt.</value></data>
   <data name="MonthlyPaymentStatus" xml:space="preserve"><value>Betalingen deze maand</value></data>
   <data name="RecurringStatusNote" xml:space="preserve"><value>Geen koppeling betekent niet onbetaald. Een betaling is pas ‘Niet gevonden’ wanneer de volledige herkenningsperiode door bevestigde volledige bankperioden wordt gedekt. Gaten en oudere imports met onbekende dekking wachten op bankgegevens.</value></data>
   <data name="RecurringDefinitions" xml:space="preserve"><value>Planningen en herkenning beheren</value></data>
@@ -1535,4 +1541,86 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="HabitAwaitingAcceptance" xml:space="preserve"><value>Dagen herkend, maar nog niet toegepast. Accepteer dit voorstel één keer om de prognose op deze dagen te laten aftrekken in plaats van dagelijks te middelen.</value></data>
   <data name="HabitPausedExplanation" xml:space="preserve"><value>Dit patroon is gepauzeerd. De categorie telt nog wel mee in de dagreserve. Sla het patroon op om het te hervatten, of sluit de categorie uit om ook de automatische reserve te verwijderen.</value></data>
   <data name="HabitScheduledAmounts" xml:space="preserve"><value>Verdeling bij toepassing: {0}. Deze bedragen vervangen hun deel van de dagelijkse raming; geen extra aftrek.</value></data>
+  <data name="OpenNavigation" xml:space="preserve"><value>Menu openen</value></data>
+  <data name="CloseNavigation" xml:space="preserve"><value>Menu sluiten</value></data>
+  <data name="QuickNavigation" xml:space="preserve"><value>Snelle navigatie</value></data>
+  <data name="CurrentMonth" xml:space="preserve"><value>Huidige maand</value></data>
+  <data name="TodayScope" xml:space="preserve"><value>Peildatum: vandaag · {0}</value></data>
+  <data name="IndependentScope" xml:space="preserve"><value>Periode instellen op deze pagina</value></data>
+  <data name="HistoryScope" xml:space="preserve"><value>Laatste 12 afgesloten maanden · saldi van vandaag</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Weergave</value></data>
+  <data name="ThemeAuto" xml:space="preserve"><value>Systeem</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Licht</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Donker</value></data>
+  <data name="ViewTransactions" xml:space="preserve"><value>Boekingen bekijken</value></data>
+  <data name="ViewTransactionDetails" xml:space="preserve"><value>Boeking bekijken: {0}</value></data>
+  <data name="ViewTrend" xml:space="preserve"><value>Trend bekijken</value></data>
+  <data name="QuickActions" xml:space="preserve"><value>Snelle invoer</value></data>
+  <data name="AdvancedFilters" xml:space="preserve"><value>Meer filters</value></data>
+  <data name="MinimumAmount" xml:space="preserve"><value>Minimaal bankbedrag (€)</value></data>
+  <data name="MaximumAmount" xml:space="preserve"><value>Maximaal bankbedrag (€)</value></data>
+  <data name="BankDirection" xml:space="preserve"><value>Bankrichting</value></data>
+  <data name="BankCredits" xml:space="preserve"><value>Bijschrijvingen</value></data>
+  <data name="BankDebits" xml:space="preserve"><value>Afschrijvingen</value></data>
+  <data name="FilterBankNet" xml:space="preserve"><value>Netto bankbeweging</value></data>
+  <data name="FilterResults" xml:space="preserve"><value>{0} boekingen · {1}</value></data>
+  <data name="FilterTotalsNote" xml:space="preserve"><value>Totalen van alle gevonden bankboekingen, niet alleen deze pagina. Bij categoriefilters telt het volledige bankbedrag, ook bij splitsingen; dit is geen categorietotaal. Maaltijdcheques zonder bankboeking ontbreken. Toekomstige boekingen zijn herkenbaar als gepland.</value></data>
+  <data name="FilterInvalidRange" xml:space="preserve"><value>Kies geldige datums tussen 1900 en 2200; de einddatum mag niet vóór de begindatum liggen.</value></data>
+  <data name="FilterInvalidAmount" xml:space="preserve"><value>Gebruik positieve bedragen met maximaal twee decimalen, met komma of punt. Het maximum moet minstens het minimum zijn.</value></data>
+  <data name="RemoveFilter" xml:space="preserve"><value>Filter verwijderen: {0}</value></data>
+  <data name="SelectedMonth" xml:space="preserve"><value>Gekozen maand</value></data>
+  <data name="CustomPeriod" xml:space="preserve"><value>Eigen periode</value></data>
+  <data name="NoTransactionsWithFilters" xml:space="preserve"><value>Geen boekingen voor deze filters. Pas de periode aan of wis de filters.</value></data>
+  <data name="TransactionUnavailable" xml:space="preserve"><value>Deze boeking bestaat niet meer of valt buiten het gekozen eigenaarfilter.</value></data>
+  <data name="BudgetUsage" xml:space="preserve"><value>{0}% gebruikt</value></data>
+  <data name="BudgetPaceNotStarted" xml:space="preserve"><value>Maand nog niet begonnen</value></data>
+  <data name="BudgetPaceIncomplete" xml:space="preserve"><value>Tempo onbekend: afschriftdekking niet volledig bevestigd</value></data>
+  <data name="BudgetPaceScheduled" xml:space="preserve"><value>Bevat geplande vaste posten; geen gelijkmatig maandtempo</value></data>
+  <data name="BudgetPaceCompleted" xml:space="preserve"><value>Afgesloten maand</value></data>
+  <data name="BudgetPaceAhead" xml:space="preserve"><value>Sneller besteed dan het maandtempo</value></data>
+  <data name="BudgetPaceOnTrack" xml:space="preserve"><value>Binnen het indicatieve maandtempo</value></data>
+  <data name="BudgetPaceExpected" xml:space="preserve"><value>{0}% van de maand verstreken; alleen een indicatie, geen nieuwe uitgavenraming.</value></data>
+  <data name="ForecastTimeline" xml:space="preserve"><value>Verwacht saldoverloop</value></data>
+  <data name="ForecastTimelineNote" xml:space="preserve"><value>Vandaag is het geregistreerde saldo; daarna volgen geschatte eindsaldi en laagste dagsaldi. De stippellijn is buffer plus gereserveerd geld. Markeringen tonen gedateerde inkomsten en betalingen, geen onzekere reserves. Exacte bedragen staan in de prognosetabel.</value></data>
+  <data name="ForecastTimelineUncertain" xml:space="preserve"><value>Deze lijn is een schatting met onvolledige gegevens. Controleer de waarschuwingen en imports vóór een aankoopbeslissing.</value></data>
+  <data name="ForecastBufferLine" xml:space="preserve"><value>Buffer + gereserveerd</value></data>
+  <data name="ImportSteps" xml:space="preserve"><value>Importstappen</value></data>
+  <data name="ImportStepFile" xml:space="preserve"><value>Bestand &amp; rekening</value></data>
+  <data name="ImportStepDetection" xml:space="preserve"><value>Herkenning controleren</value></data>
+  <data name="ImportStepReview" xml:space="preserve"><value>Boekingen beoordelen</value></data>
+  <data name="ImportStepSave" xml:space="preserve"><value>Opslaan &amp; saldo controleren</value></data>
+  <data name="ImportContinue" xml:space="preserve"><value>Doorgaan naar herkenning</value></data>
+  <data name="ImportChangeFile" xml:space="preserve"><value>Bestand of rekening wijzigen</value></data>
+  <data name="ImportChangeSettings" xml:space="preserve"><value>Herkenning wijzigen</value></data>
+  <data name="ImportReviewHint" xml:space="preserve"><value>Controleer rekening, datums, bedragen en uitzonderingen. Alleen geselecteerde geldige regels worden opgeslagen; volledige afschriftdekking bevestigt u afzonderlijk.</value></data>
+  <data name="ImportSelectionSummary" xml:space="preserve"><value>{0} van {1} regels geselecteerd · netto {2} · {3} ongeldige regels</value></data>
+  <data name="ImportExceptionsOnly" xml:space="preserve"><value>Alleen controlepunten</value></data>
+  <data name="ImportSelectValid" xml:space="preserve"><value>Alleen nieuwe regels selecteren</value></data>
+  <data name="ImportDuplicateSummary" xml:space="preserve"><value>{0} nieuw · {1} al geïmporteerd · {2} te controleren</value></data>
+  <data name="ImportDuplicateHelp" xml:space="preserve"><value>De controle vergelijkt rekening, bankdatum, bedrag en oorspronkelijke banktekst, met het saldo na boeking als dat beschikbaar is. Gelijke betalingen worden per voorkomen geteld. Zonder unieke bankreferentie is een gelijke nieuwe betaling niet altijd van een eerdere import te onderscheiden; controleer deelafschriften en gewijzigde exportteksten. Bestaande boekingen worden nooit gewijzigd. Selecteer een uitgevinkte overeenkomst alleen als dit echt een extra betaling is.</value></data>
+  <data name="ImportAlreadyImported" xml:space="preserve"><value>Al geïmporteerd</value></data>
+  <data name="ImportDuplicateReview" xml:space="preserve"><value>Mogelijk al geboekt — controleren</value></data>
+  <data name="ImportNewRow" xml:space="preserve"><value>Nieuw</value></data>
+  <data name="ImportViewExisting" xml:space="preserve"><value>Bestaande boeking bekijken</value></data>
+  <data name="ImportDuplicateOverride" xml:space="preserve"><value>Let op: u voegt {0} regel(s) toe die al geïmporteerd of mogelijk al geboekt zijn. Bevestig alleen als dit echt extra betalingen zijn; dit kan saldi en uitgaven dubbel tellen.</value></data>
+  <data name="ImportFinishCheck" xml:space="preserve"><value>Controle afronden zonder nieuwe boekingen</value></data>
+  <data name="ImportAlreadySkipped" xml:space="preserve"><value>{0} overeenkomende eerdere boekingen niet opnieuw toegevoegd. Bestaande categorieën en koppelingen zijn behouden.</value></data>
+  <data name="ImportBackDashboard" xml:space="preserve"><value>Terug naar dashboard</value></data>
+  <data name="ImportClearSelection" xml:space="preserve"><value>Selectie wissen</value></data>
+  <data name="ImportNoExceptions" xml:space="preserve"><value>Geen controlepunten gevonden. Bekijk ook alle regels voordat u opslaat.</value></data>
+  <data name="ImportDetectedProfile" xml:space="preserve"><value>Herkenningsprofiel: {0}</value></data>
+  <data name="ImportLeaveWarning" xml:space="preserve"><value>De import is nog niet opgeslagen. Wilt u het bestand en de beoordeling verlaten?</value></data>
+  <data name="DraftDiscardTitle" xml:space="preserve"><value>Wijzigingen weggooien?</value></data>
+  <data name="DraftDiscardWarning" xml:space="preserve"><value>Uw invoer is nog niet opgeslagen. Wilt u de wijzigingen weggooien?</value></data>
+  <data name="DiscardChanges" xml:space="preserve"><value>Wijzigingen weggooien</value></data>
+  <data name="FieldRequired" xml:space="preserve"><value>Vul dit veld in.</value></data>
+  <data name="FieldInvalidChoice" xml:space="preserve"><value>Kies een beschikbare optie.</value></data>
+  <data name="FieldInteger" xml:space="preserve"><value>Gebruik een geheel getal.</value></data>
+  <data name="FieldPositive" xml:space="preserve"><value>Gebruik een bedrag groter dan nul.</value></data>
+  <data name="FieldNonnegative" xml:space="preserve"><value>Gebruik een bedrag van nul of hoger.</value></data>
+  <data name="FieldDayRange" xml:space="preserve"><value>Kies een dag van 1 tot en met 31.</value></data>
+  <data name="FieldEndBeforeStart" xml:space="preserve"><value>De einddatum mag niet vóór de begindatum liggen.</value></data>
+  <data name="FixHighlightedFields" xml:space="preserve"><value>Controleer de gemarkeerde velden.</value></data>
+  <data name="AllCategories" xml:space="preserve"><value>Alle categorieën</value></data>
+  <data name="Close" xml:space="preserve"><value>Sluiten</value></data>
 </root>

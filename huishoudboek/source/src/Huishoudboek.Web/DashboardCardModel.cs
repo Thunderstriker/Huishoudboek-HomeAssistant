@@ -8,6 +8,7 @@ public sealed record DashboardCardModel(string Widget, string AppBase, string Th
 {
     public CategoryHistoryOverview? CategoryHistory { get; init; }
     public string? CategoryName { get; init; }
+    public Guid? OwnerId { get; init; }
     public string TitleKey => Widget switch
     {
         "month-overview" => "MonthlyOverview", "spending" => "WhereMoneyGoes", "freedom-map" => "FreedomTitle",

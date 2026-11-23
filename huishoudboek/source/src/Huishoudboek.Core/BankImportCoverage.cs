@@ -68,7 +68,16 @@ public static class BankImportCoverage
     public static void Invalidate(HouseholdData data, Guid? batchId)
     {
         if (data.ImportBatches.FirstOrDefault(b => b.Id == batchId) is not { } batch) return;
-        batch.CoverageFrom = null;
-        batch.CoverageThrough = null;
+        // Later, overlapping statements can reuse rows from this batch instead of
+        // importing them again. Reopen their confirmations too when bank data changes.
+        var dates = data.Transactions.Where(t => t.ImportBatchId == batch.Id).Select(t => t.Date).ToList();
+        var from = dates.Count > 0 ? dates.Min() : (DateOnly?)null;
+        var through = dates.Count > 0 ? dates.Max() : (DateOnly?)null;
+        foreach (var affected in data.ImportBatches.Where(b => b.Id == batch.Id ||
+            b.AccountId == batch.AccountId && b.CoverageFrom <= through && b.CoverageThrough >= from))
+        {
+            affected.CoverageFrom = null;
+            affected.CoverageThrough = null;
+        }
     }
 }

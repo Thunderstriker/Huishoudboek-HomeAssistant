@@ -4,7 +4,7 @@ public sealed record CategorizationPreview(IReadOnlyList<Transaction> Matches, i
     int EarlierConflictCount, bool ConflictingExactRule, bool ReusesRule);
 
 public sealed record CategoryDeletionPreview(string Name, decimal MonthlyBudget, int TransactionCount,
-    int RecurringPaymentCount, int RuleCount, int BudgetOverrideCount);
+    int RecurringPaymentCount, int RuleCount, int BudgetOverrideCount, int ChildCategoryCount = 0);
 
 /// <summary>Category edits with an optional personal description. Never changes bank text, amounts, types or recurring links.</summary>
 public static class Categorization
@@ -43,7 +43,7 @@ public static class Categorization
             ?? throw new InvalidOperationException("Kies een bestaande categorie om te verwijderen.");
         return new(category.Name, category.MonthlyBudget, data.Transactions.Count(t => HasCategory(data, t, categoryId)),
             data.RecurringPayments.Count(r => r.CategoryId == categoryId), data.Rules.Count(r => r.CategoryId == categoryId),
-            data.BudgetOverrides.Count(b => b.CategoryId == categoryId));
+            data.BudgetOverrides.Count(b => b.CategoryId == categoryId), data.Categories.Count(c => c.ParentId == categoryId));
     }
 
     public static void DeleteCategory(HouseholdData data, Guid categoryId)
@@ -70,6 +70,9 @@ public static class Categorization
         data.BudgetOverrides.RemoveAll(b => b.CategoryId == categoryId);
         data.InsightSettings.SpendingForecastCategoryIds?.RemoveAll(id => id == categoryId);
         SpendingLearning.RemoveForCategories(data, categoryId);
+        // Promote direct children one level; retain their IDs, financial settings and descendants.
+        var parentId = data.Categories.Single(c => c.Id == categoryId).ParentId;
+        foreach (var child in data.Categories.Where(c => c.ParentId == categoryId)) child.ParentId = parentId;
         data.Categories.RemoveAll(c => c.Id == categoryId);
     }
 

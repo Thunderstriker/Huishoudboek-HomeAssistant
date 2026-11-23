@@ -16,6 +16,7 @@ public static class HouseholdEdits
     {
         if (string.IsNullOrWhiteSpace(item.Name) || data.Categories.Any(c => c.Id != item.Id && c.Name.Trim().Equals(item.Name.Trim(), StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException("Vul een unieke categorienaam in.");
+        CategoryHierarchy.ValidateParent(data, item.Id, item.ParentId);
         Put(data.Categories, item with { Name = item.Name.Trim() }, x => x.Id);
     }
 
@@ -135,6 +136,7 @@ public static class HouseholdEdits
     {
         var batch = data.ImportBatches.FirstOrDefault(b => b.Id == id && !b.Undone)
             ?? throw new InvalidOperationException("Deze import bestaat niet of is al teruggedraaid.");
+        BankImportCoverage.Invalidate(data, id);
         var removed = data.Transactions.Where(t => t.ImportBatchId == id).Select(t => t.Id).ToHashSet();
         PurchaseReceipts.DetachTransactions(data, removed);
         TransactionAccounting.RemoveForTransactions(data, removed);

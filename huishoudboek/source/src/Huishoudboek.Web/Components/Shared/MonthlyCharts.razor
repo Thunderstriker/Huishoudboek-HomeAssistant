@@ -17,7 +17,7 @@
                 @for (var index = 0; index < spending.Count; index++)
                 {
                     var item = spending[index];
-                    <li><i style="background:@Colors[index]" aria-hidden="true"></i><span>@item.Name</span><strong>@Money(item.Spent)<small>@((item.Spent / total).ToString("P0", UiCulture.Culture))</small></strong></li>
+                    <li><i style="background:@Color(index)" aria-hidden="true"></i><span>@if (!(hasOther && index == spending.Count - 1)) { <a href="@CategoryBookings(item.Id)">@item.Name</a> } else { @item.Name }</span><strong>@Money(item.Spent)<small>@((item.Spent / total).ToString("P0", UiCulture.Culture))</small></strong></li>
                 }
             </ul>
         </div>
@@ -43,8 +43,15 @@
 @code {
     [Parameter, EditorRequired] public MonthlyReport Report { get; set; } = null!;
     [Parameter] public bool SpendingOnly { get; set; }
+    [Parameter] public int? Year { get; set; }
+    [Parameter] public int? Month { get; set; }
+    [Parameter] public Guid? OwnerId { get; set; }
 
-    private static readonly string[] Colors = ["#087f75", "#526dc1", "#be6432", "#8556a3", "#b18a28", "#8393a5"];
+    private bool hasOther;
+    private string Color(int index) => hasOther && index == spending.Count - 1 ? CategoryColors.Other : CategoryColors.For(spending[index].Id);
+    private string CategoryBookings(Guid id) => UiNavigation.Transactions(category: id, owner: OwnerId,
+        from: Year is { } y && Month is { } m ? new DateOnly(y, m, 1) : null,
+        through: Year is { } year && Month is { } month ? UiNavigation.ActualThrough(new DateOnly(year, month, 1).AddMonths(1).AddDays(-1)) : null);
     private List<CategoryResult> spending = [];
     private decimal total;
     private bool hasCashFlow;
@@ -59,6 +66,7 @@
     {
         var categories = Report.Categories.Where(c => c.Spent > 0).OrderByDescending(c => c.Spent).ToList();
         spending = categories.Take(5).Select(c => c.Id == Guid.Empty ? c with { Name = L["Uncategorized"] } : c).ToList();
+        hasOther = categories.Count > 5;
         if (categories.Count > 5)
             spending.Add(new(Guid.Empty, L["OtherCategories"], 0, categories.Skip(5).Sum(c => c.Spent)));
         total = categories.Sum(c => c.Spent);
@@ -81,7 +89,7 @@
             await charts.InvokeVoidAsync("update", new {
                 labels = spending.Select(c => c.Name),
                 spending = spending.Select(c => c.Spent),
-                colors = Colors,
+                colors = Enumerable.Range(0, spending.Count).Select(Color),
                 actual = new[] { Report.Income, Report.Outflow, Report.Available },
                 forecast = new[] { Report.Forecast.Income, Report.Forecast.Outflow, Report.Forecast.Available }
             });

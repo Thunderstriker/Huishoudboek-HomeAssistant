@@ -5,21 +5,70 @@
 <h1>@L["Transactions"]</h1>
 <div class="actions"><button class="primary" disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State)">+ @L["AddExpense"]</button><button disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State, true)">+ @L["AddIncome"]</button><button disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.Transaction(State)">@L["AdvancedTransaction"]</button><a class="button" href="importeren">@L["ImportExcelCsv"]</a></div>
 <div class="filters"><label>@L["Search"]<input type="search" @bind="search" @bind:event="oninput" @bind:after="Reset" placeholder="@L["TransactionSearchHint"]" /></label>
-<label>@L["Account"]<select @bind="accountId" @bind:after="Reset"><option value="">@L["AllAccounts"]</option>@foreach (var a in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@a.Id">@a.Name</option> }</select></label>
-<label class="check"><input type="checkbox" @bind="AllDates" @bind:after="Reset" />@L["AllDates"]</label></div>
+<label>@L["Account"]<select @bind="AccountId" @bind:after="Reset"><option value="">@L["AllAccounts"]</option>@foreach (var a in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@a.Id">@a.Name</option> }</select></label>
+<label>@L["HistoryPeriod"]<select @bind="dateMode" @bind:after="PeriodChanged"><option value="month">@L["SelectedMonth"]</option><option value="all">@L["AllDates"]</option><option value="custom">@L["CustomPeriod"]</option></select></label>
+<button type="button" @onclick="UseCurrentMonth">@L["CurrentMonth"]</button></div>
+@if (dateMode == "month") { <label class="transaction-month">@L["SelectedMonth"]<input type="month" min="1900-01" max="2200-12" value="@MonthStart.ToString("yyyy-MM")" @onchange="ChangeMonth" /></label> }
+<p class="period-scope">@PeriodLabel</p>
+<details class="card advanced-filters" open="@(CategoryId != null || dateMode == "custom")">
+    <summary>@L["AdvancedFilters"]</summary>
+    <div class="fields">
+        <label>@L["Category"]<select @bind="CategoryId" @bind:after="Reset"><option value="">@L["AllCategories"]</option><option value="@Guid.Empty">@L["Uncategorized"]</option>@foreach (var categoryEntry in CategoryHierarchy.Ordered(State.Data)) { <option value="@categoryEntry.Category.Id">@EditorDraft.CategoryLabel(State.Data, categoryEntry.Category)</option> }</select></label>
+        <label>@L["BankDirection"]<select @bind="direction" @bind:after="Reset"><option value="">@L["BothDirections"]</option><option value="debit">@L["BankDebits"]</option><option value="credit">@L["BankCredits"]</option></select></label>
+        <label>@L["MinimumAmount"]<input type="text" inputmode="decimal" @bind="minimum" @bind:event="oninput" @bind:after="Reset" aria-invalid="@(AmountsValid ? "false" : "true")" aria-describedby="@(!AmountsValid ? "filter-amount-error" : null)" /></label>
+        <label>@L["MaximumAmount"]<input type="text" inputmode="decimal" @bind="maximum" @bind:event="oninput" @bind:after="Reset" aria-invalid="@(AmountsValid ? "false" : "true")" aria-describedby="@(!AmountsValid ? "filter-amount-error" : null)" /></label>
+        @if (dateMode == "custom")
+        {
+            <label>@L["FromInclusive"]<input type="date" min="1900-01-01" max="2200-12-31" value="@From" @onchange="e => { From = e.Value?.ToString(); Reset(); }" aria-invalid="@(DatesValid ? "false" : "true")" aria-describedby="@(!DatesValid ? "filter-date-error" : null)" /></label>
+            <label>@L["ThroughInclusive"]<input type="date" min="1900-01-01" max="2200-12-31" value="@Through" @onchange="e => { Through = e.Value?.ToString(); Reset(); }" aria-invalid="@(DatesValid ? "false" : "true")" aria-describedby="@(!DatesValid ? "filter-date-error" : null)" /></label>
+        }
+        <label class="check"><input type="checkbox" @bind="uncategorized" @bind:after="Reset" />@L["Uncategorized"]</label>
+    </div>
+</details>
+@if (!DatesValid) { <p id="filter-date-error" class="notice error" role="alert">@L["FilterInvalidRange"]</p> }
+@if (!AmountsValid) { <p id="filter-amount-error" class="notice error" role="alert">@L["FilterInvalidAmount"]</p> }
+<div class="filter-chips" aria-label="@L["AdvancedFilters"]">
+    @if (search.Length > 0) { <button @onclick="() => { search = string.Empty; Reset(); }" aria-label="@L["RemoveFilter", search]">@search ×</button> }
+    @if (AccountId != null) { <button @onclick="() => { AccountId = null; Reset(); }">@State.AccountName(AccountId) ×</button> }
+    @if (CategoryId != null) { <button @onclick="() => { CategoryId = null; Reset(); }">@State.CategoryName(CategoryId) ×</button> }
+    @if (direction.Length > 0) { <button @onclick="() => { direction = string.Empty; Reset(); }">@L[direction == "credit" ? "BankCredits" : "BankDebits"] ×</button> }
+    @if (uncategorized) { <button @onclick="() => { uncategorized = false; Reset(); }">@L["Uncategorized"] ×</button> }
+    @if (minimum.Length > 0 || maximum.Length > 0) { <button @onclick="() => { minimum = maximum = string.Empty; Reset(); }">@minimum — @maximum € ×</button> }
+    @if (dateMode != "month") { <button @onclick="ResetPeriod" aria-label="@L["RemoveFilter", PeriodLabel]">@PeriodLabel ×</button> }
+    <button @onclick="ClearFilters">@L["ClearFilters"]</button>
+</div>
 @{ var rows = Rows.ToList(); page = Math.Min(page, Math.Max(0, (rows.Count - 1) / 100)); }
+@{ var movements = rows.Select(t => Filter.Effect(t, State.Scope)).ToList(); }
+<section class="filter-summary" aria-label="@L["FilterBankNet"]">
+    <p role="status">@L["FilterResults", rows.Count, PeriodLabel]</p>
+    <dl class="summary-totals"><div><dt>@L["BankCredits"]</dt><dd>@Money(movements.Where(v => v > 0).Sum())</dd></div><div><dt>@L["BankDebits"]</dt><dd>@Money(-movements.Where(v => v < 0).Sum())</dd></div><div><dt>@L["FilterBankNet"]</dt><dd>@Money(movements.Sum())</dd></div></dl>
+    <details><summary>@L["CalculationDetails"]</summary><p class="muted">@L["FilterTotalsNote"]</p></details>
+</section>
 <section class="card"><MobileTransactions Transactions="rows.Skip(page * 100).Take(100)" TypeLabel="TransactionType" Edit="row => Draft = EditorDraft.Transaction(State, row)" Recognize="Recognize" Handle="OpenDetails" Delete="AskDelete" Recurring="OpenRecurring" /><div class="table-scroll desktop-transactions"><table id="transactions"><thead><tr><th>@L["Date"]</th><th>@L["Account"]</th><th>@L["Description"]</th><th class="money">@L["Amount"]</th><th>@L["CategoryType"]</th><th class="money">@L["Principal"]</th><th>@L["RecurringPayment"]</th><th class="money">@L["StatementBalance"]</th><th>@L["Actions"]</th></tr></thead><tbody>
 @foreach (var row in rows.Skip(page * 100).Take(100))
 {
     <tr @key="row.Id"><td>@row.Date.ToString("dd-MM-yyyy") @if (row.Date > State.Today) { <span class="badge">@L["Planned"]</span> }</td>
         <td>@State.AccountName(row.AccountId) @if (row.Kind == TransactionKind.Transfer) { <span>→ @State.AccountName(row.CounterAccountId)</span> }</td>
-        <td class="description"><TransactionDescription Transaction="row" /></td><td class="money">@Money(row.Amount)</td>
+        <td class="description"><button class="text-button booking-link" @onclick="() => viewed = row">@TransactionRecognition.DisplayName(State.Data, row)</button>@if (TransactionRecognition.DisplayName(State.Data, row) != row.Description) { <details><summary>@L["OriginalDescription"]</summary>@row.Description</details> }</td><td class="money">@Money(row.Amount)</td>
         <td><TransactionAllocationSummary Transaction="row" /><small class="badge">@TransactionType(row)</small></td><td class="money">@Money(row.PrincipalComponent)</td>
         <td><RecognitionPlanningStatus Transaction="row" /></td><td class="money">@(row.StatementBalance is { } balance ? Money(balance) : "—")</td>
         <td><TransactionActions Transaction="row" Edit="row => Draft = EditorDraft.Transaction(State, row)" Recognize="Recognize" Handle="OpenDetails" Recurring="OpenRecurring" Delete="AskDelete" /></td>
     </tr>
 }
-</tbody></table></div>@if (rows.Count == 0) { <p class="empty">@L["NoTransactions"]</p> }<Pager Count="rows.Count" @bind-Page="page" /></section>
+</tbody></table></div>@if (rows.Count == 0) { <p class="empty">@L["NoTransactionsWithFilters"]</p> }<Pager Count="rows.Count" @bind-Page="page" /></section>
+@if (unavailable) { <p class="notice warning" role="status">@L["TransactionUnavailable"]</p> }
+@if (viewed is { } selectedTransaction && (State.Scope.Contains(selectedTransaction.AccountId) || selectedTransaction.CounterAccountId is { } selectedCounter && State.Scope.Contains(selectedCounter)))
+{
+    <Modal Title="@L["Transaction"]" Cancel="() => viewed = null">
+        <h3>@TransactionRecognition.DisplayName(State.Data, selectedTransaction)</h3>
+        <dl class="transaction-details"><dt>@L["Date"]</dt><dd>@selectedTransaction.Date.ToString("dd-MM-yyyy") @if (selectedTransaction.Date > State.Today) { <span class="badge">@L["Planned"]</span> }</dd><dt>@L["Account"]</dt><dd>@State.AccountName(selectedTransaction.AccountId)</dd><dt>@L["Amount"]</dt><dd>@Money(selectedTransaction.Amount)</dd><dt>@L["OriginalDescription"]</dt><dd>@selectedTransaction.Description</dd><dt>@L["Category"]</dt><dd><TransactionAllocationSummary Transaction="selectedTransaction" /></dd><dt>@L["Type"]</dt><dd>@TransactionType(selectedTransaction)</dd>
+        @if (selectedTransaction.CounterAccountId is { } counter) { <dt>@L["CounterAccount"]</dt><dd>@State.AccountName(counter)</dd> }
+        @if (selectedTransaction.StatementBalance is { } bankBalance) { <dt>@L["StatementBalance"]</dt><dd>@Money(bankBalance)</dd> }
+        </dl>
+        <RecognitionPlanningStatus Transaction="selectedTransaction" />
+        <div class="actions"><button @onclick="() => viewed = null">@L["Close"]</button><button class="primary" @onclick="() => { viewed = null; Draft = EditorDraft.Transaction(State, selectedTransaction); }">@L["Edit"]</button><PurchaseReceiptLink Transaction="selectedTransaction" /></div>
+    </Modal>
+}
 <p class="muted">@L["PlannedTransactionsNote"]</p>
 <p class="muted">@L["ExpenseUntilPaidNote"]</p>
 @{ var claims = State.Data.ReimbursementClaims.Where(c => State.Data.Transactions.Any(t => t.Id == c.ExpenseTransactionId && State.Scope.Contains(t.AccountId) && t.Date <= State.Today)).ToList(); }
@@ -42,8 +91,31 @@
 @if (recurringTransaction is { } recurringEntry)
 { <RecurringTransactionLink @key="recurringEntry.Id" Transaction="recurringEntry" Closed="() => recurringTransaction = null" Create="CreateRecurring" /> }
 @code {
-    private string search = ""; private Guid? accountId; private int page;
+    private string search = "", minimum = "", maximum = "", direction = "", dateMode = "month"; private bool uncategorized, unavailable; private int page;
     [SupplyParameterFromQuery(Name = "allDates")] public bool AllDates { get; set; }
+    [SupplyParameterFromQuery(Name = "account")] public Guid? AccountId { get; set; }
+    [SupplyParameterFromQuery(Name = "categorie")] public Guid? CategoryId { get; set; }
+    [SupplyParameterFromQuery(Name = "from")] public string? From { get; set; }
+    [SupplyParameterFromQuery(Name = "through")] public string? Through { get; set; }
+    [SupplyParameterFromQuery(Name = "transaction")] public Guid? TransactionId { get; set; }
+    [SupplyParameterFromQuery(Name = "owner")] public Guid? OwnerId { get; set; }
+    [SupplyParameterFromQuery(Name = "entry")] public string? Entry { get; set; }
+    private Guid? appliedTransaction;
+    private string? appliedEntry;
+    private Transaction? viewed;
+    protected override void OnParametersSet()
+    {
+        if (OwnerId is { } owner && State.Data.Owners.Any(o => o.Id == owner) && State.OwnerId != owner) { State.OwnerId = owner; State.Notify(); }
+        dateMode = From != null || Through != null ? "custom" : AllDates ? "all" : "month";
+        if (TransactionId != appliedTransaction)
+        {
+            appliedTransaction = TransactionId;
+            viewed = State.Data.Transactions.FirstOrDefault(t => t.Id == TransactionId && (State.Scope.Contains(t.AccountId) || t.CounterAccountId is { } c && State.Scope.Contains(c)));
+            unavailable = TransactionId != null && viewed == null;
+        }
+        if (Entry != appliedEntry)
+        { appliedEntry = Entry; if (Entry is "expense" or "income" && State.Scope.Count > 0) Draft = EditorDraft.SimpleTransaction(State, Entry == "income"); }
+    }
     private TransactionDetailsDraft? details;
     private Transaction? recurringTransaction;
     private void OpenRecurring(Transaction transaction) => recurringTransaction = transaction;
@@ -51,19 +123,26 @@
     private void CreateRecurring(Transaction transaction) { recurringTransaction = null; Draft = EditorDraft.RecurringFromTransaction(State, transaction); }
     private void OpenDetails(Transaction transaction) => details = new(State, transaction);
     private void Reset() => page = 0;
-    private IEnumerable<Transaction> Rows
+    private bool DatesValid => dateMode != "custom" || TransactionFilter.TryDate(From, out var f) && TransactionFilter.TryDate(Through, out var t) && f <= t;
+    private bool AmountsValid => TransactionFilter.TryAmount(minimum, out var min) && TransactionFilter.TryAmount(maximum, out var max) && (min == null || max == null || min <= max);
+    private DateOnly MonthStart => new(State.Year, State.Month, 1);
+    private string PeriodLabel => dateMode == "month" ? MonthStart.ToString("MMMM yyyy", UiCulture.Culture) : dateMode == "all" ? L["AllDates"] : $"{From} — {Through}";
+    private TransactionFilter Filter => new(search, AccountId, CategoryId, direction, uncategorized,
+        dateMode == "month" ? MonthStart : dateMode == "custom" && TransactionFilter.TryDate(From, out var f) ? f : null,
+        dateMode == "month" ? MonthStart.AddMonths(1).AddDays(-1) : dateMode == "custom" && TransactionFilter.TryDate(Through, out var t) ? t : null,
+        TransactionFilter.TryAmount(minimum, out var min) ? min : null, TransactionFilter.TryAmount(maximum, out var max) ? max : null);
+    private IEnumerable<Transaction> Rows => DatesValid && AmountsValid ? Filter.Apply(State.Data, State.Scope) : [];
+    private void PeriodChanged()
     {
-        get
-        {
-            var scope = State.Scope;
-            var detailsText = string.IsNullOrWhiteSpace(search) ? null : TransactionAccounting.Lines(State.Data, State.Data.Transactions)
-                .GroupBy(l => l.Transaction.Id).ToDictionary(g => g.Key, g => string.Join(" ", g.Select(l => State.CategoryName(l.CategoryId) + " " + l.Note)));
-            return State.Data.Transactions.Where(t => (scope.Contains(t.AccountId) || t.CounterAccountId is { } counter && scope.Contains(counter)) &&
-                (AllDates || t.Date.Year == State.Year && t.Date.Month == State.Month) && (accountId == null || t.AccountId == accountId || t.CounterAccountId == accountId) &&
-                (detailsText == null || $"{TransactionRecognition.SearchText(State.Data, t)} {State.CategoryName(t.CategoryId)} {State.AccountName(t.AccountId)} {State.AccountName(t.CounterAccountId)} {detailsText.GetValueOrDefault(t.Id)}".Contains(search, StringComparison.OrdinalIgnoreCase)))
-                .OrderByDescending(t => t.Date).ThenBy(t => t.Id);
-        }
+        AllDates = dateMode == "all";
+        if (dateMode == "custom") { From ??= MonthStart.ToString("yyyy-MM-dd"); Through ??= MonthStart.AddMonths(1).AddDays(-1).ToString("yyyy-MM-dd"); }
+        else { From = Through = null; }
+        Reset();
     }
+    private void UseCurrentMonth() { State.Year = State.Today.Year; State.Month = State.Today.Month; dateMode = "month"; PeriodChanged(); State.Notify(); }
+    private void ChangeMonth(ChangeEventArgs args) { if (TransactionFilter.TryDate(args.Value + "-01", out var date)) { State.Year = date.Year; State.Month = date.Month; Reset(); State.Notify(); } }
+    private void ClearFilters() { search = minimum = maximum = direction = ""; AccountId = CategoryId = null; uncategorized = false; dateMode = "month"; PeriodChanged(); }
+    private void ResetPeriod() { dateMode = "month"; PeriodChanged(); }
     private string TransactionType(Transaction t) => TransferMatching.IsInternal(State.Data, t) ?
         L[t.Kind == TransactionKind.Transfer ? "ManualTransfer" : "LinkedTransfer"] : State.Data.TransactionAllocations.Any(a => a.TransactionId == t.Id) ? L["AllocatedTransaction"] :
         State.Data.Categories.FirstOrDefault(c => c.Id == t.CategoryId) is { Purpose: not CategoryPurpose.Normal } category ? EditorDraft.PurposeLabel(category.Purpose) :

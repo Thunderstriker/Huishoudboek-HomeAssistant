@@ -24,6 +24,7 @@
         }
         </tbody></table></div>
         <label>@L["Account"]<select value="@selected.Account.Id" @onchange="e => accountId = Guid.Parse(e.Value!.ToString()!)">@foreach (var account in forecast.Accounts) { <option value="@account.Account.Id">@account.Account.Name</option> }</select></label>
+        <CashBalanceTimeline Forecast="selected" Today="State.Today" />
         <p><a href="kalender">@L["CalendarTitle"] →</a></p>
         <div class="fields">
             <label>@L["PurchaseAmountQuestion"]<input type="text" inputmode="decimal" @bind="purchase" @bind:event="oninput" /></label>
@@ -55,7 +56,7 @@
             { <tr><td>@(bill.IsUncertain ? L["PaymentTimingUnknown"].Value : bill.PurchaseDate <= State.Today ? L["CalendarBookedOn", bill.DueDate.ToString("dd-MM-yyyy")].Value : bill.Date.ToString("dd-MM-yyyy"))</td><td>@bill.Name @if (bill.IsUncertain) { <small>@L["RecurringUnconfirmedDate", bill.DueDate.ToString("dd-MM-yyyy")]</small> }</td><td class="money">@Money(-bill.Amount)</td><td>@L[bill.IsUncertain ? "UnconfirmedReserve" : bill.PurchaseDate <= State.Today ? "CalendarCommitted" : bill.TransactionId != null ? "RecordedEntry" : "RecurringEstimate"]</td></tr> }
             </tbody></table></div>
         </details>
-        <details><summary>@L["DailyBalanceForecast"] · @selected.Account.Name · @L["ThroughDate", selected.Days.Last().Date.ToString("dd-MM-yyyy")]</summary>
+        <details id="daily-forecast-table"><summary>@L["DailyBalanceForecast"] · @selected.Account.Name · @L["ThroughDate", selected.Days.Last().Date.ToString("dd-MM-yyyy")]</summary>
             <p class="muted">@L["DailyBalanceNote"]</p>
             <div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th class="money">@L["OpeningBalance"]</th><th class="money">@L["Receipts"]</th><th class="money">@L["PaymentsAndReserves"]</th><th class="money">@L["ExtraDaily"]</th><th class="money">@L["LowestBalance"]</th><th class="money">@L["ClosingBalance"]</th></tr></thead><tbody>
             @foreach (var day in selected.Days)

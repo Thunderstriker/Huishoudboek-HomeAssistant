@@ -3,6 +3,12 @@
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
   <data name="Language" xml:space="preserve"><value>Language</value></data>
+  <data name="ParentCategory" xml:space="preserve"><value>Parent category</value></data>
+  <data name="RootCategory" xml:space="preserve"><value>None — root category</value></data>
+  <data name="Subcategory" xml:space="preserve"><value>Subcategory</value></data>
+  <data name="AddSubcategory" xml:space="preserve"><value>Add subcategory</value></data>
+  <data name="CategoryHierarchyHelp" xml:space="preserve"><value>Add subcategories or change the parent using Category settings. Choose None — root category to move a category to the top level. Transactions, budgets, treatment and insight settings stay with each category; totals and filters apply only to the selected category, excluding subcategories.</value></data>
+  <data name="DeleteCategoryChildrenNote" xml:space="preserve"><value>The {0} direct subcategory/subcategories move up one level. Their transactions, budgets and further subcategories are preserved.</value></data>
   <data name="CardSetupTitle" xml:space="preserve"><value>Home Assistant dashboard cards · preview</value></data>
   <data name="CardSetupHelp" xml:space="preserve"><value>Place monthly overview, spending breakdown, freedom map, budget watch, upcoming payments, data status, category trend and import status separately on a Home Assistant dashboard. Download the card file, save it as /config/www/huishoudboek-card.js and follow the dashboard card instructions in the app documentation.</value></data>
   <data name="CardDownload" xml:space="preserve"><value>Download card file</value></data>
@@ -698,7 +704,7 @@ This entry replaces only this planned payment. Check that it is the same payment
 {3} rules, {4} monthly budgets and default budget {5} are removed.
 Receipt defaults and item categories using this category are cleared; items without their own category follow the receipt default. Receipt details and payments are preserved.
 Amounts, bank text, balances, principal repayments and import history are preserved. Savings/own-account treatment also ends for earlier entries; reports change. No immediate undo; make a backup first if needed.</value></data>
-  <data name="ImportAccountNote" xml:space="preserve"><value>Each import records entries only on the selected account, using the amount from the file. Other accounts are not automatically matched or adjusted; import each account's own file. No duplicate filtering is applied: importing the same statement again adds its transactions again. Check currency, account and opening date. Nothing is saved until explicit confirmation.</value></data>
+  <data name="ImportAccountNote" xml:space="preserve"><value>Each import records entries only on the selected account, using the amount from the file. Other accounts are not automatically matched or adjusted; import each account's own file. Matching previous imports are skipped by default; uncertain matches need review. Check currency, account and opening date. Nothing is saved until explicit confirmation.</value></data>
   <data name="AfterImportBothAccounts" xml:space="preserve"><value>After importing both accounts, you can</value></data>
   <data name="ImportTransferReportingNote" xml:space="preserve"><value>for reporting, without extra entries or balance adjustments.</value></data>
   <data name="ImportFileHint" xml:space="preserve"><value>File (.xls, .xlsx or .csv; maximum 50 MB and 100,000 non-empty rows)</value></data>
@@ -724,14 +730,14 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="NoFileSelected" xml:space="preserve"><value>No file selected</value></data>
   <data name="UploadExpiryNote" xml:space="preserve"><value>Settings changes invalidate the old preview. Abandoned uploads expire after 20 minutes; up to four open uploads for the household.</value></data>
   <data name="UnsavedImportPreview" xml:space="preserve"><value>Import preview · not saved yet</value></data>
-  <data name="PreviewRowsNote" xml:space="preserve"><value>{0} rows · {1} selected. All valid rows within the chosen date range are selected by default, including identical or previously imported rows. You can deselect rows manually. Invalid rows cannot be saved.</value></data>
+  <data name="PreviewRowsNote" xml:space="preserve"><value>{0} rows · {1} selected. Only new valid rows are selected by default. Previous imports and uncertain matches are deselected; review them before selecting them anyway. Invalid rows cannot be saved.</value></data>
   <data name="Row" xml:space="preserve"><value>Row</value></data>
   <data name="Check" xml:space="preserve"><value>Check</value></data>
   <data name="SelectImportRow" xml:space="preserve"><value>Select import row</value></data>
   <data name="ImportRowCategory" xml:space="preserve"><value>Import row category</value></data>
   <data name="SaveSelectedRows" xml:space="preserve"><value>Save selected rows permanently</value></data>
   <data name="CommitImport" xml:space="preserve"><value>Save import permanently</value></data>
-  <data name="CommitImportQuestion" xml:space="preserve"><value>Save {0} selected rows to {1}? Other accounts remain unchanged. All selected rows will be imported without duplicate filtering. Check categories. The balance check appears after saving.</value></data>
+  <data name="CommitImportQuestion" xml:space="preserve"><value>Save {0} selected rows to {1}? Only selected rows will be added; existing entries and other accounts remain unchanged. Check categories. The balance check appears afterwards.</value></data>
   <data name="SaveImport" xml:space="preserve"><value>Save import</value></data>
   <data name="ImportCompleteBalanceCheck" xml:space="preserve"><value>Import complete — balance check</value></data>
   <data name="ImportSavedCount" xml:space="preserve"><value>{0} transactions saved. {1} invalid or manually deselected rows not imported.</value></data>
@@ -875,7 +881,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="StatementCoverage" xml:space="preserve"><value>Confirmed statement period</value></data>
   <data name="ExistingImportCoverageHelp" xml:space="preserve"><value>Older imports have unknown statement coverage. Confirm their complete bank period here after checking your statement; do not reimport the file just to record coverage.</value></data>
   <data name="ImportConfirmCompletePeriod" xml:space="preserve"><value>I confirm that this file contains every bank entry for this account from {0} through {1}.</value></data>
-  <data name="ImportCoverageHelp" xml:space="preserve"><value>Optional: complete coverage lets the app distinguish missing payments from bank data still awaiting import. Confirm only an unfiltered statement with all rows selected and valid. Empty statements can also confirm quiet periods. Otherwise leave this unchecked.</value></data>
+  <data name="ImportCoverageHelp" xml:space="preserve"><value>Optional: complete coverage lets the app distinguish missing payments from bank data still awaiting import. Confirm only an unfiltered statement where every valid row is selected or already imported. Deselected uncertain matches prevent confirmation. Empty statements can also confirm quiet periods. Otherwise leave this unchecked.</value></data>
   <data name="MonthlyPaymentStatus" xml:space="preserve"><value>Payments this month</value></data>
   <data name="RecurringStatusNote" xml:space="preserve"><value>No link does not mean unpaid. A payment is only ‘Not found’ after its full recognition window is covered by confirmed complete bank periods. Coverage gaps and older imports with unknown coverage wait for bank data.</value></data>
   <data name="RecurringDefinitions" xml:space="preserve"><value>Manage schedules and recognition</value></data>
@@ -1535,4 +1541,86 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="HabitAwaitingAcceptance" xml:space="preserve"><value>Days detected, but not applied yet. Accept this suggestion once to deduct the forecast on these days instead of averaging it daily.</value></data>
   <data name="HabitPausedExplanation" xml:space="preserve"><value>This pattern is paused. The category still contributes to the daily reserve. Save the pattern to resume it, or exclude the category to remove its automatic reserve too.</value></data>
   <data name="HabitScheduledAmounts" xml:space="preserve"><value>Distribution when applied: {0}. These amounts replace their share of the daily estimate; no extra deduction.</value></data>
+  <data name="OpenNavigation" xml:space="preserve"><value>Open menu</value></data>
+  <data name="CloseNavigation" xml:space="preserve"><value>Close menu</value></data>
+  <data name="QuickNavigation" xml:space="preserve"><value>Quick navigation</value></data>
+  <data name="CurrentMonth" xml:space="preserve"><value>Current month</value></data>
+  <data name="TodayScope" xml:space="preserve"><value>As of today · {0}</value></data>
+  <data name="IndependentScope" xml:space="preserve"><value>Set the period on this page</value></data>
+  <data name="HistoryScope" xml:space="preserve"><value>Last 12 completed months · today's balances</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="ThemeAuto" xml:space="preserve"><value>System</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="ViewTransactions" xml:space="preserve"><value>View bookings</value></data>
+  <data name="ViewTransactionDetails" xml:space="preserve"><value>View booking: {0}</value></data>
+  <data name="ViewTrend" xml:space="preserve"><value>View trend</value></data>
+  <data name="QuickActions" xml:space="preserve"><value>Quick entry</value></data>
+  <data name="AdvancedFilters" xml:space="preserve"><value>More filters</value></data>
+  <data name="MinimumAmount" xml:space="preserve"><value>Minimum bank amount (€)</value></data>
+  <data name="MaximumAmount" xml:space="preserve"><value>Maximum bank amount (€)</value></data>
+  <data name="BankDirection" xml:space="preserve"><value>Bank direction</value></data>
+  <data name="BankCredits" xml:space="preserve"><value>Credits</value></data>
+  <data name="BankDebits" xml:space="preserve"><value>Debits</value></data>
+  <data name="FilterBankNet" xml:space="preserve"><value>Net bank movement</value></data>
+  <data name="FilterResults" xml:space="preserve"><value>{0} bookings · {1}</value></data>
+  <data name="FilterTotalsNote" xml:space="preserve"><value>Totals cover every matching bank booking, not just this page. Category filters include the full bank amount even for splits; this is not a category total. Meal vouchers without a bank booking are excluded. Future bookings are labelled as planned.</value></data>
+  <data name="FilterInvalidRange" xml:space="preserve"><value>Choose valid dates between 1900 and 2200; the end date must not precede the start date.</value></data>
+  <data name="FilterInvalidAmount" xml:space="preserve"><value>Use positive amounts with at most two decimals, with a comma or dot. The maximum must be at least the minimum.</value></data>
+  <data name="RemoveFilter" xml:space="preserve"><value>Remove filter: {0}</value></data>
+  <data name="SelectedMonth" xml:space="preserve"><value>Selected month</value></data>
+  <data name="CustomPeriod" xml:space="preserve"><value>Custom period</value></data>
+  <data name="NoTransactionsWithFilters" xml:space="preserve"><value>No bookings match these filters. Change the period or clear the filters.</value></data>
+  <data name="TransactionUnavailable" xml:space="preserve"><value>This booking no longer exists or is outside the selected owner filter.</value></data>
+  <data name="BudgetUsage" xml:space="preserve"><value>{0}% used</value></data>
+  <data name="BudgetPaceNotStarted" xml:space="preserve"><value>Month has not started</value></data>
+  <data name="BudgetPaceIncomplete" xml:space="preserve"><value>Pace unknown: statement coverage is not fully confirmed</value></data>
+  <data name="BudgetPaceScheduled" xml:space="preserve"><value>Includes scheduled bills; spending is not evenly distributed</value></data>
+  <data name="BudgetPaceCompleted" xml:space="preserve"><value>Completed month</value></data>
+  <data name="BudgetPaceAhead" xml:space="preserve"><value>Spending faster than the month progresses</value></data>
+  <data name="BudgetPaceOnTrack" xml:space="preserve"><value>Within indicative monthly pace</value></data>
+  <data name="BudgetPaceExpected" xml:space="preserve"><value>{0}% of the month has elapsed; an indication only, not a new spending forecast.</value></data>
+  <data name="ForecastTimeline" xml:space="preserve"><value>Projected balance timeline</value></data>
+  <data name="ForecastTimelineNote" xml:space="preserve"><value>Today is the recorded balance; subsequent points are estimated closing and lowest daily balances. The dashed line is the buffer plus earmarked money. Markers show dated income and payments, not uncertain reserves. Exact amounts remain in the forecast table.</value></data>
+  <data name="ForecastTimelineUncertain" xml:space="preserve"><value>This line is an estimate with incomplete information. Check warnings and imports before deciding on a purchase.</value></data>
+  <data name="ForecastBufferLine" xml:space="preserve"><value>Buffer + earmarked money</value></data>
+  <data name="ImportSteps" xml:space="preserve"><value>Import steps</value></data>
+  <data name="ImportStepFile" xml:space="preserve"><value>File &amp; account</value></data>
+  <data name="ImportStepDetection" xml:space="preserve"><value>Check detection</value></data>
+  <data name="ImportStepReview" xml:space="preserve"><value>Review bookings</value></data>
+  <data name="ImportStepSave" xml:space="preserve"><value>Save &amp; check balance</value></data>
+  <data name="ImportContinue" xml:space="preserve"><value>Continue to detection</value></data>
+  <data name="ImportChangeFile" xml:space="preserve"><value>Change file or account</value></data>
+  <data name="ImportChangeSettings" xml:space="preserve"><value>Change detection</value></data>
+  <data name="ImportReviewHint" xml:space="preserve"><value>Check the account, dates, amounts and exceptions. Only selected valid rows will be saved; full statement coverage is confirmed separately.</value></data>
+  <data name="ImportSelectionSummary" xml:space="preserve"><value>{0} of {1} rows selected · net {2} · {3} invalid rows</value></data>
+  <data name="ImportExceptionsOnly" xml:space="preserve"><value>Only items to check</value></data>
+  <data name="ImportSelectValid" xml:space="preserve"><value>Select new rows only</value></data>
+  <data name="ImportDuplicateSummary" xml:space="preserve"><value>{0} new · {1} already imported · {2} to review</value></data>
+  <data name="ImportDuplicateHelp" xml:space="preserve"><value>The check compares account, bank date, amount and original bank text, using the running balance when available. Identical payments are counted by occurrence. Without a unique bank reference, an identical new payment cannot always be distinguished from an earlier import; review partial statements and changed export descriptions. Existing entries are never changed. Select a deselected match only if it really is an additional payment.</value></data>
+  <data name="ImportAlreadyImported" xml:space="preserve"><value>Already imported</value></data>
+  <data name="ImportDuplicateReview" xml:space="preserve"><value>Possibly already recorded — review</value></data>
+  <data name="ImportNewRow" xml:space="preserve"><value>New</value></data>
+  <data name="ImportViewExisting" xml:space="preserve"><value>View existing entry</value></data>
+  <data name="ImportDuplicateOverride" xml:space="preserve"><value>Warning: you are adding {0} row(s) that are already imported or possibly already recorded. Confirm only if these really are additional payments; this can double-count balances and spending.</value></data>
+  <data name="ImportFinishCheck" xml:space="preserve"><value>Finish check without new entries</value></data>
+  <data name="ImportAlreadySkipped" xml:space="preserve"><value>{0} matching previous entries were not added again. Existing categories and links were preserved.</value></data>
+  <data name="ImportBackDashboard" xml:space="preserve"><value>Back to dashboard</value></data>
+  <data name="ImportClearSelection" xml:space="preserve"><value>Clear selection</value></data>
+  <data name="ImportNoExceptions" xml:space="preserve"><value>No items to check were found. Review all rows before saving as well.</value></data>
+  <data name="ImportDetectedProfile" xml:space="preserve"><value>Detection profile: {0}</value></data>
+  <data name="ImportLeaveWarning" xml:space="preserve"><value>The import has not been saved. Do you want to leave the file and review behind?</value></data>
+  <data name="DraftDiscardTitle" xml:space="preserve"><value>Discard changes?</value></data>
+  <data name="DraftDiscardWarning" xml:space="preserve"><value>Your input has not been saved. Do you want to discard the changes?</value></data>
+  <data name="DiscardChanges" xml:space="preserve"><value>Discard changes</value></data>
+  <data name="FieldRequired" xml:space="preserve"><value>Fill in this field.</value></data>
+  <data name="FieldInvalidChoice" xml:space="preserve"><value>Choose an available option.</value></data>
+  <data name="FieldInteger" xml:space="preserve"><value>Use a whole number.</value></data>
+  <data name="FieldPositive" xml:space="preserve"><value>Use an amount greater than zero.</value></data>
+  <data name="FieldNonnegative" xml:space="preserve"><value>Use an amount of zero or more.</value></data>
+  <data name="FieldDayRange" xml:space="preserve"><value>Choose a day from 1 to 31.</value></data>
+  <data name="FieldEndBeforeStart" xml:space="preserve"><value>The end date must not precede the start date.</value></data>
+  <data name="FixHighlightedFields" xml:space="preserve"><value>Check the highlighted fields.</value></data>
+  <data name="AllCategories" xml:space="preserve"><value>All categories</value></data>
+  <data name="Close" xml:space="preserve"><value>Close</value></data>
 </root>

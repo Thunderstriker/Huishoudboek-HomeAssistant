@@ -18,6 +18,7 @@ public static class Validation
         Unique(data.Owners.Select(x => x.Id), "eigenaren");
         Unique(data.Accounts.Select(x => x.Id), "rekeningen");
         Unique(data.Categories.Select(x => x.Id), "categorieën");
+        CategoryHierarchy.Validate(data);
         Unique(data.SpendingHabits.Select(x => x.Id), "bestedingspatronen");
         Unique(data.PurchaseDateDecisions.Select(x => x.Id), "aankoopdatumbeslissingen");
         Unique(data.SpendingAdjustments.Select(x => x.Id), "bestedingsafwijkingen");

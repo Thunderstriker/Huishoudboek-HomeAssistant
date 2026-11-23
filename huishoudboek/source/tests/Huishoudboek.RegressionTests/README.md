@@ -52,3 +52,62 @@ dagdetails en toegankelijke iconen/legenda in beide talen. Alleen werkelijk gera
 bedragen verschijnen; geboekte en overgeslagen aankopen, historische dagen en
 tijdelijke reserves blijven gescheiden. De extra dagraming verandert geen saldi,
 gegevens of aantallen gedateerde betalingen voor risicokleuren en uitleg.
+
+De UX-controles testen pagina-afhankelijke periodes, vaste categoriekleuren,
+splitsings-/retourfilters, bankrichting per transferzijde, eigenaarbeperking,
+indicatief budgettempo met bevestigde dekking, ongewijzigde prognosegegevens,
+veldfouten/ARIA-koppelingen, importcontrolepunten en Nederlandse/Engelse weergave.
+
+Bankimport test herhaalde en overlappende afschriften, voorkomen-aantallen van gelijke
+betalingen, ontbrekende/afwijkende banksaldi, rekening/datum/bankrichting, handmatige
+en onzekere matches, behoud van categorieën en splitsingen, expliciete dubbelbevestiging,
+afschriftdekking met bestaande boekingen en intrekking na wijzigen/verwijderen/herstel
+van bronboekingen, stille perioden, importherstel en revisieconflicten.
+
+Categoriecontroles testen geneste subcategorieën, verplaatsen naar een andere ouder
+of hoofdniveau, ongeldige ouders en kringverwijzingen, behoud van boekingen en
+afzonderlijke budgetten, hernoemen en veilig omhoog schuiven bij verwijderen.
+Nederlandse/Engelse invoer, categoriepaden, transactiezoektermen, schema-18-migratie,
+veiligheidskopieën, oud/nieuw databaseherstel en revisieconflicten worden eveneens getest.
+
+## Optionele browsercontroles
+
+Gebruik uitsluitend een **aparte, tijdelijke lokale previewadministratie**. De
+UI-test slaat één synthetische bankboeking op; gebruik nooit een kopie met echte gegevens.
+De scripts vereisen Node.js, Microsoft Edge en extern geïnstalleerde Playwright/axe-core.
+Installeer die testhulpmiddelen buiten de repository, bijvoorbeeld:
+
+```powershell
+npm install --prefix "$env:TEMP/huishoudboek-ux-tools" playwright axe-core --no-audit --no-fund
+$env:PLAYWRIGHT_MODULE = "file:///" + ("$env:TEMP/huishoudboek-ux-tools/node_modules/playwright/index.mjs" -replace '\\', '/')
+$env:AXE_SCRIPT = "$env:TEMP/huishoudboek-ux-tools/node_modules/axe-core/axe.min.js"
+```
+
+Start in een ander venster de gebouwde service met een **nieuwe, lege** previewmap:
+
+```powershell
+dotnet huishoudboek/source/src/Huishoudboek.Service/bin/Debug/net10.0/Huishoudboek.Service.dll --preview "$env:TEMP/huishoudboek-ux-demo" 5199
+```
+
+Voer daarna de controles uit:
+
+```powershell
+node huishoudboek/source/tests/Huishoudboek.RegressionTests/ui-smoke.mjs
+node huishoudboek/source/tests/Huishoudboek.RegressionTests/ui-import-duplicates.mjs
+node huishoudboek/source/tests/Huishoudboek.RegressionTests/ui-category-hierarchy.mjs
+node huishoudboek/source/tests/Huishoudboek.RegressionTests/ui-accessibility.mjs
+```
+
+`UI_PREVIEW_URL` kan een andere lokale poort kiezen; standaard is dit
+`http://127.0.0.1:5199/`. Met `UI_SCREENSHOT_DIR` bewaart de UI-test schermafbeeldingen
+in een map buiten de repository. De UI-test controleert invoer, conceptbeveiliging,
+filters, eigenaarbehoud, grafieken, mobiel menu, themaopslag en begeleide import.
+De importcontrole toetst herhaalde en overlappende afschriften, extra gelijke betalingen,
+onzekere matches, expliciete dubbelwaarschuwingen en afschriftdekking in beide talen.
+De categoriecontrole maakt testcategorieën en bankboekingen aan, verplaatst geneste
+indelingen naar andere ouders en hoofdniveau, toetst veilige ouderkeuzes en behoud
+van categorie-id's/budgetten en verwijdert een ouder met behoud van haar kinderen.
+Dit gebeurt in het Nederlands op desktop en in het Engels op mobiel.
+De aanvullende toegankelijkheidscontrole toetst 14 pagina's in beide thema's op
+tekstcontrast, veldlabels en geldige ARIA-waarden. Alleen die diagnostische browsercontext
+omzeilt CSP om axe te injecteren; de appbeveiliging en normale UI-test blijven ongewijzigd.

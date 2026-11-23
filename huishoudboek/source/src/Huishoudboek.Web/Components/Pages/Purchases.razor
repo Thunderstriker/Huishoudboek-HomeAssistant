@@ -60,7 +60,7 @@
                     <label>@L["PurchaseDate"]<input id="receipt-date" type="date" @bind="receipt.PurchaseDate" @bind:after="Unreview" /></label>
                     <label>@L["PurchaseInvoice"]<input maxlength="200" @bind="receipt.InvoiceNumber" @bind:after="Unreview" /></label>
                     <label>@L["PurchaseTotal"]<input id="receipt-total" type="text" inputmode="decimal" @bind="totalInput.Text" @bind:event="oninput" @bind:after="() => { receipt.Total = totalInput.Value; Unreview(); }" aria-invalid="@(!totalInput.IsValid ? "true" : null)" /></label>
-                    <label>@L["PurchaseDefaultCategory"]<select id="receipt-default-category" @bind="receipt.DefaultCategoryId" @bind:after="Unreview"><option value="">@L["Uncategorized"]</option>@foreach (var category in ExpenseCategories) { <option value="@category.Id">@category.Name</option> }</select></label>
+                    <label>@L["PurchaseDefaultCategory"]<select id="receipt-default-category" @bind="receipt.DefaultCategoryId" @bind:after="Unreview"><option value="">@L["Uncategorized"]</option>@foreach (var category in ExpenseCategories) { <option value="@category.Id">@State.CategoryName(category.Id)</option> }</select></label>
                     <label>@L["Account"]<select @bind="receipt.AccountId" @bind:after="AccountChanged"><option value="">@L["PurchaseNoAccount"]</option>@foreach (var account in State.Data.Accounts.Where(a => State.Scope.Contains(a.Id))) { <option value="@account.Id">@account.Name</option> }</select></label>
                     <label>@L["PurchaseNotes"]<textarea rows="2" maxlength="4000" @bind="receipt.Notes"></textarea></label>
                 </div>
@@ -126,7 +126,7 @@
                     <label>@L["PurchaseUnit"]<input maxlength="30" @bind="item.Unit" @bind:after="Unreview" /></label>
                     <label>@L["PurchaseUnitPrice"]<input type="text" inputmode="decimal" @bind="priceInput.Text" @bind:event="oninput" @bind:after="() => { item.UnitPrice = priceInput.Value; Unreview(); }" aria-invalid="@(!priceInput.IsValid ? "true" : null)" /></label>
                     <label>@L["PurchaseLineAmount"]<input type="text" inputmode="decimal" @bind="amountInput.Text" @bind:event="oninput" @bind:after="() => { item.Amount = amountInput.Value; Unreview(); }" aria-invalid="@(!amountInput.IsValid ? "true" : null)" /></label>
-                    <label>@L["Category"]<select @bind="item.CategoryId" @bind:after="Unreview" disabled="@(item.RelatedItemId != null)"><option value="">@(item.RelatedItemId != null ? L["PurchaseInheritCategory"].Value : receipt.DefaultCategoryId != null ? L["PurchaseUseDefaultCategory", State.CategoryName(receipt.DefaultCategoryId)].Value : L["Uncategorized"].Value)</option>@foreach (var category in ExpenseCategories) { <option value="@category.Id">@category.Name</option> }</select></label>
+                    <label>@L["Category"]<select @bind="item.CategoryId" @bind:after="Unreview" disabled="@(item.RelatedItemId != null)"><option value="">@(item.RelatedItemId != null ? L["PurchaseInheritCategory"].Value : receipt.DefaultCategoryId != null ? L["PurchaseUseDefaultCategory", State.CategoryName(receipt.DefaultCategoryId)].Value : L["Uncategorized"].Value)</option>@foreach (var category in ExpenseCategories) { <option value="@category.Id">@State.CategoryName(category.Id)</option> }</select></label>
                 </div>
                 <details>
                     <summary>@L["PurchaseItemDetails"]</summary>
@@ -219,7 +219,7 @@
     private readonly CancellationTokenSource cancellation = new();
     private bool disposed;
 
-    private IEnumerable<Category> ExpenseCategories => State.Data.Categories.Where(c => c.Purpose == CategoryPurpose.Normal).OrderBy(c => c.Name);
+    private IEnumerable<Category> ExpenseCategories => CategoryHierarchy.Ordered(State.Data).Select(e => e.Category).Where(c => c.Purpose == CategoryPurpose.Normal);
     private bool HasInvalidNumbers => numbers.Values.Any(n => !n.IsValid);
     private bool IsReconciled => !HasInvalidNumbers && draft != null && PurchaseReceipts.Reconciles(draft, items);
     private ReceiptNumberDraft Number(Guid id, string field, decimal? value, int decimalPlaces = 2,

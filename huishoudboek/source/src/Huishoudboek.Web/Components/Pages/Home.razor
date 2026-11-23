@@ -1,10 +1,15 @@
 @page "/"
 @attribute [Authorize]
-@inherits PageBase
+@inherits EditPageBase
 <PageTitle>@L["StartDashboard"] · Huishoudboek</PageTitle>
 
 <div class="dashboard">
     <h1 class="sr-only">@L["StartDashboard"]</h1>
+    <div class="actions dashboard-quick-actions" role="group" aria-label="@L["QuickActions"]">
+        <button class="primary" disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State)"><DashboardIcon Name="plus" />@L["AddExpense"]</button>
+        <button disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State, true)">@L["AddIncome"]</button>
+        <a class="button" href="importeren">@L["ImportExcelCsv"]</a>
+    </div>
 
     <div class="dashboard-overview">
         <DashboardMonth Report="overview.Month" Year="State.Year" Month="State.Month" />
@@ -35,12 +40,12 @@
     <InvestmentOverview Compact="true" />
 
     <div class="dashboard-board">
-        <DashboardSpending Report="overview.Month" />
+        <DashboardSpending Report="overview.Month" Year="State.Year" Month="State.Month" OwnerId="State.OwnerId" />
         <DashboardUpcoming Overview="overview" />
     </div>
 
     <div class="dashboard-secondary">
-        <DashboardBudgetWatch Report="overview.Month" />
+        <DashboardBudgetWatch Report="overview.Month" Context="State" />
         <section class="surface recent-card" aria-labelledby="dashboard-recent-heading">
             <div class="panel-heading"><div class="panel-title"><span class="panel-icon"><DashboardIcon Name="activity" /></span><h2 id="dashboard-recent-heading">@L["DashboardRecentActivity"]</h2></div><a class="text-link" href="transacties?allDates=true">@L["Transactions"] <span aria-hidden="true">↗</span></a></div>
             @if (overview.Recent.Count == 0)
@@ -53,7 +58,7 @@
                         var transaction = row.Transaction;
                         <li class="activity-row" @key="transaction.Id">
                             <span class="activity-icon @(row.Amount > 0 ? "incoming" : "")"><DashboardIcon Name="@(row.Amount > 0 ? "arrow-down" : "arrow-up")" /></span>
-                            <div class="activity-copy"><strong>@TransactionRecognition.DisplayName(State.Data, transaction)</strong><small>@transaction.Date.ToString("dd MMM", UiCulture.Culture) · @State.AccountName(row.AccountId)</small><small><TransactionAllocationSummary Transaction="transaction" /></small></div>
+                            <div class="activity-copy"><a class="booking-link" href="@UiNavigation.Transactions(transaction: transaction.Id, owner: State.OwnerId)" aria-label="@L["ViewTransactionDetails", TransactionRecognition.DisplayName(State.Data, transaction)]"><strong>@TransactionRecognition.DisplayName(State.Data, transaction)</strong></a><small>@transaction.Date.ToString("dd MMM", UiCulture.Culture) · @State.AccountName(row.AccountId)</small><small><TransactionAllocationSummary Transaction="transaction" /></small></div>
                             <strong class="activity-amount @(row.Amount > 0 ? "positive" : "")">@Money(row.Amount)</strong>
                         </li>
                     }
@@ -68,6 +73,7 @@
         <a href="inzichten"><DashboardIcon Name="insights" /><span>@L["FinancialInsights"]</span><span aria-hidden="true">↗</span></a>
     </nav>
 </div>
+<EditDialogs Page="this" />
 
 @code {
     private HomeOverview overview = null!;

@@ -1,7 +1,7 @@
 @inject IJSRuntime JS
 @implements IDisposable
-<dialog @ref="element" class="modal" aria-labelledby="dialog-title">
-    <h2 id="dialog-title">@Title</h2>
+<dialog @ref="element" class="modal" aria-labelledby="@titleId">
+    <h2 id="@titleId">@Title</h2>
     @ChildContent
 </dialog>
 @code {
@@ -9,6 +9,7 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public EventCallback Cancel { get; set; }
     private ElementReference element;
+    private readonly string titleId = "dialog-title-" + Guid.NewGuid().ToString("N");
     private DotNetObjectReference<Modal>? reference;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

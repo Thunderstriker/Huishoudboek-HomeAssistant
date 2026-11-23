@@ -5,9 +5,11 @@
 <h1>@L["BudgetsCategories"]</h1>
 <p class="notice">@L["CategoryPurposeHelp"]</p>
 <p class="muted">@L["CategoryInsightHelp"]</p>
+<p class="muted">@L["CategoryHierarchyHelp"]</p>
 <MealVoucherReportNote />
 <div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Category(State)">+ @L["Category"]</button></div>
-@{ var budgets = DetailedReporting.Budgets(State.Data, State.Year, State.Month, State.Today, State.Scope, includeShared: State.OwnerId == null); }
+@{ var budgets = DetailedReporting.Budgets(State.Data, State.Year, State.Month, State.Today, State.Scope, includeShared: State.OwnerId == null).ToDictionary(b => b.Id);
+   var categories = CategoryHierarchy.Ordered(State.Data); }
 <h2>@(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
 @foreach (var purpose in Enum.GetValues<CategoryPurpose>())
 {
@@ -20,13 +22,15 @@
     @if (!movement)
     { <th class="money">@L[saving ? "DefaultTarget" : "Default"]</th><th class="money">@L[saving ? "MonthlyTarget" : "ThisMonth"]</th><th class="money">@L[saving ? "NetPutAside" : "Spent"]</th><th class="money">@L[saving ? "Progress" : "Remaining"]</th> }
     <th>@L["Actions"]</th></tr></thead><tbody>
-    @foreach (var row in budgets.Where(b => b.Purpose == purpose))
+    @foreach (var entry in categories.Where(e => e.Category.Purpose == purpose))
     {
-        var c = State.Data.Categories.Single(c => c.Id == row.Id);
-        <tr><td>@row.Name @if (c.IsEssential) { <span class="badge">@L["CategoryEssentialBadge"]</span> } @if (c.IsExceptional) { <span class="badge">@L["CategoryExceptionalBadge"]</span> } @if (row.IsOverBudget) { <span class="badge negative">@L["Exceeded"]</span> }</td>
+        var c = entry.Category;
+        var row = budgets[c.Id];
+        <tr><td><div class="category-name" style="@($"--category-depth:{Math.Min(entry.Depth, 6)}")">@c.Name @if (c.IsEssential) { <span class="badge">@L["CategoryEssentialBadge"]</span> } @if (c.IsExceptional) { <span class="badge">@L["CategoryExceptionalBadge"]</span> } @if (row.IsOverBudget) { <span class="badge negative">@L["Exceeded"]</span> }
+        @if (c.ParentId != null) { <small>@L["ParentCategory"]: @State.CategoryName(c.ParentId)</small> }</div></td>
         @if (!movement)
         {
-            <td class="money">@Money(row.DefaultBudget)</td><td class="money">@Money(row.Budget)</td><td class="money">@Money(row.Spent)</td>
+            <td class="money">@Money(row.DefaultBudget)</td><td class="money">@Money(row.Budget)</td><td class="money"><a href="@UiNavigation.Transactions(category: row.Id, from: new DateOnly(State.Year, State.Month, 1), through: State.AsOf, owner: State.OwnerId)">@Money(row.Spent)</a></td>
             <td class="money">
                 @if (saving)
                 {
@@ -34,10 +38,11 @@
                     else if (row.Spent >= row.Budget) { <span class="badge positive">@L["SavingsTargetReached"]</span> }
                     else { @L["SavingsStillToTarget", Money(row.Remaining)] }
                 }
-                else { @(row.Budget == 0 ? L["NoLimit"].Value : Money(row.Remaining)) }
+                else { @(row.Budget == 0 ? L["NoLimit"].Value : Money(row.Remaining)) <BudgetUsage CategoryId="row.Id" Spent="row.Spent" Budget="row.Budget" /> }
             </td>
         }
         <td><div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, c)">@L["CategorySettings"]</button>
+        <button @onclick="() => Draft = EditorDraft.Category(State, parentId: c.Id)">+ @L["Subcategory"]</button>
         @if (!movement) { <button @onclick="() => Draft = EditorDraft.Budget(State, c)">@L[saving ? "TargetThisMonth" : "BudgetThisMonth"]</button> }
         </div></td></tr>
     }

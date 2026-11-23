@@ -4,6 +4,7 @@
 <PageTitle>@L["Categorize"] · Huishoudboek</PageTitle>
 <h1>@L["Categorize"] · @L["AllDates"]</h1>
 <p class="muted">@L["CategoryPurposeHelp"] <a href="budgetten">@L["BudgetsCategories"]</a></p>
+<p class="muted">@L["CategoryHierarchyHelp"]</p>
 <div class="actions">
     <button class="@(mode == "groups" ? "primary" : "")" @onclick='() => SetMode("groups")'>@L["ByCategory"]</button>
     <button class="@(mode == "inbox" ? "primary" : "")" @onclick='() => SetMode("inbox")'>@L["Uncategorized"]</button>
@@ -26,7 +27,7 @@
     <section class="card" style="@(mode != "groups" ? "grid-column:1/-1" : null)">
         <div class="page-heading"><h2>@(mode == "walk" ? L["StepByStep"].Value : mode == "inbox" ? L["Uncategorized"].Value : State.CategoryName(groupCategory))</h2>
         @if (mode == "groups" && groupCategory is { } categoryId && State.Data.Categories.FirstOrDefault(c => c.Id == categoryId) is { } category)
-        { <div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, category)">@L["CategorySettings"]</button><button @onclick="() => DeleteCategory(category)">@L["DeleteCategory"]</button></div> }
+        { <div class="actions"><button @onclick="() => Draft = EditorDraft.Category(State, category)">@L["CategorySettings"]</button><button @onclick="() => Draft = EditorDraft.Category(State, parentId: category.Id)">+ @L["Subcategory"]</button><button @onclick="() => DeleteCategory(category)">@L["DeleteCategory"]</button></div> }
         </div>
         @if (mode != "walk") { <p class="muted">@L["ReviewTotalsNote", rows.Count, Money(totals.Income), Money(totals.Outflow)]</p> }
         @if (mode == "walk")
@@ -60,7 +61,7 @@
         @if (mode != "walk" || Current != null)
         {
             <form @onsubmit="Assign" @onsubmit:preventDefault>
-                <div class="fields"><label>@L["Category"]<select id="assignCategory" @bind="assignCategory"><option value="">@L["Uncategorized"]</option>@foreach (var c in State.Data.Categories) { <option value="@c.Id">@EditorDraft.CategoryLabel(c)</option> }</select></label>
+                <div class="fields"><label>@L["Category"]<select id="assignCategory" @bind="assignCategory"><option value="">@L["Uncategorized"]</option>@foreach (var entry in CategoryHierarchy.Ordered(State.Data)) { <option value="@entry.Category.Id">@EditorDraft.CategoryLabel(State.Data, entry.Category)</option> }</select></label>
                 @if (mode == "walk" || selected.Count == 1) { <label>@L["OwnDescriptionOptional"]<input id="ownDescription" @bind="ownDescription" maxlength="2000" /></label> }</div>
                 @if ((mode == "walk" ? Current : selected.Count == 1 ? State.Data.Transactions.FirstOrDefault(t => selected.Contains(t.Id)) : null) is { } recognizable && !TransferMatching.IsInternal(State.Data, recognizable))
                 { <button type="button" @onclick="() => Draft = EditorDraft.RecognitionFromTransaction(State, recognizable)">@L["RecognizeAs"]</button> }
@@ -104,7 +105,7 @@
     }
     private Transaction? Current => WalkRows.FirstOrDefault();
     private IEnumerable<(Guid? Id, string Name, int Count)> Groups => new[] { ((Guid?)null, L["Uncategorized"].Value, FilteredRows.Count(t => Categorization.HasCategory(State.Data, t, null))) }
-        .Concat(State.Data.Categories.Select(c => ((Guid?)c.Id, c.Name, FilteredRows.Count(t => Categorization.HasCategory(State.Data, t, c.Id)))).OrderByDescending(c => c.Item3 > 0).ThenBy(c => c.Name));
+        .Concat(CategoryHierarchy.Ordered(State.Data).Select(e => ((Guid?)e.Category.Id, e.Path, FilteredRows.Count(t => Categorization.HasCategory(State.Data, t, e.Category.Id)))));
     protected override void OnParametersSet()
     {
         if (State.ReviewBatchId is { } review && review != lastReview) { batchId = review; lastReview = review; State.ReviewBatchId = null; includeTransfers = true; mode = "groups"; FilterChanged(); }
@@ -147,6 +148,8 @@
     private void DeleteCategory(Category category)
     {
         var p = Categorization.PreviewCategoryDeletion(State.Data, category.Id);
-        Ask(L["DeleteCategory"], L["DeleteCategoryQuestion", p.Name, p.TransactionCount, p.RecurringPaymentCount, p.RuleCount, p.BudgetOverrideCount, Money(p.MonthlyBudget)], d => Categorization.DeleteCategory(d, category.Id), L["DeleteCategory"]);
+        var question = L["DeleteCategoryQuestion", State.CategoryName(category.Id), p.TransactionCount, p.RecurringPaymentCount, p.RuleCount, p.BudgetOverrideCount, Money(p.MonthlyBudget)].Value;
+        if (p.ChildCategoryCount > 0) question += " " + L["DeleteCategoryChildrenNote", p.ChildCategoryCount];
+        Ask(L["DeleteCategory"], question, d => Categorization.DeleteCategory(d, category.Id), L["DeleteCategory"]);
     }
 }

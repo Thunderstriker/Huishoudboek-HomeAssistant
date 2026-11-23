@@ -18,7 +18,7 @@
         else if (Model.Widget == "month-overview")
         { <DashboardMonth Report="Model.Overview.Month" Year="Model.Year" Month="Model.Month" /> }
         else if (Model.Widget == "spending")
-        { <DashboardSpending Report="Model.Overview.Month" /> }
+        { <DashboardSpending Report="Model.Overview.Month" Year="Model.Year" Month="Model.Month" OwnerId="Model.OwnerId" /> }
         else if (Model.Widget == "budget-watch")
         { <DashboardBudgetWatch Report="Model.Overview.Month" /> }
         else if (Model.Widget == "upcoming")

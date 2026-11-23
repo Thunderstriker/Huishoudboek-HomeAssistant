@@ -103,7 +103,7 @@
                 {
                     <li class="@(item.Estimated ? "estimate-item" : null)"><div><strong class="item-name">@if (item.Estimated) { @EstimateIcon(item.Source) }@item.Name</strong><small>@L[item.Source]
                         @if (item.BookingDate is { } booked && booked != selectedDate) { <span> · @L["CalendarBookedOn", booked.ToString("dd-MM-yyyy")]</span> }
-                        @if (item.TransactionId != null) { <a href="transacties?allDates=true">@L["Transactions"] →</a> }
+                        @if (item.TransactionId != null) { <a href="@UiNavigation.Transactions(transaction: item.TransactionId, owner: State.OwnerId)">@L["ViewTransactions"] →</a> }
                     </small></div><strong>@SignedMoney(item.Amount)</strong></li>
                 }
             </ul>

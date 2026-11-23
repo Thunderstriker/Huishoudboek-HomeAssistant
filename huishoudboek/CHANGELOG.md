@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.3.4
+
+- Subcategorieën aanmaken en bestaande categorieën onder een andere categorie of
+  terug op hoofdniveau plaatsen, met herkenbare categoriepaden en behoud van
+  boekingen en afzonderlijke budgetten. Bij verwijderen schuiven subcategorieën
+  één niveau omhoog; schema 18 bewaart de indeling met veiligheidskopie vóór migratie.
+- Bankimport slaat overeenkomende eerdere boekingen standaard over, telt gelijke
+  betalingen per voorkomen en vraagt controle bij onzekere overeenkomsten.
+  Herhaalde afschriften kunnen zonder nieuwe boekingen worden afgerond; bevestigde
+  afschriftdekking houdt rekening met al geïmporteerde regels en vervalt bij wijzigen
+  of terugdraaien van de oorspronkelijke overlappende bankgegevens.
+- Periodekeuze afgestemd op de pagina, met duidelijke peildatums en een snelkoppeling
+  naar de huidige maand; jaaroverzicht toont alleen de jaarkeuze.
+- Compact mobiel menu en vaste snelle navigatie, met direct uitgaven toevoegen.
+  Dashboard biedt snelle uitgave-/inkomsteninvoer en bankimport.
+- Recente boekingen, rekeningen en categorietotalen openen direct de bijbehorende
+  bankboekingen met behoud van periode en eigenaar; trends blijven apart bereikbaar.
+- Transacties filteren op categorie, bankrichting, bedrag en eigen periode, met
+  actieve filters, eenvoudig wissen en duidelijk onderscheiden banktotalen.
+- Budgetten tonen gebruikspercentages en een indicatief maandtempo bij bevestigde
+  afschriftdekking; vaste posten en onvolledige gegevens krijgen passende uitleg.
+- Financiële vooruitblik toont verwacht saldoverloop over 7, 30 of 90 dagen, met
+  bufferlijn, laagste dagsaldi en gedateerde betaalmarkeringen naast de exacte tabel.
+- Bankimport begeleidt vier stappen, met ingeklapte technische instellingen,
+  controlepuntenfilter, mobiele boekingskaarten en een blijvende selectiesamenvatting.
+- Gedeelde invoervensters tonen fouten bij de velden en waarschuwen bij het verlaten
+  van gewijzigde invoer; niet-opgeslagen imports krijgen eveneens een waarschuwing.
+- Samenhangende weergave met licht/donker/systeemkeuze, beter leesbare labels en
+  vaste categoriekleuren onafhankelijk van rangorde, maand of overzicht.
+- App- en containerversie bijgewerkt naar 0.3.4 voor installatie en updates via Home Assistant.
+
 ## 0.3.3.3
 
 - Automatische uitgavenramingen beperken tot gekozen categorieën, standaard Voeding

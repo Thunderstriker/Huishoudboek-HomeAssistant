@@ -10,8 +10,8 @@
     <div class="history-filter-row">
         <label class="category-picker">@L["Category"]
             <select @bind="selectedCategory" @bind:after="Rebuild">
-                @foreach (var category in State.Data.Categories.Where(c => c.Purpose == CategoryPurpose.Normal).OrderBy(c => c.Name))
-                { <option value="@category.Id">@category.Name</option> }
+                @foreach (var entry in CategoryHierarchy.Ordered(State.Data).Where(e => e.Category.Purpose == CategoryPurpose.Normal))
+                { <option value="@entry.Category.Id">@entry.Path</option> }
                 <option value="@Guid.Empty">@L["Uncategorized"]</option>
             </select>
         </label>
@@ -58,7 +58,7 @@ else
                 @foreach (var row in overview.Months.Reverse())
                 {
                     <tr><th scope="row">@row.Month.ToString("MMM yyyy", UiCulture.Culture) @if (row.IsPartial) { <span class="badge">@L["HistoryPartial"]</span> }</th>
-                        <td class="money">@Money(row.Purchases)</td><td class="money">@Money(row.Recoveries)</td><td class="money"><strong>@Money(row.Spent)</strong></td>
+                        <td class="money">@Money(row.Purchases)</td><td class="money">@Money(row.Recoveries)</td><td class="money"><a href="@UiNavigation.Transactions(category: selectedCategory, from: row.Month, through: UiNavigation.ActualThrough(row.Month.AddMonths(1).AddDays(-1)), owner: State.OwnerId)"><strong>@Money(row.Spent)</strong></a></td>
                         <td class="money">@(row.MovingAverage is { } average ? Money(average) : "—")</td>
                         <td>@L[row.CoverageConfirmed ? "HistoryCoverageConfirmed" : "HistoryCoverageUnknown"] @if (row.EntryCount == 0) { <small> · @L["HistoryNoEntries"]</small> }</td></tr>
                 }

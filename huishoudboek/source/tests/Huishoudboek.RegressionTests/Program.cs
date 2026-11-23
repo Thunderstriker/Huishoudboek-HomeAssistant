@@ -331,9 +331,9 @@ var tests = new (string Name, Action Run)[]
             Equal(40m, Finance.Report(loaded, 2026, 11, Fixture.Today).Outflow);
             Equal(version >= 12 ? 1 : 0, loaded.PurchaseReceipts.Count);
             if (version >= 12) True(upgraded.ReadReceiptDocument(storedReceipt.Id)!.Content.SequenceEqual(document.Content));
-            Equal(1, Directory.GetFiles(directory, "*.voor-versie-17-*.db").Length);
+            Equal(1, Directory.GetFiles(directory, "*.voor-versie-18-*.db").Length);
             var restored = new SqliteHouseholdStore(Path.Combine(directory, "restored.db"));
-            restored.Restore(Directory.GetFiles(directory, "*.voor-versie-17-*.db").Single());
+            restored.Restore(Directory.GetFiles(directory, "*.voor-versie-18-*.db").Single());
             Equal(40m, Finance.Report(restored.Load(), 2026, 11, Fixture.Today).Outflow);
         });
     }),
@@ -396,7 +396,7 @@ var tests = new (string Name, Action Run)[]
         Equal(saved.Revision, coordinator.Read().Revision);
         Equal(100m, Finance.Report(coordinator.Read().Data, 2026, 11, Fixture.Today).Outflow);
     }))
-}.Concat(InvestmentTests.All()).Concat(MortgageTests.All()).Concat(RecognitionTests.All()).Concat(ActionMenuTests.All()).Concat(FinancialCalendarTests.All()).ToArray();
+}.Concat(InvestmentTests.All()).Concat(MortgageTests.All()).Concat(RecognitionTests.All()).Concat(ActionMenuTests.All()).Concat(FinancialCalendarTests.All()).Concat(UxTests.All()).Concat(ImportDuplicateTests.All()).Concat(CategoryHierarchyTests.All()).ToArray();
 
 var failed = 0;
 foreach (var test in tests)

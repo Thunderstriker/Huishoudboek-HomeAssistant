@@ -1,5 +1,26 @@
 import "./chart.umd.min.js";
 
+function watchTheme(charts) {
+    function apply() {
+        const dark = document.documentElement.dataset.theme === "dark";
+        const ink = dark ? "#bdcec5" : "#607188";
+        for (const chart of charts.filter(Boolean)) {
+            if (chart.options.plugins.legend?.labels) chart.options.plugins.legend.labels.color = ink;
+            for (const axis of Object.values(chart.options.scales ?? {})) {
+                if (axis.ticks) axis.ticks.color = ink;
+                if (axis.grid && axis.grid.display !== false) axis.grid.color = context => context.tick.value === 0
+                    ? ink : dark ? "#34483e" : "#edf2e8";
+            }
+            if (chart.config.type === "doughnut") chart.data.datasets[0].borderColor = dark ? "#1c2a23" : "#fffefa";
+            chart.update("none");
+        }
+    }
+    const observer = new MutationObserver(apply);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    apply();
+    return () => observer.disconnect();
+}
+
 // Blazor wraps these return values when C# requests IJSObjectReference; return plain objects.
 export function create(spendingCanvas, forecastCanvas, text) {
     const money = new Intl.NumberFormat(text.locale, { style: "currency", currency: "EUR" });
@@ -50,6 +71,7 @@ export function create(spendingCanvas, forecastCanvas, text) {
             }
         }
     }) : null;
+    const stopTheme = watchTheme([spendingChart, forecastChart]);
     return {
         update(data) {
             spendingChart.data.labels = data.labels;
@@ -63,6 +85,7 @@ export function create(spendingCanvas, forecastCanvas, text) {
             forecastChart?.update("none");
         },
         destroy() {
+            stopTheme();
             spendingChart.destroy();
             forecastChart?.destroy();
         }
@@ -116,6 +139,7 @@ export function createYear(trendCanvas, spendingCanvas, savingsCanvas, text) {
         ] },
         options
     });
+    const stopTheme = watchTheme([trend, spending, savings]);
     return {
         update(data) {
             trend.data.labels = savings.data.labels = data.months;
@@ -131,6 +155,7 @@ export function createYear(trendCanvas, spendingCanvas, savingsCanvas, text) {
             savings.update("none");
         },
         destroy() {
+            stopTheme();
             trend.destroy();
             spending.destroy();
             savings.destroy();

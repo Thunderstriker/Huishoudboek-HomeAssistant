@@ -3,17 +3,35 @@
 @inherits PageBase
 @inject IWebAdministration Backend
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 <PageTitle>@L["Import"] · Huishoudboek</PageTitle>
 <h1>@L["ImportExcelCsv"]</h1>
+@if (uploadId != null || preview != null) { <NavigationLock ConfirmExternalNavigation="true" OnBeforeInternalNavigation="BeforeNavigate" /> }
+<nav class="import-stepper" aria-label="@L["ImportSteps"]">
+    @for (var number = 1; number <= 4; number++)
+    {
+        var n = number;
+        <button type="button" class="@(step == n ? "current" : step > n ? "complete" : "")" aria-current="@(step == n ? "step" : null)" disabled="@(State.Busy || n == 2 && uploadId == null || n >= 3 && preview == null || n == 4)" @onclick="() => step = n"><span>@n</span>@L[StepKeys[n - 1]]</button>
+    }
+</nav>
 <p class="notice">@L["ImportAccountNote"]</p>
 <p class="muted">@L["CategoryPurposeHelp"] <a href="budgetten">@L["BudgetsCategories"]</a></p>
 <section class="card">
+    @if (step == 1)
+    {
     <label>@L["ImportFileHint"]<InputFile id="importFile" OnChange="Upload" accept=".xls,.xlsx,.csv" /></label>
     <div class="fields"><label>@L["ImportAccount"]<select id="importAccount" @bind="accountId" @bind:after="Invalidate"><option value="">@L["ChooseAccount"]</option>@foreach (var a in State.Data.Accounts) { <option value="@a.Id">@a.Name</option> }</select></label>
     <label>@L["FromInclusive"]<InputDate id="from" @bind-Value="from" @bind-Value:after="Invalidate" /></label><label>@L["ThroughInclusive"]<InputDate id="through" @bind-Value="through" @bind-Value:after="Invalidate" /></label></div>
+    <p class="muted">@(fileName ?? L["NoFileSelected"].Value)</p>
+    <button class="primary" disabled="@(uploadId == null || accountId == null || from > through)" @onclick="() => step = 2">@L["ImportContinue"]</button>
+    }
+    @if (step >= 2)
+    { <p><strong>@fileName</strong> · @State.AccountName(accountId) · @from.ToString("dd-MM-yyyy") — @through.ToString("dd-MM-yyyy")</p> }
+    @if (step == 2)
+    {
+        <div class="fields"><label>@L["SavedProfile"]<select @bind="profileChoice" @bind:after="UseProfile"><option value="">@L["AutoDetect"]</option><optgroup label="@L["ReadyMadeBankProfiles"]">@foreach (var p in BankImportProfiles.All) { <option value="@($"bank:{p.Id}")">@p.Name</option> }</optgroup><optgroup label="@L["SavedProfile"]">@foreach (var p in State.Data.ImportProfiles) { <option value="@p.Id">@p.Name</option> }</optgroup></select></label></div>
     <details open="@settingsOpen"><summary>@L["ImportSettings"]</summary>
         <div class="fields"><label>@L["Worksheet"]<select @bind="worksheet" @bind:after="Invalidate"><option value="">@(sheets.Count == 0 ? "CSV" : L["FirstWorksheet"].Value)</option>@foreach (var sheet in sheets) { <option value="@sheet">@sheet</option> }</select></label>
-        <label>@L["SavedProfile"]<select @bind="profileChoice" @bind:after="UseProfile"><option value="">@L["AutoDetect"]</option><optgroup label="@L["ReadyMadeBankProfiles"]">@foreach (var p in BankImportProfiles.All) { <option value="@($"bank:{p.Id}")">@p.Name</option> }</optgroup><optgroup label="@L["SavedProfile"]">@foreach (var p in State.Data.ImportProfiles) { <option value="@p.Id">@p.Name</option> }</optgroup></select></label>
         <label class="check"><input type="checkbox" @bind="windows1252" @bind:after="Invalidate" />@L["Windows1252Hint"]</label></div>
         @if (profile != null)
         {
@@ -25,49 +43,65 @@
         else { <p class="muted">@L["PreviewColumnNote"]</p> }
     </details>
     <p class="muted">@L["BankProfilesNote"]</p>
-    <div class="actions"><button id="preview" class="primary" disabled="@(uploadId == null || accountId == null)" @onclick="Preview">@L["ProcessPreview"]</button></div>
+    <div class="actions"><button @onclick="() => step = 1">@L["ImportChangeFile"]</button><button id="preview" class="primary" disabled="@(uploadId == null || accountId == null || from > through)" @onclick="Preview">@L["ProcessPreview"]</button></div>
     <p class="muted">@(fileName ?? L["NoFileSelected"].Value) · @L["UploadExpiryNote"]</p>
+    }
+    @if (step == 3 && preview != null)
+    { <p>@L["ImportDetectedProfile", preview.Profile.Name]</p><button @onclick="() => step = 2">@L["ImportChangeSettings"]</button> }
 </section>
-@if (preview != null)
+@if (preview != null && step >= 3)
 {
     <section class="card" id="previewPanel"><h2>@L["UnsavedImportPreview"]</h2><p>@L["PreviewRowsNote", rows.Count, rows.Count(r => r.Include)]</p>
-    <div class="table-scroll"><table><thead><tr><th>@L["Save"]</th><th>@L["Row"]</th><th>@L["Date"]</th><th>@L["Description"]</th><th class="money">@L["Amount"]</th><th>@L["Category"]</th><th>@L["Check"]</th></tr></thead><tbody>
-    @foreach (var row in rows.Skip(page * 100).Take(100))
-    { <tr @key="row.Number"><td><input type="checkbox" aria-label="@L["SelectImportRow"]" @bind="row.Include" @bind:after="UnconfirmPartialCoverage" disabled="@(!row.Source.IsValid)" /></td><td>@row.Number</td><td>@row.Source.Date?.ToString("dd-MM-yyyy")</td><td class="description">@if (row.Source.RecognizedName.Length > 0) { <strong>@row.Source.RecognizedName</strong><details><summary>@L["OriginalDescription"]</summary>@row.Source.Description</details> } else { @row.Source.Description }</td><td class="money">@(row.Source.Amount is { } amount ? Money(amount) : "—")</td>
-    <td><select aria-label="@L["ImportRowCategory"]" value="@row.Source.CategoryId" @onchange="e => Adjust(row, e)">@foreach (var category in preview.Categories) { <option value="@category.Id">@(category.Id == null ? L["Uncategorized"].Value : State.Data.Categories.FirstOrDefault(c => c.Id == category.Id) is { } stored ? EditorDraft.CategoryLabel(stored) : category.Name)</option> }</select></td>
-    <td class="description"><span class="badge">@(State.Data.Categories.FirstOrDefault(c => c.Id == row.Source.CategoryId) is { Purpose: not CategoryPurpose.Normal } selectedCategory ? EditorDraft.PurposeLabel(selectedCategory.Purpose) : row.Source.Kind)</span>
+    <p class="notice import-duplicate-summary" role="status">@L["ImportDuplicateSummary", rows.Count(r => r.Source.IsValid && r.Source.DuplicateStatus == ImportDuplicateStatus.New), rows.Count(r => r.Source.DuplicateStatus == ImportDuplicateStatus.AlreadyImported), rows.Count(r => r.Source.DuplicateStatus == ImportDuplicateStatus.NeedsReview)]</p>
+    <p class="muted">@L["ImportDuplicateHelp"]</p>
+    <p class="muted">@L["ImportReviewHint"]</p>
+    <div class="actions"><button @onclick="SelectValid">@L["ImportSelectValid"]</button><button @onclick="ClearSelection">@L["ImportClearSelection"]</button><label class="check"><input type="checkbox" @bind="exceptionsOnly" @bind:after="() => page = 0" />@L["ImportExceptionsOnly"] (@rows.Count(r => r.NeedsReview(State.Today)))</label></div>
+    @{ var displayed = rows.Where(r => !exceptionsOnly || r.NeedsReview(State.Today)).ToList(); page = Math.Min(page, Math.Max(0, (displayed.Count - 1) / 100)); }
+    <div class="table-scroll import-review"><table><thead><tr><th>@L["Save"]</th><th>@L["Row"]</th><th>@L["Date"]</th><th>@L["Description"]</th><th class="money">@L["Amount"]</th><th>@L["Category"]</th><th>@L["Check"]</th></tr></thead><tbody>
+    @foreach (var row in displayed.Skip(page * 100).Take(100))
+    { <tr @key="row.Number" class="@(row.NeedsReview(State.Today) ? "import-exception" : "")"><td data-label="@L["Save"]"><input type="checkbox" aria-label="@($"{L["SelectImportRow"]} {row.Number}")" @bind="row.Include" @bind:after="UnconfirmPartialCoverage" disabled="@(!row.Source.IsValid)" /></td><td data-label="@L["Row"]">@row.Number</td><td data-label="@L["Date"]">@row.Source.Date?.ToString("dd-MM-yyyy")</td><td class="description" data-label="@L["Description"]">@if (row.Source.RecognizedName.Length > 0) { <strong>@row.Source.RecognizedName</strong><details><summary>@L["OriginalDescription"]</summary>@row.Source.Description</details> } else { @row.Source.Description }</td><td class="money" data-label="@L["Amount"]">@(row.Source.Amount is { } amount ? Money(amount) : "—")</td>
+    <td data-label="@L["Category"]"><select aria-label="@($"{L["ImportRowCategory"]} {row.Number}")" value="@row.Source.CategoryId" @onchange="e => Adjust(row, e)" disabled="@(!row.Source.IsValid)">@foreach (var category in preview.Categories) { <option value="@category.Id">@(category.Id == null ? L["Uncategorized"].Value : State.Data.Categories.FirstOrDefault(c => c.Id == category.Id) is { } stored ? EditorDraft.CategoryLabel(State.Data, stored) : category.Name)</option> }</select></td>
+    <td class="description" data-label="@L["Check"]"><span class="badge">@(State.Data.Categories.FirstOrDefault(c => c.Id == row.Source.CategoryId) is { Purpose: not CategoryPurpose.Normal } selectedCategory ? EditorDraft.PurposeLabel(selectedCategory.Purpose) : row.Source.Kind)</span>
+        @if (row.Source.IsValid) { <span class="badge import-status" data-status="@row.Source.DuplicateStatus">@L[row.Source.DuplicateStatus switch { ImportDuplicateStatus.AlreadyImported => "ImportAlreadyImported", ImportDuplicateStatus.NeedsReview => "ImportDuplicateReview", _ => "ImportNewRow" }]</span> }
+        @if (row.Source.MatchedTransactionId is { } matchedId) { <a class="text-link" href="@UiNavigation.Transactions(transaction: matchedId)">@L["ImportViewExisting"]</a> }
         @if (row.Source.RecurringPaymentId != null) { <small>@L["ScheduledPaymentLinked"] · @row.Source.RecurringOccurrenceDate?.ToString("dd-MM-yyyy")</small> }
         else if (row.Source.HasPlannedIdentity) { <small>@L["RecognizedNotLinked"]</small> }
         @if (row.Source.AmbiguousIdentity) { <small class="notice warning">@L["RecognitionAmbiguousImport"]</small> }
         <br />@row.Source.Note</td></tr> }
-    </tbody></table></div><Pager Count="rows.Count" @bind-Page="page" />
-    <label class="check"><input type="checkbox" @bind="confirmCompletePeriod" disabled="@(rows.Any(r => !r.Source.IsValid || !r.Include) || from > State.Today)" />@L["ImportConfirmCompletePeriod", from.ToString("dd-MM-yyyy"), (through < State.Today ? through : State.Today).ToString("dd-MM-yyyy")]</label>
+    </tbody></table></div>@if (displayed.Count == 0 && exceptionsOnly) { <p role="status">@L["ImportNoExceptions"]</p> }<Pager Count="displayed.Count" @bind-Page="page" />
+    <label class="check"><input type="checkbox" @bind="confirmCompletePeriod" disabled="@(rows.Any(r => !r.AccountsForCoverage) || from > State.Today)" />@L["ImportConfirmCompletePeriod", from.ToString("dd-MM-yyyy"), (through < State.Today ? through : State.Today).ToString("dd-MM-yyyy")]</label>
     <p class="muted">@L["ImportCoverageHelp"]</p>
-    <button id="commit" class="primary" disabled="@(!rows.Any(r => r.Include) && !CanConfirmCoverage)" @onclick="() => commitConfirm = true">@L["SaveSelectedRows"]…</button></section>
+    <div class="import-selection-bar"><p role="status">@L["ImportSelectionSummary", rows.Count(r => r.Include), rows.Count, Money(rows.Where(r => r.Include).Sum(r => r.Source.Amount ?? 0)), rows.Count(r => !r.Source.IsValid)]</p><button id="commit" class="primary" disabled="@(!rows.Any(r => r.Include) && !CanConfirmCoverage && !OnlyExistingRows)" @onclick="() => { step = 4; commitConfirm = true; }">@L[rows.Any(r => r.Include) ? "SaveSelectedRows" : "ImportFinishCheck"]…</button></div></section>
 }
 @if (commitConfirm && preview != null)
-{ <Confirm Title="@L["CommitImport"]" Text="@L["CommitImportQuestion", rows.Count(r => r.Include), State.AccountName(accountId)]" ActionLabel="@L["SaveImport"]" Cancel="() => commitConfirm = false" Accept="Commit" /> }
+{ <Confirm Title="@L["CommitImport"]" Text="@CommitQuestion" ActionLabel="@L["SaveImport"]" Cancel="() => { commitConfirm = false; step = 3; }" Accept="Commit" /> }
 @if (result is { } saved)
 {
     <Modal Title="@L["ImportCompleteBalanceCheck"]" Cancel="OpenReview">
         <p>@L["ImportSavedCount", saved.Count, skippedCount]</p>
+        @if (matchedSkippedCount > 0) { <p class="notice success">@L["ImportAlreadySkipped", matchedSkippedCount]</p> }
         <h3>@L["BalanceAsOf", saved.Balance.AsOf.ToString("dd-MM-yyyy"), Money(saved.Balance.CalculatedBalance)]</h3>
         @if (saved.Balance.StatementBalance is { } bank)
         { <p>@L["StatementBalance"]: @Money(bank).</p><p class="notice @(saved.Balance.Difference == 0 ? "success" : "warning")">@(saved.Balance.Difference == 0 ? L["BalanceMatches"].Value : L["BalanceDifference", Money(saved.Balance.Difference!.Value)].Value)</p> }
         else { <p class="notice warning">@L["NoBalanceComparison"]: @BalanceReason(saved.Balance.Status)</p> }
         <p class="muted">@L["BalanceCheckNote"]</p>
         <p>@L["InvalidFutureRows", saved.Balance.InvalidRowCount, saved.Balance.FutureRowCount]</p>
-        <button class="primary" autofocus @onclick="OpenReview">@L["ContinueCheckCategories"]</button>
+        <button class="primary" autofocus @onclick="OpenReview">@L[saved.Count > 0 ? "ContinueCheckCategories" : "ImportBackDashboard"]</button>
     </Modal>
 }
 @code {
     private Guid? uploadId, accountId; private string? fileName; private string worksheet = "", profileChoice = "";
     private IReadOnlyList<string> sheets = [], headers = [];
-    private bool windows1252, settingsOpen = true, commitConfirm, confirmCompletePeriod;
-    private bool CanConfirmCoverage => confirmCompletePeriod && from <= State.Today && rows.All(r => r.Source.IsValid && r.Include);
-    private void UnconfirmPartialCoverage() { if (rows.Any(r => !r.Source.IsValid || !r.Include)) confirmCompletePeriod = false; }
+    private bool windows1252, settingsOpen, commitConfirm, confirmCompletePeriod, exceptionsOnly, allowNavigation;
+    private int step = 1;
+    private static readonly string[] StepKeys = ["ImportStepFile", "ImportStepDetection", "ImportStepReview", "ImportStepSave"];
+    private bool CanConfirmCoverage => confirmCompletePeriod && from <= State.Today && rows.All(r => r.AccountsForCoverage);
+    private bool OnlyExistingRows => rows.Count > 0 && rows.All(r => r.Source.IsValid && r.Source.DuplicateStatus == ImportDuplicateStatus.AlreadyImported);
+    private string CommitQuestion => L["CommitImportQuestion", rows.Count(r => r.Include), State.AccountName(accountId)].Value +
+        (rows.Count(r => r.Include && r.Source.DuplicateStatus != ImportDuplicateStatus.New) is > 0 and var overrides ? " " + L["ImportDuplicateOverride", overrides].Value : "");
+    private void UnconfirmPartialCoverage() { if (rows.Any(r => !r.AccountsForCoverage)) confirmCompletePeriod = false; }
     private DateOnly from, through; private ImportProfile? profile; private PreviewResponse? preview; private CommitImportResponse? result;
-    private List<ImportDraftRow> rows = []; private int page, skippedCount;
+    private List<ImportReviewRow> rows = []; private int page, skippedCount, matchedSkippedCount;
     private readonly CancellationTokenSource cancellation = new();
     private static readonly (string Key, string Label)[] Columns = [
         (nameof(ImportProfile.DateColumn), "Date"), (nameof(ImportProfile.DescriptionColumn), "Description"), (nameof(ImportProfile.ExtraDescriptionColumn), "ExtraDescription"),
@@ -78,7 +112,11 @@
     {
         base.OnInitialized(); from = new DateOnly(State.Year, State.Month, 1); through = from.AddMonths(1).AddDays(-1); accountId = State.Data.Accounts.FirstOrDefault()?.Id;
     }
-    private void Invalidate() { preview = null; rows.Clear(); commitConfirm = false; confirmCompletePeriod = false; settingsOpen = true; }
+    private void Invalidate() { preview = null; rows.Clear(); commitConfirm = false; confirmCompletePeriod = false; if (step > 2) step = 2; }
+    private void SelectValid() { foreach (var row in rows) row.Include = row.Source.IsValid && row.Source.DuplicateStatus == ImportDuplicateStatus.New; UnconfirmPartialCoverage(); }
+    private void ClearSelection() { foreach (var row in rows) row.Include = false; UnconfirmPartialCoverage(); }
+    private async Task BeforeNavigate(LocationChangingContext context)
+    { if (!allowNavigation && !await JS.InvokeAsync<bool>("confirm", L["ImportLeaveWarning"].Value)) context.PreventNavigation(); }
     private async Task Upload(InputFileChangeEventArgs args)
     {
         Invalidate(); uploadId = null; profile = null; profileChoice = ""; headers = []; sheets = []; worksheet = "";
@@ -106,10 +144,10 @@
         await State.RunAsync(async () =>
         {
             preview = await Backend.PreviewAsync(new(uploadId.Value, accountId.Value, from, through, profile, worksheet.Length == 0 ? null : worksheet, windows1252), State.Revision);
-            profile = preview.Profile with { }; headers = preview.Headers; rows = preview.Rows.Select(r => new ImportDraftRow(r)).ToList(); page = 0; settingsOpen = rows.Count == 0;
+            profile = preview.Profile with { }; headers = preview.Headers; rows = preview.Rows.Select(r => new ImportReviewRow(r)).ToList(); page = 0; settingsOpen = rows.Count == 0; exceptionsOnly = false; step = rows.Count == 0 ? 2 : 3;
         }, L["PreviewProcessed"]);
     }
-    private async Task Adjust(ImportDraftRow row, ChangeEventArgs args)
+    private async Task Adjust(ImportReviewRow row, ChangeEventArgs args)
     {
         if (preview == null) return;
         var id = Guid.TryParse(args.Value?.ToString(), out var parsed) ? parsed : (Guid?)null;
@@ -125,15 +163,14 @@
         if (preview == null) return;
         await State.RunAsync(async () =>
         {
-            var selections = rows.Where(r => r.Include).Select(r => new ImportSelection(r.Number, r.Source.CategoryId, null)).ToArray();
+            var selections = rows.Where(r => r.Include).Select(r => new ImportSelection(r.Number, r.Source.CategoryId, null, r.Source.DuplicateStatus != ImportDuplicateStatus.New)).ToArray();
             result = await Backend.CommitAsync(new(preview.PreviewId, selections, CanConfirmCoverage), preview.Revision);
-            skippedCount = rows.Count - selections.Length; commitConfirm = false; preview = null; rows.Clear(); uploadId = null;
-            State.OwnerId = null; State.ReviewBatchId = result.BatchId; await State.LoadAsync();
+            matchedSkippedCount = rows.Count(r => !r.Include && r.Source.DuplicateStatus == ImportDuplicateStatus.AlreadyImported);
+            skippedCount = rows.Count - selections.Length - matchedSkippedCount; commitConfirm = false; preview = null; rows.Clear(); uploadId = null;
+            State.OwnerId = null; State.ReviewBatchId = result.Count > 0 ? result.BatchId : null; await State.LoadAsync();
         }, L["ImportSaved"]);
     }
-    private void OpenReview() { result = null; Navigation.NavigateTo("categoriseren"); }
+    private void OpenReview() { var hasNewRows = result?.Count > 0; result = null; allowNavigation = true; Navigation.NavigateTo(hasNewRows ? "categoriseren" : ""); }
     private string BalanceReason(StatementBalanceStatus status) => L[status switch { StatementBalanceStatus.Missing => "MissingStatementBalance", StatementBalanceStatus.Ambiguous => "AmbiguousStatementBalance", StatementBalanceStatus.InvalidRows => "InvalidBalanceRows", StatementBalanceStatus.NoActualRows => "NoActualBalanceRows", _ => "NoBankReference" }];
     public override void Dispose() { cancellation.Cancel(); cancellation.Dispose(); base.Dispose(); }
-    private sealed class ImportDraftRow(PreviewRow source)
-    { public PreviewRow Source { get; set; } = source; public int Number => Source.RowNumber; public bool Include { get; set; } = source.Include; }
 }

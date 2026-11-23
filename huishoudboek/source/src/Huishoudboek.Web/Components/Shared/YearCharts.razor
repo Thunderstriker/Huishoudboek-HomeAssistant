@@ -17,7 +17,7 @@
                 @for (var index = 0; index < spending.Count; index++)
                 {
                     var item = spending[index];
-                    <li><i style="background:@Colors[index]" aria-hidden="true"></i><span>@item.Name</span><strong>@Money(item.Spent)<small>@((item.Spent / total).ToString("P0", UiCulture.Culture))</small></strong></li>
+                    <li><i style="background:@Color(index)" aria-hidden="true"></i><span>@if (!(hasOther && index == spending.Count - 1)) { <a href="@UiNavigation.Transactions(category: item.Id, from: new DateOnly(Year, 1, 1), through: UiNavigation.ActualThrough(new DateOnly(Year, 12, 31)), owner: OwnerId)">@item.Name</a> } else { @item.Name }</span><strong>@Money(item.Spent)<small>@((item.Spent / total).ToString("P0", UiCulture.Culture))</small></strong></li>
                 }
             </ul>
         </div>
@@ -34,8 +34,11 @@
 @code {
     [Parameter, EditorRequired] public IReadOnlyList<AnnualMonth> Months { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlyList<CategoryResult> Categories { get; set; } = [];
+    [Parameter] public int Year { get; set; } = DateTime.Today.Year;
+    [Parameter] public Guid? OwnerId { get; set; }
 
-    private static readonly string[] Colors = ["#087f75", "#526dc1", "#be6432", "#8556a3", "#b18a28", "#8393a5"];
+    private bool hasOther;
+    private string Color(int index) => hasOther && index == spending.Count - 1 ? CategoryColors.Other : CategoryColors.For(spending[index].Id);
     private List<CategoryResult> spending = [];
     private decimal total;
     private bool hasActivity;
@@ -48,6 +51,7 @@
     {
         var categories = Categories.Where(c => c.Spent > 0).OrderByDescending(c => c.Spent).ToList();
         spending = categories.Take(5).Select(c => c.Id == Guid.Empty ? c with { Name = L["Uncategorized"] } : c).ToList();
+        hasOther = categories.Count > 5;
         if (categories.Count > 5)
             spending.Add(new(Guid.Empty, L["OtherCategories"], 0, categories.Skip(5).Sum(c => c.Spent)));
         total = categories.Sum(c => c.Spent);
@@ -72,7 +76,7 @@
                 income = Months.Select(m => m.Income), outflow = Months.Select(m => m.Outflow),
                 savings = Months.Select(m => m.Savings),
                 cumulativeSavings = Months.Select(m => cumulative += m.Savings).ToArray(),
-                categories = spending.Select(c => c.Name), spending = spending.Select(c => c.Spent), colors = Colors
+                categories = spending.Select(c => c.Name), spending = spending.Select(c => c.Spent), colors = Enumerable.Range(0, spending.Count).Select(Color)
             });
         }
         finally { chartLock.Release(); }

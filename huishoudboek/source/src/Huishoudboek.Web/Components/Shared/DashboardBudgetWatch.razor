@@ -8,8 +8,9 @@
             @foreach (var category in budgets)
             {
                 <li>
-                    <div class="list-heading"><a class="category-link" href="categorietrends?categorie=@category.Id">@category.Name</a><strong>@Money(category.Spent) <small>/ @Money(category.Budget)</small></strong></div>
-                    <progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@L["CategoryUsage", category.Name]" class="@(category.IsOverBudget ? "over-budget" : category.Progress >= 80 ? "near-budget" : "")"></progress>
+                    <div class="list-heading"><a class="category-link" href="@CategoryBookings(category.Id)">@category.Name</a><strong>@Money(category.Spent) <small>/ @Money(category.Budget)</small></strong></div>
+                    @if (Context != null) { <BudgetUsage CategoryId="category.Id" Spent="category.Spent" Budget="category.Budget" /> }
+                    else { <progress value="@category.Progress.ToString(CultureInfo.InvariantCulture)" max="100" aria-label="@L["CategoryUsage", category.Name]"></progress><small>@L["BudgetUsage", (category.Spent / category.Budget * 100).ToString("0", UiCulture.Culture)]</small> }
                     <small class="budget-remaining @(category.IsOverBudget ? "negative" : "")">@L[category.IsOverBudget ? "DashboardBudgetOver" : "DashboardBudgetRemaining", Money(category.IsOverBudget ? category.Overspent : category.Remaining)]</small>
                 </li>
             }
@@ -19,6 +20,9 @@
 </section>
 
 @code {
+    [Parameter] public WebState? Context { get; set; }
+    private string CategoryBookings(Guid id) => Context == null ? $"categorietrends?categorie={id}" : UiNavigation.Transactions(category: id,
+        from: new DateOnly(Context.Year, Context.Month, 1), through: Context.AsOf, owner: Context.OwnerId);
     [Parameter, EditorRequired] public MonthlyReport Report { get; set; } = null!;
     private IReadOnlyList<CategoryResult> budgets = [];
     protected override void OnParametersSet() => budgets = Report.Categories.Where(c => c.Budget > 0)

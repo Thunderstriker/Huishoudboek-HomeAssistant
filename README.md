@@ -10,6 +10,14 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
 
 ## Functies
 
+- **Gebruiksgemak:** pagina-afhankelijke periodekeuze, snelle invoer op het dashboard,
+  compacte mobiele navigatie en directe koppelingen naar bronboekingen. Transacties
+  hebben categorie-, bedrag-, bankrichting- en periodefilters met banktotalen.
+  Kies licht, donker of het systeemthema; categoriekleuren blijven gelijk tussen overzichten.
+- **Begeleide invoer:** bankimport in vier stappen met mobiele beoordeling en een
+  selectiesamenvatting. Gedeelde invoervensters tonen veldfouten en beschermen gewijzigde
+  invoer bij verlaten. Budgettempo is indicatief en vereist bevestigde afschriftdekking;
+  saldoverloop over 7/30/90 dagen blijft een schatting naast de exacte prognosetabel.
 - **Dashboard als startpagina:** saldi van vandaag per rekening, maandcijfers,
   uitgavencategorieën, budgetbewaking, betalingen over 7 dagen en recente boekingen.
   Kies zelf rekeningkaarten; standaard staan de betaalrekeningen (zichtrekeningen) aan.
@@ -88,7 +96,9 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
 - **Import en export:** Excel/CSV-import, automatische herkenning van Argenta-exports,
   kant-en-klare profielen voor ING (NL), Rabobank en KBC/CBC, CSV-export en volledige databaseback-ups met herstel.
 - **Imports per rekening:** alleen de gekozen rekening wordt bijgewerkt, met de
-  bedragen uit het bestand. Geen automatische koppeling tussen eigen rekeningen.
+  bedragen uit het bestand. Eerdere overeenkomende imports staan standaard uitgevinkt;
+  onzekere overeenkomsten vragen controle. Gelijke betalingen worden per voorkomen geteld.
+  Geen automatische koppeling tussen eigen rekeningen.
 - **Sparen zonder transfers koppelen:** kies per categorie gewone inkomsten/uitgaven,
   sparen/beleggen of tussen eigen rekeningen. Spaarbijdragen staan apart van uitgaven
   en budgetoverschrijdingen; bestaande transfers blijven als historie behouden.

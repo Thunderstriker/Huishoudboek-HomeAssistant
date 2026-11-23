@@ -89,7 +89,7 @@ export function createHistory(trendCanvas, comparisonCanvas, text) {
         options: trendOptions
     });
 
-    const comparisonOptions = options(false);
+    const comparisonOptions = options(document.documentElement.dataset.theme === "dark");
     comparisonOptions.plugins.tooltip.callbacks.label = context => {
         const dates = context.datasetIndex === 0 ? payload?.previousMonths : payload?.latestMonths;
         return `${dates?.[context.dataIndex] ?? context.dataset.label}: ${money.format(context.parsed.y)}`;
@@ -107,6 +107,17 @@ export function createHistory(trendCanvas, comparisonCanvas, text) {
         options: comparisonOptions
     });
 
+    const observer = new MutationObserver(() => {
+        const dark = document.documentElement.dataset.theme === "dark";
+        const appearance = options(dark);
+        comparison.options.scales = appearance.scales;
+        Object.assign(comparison.options.plugins.tooltip, {
+            backgroundColor: appearance.plugins.tooltip.backgroundColor,
+            titleColor: appearance.plugins.tooltip.titleColor, bodyColor: appearance.plugins.tooltip.bodyColor
+        });
+        comparison.update("none");
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     return {
         update(data) {
             const next = JSON.stringify(data);
@@ -126,6 +137,6 @@ export function createHistory(trendCanvas, comparisonCanvas, text) {
             trend.resize();
             comparison.resize();
         },
-        destroy() { trend.destroy(); comparison.destroy(); }
+        destroy() { observer.disconnect(); trend.destroy(); comparison.destroy(); }
     };
 }
