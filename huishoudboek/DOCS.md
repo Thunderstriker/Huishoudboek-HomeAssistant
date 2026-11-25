@@ -323,11 +323,22 @@ Abonnementen & contracten is optioneel en voegt geen bedragen of vaste posten to
   een indexwaarde op de kaart wordt niet overgenomen. Het origineel wordt alleen in
   de database bewaard als je dat aanvinkt. Voor de losse service is `pdftotext`
   (Poppler) op het zoekpad nodig; de Home Assistant-add-on bevat het al.
-- **Kwartiermetingen:** upload de oorspronkelijke UTF-8-elektriciteits-CSV uit
-  Mijn Fluvius (puntkomma's, decimale komma, kWh). Controleer EAN, meter, periode,
-  totalen en meldingen. Herhaalde regels tellen niet dubbel. Controleer voorgestelde
-  correcties vóór vervanging; regels waarvan het wintertijdkwartier niet eenduidig is
-  worden overgeslagen, niet op nul gezet. Er is geen automatische meterinvoer.
+- **Meetgegevens:** upload de oorspronkelijke UTF-8-elektriciteits-CSV met dag- of
+  kwartiertotalen uit Mijn Fluvius (puntkomma's, decimale komma, kWh). Controleer EAN,
+  meter, periode, totalen en meldingen. Herhaalde regels tellen niet dubbel. Controleer
+  voorgestelde correcties vóór vervanging. Lege hoeveelheden en dubbelzinnige
+  wintertijdkwartieren worden overgeslagen, niet op nul gezet. Er is geen automatische
+  meterinvoer.
+- **Eerdere kwartiermetingen wissen:** kies bij de import het EAN en de begin- en
+  einddatum, controleer het aantal te wissen metingen en bevestig. Beide datums
+  tellen mee. Dagtotalen en kwartiermetingen buiten de selectie blijven staan.
+  Wil je kwartiermetingen voor een nieuw contract behouden, kies dan een einddatum
+  vóór de start van dat contract. Bewaar zo nodig de oorspronkelijke CSV.
+- **Dekking:** het overzicht gebruikt een volledig gemeten kwartierdag als die er is.
+  Anders vullen dagtotalen voor afname en injectie de historie aan, zonder overlappende
+  kwartieren op te tellen. Van dagtotalen kunnen bekende dag-/nachttarieven en
+  injectievergoedingen worden berekend. Voor dynamische afname zijn alleen bedragen uit
+  gemeten kwartieren bekend; het verbruik wordt niet over de dag verdeeld.
 - **Kosten:** een vaste of variabele afnameprijs staat per toepasselijke versie.
   Vul voor maandelijkse injectie-indexering alleen de geverifieerde waarde van de
   leverancier voor die maand in, in €/MWh, met bron. De formule is in cent/kWh.
@@ -349,6 +360,7 @@ Abonnementen & contracten is optioneel en voegt geen bedragen of vaste posten to
 De module is gedeeld voor het huishouden en wijzigt geen bankboekingen, budgetten,
 vaste posten of prognoses. Tarieven, metingen, optioneel bewaarde pdf's en marktprijzen
 gaan vanaf schema 20 mee in de volledige SQLite-back-up, niet in de transactie-CSV.
+Schema 22 bewaart ook dagtotalen naast kwartiermetingen.
 Bij migratie wordt eerst een veiligheidskopie gemaakt. Gas, leveranciersvergelijkingen
 en automatische Home Assistant-/P1-invoer zijn niet inbegrepen.
 

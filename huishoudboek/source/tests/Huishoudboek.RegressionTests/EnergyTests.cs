@@ -12,8 +12,11 @@ using Microsoft.Data.Sqlite;
 internal static class EnergyTests
 {
     internal const string RemoveSchema20Tables = "DROP TABLE EnergyContract; DROP TABLE EnergyTariff; DROP TABLE EnergyIndexValue; DROP TABLE EnergyReading; DROP TABLE EnergyMarketPrice; DROP TABLE energy_tariff_documents;";
+    internal const string RemoveSchema22Resolution = "DROP INDEX ix_energy_reading_slot; ALTER TABLE EnergyReading DROP COLUMN Resolution; " +
+        "CREATE UNIQUE INDEX ix_energy_reading_slot ON EnergyReading(Ean, StartUtc, Direction, Register);";
     private const string Ean = "000000000000000001";
     private const string Header = "EAN-code;Meternummer;Datum;Starttijd;Eindtijd;Register;Volume;Eenheid;Validatiestatus;Omschrijving";
+    private const string FluviusHeader = "Van (datum);Van (tijdstip);Tot (datum);Tot (tijdstip);EAN-code;Meter;Metertype;Register;Volume;Eenheid;Validatiestatus;Omschrijving";
     private static readonly DateOnly November = new(2026, 11, 1);
 
     public static IEnumerable<(string Name, Action Run)> All()
@@ -118,6 +121,60 @@ internal static class EnergyTests
             var parsed = EnergyCsv.Read(stream);
             Equal(2, parsed.Readings.Count); Equal(0m, parsed.Readings[1].Quantity); Equal(EnergyCsvProblem.Quantity, parsed.Issues.Single().Problem);
             Equal(new DateOnly(2026, 11, 2), BelgianEnergyTime.Day(parsed.Readings[0].EndUtc));
+        });
+        yield return ("Fluvius daily totals follow Brussels calendar days, including the winter-clock export convention", () =>
+        {
+            var spring = FluviusRow("29-03-2026", "30-03-2026", "7,811");
+            var fall = FluviusRow("25-10-2026", "25-10-2026", "8,787", until: "23:00:00");
+            var zero = FluviusRow("01-11-2026", "02-11-2026", "0,000", "Injectie Nacht", "Geen verbruik");
+            var missing = FluviusRow("01-11-2026", "02-11-2026", "", "Afname Nacht", "Geen verbruik");
+            var badEnd = FluviusRow("26-10-2026", "26-10-2026", "8,787", until: "23:00:00");
+            var sameMidnight = FluviusRow("01-11-2026", "01-11-2026", "1");
+            var quarter = FluviusRow("01-11-2026", "01-11-2026", "2", "Injectie Nacht", until: "00:15:00");
+            var parsed = ReadCsv(FluviusHeader, spring, fall, zero, missing, badEnd, sameMidnight, quarter, fall);
+            Equal(8, parsed.Rows); Equal(1, parsed.DuplicateRows); Equal(4, parsed.Readings.Count); Equal(3, parsed.IssueCount);
+            True(parsed.Issues.Select(i => i.Problem).SequenceEqual([EnergyCsvProblem.MissingQuantity, EnergyCsvProblem.Time, EnergyCsvProblem.Time]));
+            True(parsed.Readings.Take(3).All(r => r.Resolution == EnergyReadingResolution.DailyTotal && EnergyTerms.ValidReading(r)));
+            Equal(23d, (parsed.Readings[0].EndUtc - parsed.Readings[0].StartUtc).TotalHours);
+            Equal(25d, (parsed.Readings[1].EndUtc - parsed.Readings[1].StartUtc).TotalHours);
+            Equal(BelgianEnergyTime.MidnightUtc(new DateOnly(2026, 10, 26)), parsed.Readings[1].EndUtc);
+            Equal(8.787m, parsed.Readings[1].Quantity); Equal(0m, parsed.Readings[2].Quantity);
+            Equal(EnergyDirection.Injection, parsed.Readings[2].Direction); Equal(EnergyRegister.Night, parsed.Readings[2].Register);
+            Equal(EnergyReadingResolution.QuarterHour, parsed.Readings[3].Resolution);
+            var conflicting = ReadCsv(FluviusHeader, fall, fall.Replace("8,787", "8,789"));
+            Equal(0, conflicting.Readings.Count); Equal(2, conflicting.IssueCount);
+        });
+        yield return ("Daily totals fill quarter coverage gaps without double counting and retain independent register rates", () =>
+        {
+            var c = Contract(); var t = Tariff(c) with { InjectionCoefficient = .05m, InjectionOffset = 0, InjectionNightCoefficient = .02m, InjectionNightOffset = 0 };
+            var i = new EnergyIndexValue { Series = t.InjectionIndex, Month = November, Source = "Synthetic publication", EuroPerMwh = 100m };
+            var day2 = November.AddDays(1); var day3 = November.AddDays(2);
+            var readings = new[] { Reading(November, 0, 1), Daily(November, 5), Daily(November, 3, EnergyRegister.Night),
+                Daily(November, 3, direction: EnergyDirection.Injection), Daily(November, 2, EnergyRegister.Night, EnergyDirection.Injection),
+                Daily(day2, 20), Daily(day2, 30, EnergyRegister.Night), Daily(day3, 2) with { Status = "Geschat" } }
+                .Concat(Enumerable.Range(0, 96).Select(q => Reading(day2, q * 15, .1m)));
+            var report = EnergyCosts.Calculate(new([c], [t], [i]), c, November, November.AddDays(3), readings, []);
+            True(report.HasReadings);
+            Equal<decimal?>(8m, report.Days[0].Consumption.Kwh); Equal<decimal?>(1.4741m, report.Days[0].Consumption.Amount);
+            Equal<decimal?>(5m, report.Days[0].Injection.Kwh); Equal<decimal?>(.19m, report.Days[0].Injection.Amount);
+            Equal<decimal?>(9.6m, report.Days[1].Consumption.Kwh); Equal(0, report.Days[1].Consumption.DailyTotals);
+            Equal(2, report.Consumption.DailyTotals); Equal(1, report.Consumption.PartialDailyTotals); Equal(1, report.Consumption.EstimatedDailyTotals);
+            Equal(97, report.Consumption.Intervals); Equal(0, report.Consumption.UnpricedDailyTotals);
+            Equal<decimal?>(19.6m, report.Consumption.Kwh); Equal<decimal?>(null, report.Days[3].Consumption.Kwh);
+        });
+        yield return ("Dynamic tariffs cannot price daily totals even when a midnight market price exists", () =>
+        {
+            var c = Contract(); var t = Tariff(c) with { Pricing = EnergyPricing.Dynamic, MarketSeries = EnergyMarketSeries.BelgianDayAhead,
+                Settlement = EnergySettlement.QuarterHour, MarketCoefficient = .1m, MarketOffset = 2m };
+            var market = Price(BelgianEnergyTime.MidnightUtc(November), 15, 100m);
+            var daily = new[] { Daily(November, 5), Daily(November, 3, EnergyRegister.Night) };
+            var settings = new EnergySettings([c], [t], []);
+            var report = EnergyCosts.Calculate(settings, c, November, November, daily, [market]);
+            True(report.HasReadings); Equal(0, report.Consumption.Intervals); Equal(1, report.Consumption.UnpricedDailyTotals);
+            Equal<decimal?>(8m, report.Consumption.Kwh); Equal<decimal?>(null, report.Consumption.Amount);
+            var overlap = EnergyCosts.Calculate(settings, c, November, November, daily.Append(Reading(November, 0, 2)), [market]);
+            Equal<decimal?>(8m, overlap.Consumption.Kwh); Equal<decimal?>(.24m, overlap.Consumption.Amount);
+            Equal(2m, overlap.Consumption.PricedKwh); Equal(1, overlap.Consumption.UnpricedDailyTotals);
         });
         yield return ("Energy CSV import atomically checks duplicate, correction, overlapping meter and revision", () => InDirectory(directory =>
         {
@@ -228,17 +285,87 @@ internal static class EnergyTests
             target.Restore(old); Equal(0, target.ReadEnergySettings().Contracts.Count); Equal<EnergyTariffDocument?>(null, target.ReadEnergyDocument(t.Id));
             Equal(0, target.ReadEnergyReadings(Ean, November, November.AddMonths(1)).Count);
         }));
+        yield return ("Schema 22 keeps daily totals and midnight quarters independent through corrections and backup restore", () => InDirectory(directory =>
+        {
+            var path = Path.Combine(directory, "energy.db"); var initial = new SqliteHouseholdStore(path);
+            var quarter = Csv(Row("01-11-2026", "00:00", "00:15", "1"));
+            initial.CommitEnergyImport(quarter, false);
+            Sql(path, RemoveSchema22Resolution + "PRAGMA user_version=21;");
+
+            var store = new SqliteHouseholdStore(path, allowCreate: false);
+            var old = Directory.GetFiles(directory, "*.voor-versie-22-*.db").Single();
+            var target = new SqliteHouseholdStore(Path.Combine(directory, "target.db"));
+            List<EnergyReading> Read(SqliteHouseholdStore db) => db.ReadEnergyReadings(Ean, November, November.AddDays(1));
+            target.Restore(old); Equal(quarter.Readings.Single(), Read(target).Single());
+            Equal(quarter.Readings.Single(), Read(store).Single());
+
+            var row = FluviusRow("01-11-2026", "02-11-2026", "5");
+            var day = ReadCsv(FluviusHeader, row);
+            Equal(0, store.PreviewEnergyImport(day, "").Conflicts);
+            True(store.CommitEnergyImport(day, false)); True(!store.CommitEnergyImport(day, false));
+            var night = ReadCsv(FluviusHeader, FluviusRow("01-11-2026", "02-11-2026", "3", "Afname Nacht"));
+            True(store.CommitEnergyImport(night, false));
+            var correction = ReadCsv(FluviusHeader, row.Replace(";5;", ";6;"));
+            Equal(1, store.PreviewEnergyImport(correction, "").Conflicts);
+            Throws<InvalidOperationException>(() => store.CommitEnergyImport(correction, false));
+            True(store.CommitEnergyImport(correction, true));
+            Equal(3, Read(store).Count); Equal(quarter.Readings.Single(), Read(store)[0]);
+            Equal(9m, Read(store).Where(r => r.Resolution == EnergyReadingResolution.DailyTotal).Sum(r => r.Quantity));
+            var quarterCorrection = Csv(Row("01-11-2026", "00:00", "00:15", "2"));
+            True(store.CommitEnergyImport(quarterCorrection, true));
+            Equal(3, Read(store).Count); Equal(2m, Read(store)[0].Quantity);
+
+            var backup = Path.Combine(directory, "backup.db"); store.Backup(backup); target.Restore(backup);
+            True(Read(store).SequenceEqual(Read(target)));
+        }));
+        yield return ("Clearing quarters previews the exact Belgian-date range, protects other readings and rejects stale confirmation", () => InDirectory(directory =>
+        {
+            using var coordinator = new AdministrationCoordinator(directory, initialize: true);
+            var store = new SqliteHouseholdStore(Path.Combine(directory, "huishoudboek.db"));
+            var day = new DateOnly(2026, 10, 25); // 25-hour day, and the next day can belong to a newer contract.
+            const string otherEan = "000000000000000002";
+            var before = Reading(day.AddDays(-1), 95 * 15, 1);
+            var first = Reading(day, 0, 1);
+            var last = Reading(day, 99 * 15, 1);
+            var after = Reading(day.AddDays(1), 0, 1);
+            var other = Reading(day, 0, 1) with { Ean = otherEan };
+            var daily = Daily(day, 7);
+            coordinator.CommitEnergy(coordinator.PreviewEnergy(new([before, first, last, after, other, daily], 6, 0, 0, [])), false);
+
+            var view = coordinator.ReadEnergy(null, new(2026, 10, 1), day.AddDays(1));
+            True(view.QuarterHourConnections.SequenceEqual([Ean, otherEan])); // No contract is required to remove previously imported readings.
+            var cleanup = coordinator.PreviewClearEnergyQuarterHours(Ean, day, day);
+            Equal(2, cleanup.Count);
+            var empty = coordinator.PreviewClearEnergyQuarterHours(Ean, day.AddDays(2), day.AddDays(2));
+            Equal(0, empty.Count);
+            Throws<InvalidOperationException>(() => coordinator.ClearEnergyQuarterHours(empty));
+            Throws<InvalidDataException>(() => coordinator.PreviewClearEnergyQuarterHours(Ean, day.AddDays(1), day));
+            Throws<InvalidOperationException>(() => store.ClearQuarterHourReadings(Ean, day, day, 3));
+            Equal(2, store.CountQuarterHourReadings(Ean, day, day));
+
+            var newReading = new EnergyCsvFile([Reading(day, 15, 2)], 1, 0, 0, []);
+            coordinator.CommitEnergy(coordinator.PreviewEnergy(newReading), false);
+            Throws<AdministrationConflictException>(() => coordinator.ClearEnergyQuarterHours(cleanup));
+            var import = coordinator.PreviewEnergy(newReading);
+            Equal(3, coordinator.ClearEnergyQuarterHours(coordinator.PreviewClearEnergyQuarterHours(Ean, day, day)));
+            Throws<AdministrationConflictException>(() => coordinator.CommitEnergy(import, false));
+            True(store.ReadEnergyReadings(Ean, day.AddDays(-1), day.AddDays(2)).SequenceEqual([before, daily, after]));
+            Equal(other, store.ReadEnergyReadings(otherEan, day, day.AddDays(1)).Single());
+        }));
         yield return ("Energy cost UI translates coverage and labels all incomplete charges as a partial subtotal", () =>
         {
             var previous = CultureInfo.CurrentUICulture;
             try
             {
                 var c = Contract(); var r = EnergyCosts.Calculate(new([c], [Tariff(c)], []), c, November, November, [Reading(November, 0, 0)], []);
+                var totals = EnergyCosts.Calculate(new([c], [Tariff(c)], []), c, November, November, [Daily(November, 5), Daily(November, 3, EnergyRegister.Night)], []);
                 foreach (var name in new[] { "nl-NL", "en-US" })
                 {
                     CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(name);
                     var html = WebUtility.HtmlDecode(UxTests.Render<EnergyCostTable>(new WebState(null!), new Dictionary<string, object?> { ["Report"] = r }));
                     True(html.Contains(UiCulture.Text("EnergyPartialSubtotal"))); True(html.Contains(UiCulture.Text("EnergyOtherChargesMissing"))); True(html.Contains("1/96"));
+                    var daily = WebUtility.HtmlDecode(UxTests.Render<EnergyCostTable>(new WebState(null!), new Dictionary<string, object?> { ["Report"] = totals }));
+                    True(daily.Contains(UiCulture.Text("EnergyDailyCoverage", 1, 1, 0, 0, 0))); True(!daily.Contains("1/96"));
                 }
             }
             finally { CultureInfo.CurrentUICulture = previous; }
@@ -257,9 +384,14 @@ internal static class EnergyTests
     }
     private static string Row(string day, string from, string end, string amount, string register = "Afname Dag", string? point = null) =>
         $"{point ?? $"=\"{Ean}\""};meter-a;{day};{from};{end};{register};{amount};kWh;Gevalideerd;\"Kwartier; test\"";
-    private static EnergyCsvFile Csv(params string[] rows)
+    private static EnergyReading Daily(DateOnly day, decimal amount, EnergyRegister register = EnergyRegister.Day, EnergyDirection direction = EnergyDirection.Consumption) =>
+        Reading(day, 0, amount, register, direction) with { Resolution = EnergyReadingResolution.DailyTotal, EndUtc = BelgianEnergyTime.MidnightUtc(day.AddDays(1)) };
+    private static string FluviusRow(string day, string end, string amount, string register = "Afname Dag", string status = "Uitgelezen", string until = "00:00:00") =>
+        $"{day};00:00:00;{end};{until};=\"{Ean}\";meter-a;Digitale meter;{register};{amount};kWh;{status};";
+    private static EnergyCsvFile Csv(params string[] rows) => ReadCsv(Header, rows);
+    private static EnergyCsvFile ReadCsv(string header, params string[] rows)
     {
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(string.Join('\n', rows.Prepend(Header))));
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(string.Join('\n', rows.Prepend(header))));
         return EnergyCsv.Read(stream);
     }
     private static void Sql(string path, string sql)

@@ -1750,7 +1750,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="AllCategories" xml:space="preserve"><value>Alle categorieën</value></data>
   <data name="Close" xml:space="preserve"><value>Sluiten</value></data>
   <data name="EnergyTitle" xml:space="preserve"><value>Elektriciteit (Vlaanderen)</value></data>
-  <data name="EnergyIntro" xml:space="preserve"><value>Bewaar elektriciteitscontracten, tariefversies en kwartiermetingen. Dit overzicht wijzigt geen bankboekingen, vaste posten, budgetten of prognoses.</value></data>
+  <data name="EnergyIntro" xml:space="preserve"><value>Bewaar elektriciteitscontracten, tariefversies, kwartiermetingen en dagtotalen. Dit overzicht wijzigt geen bankboekingen, vaste posten, budgetten of prognoses.</value></data>
   <data name="EnergyHouseholdScope" xml:space="preserve"><value>Gedeeld voor het huishouden. Het maandoverzicht volgt het EAN over contractwissels heen, onafhankelijk van het eigenaarfilter.</value></data>
   <data name="EnergyContract" xml:space="preserve"><value>Energiecontract</value></data>
   <data name="EnergyEditContract" xml:space="preserve"><value>Contractgegevens bewerken</value></data>
@@ -1833,24 +1833,27 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="EnergyPdfExpired" xml:space="preserve"><value>De tijdelijke pdf is verlopen. Upload opnieuw of zet bewaren uit; je invoer blijft staan.</value></data>
   <data name="EnergyPdfOnly" xml:space="preserve"><value>Kies een geldig pdf-bestand.</value></data>
   <data name="EnergyFileLimit" xml:space="preserve"><value>Het bestand is te groot voor verwerking.</value></data>
-  <data name="EnergyImportTitle" xml:space="preserve"><value>Kwartiermetingen importeren</value></data>
-  <data name="EnergyImportFile" xml:space="preserve"><value>Fluvius-kwartierexport (csv)</value></data>
+  <data name="EnergyImportTitle" xml:space="preserve"><value>Meetgegevens importeren</value></data>
+  <data name="EnergyImportFile" xml:space="preserve"><value>Fluvius-export met dag- of kwartiertotalen (csv)</value></data>
   <data name="EnergyImportHelp" xml:space="preserve"><value>Kies de oorspronkelijke puntkomma-gescheiden elektriciteitsexport (max. 20 MB en 100.000 regels). Het bestand blijft lokaal. De dag-/nachtregisters bepalen niet het facturatieschema.</value></data>
+  <data name="EnergyReadingDailyTotal" xml:space="preserve"><value>Dagtotalen</value></data>
+  <data name="EnergyReadingQuarterHour" xml:space="preserve"><value>Kwartiermetingen</value></data>
   <data name="EnergyCsvOnly" xml:space="preserve"><value>Kies een csv-bestand van maximaal 20 MB.</value></data>
   <data name="EnergyImportReview" xml:space="preserve"><value>Meetgegevens controleren</value></data>
-  <data name="EnergyImportSummary" xml:space="preserve"><value>{0} regels gelezen · {1} unieke bruikbare metingen · {2} al opgeslagen · {3} dubbel in bestand · {4} kwartieren met wijzigingen</value></data>
+  <data name="EnergyImportSummary" xml:space="preserve"><value>{0} regels gelezen · {1} unieke bruikbare metingen · {2} al opgeslagen · {3} dubbel in bestand · {4} voorgestelde vervangingen</value></data>
   <data name="EnergyRegisterDay" xml:space="preserve"><value>Dagregister</value></data>
   <data name="EnergyRegisterNight" xml:space="preserve"><value>Nachtregister</value></data>
   <data name="EnergyImportIssues" xml:space="preserve"><value>{0} over te slaan regels ({1} getoond)</value></data>
   <data name="EnergyImportRow" xml:space="preserve"><value>Regel {0}:</value></data>
   <data name="EnergyCsvColumns" xml:space="preserve"><value>Onjuist aantal velden of ongeldige aanhalingstekens.</value></data>
   <data name="EnergyCsvIdentity" xml:space="preserve"><value>Ongeldig EAN of meternummer.</value></data>
-  <data name="EnergyCsvTime" xml:space="preserve"><value>Geen geldig kwartier in Belgische tijd.</value></data>
+  <data name="EnergyCsvTime" xml:space="preserve"><value>Geen geldig kwartier of dagtotaal in Belgische tijd.</value></data>
   <data name="EnergyCsvAmbiguousTime" xml:space="preserve"><value>Dubbelzinnig wintertijdkwartier; de juiste UTC-tijd is niet vast te stellen.</value></data>
   <data name="EnergyCsvQuantity" xml:space="preserve"><value>Ongeldige hoeveelheid of geen kWh.</value></data>
+  <data name="EnergyCsvMissingQuantity" xml:space="preserve"><value>Leeg dagtotaal; er is geen gemeten hoeveelheid ingevuld.</value></data>
   <data name="EnergyCsvRegister" xml:space="preserve"><value>Afname/injectie of dag/nacht niet eenduidig.</value></data>
   <data name="EnergyCsvStatus" xml:space="preserve"><value>Onbekende of onbruikbare validatiestatus.</value></data>
-  <data name="EnergyCsvConflictingRows" xml:space="preserve"><value>Het bestand bevat tegenstrijdige metingen binnen hetzelfde kwartier.</value></data>
+  <data name="EnergyCsvConflictingRows" xml:space="preserve"><value>Het bestand bevat tegenstrijdige metingen voor hetzelfde kwartier of dagtotaal.</value></data>
   <data name="EnergySkipIssues" xml:space="preserve"><value>Ik wil de afgekeurde regels overslaan. Ze tellen niet als nulmetingen.</value></data>
   <data name="EnergyImportConflicts" xml:space="preserve"><value>Controleer {0} voorgestelde vervangingen</value></data>
   <data name="EnergyBefore" xml:space="preserve"><value>Opgeslagen</value></data>
@@ -1858,10 +1861,20 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="EnergyConfirmReplace" xml:space="preserve"><value>Ik bevestig dat deze opgeslagen metingen worden vervangen.</value></data>
   <data name="EnergyConfirmImport" xml:space="preserve"><value>Geldige metingen opslaan</value></data>
   <data name="EnergyImportSaved" xml:space="preserve"><value>Meetgegevens opgeslagen.</value></data>
+  <data name="EnergyClearQuarterTitle" xml:space="preserve"><value>Eerdere kwartiermetingen wissen</value></data>
+  <data name="EnergyClearQuarterHelp" xml:space="preserve"><value>Kies een EAN en de periode die je wilt wissen. Dagtotalen en kwartiermetingen buiten die periode blijven bewaard. Wil je kwartiermetingen voor een nieuw contract behouden, kies dan een einddatum vóór de start van dat contract.</value></data>
+  <data name="EnergyClearQuarterInvalidRange" xml:space="preserve"><value>Kies een geldige begindatum en een einddatum op of na de begindatum.</value></data>
+  <data name="EnergyClearQuarterNone" xml:space="preserve"><value>Geen kwartiermetingen gevonden voor dit EAN in de gekozen periode.</value></data>
+  <data name="EnergyClearQuarterFinishImport" xml:space="preserve"><value>Rond de lopende import af of annuleer deze voordat je kwartiermetingen wist.</value></data>
+  <data name="EnergyClearQuarterPreview" xml:space="preserve"><value>Controleer wat wordt gewist</value></data>
+  <data name="EnergyClearQuarterConfirm" xml:space="preserve"><value>Wis {0} kwartiermetingen voor EAN {1} van {2} t/m {3}. Dagtotalen en metingen buiten dit EAN of deze periode blijven staan. Je kunt dit niet ongedaan maken; bewaar zo nodig de oorspronkelijke CSV.</value></data>
+  <data name="EnergyClearQuarterDelete" xml:space="preserve"><value>Kwartiermetingen wissen</value></data>
+  <data name="EnergyClearQuarterSaved" xml:space="preserve"><value>{0} kwartiermetingen gewist.</value></data>
   <data name="EnergyMonthlyCosts" xml:space="preserve"><value>Energiekosten per maand</value></data>
-  <data name="EnergyCostsNote" xml:space="preserve"><value>Alleen bekende bedragen inclusief toepasselijke btw; — betekent ontbrekend of niet van toepassing. Dit is geen factuur of voorschot. Dekking vergelijkt de metingen met alle kwartieren van de Belgische dag, inclusief vandaag.</value></data>
+  <data name="EnergyCostsNote" xml:space="preserve"><value>Alleen bekende bedragen inclusief toepasselijke btw; — betekent ontbrekend of niet van toepassing. Dit is geen factuur of voorschot. Dagtotalen vullen ontbrekende kwartierdekking aan, maar dynamische afnamekosten tellen alleen gemeten kwartieren mee.</value></data>
   <data name="EnergyNoReadings" xml:space="preserve"><value>Geen metingen voor deze maand. Zonder metingen wordt geen huishoudsubtotaal berekend.</value></data>
   <data name="EnergyCoverage" xml:space="preserve"><value>{0}/{1} kwartieren · {2} niet volledig geprijsd · {3} geschat of voorlopig</value></data>
+  <data name="EnergyDailyCoverage" xml:space="preserve"><value>Dagtotalen gebruikt: {0}/{1} dagen · {2} onvolledig · {3} niet volledig geprijsd · {4} geschat of voorlopig</value></data>
   <data name="EnergyWeightedRate" xml:space="preserve"><value>Gewogen prijs voor geprijsde kWh: {0} €/kWh</value></data>
   <data name="EnergyPartialSubtotal" xml:space="preserve"><value>Deelsubtotaal</value></data>
   <data name="EnergyOtherChargesMissing" xml:space="preserve"><value>Netkosten, capaciteitstarief, heffingen en andere niet ingevoerde kosten ontbreken.</value></data>

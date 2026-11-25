@@ -5,7 +5,8 @@ namespace Huishoudboek.Web;
 
 public sealed record EnergyPublishedDay(DateOnly Day, EnergyTariff Tariff, IReadOnlyList<EnergyPriceSlot> Slots);
 public sealed record EnergyView(string Revision, EnergySettings Settings, Guid? ContractId, EnergyCostReport? Report,
-    IReadOnlyList<EnergyPublishedDay> Published, bool CanFetchHistorical);
+    IReadOnlyList<EnergyPublishedDay> Published, bool CanFetchHistorical, IReadOnlyList<string> QuarterHourConnections);
+public sealed record EnergyQuarterClearPreview(string Revision, string Ean, DateOnly From, DateOnly Through, int Count);
 public sealed record EnergyPdfDraft(Guid UploadId, string FileName, LuminusCard? Card, ReceiptRecognitionState State);
 
 public interface IEnergyAdministration
@@ -15,6 +16,8 @@ public interface IEnergyAdministration
     Task SaveIndexAsync(string revision, EnergyIndexValue value, CancellationToken token);
     Task<EnergyImportPreview> PreviewAsync(Stream source, CancellationToken token);
     Task CommitAsync(EnergyImportPreview preview, bool replace, CancellationToken token);
+    Task<EnergyQuarterClearPreview> PreviewClearQuarterHoursAsync(string ean, DateOnly from, DateOnly through, CancellationToken token);
+    Task<int> ClearQuarterHoursAsync(EnergyQuarterClearPreview preview, CancellationToken token);
     Task<EnergyPdfDraft> ReadPdfAsync(Stream source, string name, CancellationToken token);
     void DiscardPdf(Guid id);
     Task<int> FetchPricesAsync(string revision, Guid contractId, DateOnly month, bool current, CancellationToken token);

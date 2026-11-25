@@ -115,9 +115,18 @@ public static class EnergyTerms
     public static (string, DateOnly) IndexKey(string series, DateOnly date) => (series.Trim().ToUpperInvariant(), new(date.Year, date.Month, 1));
 
     public static bool ValidReading(EnergyReading r) => r.Id != Guid.Empty && ValidEan(r.Ean) && Text(r.Meter, 100, true) &&
-        ValidInterval(r.StartUtc, r.EndUtc, 15) && Enum.IsDefined(r.Direction) && Enum.IsDefined(r.Register) && r.Quantity is >= 0 and <= 1_000_000 &&
+        ValidReadingInterval(r) && Enum.IsDefined(r.Direction) && Enum.IsDefined(r.Register) && r.Quantity is >= 0 and <= 1_000_000 &&
         r.Unit == "kWh" && Text(r.Source, 180, true) && Text(r.Description, 500) && ReadingQuality(r.Status) != 0 &&
         (!r.Status.Equals("Geen verbruik", StringComparison.OrdinalIgnoreCase) || r.Quantity == 0);
+
+    private static bool ValidReadingInterval(EnergyReading r)
+    {
+        if (r.Resolution == EnergyReadingResolution.QuarterHour) return ValidInterval(r.StartUtc, r.EndUtc, 15);
+        if (r.Resolution != EnergyReadingResolution.DailyTotal || r.StartUtc.Kind != DateTimeKind.Utc || r.EndUtc.Kind != DateTimeKind.Utc ||
+            r.StartUtc.Year is < 1899 or > 2199) return false;
+        var day = BelgianEnergyTime.Day(r.StartUtc);
+        return BelgianEnergyTime.Supported(day) && r.StartUtc == BelgianEnergyTime.MidnightUtc(day) && r.EndUtc == BelgianEnergyTime.MidnightUtc(day.AddDays(1));
+    }
 
     public static int ReadingQuality(string? status) => status?.Trim().ToUpperInvariant() switch
     {

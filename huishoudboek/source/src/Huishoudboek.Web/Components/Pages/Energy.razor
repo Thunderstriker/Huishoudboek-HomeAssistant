@@ -103,9 +103,34 @@ else
     <section class="card">
         <h2>@L["EnergyImportTitle"]</h2>
         <p class="muted">@L["EnergyImportHelp"]</p>
-        <label>@L["EnergyImportFile"] <InputFile @key="fileKey" OnChange="PreviewFile" accept=".csv,text/csv" /></label>
+        <label>@L["EnergyImportFile"] <InputFile @key="fileKey" OnChange="PreviewFile" accept=".csv,text/csv" disabled="@State.Busy" /></label>
     </section>
     @if (preview is { } review) { <EnergyImportReview @key="review" Preview="review" Busy="State.Busy" OnCancel="ClearPreview" OnConfirm="Commit" /> }
+    @if (view.QuarterHourConnections.Count > 0)
+    {
+        <details class="card">
+            <summary>@L["EnergyClearQuarterTitle"]</summary>
+            <p class="muted">@L["EnergyClearQuarterHelp"]</p>
+            <div class="filters">
+                <label>EAN
+                    <select @bind="quarterEan" @bind:after="ResetQuarterPreview" disabled="@State.Busy">
+                        @foreach (var ean in view.QuarterHourConnections) { <option value="@ean">@ean</option> }
+                    </select>
+                </label>
+                <label>@L["FromInclusive"] <input type="date" min="1900-01-01" max="2199-12-31" @bind="quarterFrom" @bind:after="ResetQuarterPreview" disabled="@State.Busy" /></label>
+                <label>@L["ThroughInclusive"] <input type="date" min="1900-01-01" max="2199-12-31" @bind="quarterThrough" @bind:after="ResetQuarterPreview" disabled="@State.Busy" /></label>
+            </div>
+            @if (quarterFrom.HasValue && quarterThrough.HasValue && !QuarterRangeValid) { <p role="alert">@L["EnergyClearQuarterInvalidRange"]</p> }
+            @if (quarterClear is { Count: 0 }) { <p role="status">@L["EnergyClearQuarterNone"]</p> }
+            @if (preview != null) { <p class="muted">@L["EnergyClearQuarterFinishImport"]</p> }
+            <button type="button" @onclick="PreviewQuarterCleanup" disabled="@(State.Busy || preview != null || !QuarterRangeValid)">@L["EnergyClearQuarterPreview"]</button>
+        </details>
+    }
+    @if (quarterClear is { Count: > 0 } cleanup)
+    {
+        <Confirm Title="@L["EnergyClearQuarterTitle"]" Text="@L["EnergyClearQuarterConfirm", cleanup.Count, cleanup.Ean, Date(cleanup.From), Date(cleanup.Through)]"
+                 ActionLabel="@L["EnergyClearQuarterDelete"]" Cancel="ResetQuarterPreview" Accept="ClearQuarterHours" />
+    }
     <details class="card" open="@(index != null)">
         <summary>@L["EnergyIndexTitle"]</summary>
         <p class="muted">@L["EnergyIndexHelp"]</p>
@@ -141,6 +166,9 @@ else
     private EnergyTariff? draftTariff;
     private string? draftRevision;
     private EnergyImportPreview? preview;
+    private EnergyQuarterClearPreview? quarterClear;
+    private string? quarterEan;
+    private DateOnly? quarterFrom, quarterThrough;
     private IndexDraft? index;
     private int fileKey;
     private bool initialLoading = true;
@@ -156,7 +184,14 @@ else
     private Task Reload() => State.RunAsync(() => Load(view?.ContractId, month));
     private async Task Load(Guid? id, DateOnly period)
     {
+        var oldId = view?.ContractId;
         view = await Module.ReadAsync(id, period, lifetime.Token);
+        if (view.ContractId != oldId || !view.QuarterHourConnections.Contains(quarterEan))
+        {
+            var selectedEan = view.Settings.Contracts.FirstOrDefault(c => c.Id == view.ContractId)?.Ean;
+            quarterEan = view.QuarterHourConnections.Contains(selectedEan) ? selectedEan : view.QuarterHourConnections.FirstOrDefault();
+        }
+        ResetQuarterPreview();
         month = period;
     }
     private Task SwitchContract(ChangeEventArgs e) => Guid.TryParse(e.Value?.ToString(), out var id) ? State.RunAsync(() => Load(id, month)) : Task.CompletedTask;
@@ -191,6 +226,22 @@ else
         ClearPreview();
         await Load(view?.ContractId, month);
     }, L["EnergyImportSaved"]);
+    private bool QuarterRangeValid => quarterFrom is { } from && quarterThrough is { } through &&
+        BelgianEnergyTime.Supported(from) && BelgianEnergyTime.Supported(through) && from <= through;
+    private void ResetQuarterPreview() => quarterClear = null;
+    private Task PreviewQuarterCleanup() => State.RunAsync(async () =>
+    {
+        if (preview != null || !QuarterRangeValid || quarterEan == null) return;
+        quarterClear = await Module.PreviewClearQuarterHoursAsync(quarterEan, quarterFrom!.Value, quarterThrough!.Value, lifetime.Token);
+    });
+    private Task ClearQuarterHours() => State.RunAsync(async () =>
+    {
+        if (quarterClear is not { Count: > 0 } removal || preview != null) return;
+        var removed = await Module.ClearQuarterHoursAsync(removal, lifetime.Token);
+        ResetQuarterPreview();
+        await Load(view?.ContractId, month);
+        State.Message = L["EnergyClearQuarterSaved", removed];
+    });
     private Task Fetch(bool current) => State.RunAsync(async () =>
     {
         if (view?.ContractId is not { } id) return;

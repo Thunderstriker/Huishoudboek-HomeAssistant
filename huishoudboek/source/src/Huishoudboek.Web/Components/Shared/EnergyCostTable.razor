@@ -6,10 +6,10 @@
     {
         <div class="metrics">
             <div><strong>@L["EnergyConsumption"]</strong><div>@N(Report.Consumption.Kwh) kWh · @Euro(Report.Consumption.Amount)</div>
-                <small>@L["EnergyCoverage", Report.Consumption.Intervals, Report.Expected, Report.Consumption.UnpricedIntervals, Report.Consumption.EstimatedIntervals]</small><br />
+                @Coverage(Report.Consumption, Report.Expected, Report.Days.Count)
                 <small>@L["EnergyWeightedRate", N(Report.Consumption.WeightedPrice)]</small></div>
             <div><strong>@L["EnergyInjection"]</strong><div>@N(Report.Injection.Kwh) kWh · @Euro(Report.Injection.Amount)</div>
-                <small>@(Report.ExpectedInjection == 0 ? L["EnergyInjectionNone"] : L["EnergyCoverage", Report.Injection.Intervals, Report.ExpectedInjection, Report.Injection.UnpricedIntervals, Report.Injection.EstimatedIntervals])</small><br />
+                @Coverage(Report.Injection, Report.ExpectedInjection, Report.Days.Count)
                 <small>@L["EnergyWeightedRate", N(Report.Injection.WeightedPrice)]</small></div>
             <div><strong>@L["EnergyFeeAllocation"]</strong><div>@Euro(Report.AllocatedFee)</div><small>@L["EnergyFeeCoverage", Report.FeeDays, Report.ApplicableDays]</small></div>
             <div><strong>@L["EnergyPartialSubtotal"]</strong><div>@Euro(Report.PartialSubtotal)</div><small>@L["EnergyOtherChargesMissing"]</small></div>
@@ -24,8 +24,8 @@
                         {
                             <tr>
                                 <th scope="row">@day.Day.ToString("dd-MM", UiCulture.Culture)</th>
-                                <td>@N(day.Consumption.Kwh) kWh · @Euro(day.Consumption.Amount)<br /><small>@L["EnergyCoverage", day.Consumption.Intervals, day.Expected, day.Consumption.UnpricedIntervals, day.Consumption.EstimatedIntervals]</small><br /><small>@L["EnergyWeightedRate", N(day.Consumption.WeightedPrice)]</small></td>
-                                <td>@N(day.Injection.Kwh) kWh · @Euro(day.Injection.Amount)<br /><small>@(day.InjectionNotApplicable ? L["EnergyInjectionNone"] : L["EnergyCoverage", day.Injection.Intervals, day.Expected, day.Injection.UnpricedIntervals, day.Injection.EstimatedIntervals])</small><br /><small>@L["EnergyWeightedRate", N(day.Injection.WeightedPrice)]</small></td>
+                                <td>@N(day.Consumption.Kwh) kWh · @Euro(day.Consumption.Amount)<br />@Coverage(day.Consumption, day.Expected)<small>@L["EnergyWeightedRate", N(day.Consumption.WeightedPrice)]</small></td>
+                                <td>@N(day.Injection.Kwh) kWh · @Euro(day.Injection.Amount)<br />@Coverage(day.Injection, day.InjectionNotApplicable && !day.Injection.Kwh.HasValue ? 0 : day.Expected)<small>@L["EnergyWeightedRate", N(day.Injection.WeightedPrice)]</small></td>
                                 <td>@Euro(day.AllocatedFee)</td>
                                 <td>@Euro(day.PartialSubtotal)</td>
                             </tr>
@@ -40,6 +40,20 @@
 
 @code {
     [Parameter, EditorRequired] public EnergyCostReport Report { get; set; } = null!;
+    private RenderFragment Coverage(EnergyComponent component, int expected, int days = 1) => @<text>
+        @if (expected == 0)
+        {
+            <small>@L["EnergyInjectionNone"]</small><br />
+        }
+        else if (component.Intervals > 0 || component.DailyTotals == 0)
+        {
+            <small>@L["EnergyCoverage", component.Intervals, expected, component.UnpricedIntervals, component.EstimatedIntervals]</small><br />
+        }
+        @if (component.DailyTotals > 0)
+        {
+            <small>@L["EnergyDailyCoverage", component.DailyTotals, days, component.PartialDailyTotals, component.UnpricedDailyTotals, component.EstimatedDailyTotals]</small><br />
+        }
+    </text>;
     private static string N(decimal? n) => n?.ToString("0.######", UiCulture.Culture) ?? "—";
     private static string Euro(decimal? n) => n.HasValue ? Money(n.Value) : "—";
 }

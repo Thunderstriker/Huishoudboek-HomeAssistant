@@ -1750,7 +1750,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="AllCategories" xml:space="preserve"><value>All categories</value></data>
   <data name="Close" xml:space="preserve"><value>Close</value></data>
   <data name="EnergyTitle" xml:space="preserve"><value>Electricity (Flanders)</value></data>
-  <data name="EnergyIntro" xml:space="preserve"><value>Keep electricity contracts, tariff versions and quarter-hour readings. This does not change bank transactions, recurring payments, budgets or forecasts.</value></data>
+  <data name="EnergyIntro" xml:space="preserve"><value>Keep electricity contracts, tariff versions, quarter-hour readings and daily totals. This does not change bank transactions, recurring payments, budgets or forecasts.</value></data>
   <data name="EnergyHouseholdScope" xml:space="preserve"><value>Shared by the household. Monthly costs follow the EAN across contract changes, independently of the owner filter.</value></data>
   <data name="EnergyContract" xml:space="preserve"><value>Electricity contract</value></data>
   <data name="EnergyEditContract" xml:space="preserve"><value>Edit contract details</value></data>
@@ -1833,21 +1833,24 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="EnergyPdfExpired" xml:space="preserve"><value>The temporary PDF expired. Upload it again or turn off retention; your entries are kept.</value></data>
   <data name="EnergyPdfOnly" xml:space="preserve"><value>Choose a valid PDF file.</value></data>
   <data name="EnergyFileLimit" xml:space="preserve"><value>The file is too large to process.</value></data>
-  <data name="EnergyImportTitle" xml:space="preserve"><value>Import quarter-hour readings</value></data>
-  <data name="EnergyImportFile" xml:space="preserve"><value>Fluvius quarter-hour export (CSV)</value></data>
+  <data name="EnergyImportTitle" xml:space="preserve"><value>Import meter readings</value></data>
+  <data name="EnergyImportFile" xml:space="preserve"><value>Fluvius daily or quarter-hour export (CSV)</value></data>
   <data name="EnergyImportHelp" xml:space="preserve"><value>Choose the original semicolon-delimited electricity export (up to 20 MB and 100,000 rows). It stays local. Day and night registers do not determine the billing scheme.</value></data>
+  <data name="EnergyReadingDailyTotal" xml:space="preserve"><value>Daily totals</value></data>
+  <data name="EnergyReadingQuarterHour" xml:space="preserve"><value>Quarter-hour readings</value></data>
   <data name="EnergyCsvOnly" xml:space="preserve"><value>Choose a CSV file of up to 20 MB.</value></data>
   <data name="EnergyImportReview" xml:space="preserve"><value>Review readings</value></data>
-  <data name="EnergyImportSummary" xml:space="preserve"><value>{0} rows read · {1} usable unique readings · {2} already stored · {3} duplicated in file · {4} intervals with corrections</value></data>
+  <data name="EnergyImportSummary" xml:space="preserve"><value>{0} rows read · {1} usable unique readings · {2} already stored · {3} duplicated in file · {4} proposed replacements</value></data>
   <data name="EnergyRegisterDay" xml:space="preserve"><value>Day register</value></data>
   <data name="EnergyRegisterNight" xml:space="preserve"><value>Night register</value></data>
   <data name="EnergyImportIssues" xml:space="preserve"><value>{0} rows will be skipped ({1} shown)</value></data>
   <data name="EnergyImportRow" xml:space="preserve"><value>Row {0}:</value></data>
   <data name="EnergyCsvColumns" xml:space="preserve"><value>Incorrect field count or invalid quoting.</value></data>
   <data name="EnergyCsvIdentity" xml:space="preserve"><value>Invalid EAN or meter identification.</value></data>
-  <data name="EnergyCsvTime" xml:space="preserve"><value>Not a valid quarter-hour interval in Belgian time.</value></data>
+  <data name="EnergyCsvTime" xml:space="preserve"><value>Not a valid quarter-hour interval or daily total in Belgian time.</value></data>
   <data name="EnergyCsvAmbiguousTime" xml:space="preserve"><value>Ambiguous fall-back interval; the correct UTC time cannot be established.</value></data>
   <data name="EnergyCsvQuantity" xml:space="preserve"><value>Invalid quantity or unit other than kWh.</value></data>
+  <data name="EnergyCsvMissingQuantity" xml:space="preserve"><value>Blank daily total; no measured quantity was provided.</value></data>
   <data name="EnergyCsvRegister" xml:space="preserve"><value>Consumption/injection or day/night is ambiguous.</value></data>
   <data name="EnergyCsvStatus" xml:space="preserve"><value>Unknown or unusable validation status.</value></data>
   <data name="EnergyCsvConflictingRows" xml:space="preserve"><value>The file has conflicting readings for the same interval.</value></data>
@@ -1858,10 +1861,20 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="EnergyConfirmReplace" xml:space="preserve"><value>I confirm that these stored readings will be replaced.</value></data>
   <data name="EnergyConfirmImport" xml:space="preserve"><value>Save valid readings</value></data>
   <data name="EnergyImportSaved" xml:space="preserve"><value>Readings saved.</value></data>
+  <data name="EnergyClearQuarterTitle" xml:space="preserve"><value>Clear earlier 15-minute readings</value></data>
+  <data name="EnergyClearQuarterHelp" xml:space="preserve"><value>Choose an EAN and the dates to clear. Daily totals and 15-minute readings outside those dates are kept. To keep 15-minute readings for a new contract, choose an end date before that contract starts.</value></data>
+  <data name="EnergyClearQuarterInvalidRange" xml:space="preserve"><value>Choose a valid start date and an end date on or after it.</value></data>
+  <data name="EnergyClearQuarterNone" xml:space="preserve"><value>No 15-minute readings found for this EAN on the selected dates.</value></data>
+  <data name="EnergyClearQuarterFinishImport" xml:space="preserve"><value>Finish or cancel the current import before clearing 15-minute readings.</value></data>
+  <data name="EnergyClearQuarterPreview" xml:space="preserve"><value>Review readings to clear</value></data>
+  <data name="EnergyClearQuarterConfirm" xml:space="preserve"><value>Clear {0} 15-minute readings for EAN {1} from {2} through {3}. Daily totals and readings for other EANs or dates will be kept. This cannot be undone; keep the original CSV if you may need it again.</value></data>
+  <data name="EnergyClearQuarterDelete" xml:space="preserve"><value>Clear 15-minute readings</value></data>
+  <data name="EnergyClearQuarterSaved" xml:space="preserve"><value>Cleared {0} 15-minute readings.</value></data>
   <data name="EnergyMonthlyCosts" xml:space="preserve"><value>Monthly electricity costs</value></data>
-  <data name="EnergyCostsNote" xml:space="preserve"><value>Known amounts include applicable VAT; — means missing or not applicable. This is not a bill or advance. Coverage counts all quarters of the Belgian local day, including today.</value></data>
+  <data name="EnergyCostsNote" xml:space="preserve"><value>Known amounts include applicable VAT; — means missing or not applicable. This is not a bill or advance. Daily totals fill gaps in quarter-hour coverage, but dynamic consumption costs use only recorded quarter-hours.</value></data>
   <data name="EnergyNoReadings" xml:space="preserve"><value>No readings for this month. Household costs are not calculated without readings.</value></data>
   <data name="EnergyCoverage" xml:space="preserve"><value>{0}/{1} quarters · {2} not fully priced · {3} estimated or provisional</value></data>
+  <data name="EnergyDailyCoverage" xml:space="preserve"><value>Daily totals used: {0}/{1} days · {2} incomplete · {3} not fully priced · {4} estimated or provisional</value></data>
   <data name="EnergyWeightedRate" xml:space="preserve"><value>Weighted rate for priced kWh: {0} EUR/kWh</value></data>
   <data name="EnergyPartialSubtotal" xml:space="preserve"><value>Partial subtotal</value></data>
   <data name="EnergyOtherChargesMissing" xml:space="preserve"><value>Grid charges, capacity tariff, taxes and other unrecorded charges are missing.</value></data>

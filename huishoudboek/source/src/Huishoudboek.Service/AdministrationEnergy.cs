@@ -16,7 +16,8 @@ public sealed partial class AdministrationCoordinator
             var settings = _store.ReadEnergySettings();
             var contract = settings.Contracts.FirstOrDefault(c => c.Id == contractId) ?? settings.Contracts
                 .OrderByDescending(c => c.SupplyEnd == null || c.SupplyEnd >= today).ThenByDescending(c => c.SupplyStart).ThenBy(c => c.Supplier).FirstOrDefault();
-            if (contract == null) return new(_energyRevision, settings, null, null, [], false);
+            var quarterHourConnections = _store.ReadQuarterHourConnections();
+            if (contract == null) return new(_energyRevision, settings, null, null, [], false, quarterHourConnections);
 
             var historyEnd = month.AddMonths(1);
             var historyThrough = Min(historyEnd.AddDays(-1), today);
@@ -34,7 +35,7 @@ public sealed partial class AdministrationCoordinator
                     if (windows.FirstOrDefault(w => w.From <= day && w.Through >= day) is { } w)
                         publish.Add(new(day, w.Tariff, EnergyCosts.Published(w, day, market)));
             }
-            return new(_energyRevision, settings, contract.Id, report, publish, canFetchHistory);
+            return new(_energyRevision, settings, contract.Id, report, publish, canFetchHistory, quarterHourConnections);
         }
     }
 
@@ -84,6 +85,22 @@ public sealed partial class AdministrationCoordinator
         {
             CheckEnergyRevision(preview.Revision);
             if (_store.CommitEnergyImport(preview.File, replace)) _energyRevision = NewRevision();
+        }
+    }
+
+    public EnergyQuarterClearPreview PreviewClearEnergyQuarterHours(string ean, DateOnly from, DateOnly through)
+    {
+        lock (_gate) return new(_energyRevision, ean, from, through, _store.CountQuarterHourReadings(ean, from, through));
+    }
+
+    public int ClearEnergyQuarterHours(EnergyQuarterClearPreview preview)
+    {
+        lock (_gate)
+        {
+            CheckEnergyRevision(preview.Revision);
+            var count = _store.ClearQuarterHourReadings(preview.Ean, preview.From, preview.Through, preview.Count);
+            _energyRevision = NewRevision();
+            return count;
         }
     }
 

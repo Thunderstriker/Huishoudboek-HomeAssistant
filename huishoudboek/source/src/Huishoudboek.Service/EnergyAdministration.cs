@@ -64,6 +64,18 @@ public sealed class EnergyAdministration(AdministrationCoordinator coordinator, 
         await Task.Run(() => coordinator.CommitEnergy(preview, replace), token);
     }
 
+    public async Task<EnergyQuarterClearPreview> PreviewClearQuarterHoursAsync(string ean, DateOnly from, DateOnly through, CancellationToken token)
+    {
+        await AuthorizeAsync(token);
+        return await Task.Run(() => coordinator.PreviewClearEnergyQuarterHours(ean, from, through), token);
+    }
+
+    public async Task<int> ClearQuarterHoursAsync(EnergyQuarterClearPreview preview, CancellationToken token)
+    {
+        await AuthorizeAsync(token);
+        return await Task.Run(() => coordinator.ClearEnergyQuarterHours(preview), token);
+    }
+
     public async Task<EnergyPdfDraft> ReadPdfAsync(Stream source, string name, CancellationToken token)
     {
         await AuthorizeAsync(token);

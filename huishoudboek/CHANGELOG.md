@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.2
+
+- Fluvius-dagtotalen importeren naast kwartiermetingen, met behoud van dag-/nachtregisters
+  voor afname en injectie. Dagtotalen vullen ontbrekende kwartierdekking aan zonder
+  dubbeltelling; dynamische afnamekosten blijven gebaseerd op gemeten kwartieren.
+  Schema 22 bewaart beide resoluties in back-ups en behoudt bestaande metingen.
+- Eerdere kwartiermetingen wissen per EAN en datumbereik, met controle vóór bevestiging.
+  Dagtotalen en kwartiermetingen buiten de selectie blijven bewaard.
+- App- en containerversie bijgewerkt naar 0.4.2.
+
 ## 0.4.1
 
 - Gekoppelde contracten rechtstreeks openen vanuit Vaste posten en de bijbehorende

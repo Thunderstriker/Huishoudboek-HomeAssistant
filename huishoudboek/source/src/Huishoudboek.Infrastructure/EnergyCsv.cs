@@ -6,7 +6,7 @@ using Huishoudboek.Core;
 
 namespace Huishoudboek.Infrastructure;
 
-public enum EnergyCsvProblem { Columns, Identity, Time, AmbiguousTime, Quantity, Register, Status, ConflictingRows }
+public enum EnergyCsvProblem { Columns, Identity, Time, AmbiguousTime, Quantity, MissingQuantity, Register, Status, ConflictingRows }
 public sealed record EnergyCsvIssue(int Row, EnergyCsvProblem Problem);
 public sealed record EnergyCsvFile(IReadOnlyList<EnergyReading> Readings, int Rows, int DuplicateRows, int IssueCount, IReadOnlyList<EnergyCsvIssue> Issues);
 public sealed record EnergyReadingChange(IReadOnlyList<EnergyReading> Before, IReadOnlyList<EnergyReading> After, bool NeedsReplacement);
@@ -55,7 +55,7 @@ public static class EnergyCsv
             var description = Find("omschrijving", "beschrijving", "description");
             if (malformedField || new[] { date, start, end, ean, meter, volume, status }.Any(i => i < 0) ||
                 (register < 0 && description < 0) || (unit < 0 && !headers[volume].EndsWith("kwh", StringComparison.Ordinal)))
-                throw new InvalidDataException("De vereiste kolommen voor de kwartierexport ontbreken. Controleer het CSV-formaat.");
+                throw new InvalidDataException("De vereiste kolommen voor de Fluvius-export ontbreken. Controleer het CSV-formaat.");
 
             var rows = 0;
             var duplicates = 0;
@@ -82,9 +82,21 @@ public static class EnergyCsv
                 if (dateEnd >= 0 && (!DateOnly.TryParseExact(Cell(dateEnd), "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out lastDay) ||
                     lastDay < day || lastDay > day.AddDays(1))) { Issue(row, EnergyCsvProblem.Time); continue; }
                 if (!Clock(Cell(start), day, false, out var begin) || !Clock(Cell(end), lastDay, true, out var finish)) { Issue(row, EnergyCsvProblem.Time); continue; }
-                if (finish.TimeOfDay == TimeSpan.Zero && finish.Date == begin.Date) finish = finish.AddDays(1);
-                var candidates = Bounds(begin, finish);
-                if (candidates.Length != 1) { Issue(row, candidates.Length > 1 ? EnergyCsvProblem.AmbiguousTime : EnergyCsvProblem.Time); continue; }
+                var daily = IsDailyTotal(day, begin, finish);
+                DateTime from, to;
+                if (daily)
+                {
+                    from = BelgianEnergyTime.MidnightUtc(day);
+                    to = BelgianEnergyTime.MidnightUtc(day.AddDays(1));
+                    if (Cell(volume).Length == 0) { Issue(row, EnergyCsvProblem.MissingQuantity); continue; }
+                }
+                else
+                {
+                    if (finish.TimeOfDay == TimeSpan.Zero && finish.Date == begin.Date) finish = finish.AddDays(1);
+                    var candidates = Bounds(begin, finish);
+                    if (candidates.Length != 1) { Issue(row, candidates.Length > 1 ? EnergyCsvProblem.AmbiguousTime : EnergyCsvProblem.Time); continue; }
+                    (from, to) = candidates[0];
+                }
                 if (!decimal.TryParse(Cell(volume), NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, Belgian, out var kwh) || kwh is < 0 or > 1_000_000 ||
                     (unit >= 0 && !Cell(unit).Equals("kWh", StringComparison.OrdinalIgnoreCase))) { Issue(row, EnergyCsvProblem.Quantity); continue; }
                 var detail = Cell(description);
@@ -100,8 +112,8 @@ public static class EnergyCsv
                 if (consumption == injection || peak == offpeak || detail.Length > 500) { Issue(row, EnergyCsvProblem.Register); continue; }
                 if (EnergyTerms.ReadingQuality(Cell(status)) == 0 || (Cell(status).Equals("Geen verbruik", StringComparison.OrdinalIgnoreCase) && kwh != 0))
                 { Issue(row, EnergyCsvProblem.Status); continue; }
-                var (from, to) = candidates[0];
                 var reading = new EnergyReading { Ean = point, Meter = Cell(meter), StartUtc = from, EndUtc = to, Quantity = kwh,
+                    Resolution = daily ? EnergyReadingResolution.DailyTotal : EnergyReadingResolution.QuarterHour,
                     Direction = consumption ? EnergyDirection.Consumption : EnergyDirection.Injection, Register = peak ? EnergyRegister.Day : EnergyRegister.Night,
                     Status = Cell(status), Description = detail };
                 if (!EnergyTerms.ValidReading(reading)) { Issue(row, EnergyCsvProblem.Time); continue; }
@@ -109,7 +121,7 @@ public static class EnergyCsv
             }
 
             var accepted = new List<EnergyReading>();
-            foreach (var group in parsed.GroupBy(p => (p.Reading.Ean, p.Reading.StartUtc)))
+            foreach (var group in parsed.GroupBy(p => Slot(p.Reading)))
             {
                 var keys = group.GroupBy(p => Key(p.Reading)).ToList();
                 if (group.Select(p => p.Reading.Meter).Distinct().Skip(1).Any() || keys.Any(g => g.Skip(1).Any(p => !Same(g.First().Reading, p.Reading))))
@@ -119,21 +131,22 @@ public static class EnergyCsv
             return new(accepted, rows, duplicates, issueCount, issues.OrderBy(i => i.Row).ToList());
         }
         catch (Exception ex) when (ex is CsvHelperException or DecoderFallbackException)
-        { throw new InvalidDataException("Ongeldig CSV-formaat of tekencodering. Gebruik de oorspronkelijke UTF-8-kwartierexport."); }
+        { throw new InvalidDataException("Ongeldig CSV-formaat of tekencodering. Gebruik de oorspronkelijke UTF-8-export van Fluvius."); }
     }
 
     public static EnergyImportPreview Compare(EnergyCsvFile file, IEnumerable<EnergyReading> existing, string revision)
     {
-        var previous = existing.ToLookup(r => (r.Ean, r.StartUtc));
+        var previous = existing.ToLookup(Slot);
         var changes = new List<EnergyReadingChange>();
         var unchanged = 0;
-        foreach (var group in file.Readings.GroupBy(r => (r.Ean, r.StartUtc)))
+        foreach (var group in file.Readings.GroupBy(Slot))
         {
             var before = previous[group.Key].ToList();
             var incoming = group.ToDictionary(Key);
             var meterChanged = before.Any(r => r.Meter != group.First().Meter);
-            // A nonzero reading in a different register could be a correction, not extra usage.
-            var moved = before.Where(r => r.Quantity != 0 && !incoming.ContainsKey(Key(r)) && group.Any(a => a.Direction == r.Direction && a.Quantity != 0)).ToList();
+            // A quarter in a different register could be a correction. For daily totals both registers are independent.
+            var moved = group.Key.Resolution == EnergyReadingResolution.QuarterHour
+                ? before.Where(r => r.Quantity != 0 && !incoming.ContainsKey(Key(r)) && group.Any(a => a.Direction == r.Direction && a.Quantity != 0)).ToList() : [];
             var conflict = meterChanged || moved.Count != 0;
             var after = meterChanged ? [] : before.Except(moved).ToDictionary(Key);
             var changed = false;
@@ -152,6 +165,7 @@ public static class EnergyCsv
         return new(revision, file, unchanged, changes);
     }
 
+    private static (string Ean, DateTime StartUtc, EnergyReadingResolution Resolution) Slot(EnergyReading r) => (r.Ean, r.StartUtc, r.Resolution);
     private static (EnergyDirection, EnergyRegister) Key(EnergyReading r) => (r.Direction, r.Register);
     private static bool Same(EnergyReading a, EnergyReading b) => a.Meter == b.Meter && a.Quantity == b.Quantity && a.Unit == b.Unit &&
         a.Status.Equals(b.Status, StringComparison.OrdinalIgnoreCase);
@@ -165,6 +179,19 @@ public static class EnergyCsv
         if (TimeOnly.TryParseExact(value, ["HH:mm", "HH:mm:ss", "H:mm", "H:mm:ss"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var time) && time.Second == 0 && time.Minute % 15 == 0)
         { result = day.ToDateTime(time); return true; }
         result = default; return false;
+    }
+    private static bool IsDailyTotal(DateOnly day, DateTime begin, DateTime finish)
+    {
+        if (begin.TimeOfDay != TimeSpan.Zero) return false;
+        var nextMidnight = day.AddDays(1).ToDateTime(TimeOnly.MinValue);
+        if (finish == nextMidnight) return true;
+        // Fluvius can write a 24-hour elapsed end on clock-change days (23:00 on the fall-back day).
+        return BelgianEnergyTime.Quarters(day) switch
+        {
+            100 => finish == nextMidnight.AddHours(-1),
+            92 => finish == nextMidnight.AddHours(1),
+            _ => false
+        };
     }
     private static (DateTime, DateTime)[] Bounds(DateTime begin, DateTime finish)
     {

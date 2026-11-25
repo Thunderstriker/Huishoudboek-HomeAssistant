@@ -10,6 +10,7 @@ public enum EnergyMarketSeries { Unconfirmed, BelgianDayAhead }
 public enum EnergySettlement { QuarterHour = 15, Hour = 60 }
 public enum EnergyDirection { Consumption, Injection }
 public enum EnergyRegister { Day, Night }
+public enum EnergyReadingResolution { QuarterHour, DailyTotal }
 
 public sealed record EnergyContract
 {
@@ -83,6 +84,7 @@ public sealed record EnergyReading
     public string Meter { get; init; } = "";
     public DateTime StartUtc { get; init; }
     public DateTime EndUtc { get; init; }
+    public EnergyReadingResolution Resolution { get; init; }
     public EnergyDirection Direction { get; init; }
     public EnergyRegister Register { get; init; }
     public decimal Quantity { get; init; }

@@ -64,7 +64,7 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   internet-/mobielsnelheden en datalimieten zijn vast te leggen; automatische
   prijsvergelijkingen wachten op een geschikte gegevensbron met gebruiksrechten.
 - **Elektriciteit (Vlaanderen):** bewaar tariefhistorie, injectievoorwaarden en vaste
-  vergoedingen. Importeer lokale Fluvius-kwartiermetingen voor een deelsubtotaal of
+  vergoedingen. Importeer lokale Fluvius-dagtotalen of kwartiermetingen voor een deelsubtotaal of
   gebruik een Luminus BasicFix-pdf als invulvoorstel. Haal Belgische day-aheadprijzen
   op voor een dynamisch afnamecontract. Zie [de energiemodule](huishoudboek/DOCS.md#elektriciteit-vlaanderen).
 - **Jaaroverzicht:** inkomsten tegenover maandlasten, een uitgavendoughnut en de

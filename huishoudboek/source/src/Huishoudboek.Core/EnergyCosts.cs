@@ -2,6 +2,10 @@ namespace Huishoudboek.Core;
 
 public sealed record EnergyComponent(decimal? Kwh, decimal? Amount, decimal PricedKwh, decimal PricedAmount, int Intervals, int RatedIntervals, int EstimatedIntervals)
 {
+    public int DailyTotals { get; init; }
+    public int PartialDailyTotals { get; init; }
+    public int UnpricedDailyTotals { get; init; }
+    public int EstimatedDailyTotals { get; init; }
     public decimal? WeightedPrice => PricedKwh == 0 ? null : PricedAmount / PricedKwh;
     public int UnpricedIntervals => Intervals - RatedIntervals;
 }
@@ -15,8 +19,8 @@ public sealed record EnergyCostReport(IReadOnlyList<EnergyDayCost> Days, EnergyC
     int FeeDays, int ApplicableDays, decimal? EarlyEndFee)
 {
     public int Expected => Days.Sum(d => d.Expected);
-    public int ExpectedInjection => Days.Where(d => !d.InjectionNotApplicable || d.Injection.Intervals > 0).Sum(d => d.Expected);
-    public bool HasReadings => Consumption.Intervals > 0 || Injection.Intervals > 0;
+    public int ExpectedInjection => Days.Where(d => !d.InjectionNotApplicable || d.Injection.Kwh.HasValue).Sum(d => d.Expected);
+    public bool HasReadings => Consumption.Kwh.HasValue || Injection.Kwh.HasValue;
     public decimal? PartialSubtotal => EnergyCosts.Subtotal(Consumption.Amount, Injection.Amount, AllocatedFee);
 }
 
@@ -42,10 +46,13 @@ public static class EnergyCosts
             var window = windows.FirstOrDefault(w => w.From <= day && w.Through >= day);
             var tariff = window?.Tariff;
             if (window != null) applicable++;
-            var consumption = Measure(byDay[day].Where(r => r.Direction == EnergyDirection.Consumption), r => ConsumptionRate(tariff, r, prices));
-            var injection = Measure(byDay[day].Where(r => r.Direction == EnergyDirection.Injection), r => InjectionRate(tariff, r, day, indexes));
-            hasReadings |= consumption.Intervals > 0 || injection.Intervals > 0;
-            days.Add(new(day, BelgianEnergyTime.Quarters(day), consumption, injection, window == null ? null : EnergyTerms.AllocatedFee(window, day), tariff?.Injection == EnergyInjection.None));
+            var expected = BelgianEnergyTime.Quarters(day);
+            var consumption = MeasureDay(byDay[day].Where(r => r.Direction == EnergyDirection.Consumption), expected,
+                r => ConsumptionRate(tariff, r, prices), requiresQuarters: tariff?.Pricing == EnergyPricing.Dynamic);
+            var injection = MeasureDay(byDay[day].Where(r => r.Direction == EnergyDirection.Injection), expected,
+                r => InjectionRate(tariff, r, day, indexes));
+            hasReadings |= consumption.Kwh.HasValue || injection.Kwh.HasValue;
+            days.Add(new(day, expected, consumption, injection, window == null ? null : EnergyTerms.AllocatedFee(window, day), tariff?.Injection == EnergyInjection.None));
         }
         if (!hasReadings) days = days.Select(d => d with { AllocatedFee = null }).ToList();
         return new(days, Total(days.Select(d => d.Consumption)), Total(days.Select(d => d.Injection)), SumKnown(days.Select(d => d.AllocatedFee)),
@@ -81,7 +88,7 @@ public static class EnergyCosts
         if (t == null) return null;
         if (t.Pricing != EnergyPricing.Dynamic)
             return EnergyTerms.WithVat(EnergyTerms.Night(t, r.Register) ? t.ConsumptionNightRate : t.ConsumptionRate, t.ConsumptionVat, t.ConsumptionVatPercent);
-        if (t.MarketSeries != EnergyMarketSeries.BelgianDayAhead) return null;
+        if (t.MarketSeries != EnergyMarketSeries.BelgianDayAhead || r.Resolution != EnergyReadingResolution.QuarterHour) return null;
         var start = t.Settlement == EnergySettlement.Hour ? r.StartUtc.AddMinutes(-r.StartUtc.Minute) : r.StartUtc;
         return EnergyTerms.DynamicRate(t, r.Register, prices.GetValueOrDefault((t.MarketSeries, start, start.AddMinutes((int)t.Settlement)))?.EuroPerMwh);
     }
@@ -95,6 +102,27 @@ public static class EnergyCosts
             indexes.GetValueOrDefault(EnergyTerms.IndexKey(t.InjectionIndex, day))?.EuroPerMwh, night ? t.InjectionNightCoefficient : t.InjectionCoefficient,
             night ? t.InjectionNightOffset : t.InjectionOffset);
         return EnergyTerms.WithVat(price, t.InjectionVat, t.InjectionVatPercent);
+    }
+
+    private static EnergyComponent MeasureDay(IEnumerable<EnergyReading> readings, int expected, Func<EnergyReading, decimal?> rate, bool requiresQuarters = false)
+    {
+        var (quarters, daily) = (new List<EnergyReading>(), new List<EnergyReading>());
+        foreach (var reading in readings)
+            (reading.Resolution == EnergyReadingResolution.DailyTotal ? daily : quarters).Add(reading);
+        var quarter = Measure(quarters, rate);
+        var completeDaily = daily.Any(r => r.Register == EnergyRegister.Day) && daily.Any(r => r.Register == EnergyRegister.Night);
+        // Prefer a complete quarter series; never add a daily aggregate to its overlapping quarters.
+        if (daily.Count == 0 || quarter.Intervals == expected || (!completeDaily && quarter.Intervals > 0)) return quarter;
+
+        var total = Measure(daily, rate);
+        // Dynamic costs can only use real quarters from the same meter. They are a partial amount, not the cost of the daily kWh.
+        var priced = !requiresQuarters ? total : quarters.All(r => r.Meter == daily[0].Meter) ? quarter : null;
+        return quarter with
+        {
+            Kwh = total.Kwh, Amount = priced?.Amount, PricedKwh = priced?.PricedKwh ?? 0, PricedAmount = priced?.PricedAmount ?? 0,
+            DailyTotals = 1, PartialDailyTotals = completeDaily ? 0 : 1, UnpricedDailyTotals = requiresQuarters || total.UnpricedIntervals > 0 ? 1 : 0,
+            EstimatedDailyTotals = total.EstimatedIntervals
+        };
     }
 
     private static EnergyComponent Measure(IEnumerable<EnergyReading> readings, Func<EnergyReading, decimal?> rate)
@@ -130,7 +158,11 @@ public static class EnergyCosts
     {
         var values = components.ToList();
         return new(SumKnown(values.Select(v => v.Kwh)), SumKnown(values.Select(v => v.Amount)), values.Sum(v => v.PricedKwh), values.Sum(v => v.PricedAmount),
-            values.Sum(v => v.Intervals), values.Sum(v => v.RatedIntervals), values.Sum(v => v.EstimatedIntervals));
+            values.Sum(v => v.Intervals), values.Sum(v => v.RatedIntervals), values.Sum(v => v.EstimatedIntervals))
+        {
+            DailyTotals = values.Sum(v => v.DailyTotals), PartialDailyTotals = values.Sum(v => v.PartialDailyTotals),
+            UnpricedDailyTotals = values.Sum(v => v.UnpricedDailyTotals), EstimatedDailyTotals = values.Sum(v => v.EstimatedDailyTotals)
+        };
     }
 
     private static decimal? SumKnown(IEnumerable<decimal?> values) => values.Aggregate((decimal?)null, (sum, v) => v.HasValue ? (sum ?? 0) + v.Value : sum);

@@ -14,7 +14,7 @@ namespace Huishoudboek.Infrastructure;
 public sealed partial class SqliteHouseholdStore : IAdministrationStore
 {
     public const long MaximumRestoreBytes = 256L * 1024 * 1024;
-    public const int SchemaVersion = 21;
+    public const int SchemaVersion = 22;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -199,6 +199,7 @@ public sealed partial class SqliteHouseholdStore : IAdministrationStore
         if (version < 19) CreateTable(connection, tx, typeof(SubscriptionContract));
         else if (version < 21) Execute(connection, tx, "ALTER TABLE [SubscriptionContract] ADD COLUMN [IsIndefinite] INTEGER NOT NULL DEFAULT 0");
         if (version < 20) CreateEnergyTables(connection, tx);
+        else if (version < 22) UpgradeEnergyReadingResolution(connection, tx);
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
@@ -359,6 +360,7 @@ public sealed partial class SqliteHouseholdStore : IAdministrationStore
 
     private static string? PreviousDefault(Type type, string property, int version)
     {
+        if (version < 22 && type == typeof(EnergyReading) && property == nameof(EnergyReading.Resolution)) return "0";
         if (version < 21 && type == typeof(SubscriptionContract) && property == nameof(SubscriptionContract.IsIndefinite)) return "0";
         if (version < 18 && type == typeof(Category) && property == nameof(Category.ParentId)) return "NULL";
         if (version < 16 && type == typeof(Transaction))
@@ -504,7 +506,7 @@ public sealed partial class SqliteHouseholdStore : IAdministrationStore
         CheckDatabase(candidate, allowPrevious: true);
         var version = Version(candidate);
         var data = ReadData(candidate, version);
-        if (version >= 20) ValidateEnergyBackup(candidate, data);
+        if (version >= 20) ValidateEnergyBackup(candidate, data, version);
         if (version == 1)
             foreach (var profile in data.ImportProfiles.Where(p => p.AccountReferenceColumn == "Rekening opdrachtgever"))
                 profile.CounterAccountReferenceColumn = "Rekening tegenpartij";

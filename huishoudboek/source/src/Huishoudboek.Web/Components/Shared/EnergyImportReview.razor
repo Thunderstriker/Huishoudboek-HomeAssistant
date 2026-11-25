@@ -1,9 +1,9 @@
 <section class="card">
     <h3>@L["EnergyImportReview"]</h3>
     <p>@L["EnergyImportSummary", Preview.File.Rows, Preview.File.Readings.Count, Preview.Unchanged, Preview.File.DuplicateRows, Preview.Conflicts]</p>
-    @foreach (var group in Preview.File.Readings.GroupBy(r => (r.Ean, r.Meter)))
+    @foreach (var group in Preview.File.Readings.GroupBy(r => (r.Ean, r.Meter, r.Resolution)))
     {
-        <p><strong>EAN @group.Key.Ean · @group.Key.Meter</strong> · @Day(group.Min(r => r.StartUtc)) – @Day(group.Max(r => r.StartUtc))</p>
+        <p><strong>EAN @group.Key.Ean · @group.Key.Meter</strong> · @L[$"EnergyReading{group.Key.Resolution}"] · @Day(group.Min(r => r.StartUtc)) – @Day(group.Max(r => r.StartUtc))</p>
         <ul>
             @foreach (var register in group.GroupBy(r => (r.Direction, r.Register)))
             {
@@ -27,7 +27,7 @@
                 @foreach (var change in Preview.Changes.Where(c => c.NeedsReplacement).Skip(page * 20).Take(20))
                 {
                     var reading = change.Before[0];
-                    <li><strong>@reading.Ean · @Local(reading.StartUtc)</strong>
+                    <li><strong>@reading.Ean · @L[$"EnergyReading{reading.Resolution}"] · @(reading.Resolution == EnergyReadingResolution.DailyTotal ? Day(reading.StartUtc) : Local(reading.StartUtc))</strong>
                         <div>@L["EnergyBefore"]: @Describe(change.Before)</div>
                         <div>@L["EnergyAfter"]: @Describe(change.After)</div>
                     </li>
