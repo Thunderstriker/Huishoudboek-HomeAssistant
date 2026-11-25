@@ -75,6 +75,7 @@
   <data name="ContractStreamingSummary" xml:space="preserve"><value>Simultaneous streams: {0} · video quality: {1}</value></data>
   <data name="ContractDetails" xml:space="preserve"><value>Terms, links and notes</value></data>
   <data name="ContractLinkedPayment" xml:space="preserve"><value>Linked recurring payment: {0} · {1} · {2}. Contract prices and payment schedules are not automatically synchronized.</value></data>
+  <data name="LinkedContract" xml:space="preserve"><value>Linked contract: {0}</value></data>
   <data name="ContractDatesNote" xml:space="preserve"><value>Check deadlines with the provider. A past date is a review point, not a confirmed renewal, cancellation or overdue payment. Update the next renewal date and status explicitly. Minimum commitment and effective stop date are separate; the app cancels nothing automatically.</value></data>
   <data name="ContractDelete" xml:space="preserve"><value>Delete contract</value></data>
   <data name="ContractDeleteQuestion" xml:space="preserve"><value>Delete contract ‘{0}’ and its reminders? The linked recurring payment, bank entries and balances remain unchanged.</value></data>

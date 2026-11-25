@@ -2,6 +2,7 @@
 @if (State.Data.RecurringPayments.FirstOrDefault(p => p.Id == Transaction.RecurringPaymentId) is { } linked)
 {
     <span class="badge">@L["ScheduledPaymentLinked"]</span><small>@linked.Name · @RecurringSchedule.LinkedDate(linked, Transaction).ToString("dd-MM-yyyy")</small>
+    <LinkedContract RecurringPaymentId="linked.Id" />
 }
 else if (State.Data.Rules.FirstOrDefault(r => r.Id == Transaction.RecognitionRuleId)?.RecurringPaymentId is { } payment)
 {

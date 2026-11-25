@@ -235,6 +235,8 @@ of vaste posten en veranderen geen saldi, uitgaven, budgetten of cashprognoses.
   bankboekingen. Verwijderen van het contract behoudt de vaste post. Verwijderen
   van de vaste post laat het contract bestaan zonder koppeling; verwijderen van
   een categorie wist alleen de bijbehorende contractcategorisatie.
+- Via **Gekoppeld contract** bij de vaste post of een daaraan gekoppelde bankboeking
+  opent u de contractdetails. Op mobiel staat de link in de uitgeklapte boeking.
 - Voor mobiel, internet en bundels zijn download/upload in Mbps, data in GB per
   maand of ‘onbeperkt’, netwerk, roaming, fair-use/throttling en apparatuurvoorwaarden
   vast te leggen. Streaming bewaart gelijktijdige streams, beeldkwaliteit en reclame.

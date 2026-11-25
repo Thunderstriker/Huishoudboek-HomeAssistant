@@ -75,6 +75,7 @@
   <data name="ContractStreamingSummary" xml:space="preserve"><value>Gelijktijdige streams: {0} · beeldkwaliteit: {1}</value></data>
   <data name="ContractDetails" xml:space="preserve"><value>Voorwaarden, koppelingen en notities</value></data>
   <data name="ContractLinkedPayment" xml:space="preserve"><value>Gekoppelde vaste post: {0} · {1} · {2}. Contractprijs en betalingsplanning worden niet automatisch gesynchroniseerd.</value></data>
+  <data name="LinkedContract" xml:space="preserve"><value>Gekoppeld contract: {0}</value></data>
   <data name="ContractDatesNote" xml:space="preserve"><value>Controleer deadlines bij de aanbieder. Een verlopen datum is een controlepunt, geen bevestigde verlenging, opzegging of betalingsachterstand. Werk de volgende verlengdatum en status expliciet bij. Minimale verbintenis en effectieve stopdatum staan apart; de app zegt niets automatisch op.</value></data>
   <data name="ContractDelete" xml:space="preserve"><value>Contract verwijderen</value></data>
   <data name="ContractDeleteQuestion" xml:space="preserve"><value>Contract ‘{0}’ en zijn herinneringen verwijderen? De gekoppelde vaste post, bankboekingen en saldi blijven behouden.</value></data>

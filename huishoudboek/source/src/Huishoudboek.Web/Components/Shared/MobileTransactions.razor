@@ -17,7 +17,8 @@
             @if (row.RecurringPaymentId is { } recurring)
             {
                 <dt>@L["RecurringPayment"]</dt><dd>@State.Data.RecurringPayments.FirstOrDefault(r => r.Id == recurring)?.Name
-                @if (row.RecurringOccurrenceDate is { } due) { <small> · @due.ToString("dd-MM-yyyy")</small> }</dd>
+                @if (row.RecurringOccurrenceDate is { } due) { <small> · @due.ToString("dd-MM-yyyy")</small> }
+                <LinkedContract RecurringPaymentId="recurring" /></dd>
             }
             @if (row.StatementBalance is { } balance) { <dt>@L["StatementBalance"]</dt><dd>@Money(balance)</dd> }
             @if (row.RecurringPaymentId == null && row.RecognitionRuleId != null) { <dt>@L["PlanningLink"]</dt><dd><RecognitionPlanningStatus Transaction="row" /></dd> }

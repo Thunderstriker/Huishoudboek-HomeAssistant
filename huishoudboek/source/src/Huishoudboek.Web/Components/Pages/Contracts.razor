@@ -31,7 +31,7 @@
     <p class="muted">@L["ContractSharedFilterNote"]</p>
 </section>
 @{ var attentionIds = SubscriptionContracts.Attention(scope, State.Today).Select(a => a.Contract.Id).ToHashSet();
-   var contracts = scope.Where(c => (showClosed || SubscriptionContracts.IsOpen(c)) && (kind.Length == 0 || c.Kind.ToString() == kind) &&
+   var contracts = scope.Where(c => (showClosed || c.Id == SelectedContractId || SubscriptionContracts.IsOpen(c)) && (kind.Length == 0 || c.Kind.ToString() == kind) &&
        (!attentionOnly || attentionIds.Contains(c.Id)) && (search.Length == 0 || $"{c.Name} {c.Provider} {c.Plan} {c.ExternalPaymentLabel} {c.Notes}".Contains(search.Trim(), StringComparison.OrdinalIgnoreCase)))
        .OrderBy(c => !SubscriptionContracts.IsOpen(c)).ThenBy(c => c.Name).ToList(); }
 @if (contracts.Count == 0) { <section class="card"><p>@L["ContractNoResults"]</p></section> }
@@ -65,7 +65,7 @@
         }
         @if (contract.Kind == ContractKind.Streaming)
         { <p>@L["ContractStreamingSummary", contract.SimultaneousStreams?.ToString() ?? L["Unknown"].Value, contract.VideoQuality.Length > 0 ? contract.VideoQuality : L["Unknown"].Value] · @L[contract.HasAds == null ? "Unknown" : contract.HasAds.Value ? "ContractWithAds" : "ContractWithoutAds"]</p> }
-        <details><summary>@L["ContractDetails"]</summary>
+        <details open="@(contract.Id == SelectedContractId)"><summary>@L["ContractDetails"]</summary>
             <dl class="contract-dates">
                 <div><dt>@L["Category"]</dt><dd>@State.CategoryName(contract.CategoryId)</dd></div>
                 <div><dt>@L["ContractStart"]</dt><dd>@Date(contract.StartDate)</dd></div>
@@ -94,6 +94,7 @@
 </section>
 <EditDialogs Page="this" />
 @code {
+    [SupplyParameterFromQuery(Name = "contract")] public Guid? SelectedContractId { get; set; }
     private string search = "", kind = "";
     private bool attentionOnly, showClosed;
     private Guid? seedPaymentId;

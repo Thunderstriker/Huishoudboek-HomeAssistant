@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+- Gekoppelde contracten rechtstreeks openen vanuit Vaste posten en de bijbehorende
+  bankboekingen, ook op mobiel. Bedragen en betalingsplanning blijven ongewijzigd.
+- App- en containerversie bijgewerkt naar 0.4.1.
+
 ## 0.4
 
 - Abonnementen & contracten bij Planning, met aanbieders, productnamen, prijzen,

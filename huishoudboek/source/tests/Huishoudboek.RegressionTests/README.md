@@ -73,7 +73,7 @@ veiligheidskopieën, oud/nieuw databaseherstel en revisieconflicten worden evene
 ## Optionele browsercontroles
 
 Gebruik uitsluitend een **aparte, tijdelijke lokale previewadministratie**. De
-UI-test slaat één synthetische bankboeking op; gebruik nooit een kopie met echte gegevens.
+UI-tests kunnen synthetische bankboekingen en democontracten wijzigen; gebruik nooit een kopie met echte gegevens.
 De scripts vereisen Node.js, Microsoft Edge en extern geïnstalleerde Playwright/axe-core.
 Installeer die testhulpmiddelen buiten de repository, bijvoorbeeld:
 
@@ -95,6 +95,7 @@ Voer daarna de controles uit:
 node huishoudboek/source/tests/Huishoudboek.RegressionTests/ui-smoke.mjs
 node huishoudboek/source/tests/Huishoudboek.RegressionTests/ui-import-duplicates.mjs
 node huishoudboek/source/tests/Huishoudboek.RegressionTests/ui-category-hierarchy.mjs
+node huishoudboek/source/tests/Huishoudboek.RegressionTests/ui-linked-contracts.mjs
 node huishoudboek/source/tests/Huishoudboek.RegressionTests/ui-accessibility.mjs
 ```
 
@@ -108,6 +109,8 @@ De categoriecontrole maakt testcategorieën en bankboekingen aan, verplaatst gen
 indelingen naar andere ouders en hoofdniveau, toetst veilige ouderkeuzes en behoud
 van categorie-id's/budgetten en verwijdert een ouder met behoud van haar kinderen.
 Dit gebeurt in het Nederlands op desktop en in het Engels op mobiel.
+De contractcontrole volgt de koppelingen vanuit Vaste posten en bankboekingen op
+desktop en mobiel, ook nadat het gekoppelde democontract is opgezegd.
 De aanvullende toegankelijkheidscontrole toetst 14 pagina's in beide thema's op
 tekstcontrast, veldlabels en geldige ARIA-waarden. Alleen die diagnostische browsercontext
 omzeilt CSP om axe te injecteren; de appbeveiliging en normale UI-test blijven ongewijzigd.
