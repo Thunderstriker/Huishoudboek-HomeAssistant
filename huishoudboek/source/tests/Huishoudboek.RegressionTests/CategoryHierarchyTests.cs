@@ -165,7 +165,7 @@ internal static class CategoryHierarchyTests
         yield return ("SQLite and database backups preserve nested category parents and all financial references", () => InDirectory(directory =>
         {
             var f = new Fixture(); var store = new SqliteHouseholdStore(System.IO.Path.Combine(directory, "source.db")); store.Save(f.Data);
-            Equal(18L, Scalar(store.DatabasePath, "PRAGMA user_version"));
+            Equal((long)SqliteHouseholdStore.SchemaVersion, Scalar(store.DatabasePath, "PRAGMA user_version"));
             Equal(JsonSerializer.Serialize(f.Data.Categories), JsonSerializer.Serialize(store.Load().Categories));
             var backup = System.IO.Path.Combine(directory, "backup.db"); store.Backup(backup);
             var restored = new SqliteHouseholdStore(System.IO.Path.Combine(directory, "restored.db")); restored.Restore(backup);
@@ -180,10 +180,10 @@ internal static class CategoryHierarchyTests
             var old = SqliteHouseholdStore.ReadBackup(path); True(old.Categories.All(c => c.ParentId == null));
             Equal(17L, Scalar(path, "PRAGMA user_version")); Equal(0, Directory.GetFiles(directory, "*.voor-versie-*.db").Length);
             var upgraded = new SqliteHouseholdStore(path, allowCreate: false); var loaded = upgraded.Load();
-            Equal(18L, Scalar(path, "PRAGMA user_version")); True(loaded.Categories.All(c => c.ParentId == null));
+            Equal((long)SqliteHouseholdStore.SchemaVersion, Scalar(path, "PRAGMA user_version")); True(loaded.Categories.All(c => c.ParentId == null));
             Equal(FinancialSnapshot(f.Data), FinancialSnapshot(loaded));
-            var backup = Directory.GetFiles(directory, "*.voor-versie-18-*.db").Single(); Equal(17L, Scalar(backup, "PRAGMA user_version"));
-            _ = new SqliteHouseholdStore(path, allowCreate: false); Equal(1, Directory.GetFiles(directory, "*.voor-versie-18-*.db").Length);
+            var backup = Directory.GetFiles(directory, $"*.voor-versie-{SqliteHouseholdStore.SchemaVersion}-*.db").Single(); Equal(17L, Scalar(backup, "PRAGMA user_version"));
+            _ = new SqliteHouseholdStore(path, allowCreate: false); Equal(1, Directory.GetFiles(directory, "*.voor-versie-*.db").Length);
             var target = new SqliteHouseholdStore(System.IO.Path.Combine(directory, "target.db")); target.Save(new Fixture().Data);
             target.Restore(backup); True(target.Load().Categories.All(c => c.ParentId == null));
             Equal(FinancialSnapshot(f.Data), FinancialSnapshot(target.Load()));

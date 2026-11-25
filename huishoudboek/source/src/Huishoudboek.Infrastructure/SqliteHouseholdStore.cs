@@ -11,10 +11,10 @@ namespace Huishoudboek.Infrastructure;
 /// Money is stored as invariant decimal TEXT, never floating point. A save is one atomic
 /// transaction. The desktop holds a per-database process mutex for its lifetime.
 /// </summary>
-public sealed class SqliteHouseholdStore : IAdministrationStore
+public sealed partial class SqliteHouseholdStore : IAdministrationStore
 {
     public const long MaximumRestoreBytes = 256L * 1024 * 1024;
-    private const int SchemaVersion = 18;
+    public const int SchemaVersion = 21;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -42,6 +42,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             Execute(connection, transaction, "INSERT INTO app_metadata(id,application) VALUES(1,'Huishoudboek')");
             foreach (var type in EntityTypes) CreateTable(connection, transaction, type);
             CreateReceiptDocuments(connection, transaction);
+            CreateEnergyTables(connection, transaction);
             Execute(connection, transaction, "CREATE INDEX ix_transactions_date_account ON [Transaction] ([Date], [AccountId])");
             Execute(connection, transaction, $"PRAGMA user_version={SchemaVersion}");
             transaction.Commit();
@@ -60,7 +61,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         typeof(TransactionAllocation), typeof(ReimbursementClaim), typeof(AccountReview), typeof(AccountStatementPeriod),
         typeof(PurchaseReceipt), typeof(PurchaseReceiptItem), typeof(MealVoucherCredit),
         typeof(InvestmentInstrument), typeof(InvestmentTrade), typeof(SpendingHabit),
-        typeof(PurchaseDateDecision), typeof(SpendingAdjustment)];
+        typeof(PurchaseDateDecision), typeof(SpendingAdjustment), typeof(SubscriptionContract)];
 
     private static SqliteConnection Open(string path, bool readOnly = false)
     {
@@ -195,14 +196,18 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             CreateTable(connection, tx, typeof(SpendingAdjustment));
         }
         if (version < 18) Execute(connection, tx, "ALTER TABLE [Category] ADD COLUMN [ParentId] TEXT NULL");
+        if (version < 19) CreateTable(connection, tx, typeof(SubscriptionContract));
+        else if (version < 21) Execute(connection, tx, "ALTER TABLE [SubscriptionContract] ADD COLUMN [IsIndefinite] INTEGER NOT NULL DEFAULT 0");
+        if (version < 20) CreateEnergyTables(connection, tx);
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);
     }
 
-    private static void CreateTable(SqliteConnection c, SqliteTransaction tx, Type type)
+    private static void CreateTable(SqliteConnection c, SqliteTransaction tx, Type type, bool requireValues = false)
     {
-        var columns = type.GetProperties().Select(p => $"[{p.Name}] {(IsInteger(p.PropertyType) ? "INTEGER" : "TEXT")}{(p.Name == "Id" ? " PRIMARY KEY NOT NULL" : "")}");
+        var columns = type.GetProperties().Select(p => $"[{p.Name}] {(IsInteger(p.PropertyType) ? "INTEGER" : "TEXT")}" +
+            (p.Name == "Id" ? " PRIMARY KEY NOT NULL" : requireValues && Nullable.GetUnderlyingType(p.PropertyType) == null ? " NOT NULL" : ""));
         Execute(c, tx, $"CREATE TABLE [{type.Name}] ({string.Join(",", columns)})");
     }
 
@@ -244,7 +249,8 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
             InvestmentTrades = version >= 15 ? Read<InvestmentTrade>(connection, tx) : [],
             SpendingHabits = version >= 17 ? Read<SpendingHabit>(connection, tx) : [],
             PurchaseDateDecisions = version >= 17 ? Read<PurchaseDateDecision>(connection, tx) : [],
-            SpendingAdjustments = version >= 17 ? Read<SpendingAdjustment>(connection, tx) : []
+            SpendingAdjustments = version >= 17 ? Read<SpendingAdjustment>(connection, tx) : [],
+            Contracts = version >= 19 ? Read<SubscriptionContract>(connection, tx, version) : []
         };
         using var command = connection.CreateCommand();
         command.Transaction = tx;
@@ -288,6 +294,9 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         Write(connection, tx, data.Instruments); Write(connection, tx, data.InvestmentTrades);
         Write(connection, tx, data.SpendingHabits); Write(connection, tx, data.PurchaseDateDecisions);
         Write(connection, tx, data.SpendingAdjustments);
+        Write(connection, tx, data.Contracts);
+        if (restoreFrom != null) RestoreEnergy(connection, tx, restoreFrom);
+        else Execute(connection, tx, "UPDATE EnergyContract SET SubscriptionId=NULL WHERE SubscriptionId NOT IN (SELECT Id FROM SubscriptionContract)");
         if (restoreFrom != null)
         {
             Execute(connection, tx, "DELETE FROM receipt_documents");
@@ -311,15 +320,19 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         tx.Commit();
     }
 
-    private static List<T> Read<T>(SqliteConnection c, SqliteTransaction tx, int version = SchemaVersion) where T : new()
+    private static List<T> Read<T>(SqliteConnection c, SqliteTransaction tx, int version = SchemaVersion) where T : new() =>
+        ReadRows<T>(c, tx, version).ToList();
+
+    private static IEnumerable<T> ReadRows<T>(SqliteConnection c, SqliteTransaction tx, int version = SchemaVersion,
+        string filterAndOrder = "ORDER BY rowid", params (string Name, object Value)[] parameters) where T : new()
     {
         using var command = c.CreateCommand();
         command.Transaction = tx;
         var properties = typeof(T).GetProperties();
         command.CommandText = $"SELECT {string.Join(",", properties.Select(p =>
-            PreviousDefault(typeof(T), p.Name, version) is { } fallback ? $"{fallback} AS [{p.Name}]" : $"[{p.Name}]"))} FROM [{typeof(T).Name}] ORDER BY rowid";
+            PreviousDefault(typeof(T), p.Name, version) is { } fallback ? $"{fallback} AS [{p.Name}]" : $"[{p.Name}]"))} FROM [{typeof(T).Name}] {filterAndOrder}";
+        foreach (var (name, value) in parameters) command.Parameters.AddWithValue(name, value);
         using var reader = command.ExecuteReader();
-        var result = new List<T>();
         while (reader.Read())
         {
             var item = new T();
@@ -340,13 +353,13 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
                     throw new NotSupportedException(type.Name);
                 p.SetValue(item, value);
             }
-            result.Add(item);
+            yield return item;
         }
-        return result;
     }
 
     private static string? PreviousDefault(Type type, string property, int version)
     {
+        if (version < 21 && type == typeof(SubscriptionContract) && property == nameof(SubscriptionContract.IsIndefinite)) return "0";
         if (version < 18 && type == typeof(Category) && property == nameof(Category.ParentId)) return "NULL";
         if (version < 16 && type == typeof(Transaction))
         {
@@ -387,6 +400,11 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
     private static void Write<T>(SqliteConnection c, SqliteTransaction tx, IEnumerable<T> items)
     {
         Execute(c, tx, $"DELETE FROM [{typeof(T).Name}]");
+        Insert(c, tx, items);
+    }
+
+    private static void Insert<T>(SqliteConnection c, SqliteTransaction tx, IEnumerable<T> items)
+    {
         var properties = typeof(T).GetProperties();
         using var command = c.CreateCommand();
         command.Transaction = tx;
@@ -486,6 +504,7 @@ public sealed class SqliteHouseholdStore : IAdministrationStore
         CheckDatabase(candidate, allowPrevious: true);
         var version = Version(candidate);
         var data = ReadData(candidate, version);
+        if (version >= 20) ValidateEnergyBackup(candidate, data);
         if (version == 1)
             foreach (var profile in data.ImportProfiles.Where(p => p.AccountReferenceColumn == "Rekening opdrachtgever"))
                 profile.CounterAccountReferenceColumn = "Rekening tegenpartij";

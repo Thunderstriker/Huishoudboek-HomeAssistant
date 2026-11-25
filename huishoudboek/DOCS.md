@@ -209,6 +209,147 @@ de afzonderlijke kapitaalaflossing uit het bankoverzicht; het volledige bankbedr
 is geen kapitaalaflossing. Zonder de exacte start-/betaaldatums, renteconventie en
 banksplitsing kan de app die eerste betaling niet betrouwbaar reconstrueren.
 
+## Abonnementen & contracten
+
+Open **Planning → Abonnementen & contracten** (`/abonnementen`). Deze pagina gebruikt
+de peildatum van vandaag, niet de maandkeuze. De contractregistratie is gescheiden
+van de boekhouding: toevoegen, wijzigen en verwijderen maken geen bankboekingen
+of vaste posten en veranderen geen saldi, uitgaven, budgetten of cashprognoses.
+
+### Een contract vastleggen
+
+- Vul naam en aanbieder in, kies een type en landcode (bijvoorbeeld `BE`), en leg
+  de prijs per facturatieperiode vast. Week-, maand-, kwartaal-, halfjaar- en
+  jaarbetalingen zijn mogelijk; EUR blijft de boekhoudvaluta.
+- Productnaam, categorie, eigenaar, regio/postcode en notities zijn optioneel.
+  Er zijn typen voor streaming, mobiel, internet, telecombundels, muziek, software/AI,
+  cloudopslag, gaming, sport, nieuws, verzekeringen, onderhoud en overige contracten.
+- Kies een geregistreerde betaalrekening of **Buiten geregistreerde rekeningen**.
+  Bij externe betaling kan een vrij label zoals ‘Andere rekening’ worden gebruikt;
+  een rekeningnummer of fictieve bankrekening is niet nodig.
+- Koppel eventueel een bestaande uitgaande vaste post op dezelfde rekening.
+  Eén vaste post hoort bij maximaal één contract. Hypotheken en eenmalige posten
+  worden niet aangeboden. **Overnemen uit een bestaande vaste post** vult enkele
+  velden als voorstel in; controleer aanbieder, productnaam en datums zelf.
+- Een koppeling synchroniseert geen prijs of planning en categoriseert geen
+  bankboekingen. Verwijderen van het contract behoudt de vaste post. Verwijderen
+  van de vaste post laat het contract bestaan zonder koppeling; verwijderen van
+  een categorie wist alleen de bijbehorende contractcategorisatie.
+- Voor mobiel, internet en bundels zijn download/upload in Mbps, data in GB per
+  maand of ‘onbeperkt’, netwerk, roaming, fair-use/throttling en apparatuurvoorwaarden
+  vast te leggen. Streaming bewaart gelijktijdige streams, beeldkwaliteit en reclame.
+  Kies **Telecombundel** voor bijvoorbeeld mobiel en internet in één pakket en vul
+  de gezamenlijke prijs één keer in.
+- Bewaar eventueel een http(s)-link naar een contractdocument of opzegpagina.
+  Links worden niet door de server opgehaald; bestanden uploaden is hier nog niet
+  beschikbaar. Deel geen inloggegevens of gevoelige tokens in deze links.
+
+### Datums en controlepunten
+
+Laat onbekende datums of termijnen leeg; `0` is een expliciete opzegtermijn van nul.
+De **laatste opzegdatum** is de expliciet ingevoerde deadline, of anders de volgende
+verlengdatum min de ingevoerde termijn. Maanden zijn kalendermaanden, geen vaste
+blokken van 30 dagen. Er worden geen voorwaarden afgeleid uit bankbetalingen.
+Minimale verbintenis, verlenging en effectieve stopdatum blijven afzonderlijke velden.
+
+Vink **Onbepaalde duur** aan als het contract geen vaste einddatum heeft. De app
+waarschuwt dan niet als een verleng- of opzegdatum ontbreekt. Ingevulde datums,
+zoals een controledatum of latere stopdatum, blijven controlepunten. Een minimale
+verbintenis en opzegtermijn kunnen nog steeds worden vastgelegd.
+
+Proefperiode, laatste kortingsdag, einddatum en een eigen controledatum zijn optioneel.
+Datums in de komende 30 dagen, eerdere datums en waar van toepassing ontbrekende
+opzeg- of verlengvoorwaarden staan bij aandachtspunten, op het dashboard en bij
+de wekelijkse controle. Een voorbije datum is geen bevestigde verlenging, opzegging
+of betalingsachterstand.
+Werk de volgende datum en status expliciet bij; de app zegt niets automatisch op
+en stuurt voor deze functie geen Home Assistant-pushmeldingen.
+
+**Opzegging aangevraagd** blijft een controlepunt totdat u de status bijwerkt.
+Gebruik **Opgezegd** of **Verlopen** voor afgesloten contracten; deze verdwijnen
+uit actuele prijstotalen en herinneringen, maar zijn via **Opgezegde en verlopen
+contracten tonen** terug te vinden. Leg de effectieve stopdatum vast en sluit een
+nog doorlopend contract niet eerder af als het in de actuele prijstotalen moet blijven.
+
+### Prijstotalen, filters en back-ups
+
+De samenvatting toont bekende prijzen van nu lopende contracten als maand-/jaarequivalent,
+met geregistreerde rekeningen en externe betalingen apart. Weekprijzen worden met
+52 vermenigvuldigd. Dit is geen voorspelling van de facturen voor de volgende twaalf
+maanden: toekomstige prijswisselingen en stopdatums worden niet doorgerekend.
+Na de laatste kortingsdag geldt de ingevulde gewone prijs per dezelfde facturatieperiode.
+Zonder die prijs, of bij een voorbije nog niet gecontroleerde proefperiode, blijft
+het actuele bedrag onbekend en ontbreekt het contract in de prijstotalen.
+
+De samenvatting volgt het eigenaarfilter, niet de zoek-/typefilters. Een expliciete
+contracteigenaar gaat voor; anders volgt het contract de rekening. Gedeelde contracten
+zonder rekening blijven onder elk eigenaarfilter zichtbaar. Filters beperken geen
+toegangsrechten: vertrouwde ingress-gebruikers behouden dezelfde financiële toegang.
+
+Volledige databaseback-ups bewaren contractgegevens vanaf schema 19 en de keuze
+**Onbepaalde duur** vanaf schema 21. Bestaande contracten krijgen die keuze niet
+automatisch. Vóór migratie wordt een SQLite-bewuste veiligheidskopie gemaakt.
+Back-ups van vóór schema 19 krijgen een leeg contractregister; bankgegevens worden
+niet gebruikt om fictieve contracten te maken.
+CSV-transactie-export bevat geen contractregister; gebruik een volledige databaseback-up.
+
+### Automatische alternatieven — uitgesteld
+
+Automatische marktprijzen en besparingsvergelijkingen zijn nog niet beschikbaar.
+Er is nog geen betrouwbare feed met vastgestelde gebruiksrechten voor de gewenste
+streaming- en telecomaanbieders. De app bevat geen scraper, ingebouwde verouderde
+prijslijst of onbevestigde prijsclaims. De Belgische telecomlink naar Bestetarief
+opent alleen die externe website en verstuurt geen contractgegevens.
+
+Mogelijke vervolgwerkzaamheden staan in [IDEAS.MD](../IDEAS.MD), waaronder
+energievergelijkingen en automatische verbruiksinvoer.
+
+## Elektriciteit (Vlaanderen)
+
+Open **Planning → Elektriciteit (Vlaanderen)**. Voeg een contract toe met het EAN
+van de aansluiting en kies bij de tariefversie zelf enkelvoudig of dag/nacht. Vul
+de werkelijke ingangsdatum op basis van je contract in; de uitgiftedatum van de kaart
+is geen ingangsdatum. Voeg een nieuwe versie toe wanneer voorwaarden wijzigen. Gebruik
+een correctie alleen voor verkeerde invoer van een bestaande versie. Voor een nieuwe
+leverancier op hetzelfde EAN vul je de laatste leveringsdag van het vorige contract in.
+Het maandoverzicht volgt de aansluiting over contractwissels heen. Een koppeling met
+Abonnementen & contracten is optioneel en voegt geen bedragen of vaste posten toe.
+
+- **Tariefkaart:** een Vlaamse Luminus BasicFix-elektriciteits-pdf met tekstlaag kan
+  lokaal een invulvoorstel leveren. Kies eerst je facturatieschema. Controleer alle
+  velden met de bron, vooral de ingangsdatum, btw en voorwaarden. Het voorbeeld van
+  een indexwaarde op de kaart wordt niet overgenomen. Het origineel wordt alleen in
+  de database bewaard als je dat aanvinkt. Voor de losse service is `pdftotext`
+  (Poppler) op het zoekpad nodig; de Home Assistant-add-on bevat het al.
+- **Kwartiermetingen:** upload de oorspronkelijke UTF-8-elektriciteits-CSV uit
+  Mijn Fluvius (puntkomma's, decimale komma, kWh). Controleer EAN, meter, periode,
+  totalen en meldingen. Herhaalde regels tellen niet dubbel. Controleer voorgestelde
+  correcties vóór vervanging; regels waarvan het wintertijdkwartier niet eenduidig is
+  worden overgeslagen, niet op nul gezet. Er is geen automatische meterinvoer.
+- **Kosten:** een vaste of variabele afnameprijs staat per toepasselijke versie.
+  Vul voor maandelijkse injectie-indexering alleen de geverifieerde waarde van de
+  leverancier voor die maand in, in €/MWh, met bron. De formule is in cent/kWh.
+  De dagtoerekening van de vaste vergoeding is een schatting op basis van de
+  leveringsperiode. De volledige eerstejaarsvergoeding bij een vroeg einde staat
+  afzonderlijk indien bekend en wordt niet dubbel meegeteld. Netkosten, heffingen,
+  capaciteitstarief, voorschotten en werkelijke facturen worden niet berekend.
+- **Dynamische afname:** bevestig dat je contract de Belgische day-aheadspotprijs
+  gebruikt en kies uur- of kwartierafrekening zoals beschreven in het contract. Je
+  kunt gepubliceerde prijzen voor vandaag en morgen of de gekozen maand ophalen
+  vanuit het toepasselijke dynamische contract.
+  Alleen de datums en de Belgische marktzone gaan naar [Energy-Charts.info](https://api.energy-charts.info/).
+  Bron: Energy-Charts.info / Bundesnetzagentur | SMARD.de, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+  De bron levert Belgische uurprijzen vóór de kwartierovergang voor levering op
+  1 oktober 2025 en kwartierprijzen erna. Verschillende intervallen worden niet
+  omgerekend. Niet-gepubliceerde perioden blijven onbekend. Een vaste of variabele
+  afnameprijs activeert geen marktprijzen, ook niet met geïndexeerde injectie.
+
+De module is gedeeld voor het huishouden en wijzigt geen bankboekingen, budgetten,
+vaste posten of prognoses. Tarieven, metingen, optioneel bewaarde pdf's en marktprijzen
+gaan vanaf schema 20 mee in de volledige SQLite-back-up, niet in de transactie-CSV.
+Bij migratie wordt eerst een veiligheidskopie gemaakt. Gas, leveranciersvergelijkingen
+en automatische Home Assistant-/P1-invoer zijn niet inbegrepen.
+
 ## Beleggingen en Alpha Vantage
 
 Open **Overzichten → Beleggingen** (`/beleggingen`). De startpagina toont bij aanwezige
@@ -952,7 +1093,7 @@ zonder ingestelde planning is dit geen bevestiging dat er niets te betalen is.
 4. Controleer de waarschuwing en bevestig expliciet met **Database importeren**.
    Annuleren wijzigt niets. Een import vervangt de volledige administratie;
    het is geen samenvoeging van twee huishoudboeken.
-5. De app valideert applicatiemarker, schema (versies 1–11), SQLite-integriteit en
+5. De app valideert applicatiemarker, schema (versies 1–20), SQLite-integriteit en
    financiële verwijzingen. Vervolgens bewaart hij de huidige administratie als
    veiligheidskopie en slaat hij de geïmporteerde administratie atomair op.
    Een onbekende versie of ongeldig bestand wordt geweigerd, niet gereset.
@@ -1433,15 +1574,15 @@ Controleer de herkenningskwaliteit met uw eigen winkelbonnen voordat u daarop ve
   `/data` is de private, permanente app-opslag van de Supervisor, geen Windows-pad.
 - Normale herstarts en updates behouden `/data`. Een bestaande ontbrekende of
   beschadigde database wordt nooit automatisch vervangen door een lege database.
-- Bij een Home Assistant-update worden ondersteunde schema's 1–15 na validatie
-  onder de exclusieve schrijfvergrendeling automatisch bijgewerkt naar schema 16. Vooraf wordt
-  een SQLite-bewuste `.voor-versie-16-….db`-veiligheidskopie naast de database gemaakt.
+- Bij een Home Assistant-update worden ondersteunde schema's 1–20 na validatie
+  onder de exclusieve schrijfvergrendeling automatisch bijgewerkt naar schema 21. Vooraf wordt
+  een SQLite-bewuste `.voor-versie-21-….db`-veiligheidskopie naast de database gemaakt.
   De schemawijziging gebeurt in één transactie; bij een fout worden die wijzigingen teruggedraaid.
-  Bestaande categorisatieregels behouden hun ID, tekst, categorie en volgorde. Voor vaste
+  Bij migratie vanuit schema 15 of ouder behouden categorisatieregels hun ID, tekst, categorie en volgorde. Voor vaste
   posten wordt een gedeelde herkenningsinstelling toegevoegd achter de bestaande regels,
   zonder samenvoegen, herimporteren, hercategoriseren of opnieuw koppelen van bankhistorie.
   Onbekende schema's worden geweigerd. Teruggaan naar een oude appversie vereist
-  herstel van een passende oude back-up; schema-16-back-ups zijn niet leesbaar in
+  herstel van een passende oude back-up; schema-21-back-ups zijn niet leesbaar in
   oudere apps. De normale Windows-service blijft automatische upgrades weigeren.
 - Alleen een werkelijk nieuwe installatie begint met een lege administratie en
   standaardcategorieën, zonder fictieve bedragen. U kunt ook zelf rekeningen aanmaken.

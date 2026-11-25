@@ -42,6 +42,7 @@ public static class Validation
         MealVouchers.Validate(data);
         Investments.Validate(data);
         PurchaseReceipts.Validate(data);
+        SubscriptionContracts.Validate(data);
         var owners = data.Owners.Select(o => o.Id).ToHashSet();
         var accounts = data.Accounts.Select(a => a.Id).ToHashSet();
         var categories = data.Categories.Select(c => c.Id).ToHashSet();

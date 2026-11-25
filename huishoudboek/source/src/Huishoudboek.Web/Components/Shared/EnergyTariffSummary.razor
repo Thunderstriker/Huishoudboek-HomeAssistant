@@ -1,0 +1,46 @@
+<dl>
+    <dt>@L["EnergyConsumption"] · @L[$"EnergyPricing{Tariff.Pricing}"] · @L[$"EnergyBilling{Tariff.Billing}"]</dt>
+    <dd>
+        @if (Tariff.Pricing == EnergyPricing.Dynamic)
+        {
+            @L[$"EnergySeries{Tariff.MarketSeries}"] <span>· @L[$"EnergySettlement{Tariff.Settlement}"] · @Formula(Tariff.MarketCoefficient, Tariff.MarketOffset)</span>
+            @if (Split) { <span> / @Formula(Tariff.MarketNightCoefficient, Tariff.MarketNightOffset)</span> }
+        }
+        else
+        {
+            <span>@N(Tariff.ConsumptionRate) €/kWh</span>
+            @if (Split) { <span> / @N(Tariff.ConsumptionNightRate) €/kWh</span> }
+        }
+        · @Vat(Tariff.ConsumptionVat, Tariff.ConsumptionVatPercent)
+    </dd>
+    <dt>@L["EnergyInjection"] @if (Tariff.Injection is EnergyInjection.Fixed or EnergyInjection.MonthlyIndex) { <span>· @L[$"EnergyInjection{Tariff.Injection}"]</span> }</dt>
+    <dd>
+        @if (Tariff.Injection == EnergyInjection.Fixed)
+        {
+            <span>@N(Tariff.InjectionRate) €/kWh</span>
+            @if (Split) { <span> / @N(Tariff.InjectionNightRate) €/kWh</span> }
+        }
+        else if (Tariff.Injection == EnergyInjection.MonthlyIndex)
+        {
+            <span>@Tariff.InjectionIndex · @Formula(Tariff.InjectionCoefficient, Tariff.InjectionOffset)</span>
+            @if (Split) { <span> / @Formula(Tariff.InjectionNightCoefficient, Tariff.InjectionNightOffset)</span> }
+        }
+        @if (Tariff.Injection is EnergyInjection.Fixed or EnergyInjection.MonthlyIndex) { <span> · @Vat(Tariff.InjectionVat, Tariff.InjectionVatPercent)</span> }
+        else { @L[$"EnergyInjection{Tariff.Injection}"] }
+    </dd>
+    <dt>@L["EnergyFee"]</dt>
+    <dd>@N(Tariff.FeeAmount) € · @L[$"EnergyFeePeriod{Tariff.FeePeriod}"] · @Vat(Tariff.FeeVat, Tariff.FeeVatPercent) · @L[$"EnergyFeeRule{Tariff.FeeRule}"]
+        @if (!string.IsNullOrWhiteSpace(Tariff.FeeTerms)) { <br />@Tariff.FeeTerms }</dd>
+    <dt>@L["EnergyCardSource"]</dt>
+    <dd>@(Tariff.CardSource.Length > 0 ? Tariff.CardSource : "—") · @(Tariff.CardIssued?.ToString(Tariff.CardIssueMonthOnly ? "MMM yyyy" : "dd-MM-yyyy", UiCulture.Culture) ?? "—")
+        @if (Tariff.DocumentName.Length > 0) { <a href="@($"website/energy/tariffs/{Tariff.Id}/document")" data-enhance-nav="false">@L["EnergyDownloadPdf"]</a> }</dd>
+</dl>
+@if (!string.IsNullOrWhiteSpace(Tariff.Notes)) { <p>@Tariff.Notes</p> }
+
+@code {
+    [Parameter, EditorRequired] public EnergyTariff Tariff { get; set; } = null!;
+    private bool Split => Tariff.Billing == EnergyBilling.DayNight;
+    private static string N(decimal? n) => n?.ToString("0.############", UiCulture.Culture) ?? "—";
+    private string Vat(EnergyVat vat, decimal? percent) => percent.HasValue ? $"{L[$"EnergyVat{vat}"]} ({N(percent)}%)" : L[$"EnergyVat{vat}"];
+    private static string Formula(decimal? coefficient, decimal? offset) => coefficient.HasValue && offset.HasValue ? $"{N(coefficient)} × €/MWh + ({N(offset)}) = c€/kWh" : "—";
+}

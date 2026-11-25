@@ -4,7 +4,7 @@
 <PageTitle>@L["RecurringPayments"] · Huishoudboek</PageTitle>
 <h1>@L["RecurringIncomeBills"]</h1>
 @{ var allCandidates = RecurringSchedule.Candidates(State.Data, State.Today); }
-<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Recurring(State)">+ @L["RecurringPayment"]</button><a class="button" href="herkenning">@L["ManageRecognition"]</a></div>
+<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Recurring(State)">+ @L["RecurringPayment"]</button><a class="button" href="herkenning">@L["ManageRecognition"]</a><a class="button" href="abonnementen">@L["ContractsTitle"]</a></div>
 <p class="muted">@L["RecurringPlanningNote"] <a href="#koppelen">@L["MatchBankEntries"]</a> @L["AvoidDuplicateEstimates"]</p>
 <section class="card" id="payment-status"><h2>@L["MonthlyPaymentStatus"] · @(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
     <p class="muted">@L["RecurringStatusNote"] <a href="beheer">@L["ConfirmExistingStatementPeriods"]</a></p>

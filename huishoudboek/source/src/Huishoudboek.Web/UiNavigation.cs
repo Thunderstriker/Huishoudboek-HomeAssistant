@@ -12,7 +12,7 @@ public static class UiNavigation
     {
         "" or "maand" or "budgetten" or "vaste-posten" or "categoriseren" or "vooruitblik" => ToolbarPeriod.Month,
         "jaar" => ToolbarPeriod.Year,
-        "rekeningen" or "beleggingen" or "hypotheek" or "weekcontrole" => ToolbarPeriod.Today,
+        "rekeningen" or "beleggingen" or "hypotheek" or "weekcontrole" or "abonnementen" => ToolbarPeriod.Today,
         "transacties" or "categorietrends" or "kalender" => ToolbarPeriod.Independent,
         "inzichten" => ToolbarPeriod.History,
         _ => ToolbarPeriod.None

@@ -3,6 +3,131 @@
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
   <data name="Language" xml:space="preserve"><value>Taal</value></data>
+  <data name="ContractsTitle" xml:space="preserve"><value>Abonnementen &amp; contracten</value></data>
+  <data name="ContractTitle" xml:space="preserve"><value>Abonnement of contract</value></data>
+  <data name="ContractGeneralSection" xml:space="preserve"><value>Contractgegevens</value></data>
+  <data name="ContractPaymentSection" xml:space="preserve"><value>Betaling en prijs</value></data>
+  <data name="ContractDatesSection" xml:space="preserve"><value>Datums en opzegvoorwaarden</value></data>
+  <data name="ContractLinksSection" xml:space="preserve"><value>Contract- en opzeglinks</value></data>
+  <data name="ContractFeaturesSection" xml:space="preserve"><value>Planvoorwaarden</value></data>
+  <data name="ContractNotesSection" xml:space="preserve"><value>Eigen notities</value></data>
+  <data name="ContractsIntro" xml:space="preserve"><value>Bewaar prijzen, planvoorwaarden en belangrijke datums, ook voor betalingen buiten de geregistreerde rekeningen. Deze registratie maakt geen bankboekingen of nieuwe vaste posten.</value></data>
+  <data name="ContractEditorNote" xml:space="preserve"><value>Laat onbekende datums en voorwaarden leeg. Kies ‘Onbepaalde duur’ als er geen vaste einddatum is; een latere stopdatum kunt u alsnog invullen. De gewone prijs gebruikt dezelfde facturatieperiode als de huidige prijs. Een expliciete opzegdeadline gaat vóór de berekening uit verlengdatum en opzegtermijn; maanden zijn kalendermaanden. Een koppeling naar een bestaande vaste post is alleen ter referentie: bedragen, planning en bankboekingen veranderen niet. Gedeelde contracten zonder rekening blijven bij ieder eigenaarfilter zichtbaar.</value></data>
+  <data name="ContractProvider" xml:space="preserve"><value>Aanbieder</value></data>
+  <data name="ContractPlan" xml:space="preserve"><value>Abonnement / productnaam (optioneel)</value></data>
+  <data name="ContractCountry" xml:space="preserve"><value>Landcode (bijvoorbeeld BE)</value></data>
+  <data name="ContractPostcode" xml:space="preserve"><value>Postcode / regio (optioneel)</value></data>
+  <data name="ContractShared" xml:space="preserve"><value>Gedeeld huishouden</value></data>
+  <data name="ContractPaymentAccount" xml:space="preserve"><value>Betaalrekening</value></data>
+  <data name="ContractExternalPayment" xml:space="preserve"><value>Buiten geregistreerde rekeningen</value></data>
+  <data name="ContractExternalLabel" xml:space="preserve"><value>Extern betaallabel (optioneel, geen rekeningnummer nodig)</value></data>
+  <data name="ContractRecurringLink" xml:space="preserve"><value>Bestaande uitgaande vaste post (optioneel)</value></data>
+  <data name="ContractPrice" xml:space="preserve"><value>Huidige prijs per facturatieperiode (€)</value></data>
+  <data name="ContractBilling" xml:space="preserve"><value>Facturatieperiode</value></data>
+  <data name="ContractRegularPrice" xml:space="preserve"><value>Gewone prijs na korting (€ per dezelfde periode, optioneel)</value></data>
+  <data name="ContractStart" xml:space="preserve"><value>Startdatum (optioneel)</value></data>
+  <data name="ContractIndefinite" xml:space="preserve"><value>Onbepaalde duur</value></data>
+  <data name="ContractEnd" xml:space="preserve"><value>Einddatum / effectieve stopdatum (optioneel)</value></data>
+  <data name="ContractRenewal" xml:space="preserve"><value>Volgende verlengdatum</value></data>
+  <data name="ContractCommitment" xml:space="preserve"><value>Minimale verbintenis tot (optioneel)</value></data>
+  <data name="ContractNotice" xml:space="preserve"><value>Opzegtermijn (optioneel; 0 = geen termijn)</value></data>
+  <data name="ContractNoticeUnit" xml:space="preserve"><value>Eenheid opzegtermijn</value></data>
+  <data name="ContractNoticeDays" xml:space="preserve"><value>dagen</value></data>
+  <data name="ContractNoticeMonths" xml:space="preserve"><value>kalendermaanden</value></data>
+  <data name="ContractExplicitDeadline" xml:space="preserve"><value>Expliciete laatste opzegdatum (optioneel)</value></data>
+  <data name="ContractDeadline" xml:space="preserve"><value>Laatste opzegdatum</value></data>
+  <data name="ContractCalculatedDeadline" xml:space="preserve"><value>Berekend uit uw ingevoerde voorwaarden</value></data>
+  <data name="ContractTrialEnd" xml:space="preserve"><value>Proefperiode eindigt op</value></data>
+  <data name="ContractPromotionEnd" xml:space="preserve"><value>Korting eindigt op (laatste kortingsdag)</value></data>
+  <data name="ContractReview" xml:space="preserve"><value>Opnieuw controleren op (optioneel)</value></data>
+  <data name="ContractCancellationUrl" xml:space="preserve"><value>Opzeglink</value></data>
+  <data name="ContractDocumentUrl" xml:space="preserve"><value>Contract- of documentlink</value></data>
+  <data name="ContractDownload" xml:space="preserve"><value>Downloadsnelheid (Mbps, optioneel)</value></data>
+  <data name="ContractUpload" xml:space="preserve"><value>Uploadsnelheid (Mbps, optioneel)</value></data>
+  <data name="ContractUnlimited" xml:space="preserve"><value>Onbeperkte data (controleer fair-usevoorwaarden)</value></data>
+  <data name="ContractDataLimit" xml:space="preserve"><value>Datalimiet (GB per maand, optioneel)</value></data>
+  <data name="ContractNetwork" xml:space="preserve"><value>Netwerk, roaming, throttling, apparatuur en voorwaarden (optioneel)</value></data>
+  <data name="ContractStreams" xml:space="preserve"><value>Gelijktijdige streams (optioneel)</value></data>
+  <data name="ContractVideoQuality" xml:space="preserve"><value>Beeldkwaliteit (bijvoorbeeld HD / 4K, optioneel)</value></data>
+  <data name="ContractAds" xml:space="preserve"><value>Reclame</value></data>
+  <data name="ContractWithAds" xml:space="preserve"><value>Met reclame</value></data>
+  <data name="ContractWithoutAds" xml:space="preserve"><value>Zonder reclame</value></data>
+  <data name="ContractNotes" xml:space="preserve"><value>Notities / opzegstappen (optioneel)</value></data>
+  <data name="ContractMonthlyKnown" xml:space="preserve"><value>Bekende contractprijzen · per maand</value></data>
+  <data name="ContractAnnualKnown" xml:space="preserve"><value>Indicatief jaarbedrag: {0}</value></data>
+  <data name="ContractTrackedCosts" xml:space="preserve"><value>Via geregistreerde rekeningen</value></data>
+  <data name="ContractExternalCosts" xml:space="preserve"><value>Buiten geregistreerde rekeningen</value></data>
+  <data name="ContractPerMonth" xml:space="preserve"><value>Maandequivalent van bekende prijzen</value></data>
+  <data name="ContractCostsNote" xml:space="preserve"><value>Alleen nu lopende contracten binnen het eigenaarfilter, op basis van de bekende prijs van vandaag (weekprijzen × 52). Dit is geen factuurprognose of geboekte uitgave; tijdelijke kortingen, toekomstige wijzigingen en stopdatums worden niet een jaar vooruit doorgerekend. Zoek- en typefilters wijzigen deze samenvatting niet. Externe betalingen veranderen geen saldi, budgetten of cashprognoses.</value></data>
+  <data name="ContractUnknownPrices" xml:space="preserve"><value>Bij {0} lopend(e) contract(en) is de proefperiode of korting voorbij en moet de huidige prijs worden gecontroleerd. Deze contracten ontbreken in de prijstotalen.</value></data>
+  <data name="ContractPriceUnknown" xml:space="preserve"><value>Huidige prijs controleren</value></data>
+  <data name="ContractFromRecurring" xml:space="preserve"><value>Overnemen uit een bestaande vaste post</value></data>
+  <data name="ContractFromRecurringNote" xml:space="preserve"><value>Neem de naam, rekening, categorie en prijs als voorstel over. Vul aanbieder, productnaam en contractdatums zelf aan. De vaste post wordt niet gewijzigd en krijgt geen dubbele planning.</value></data>
+  <data name="ContractFromRecurringAction" xml:space="preserve"><value>Contractgegevens aanvullen</value></data>
+  <data name="ContractRegister" xml:space="preserve"><value>Contractregister</value></data>
+  <data name="ContractAllKinds" xml:space="preserve"><value>Alle typen</value></data>
+  <data name="ContractOnlyAttention" xml:space="preserve"><value>Alleen aandachtspunten</value></data>
+  <data name="ContractShowClosed" xml:space="preserve"><value>Opgezegde en verlopen contracten tonen</value></data>
+  <data name="ContractSharedFilterNote" xml:space="preserve"><value>Een expliciete eigenaar bepaalt het filter. Zonder eigenaar volgt een contract de betaalrekening; gedeelde contracten zonder rekening blijven zichtbaar. Dit filter geeft geen afzonderlijke toegangsrechten.</value></data>
+  <data name="ContractNoResults" xml:space="preserve"><value>Geen contracten voor deze selectie. Voeg een contract toe of wijzig de filters.</value></data>
+  <data name="ContractSpeedSummary" xml:space="preserve"><value>Download: {0} Mbps · upload: {1} Mbps</value></data>
+  <data name="ContractDataSummary" xml:space="preserve"><value>Datalimiet: {0} GB per maand</value></data>
+  <data name="ContractStreamingSummary" xml:space="preserve"><value>Gelijktijdige streams: {0} · beeldkwaliteit: {1}</value></data>
+  <data name="ContractDetails" xml:space="preserve"><value>Voorwaarden, koppelingen en notities</value></data>
+  <data name="ContractLinkedPayment" xml:space="preserve"><value>Gekoppelde vaste post: {0} · {1} · {2}. Contractprijs en betalingsplanning worden niet automatisch gesynchroniseerd.</value></data>
+  <data name="ContractDatesNote" xml:space="preserve"><value>Controleer deadlines bij de aanbieder. Een verlopen datum is een controlepunt, geen bevestigde verlenging, opzegging of betalingsachterstand. Werk de volgende verlengdatum en status expliciet bij. Minimale verbintenis en effectieve stopdatum staan apart; de app zegt niets automatisch op.</value></data>
+  <data name="ContractDelete" xml:space="preserve"><value>Contract verwijderen</value></data>
+  <data name="ContractDeleteQuestion" xml:space="preserve"><value>Contract ‘{0}’ en zijn herinneringen verwijderen? De gekoppelde vaste post, bankboekingen en saldi blijven behouden.</value></data>
+  <data name="ContractAttentionTitle" xml:space="preserve"><value>Contracten die aandacht vragen</value></data>
+  <data name="ContractAttentionNote" xml:space="preserve"><value>Datums over de komende 30 dagen, eerdere controlepunten en onbekende voorwaarden. Dit zijn herinneringen in de app, geen pushmeldingen of automatische opzeggingen.</value></data>
+  <data name="ContractCancellationPending" xml:space="preserve"><value>Opzegging aangevraagd — bevestiging controleren</value></data>
+  <data name="ContractCancellationDue" xml:space="preserve"><value>Laatste opzegdatum</value></data>
+  <data name="ContractRenewalDue" xml:space="preserve"><value>Verlengdatum controleren</value></data>
+  <data name="ContractRenewalUnknown" xml:space="preserve"><value>Volgende verlengdatum ontbreekt</value></data>
+  <data name="ContractDeadlineUnknown" xml:space="preserve"><value>Opzegdeadline of voorwaarden ontbreken</value></data>
+  <data name="ContractTrialDue" xml:space="preserve"><value>Proefperiode eindigt / is geëindigd</value></data>
+  <data name="ContractTrialUnknown" xml:space="preserve"><value>Einddatum proefperiode ontbreekt</value></data>
+  <data name="ContractPromotionDue" xml:space="preserve"><value>Korting eindigt / is geëindigd</value></data>
+  <data name="ContractReviewDue" xml:space="preserve"><value>Contract opnieuw controleren</value></data>
+  <data name="ContractEndDue" xml:space="preserve"><value>Einddatum / stopdatum controleren</value></data>
+  <data name="ContractCheckPastDate" xml:space="preserve"><value>Datum voorbij — controleren</value></data>
+  <data name="ContractShowAllAttention" xml:space="preserve"><value>Alle {0} aandachtspunten tonen</value></data>
+  <data name="ContractShowLessAttention" xml:space="preserve"><value>Minder aandachtspunten tonen</value></data>
+  <data name="ContractDashboardAttention" xml:space="preserve"><value>{0} contract(en) met komende datums, te controleren opzeggingen of onbekende voorwaarden.</value></data>
+  <data name="ContractAlternativesTitle" xml:space="preserve"><value>Alternatieven vergelijken · later</value></data>
+  <data name="ContractAlternativesDeferred" xml:space="preserve"><value>Automatische prijzen en besparingsvergelijkingen volgen pas zodra een betrouwbare bron met passende gebruiksrechten beschikbaar is. Er worden nu geen aanbieders gescrapet of oude prijzen als actueel getoond. Planvoorwaarden blijven alvast bewaard voor die latere vergelijking.</value></data>
+  <data name="ContractComparePrivacy" xml:space="preserve"><value>Uw contractgegevens worden niet automatisch verstuurd. Een externe vergelijkingslink opent alleen de website; u kiest daar zelf welke gegevens u invult.</value></data>
+  <data name="ContractBelgianComparison" xml:space="preserve"><value>Belgische telecomtarieven controleren bij Bestetarief (BIPT)</value></data>
+  <data name="ContractLinkInvalid" xml:space="preserve"><value>Gebruik een volledige http(s)-link zonder inloggegevens.</value></data>
+  <data name="ContractPriceInvalid" xml:space="preserve"><value>Kies een prijs tussen 0 en 1.000.000.000.</value></data>
+  <data name="ContractQuantityInvalid" xml:space="preserve"><value>Kies een waarde boven 0 en maximaal 1.000.000.</value></data>
+  <data name="ContractNoticeInvalid" xml:space="preserve"><value>Kies 0–120 dagen of kalendermaanden, of laat de termijn leeg.</value></data>
+  <data name="ContractStreamsInvalid" xml:space="preserve"><value>Kies 1–100 gelijktijdige streams, of laat het veld leeg.</value></data>
+  <data name="ContractCountryInvalid" xml:space="preserve"><value>Gebruik twee letters als landcode, bijvoorbeeld BE.</value></data>
+  <data name="ContractTextTooLong" xml:space="preserve"><value>Deze tekst is te lang voor het contractveld.</value></data>
+  <data name="ContractKindStreaming" xml:space="preserve"><value>Video / streaming</value></data>
+  <data name="ContractKindMobile" xml:space="preserve"><value>Mobiel</value></data>
+  <data name="ContractKindInternet" xml:space="preserve"><value>Internet thuis</value></data>
+  <data name="ContractKindTelecomBundle" xml:space="preserve"><value>Telecombundel</value></data>
+  <data name="ContractKindMusic" xml:space="preserve"><value>Muziek</value></data>
+  <data name="ContractKindSoftware" xml:space="preserve"><value>Software / AI</value></data>
+  <data name="ContractKindCloudStorage" xml:space="preserve"><value>Cloudopslag</value></data>
+  <data name="ContractKindGaming" xml:space="preserve"><value>Gaming</value></data>
+  <data name="ContractKindGym" xml:space="preserve"><value>Sport / fitness</value></data>
+  <data name="ContractKindNews" xml:space="preserve"><value>Nieuws / tijdschriften</value></data>
+  <data name="ContractKindInsurance" xml:space="preserve"><value>Verzekering</value></data>
+  <data name="ContractKindMaintenance" xml:space="preserve"><value>Onderhoudscontract</value></data>
+  <data name="ContractKindOther" xml:space="preserve"><value>Overig</value></data>
+  <data name="ContractStatusActive" xml:space="preserve"><value>Actief</value></data>
+  <data name="ContractStatusTrial" xml:space="preserve"><value>Proefperiode</value></data>
+  <data name="ContractStatusCancellationRequested" xml:space="preserve"><value>Opzegging aangevraagd</value></data>
+  <data name="ContractStatusCancelled" xml:space="preserve"><value>Opgezegd</value></data>
+  <data name="ContractStatusExpired" xml:space="preserve"><value>Verlopen</value></data>
+  <data name="ContractBillingWeekly" xml:space="preserve"><value>Wekelijks</value></data>
+  <data name="ContractBillingMonthly" xml:space="preserve"><value>Maandelijks</value></data>
+  <data name="ContractBillingQuarterly" xml:space="preserve"><value>Per kwartaal</value></data>
+  <data name="ContractBillingHalfYearly" xml:space="preserve"><value>Halfjaarlijks</value></data>
+  <data name="ContractBillingYearly" xml:space="preserve"><value>Jaarlijks</value></data>
   <data name="ParentCategory" xml:space="preserve"><value>Bovenliggende categorie</value></data>
   <data name="RootCategory" xml:space="preserve"><value>Geen — hoofdcategorie</value></data>
   <data name="Subcategory" xml:space="preserve"><value>Subcategorie</value></data>
@@ -1623,4 +1748,146 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="FixHighlightedFields" xml:space="preserve"><value>Controleer de gemarkeerde velden.</value></data>
   <data name="AllCategories" xml:space="preserve"><value>Alle categorieën</value></data>
   <data name="Close" xml:space="preserve"><value>Sluiten</value></data>
+  <data name="EnergyTitle" xml:space="preserve"><value>Elektriciteit (Vlaanderen)</value></data>
+  <data name="EnergyIntro" xml:space="preserve"><value>Bewaar elektriciteitscontracten, tariefversies en kwartiermetingen. Dit overzicht wijzigt geen bankboekingen, vaste posten, budgetten of prognoses.</value></data>
+  <data name="EnergyHouseholdScope" xml:space="preserve"><value>Gedeeld voor het huishouden. Het maandoverzicht volgt het EAN over contractwissels heen, onafhankelijk van het eigenaarfilter.</value></data>
+  <data name="EnergyContract" xml:space="preserve"><value>Energiecontract</value></data>
+  <data name="EnergyEditContract" xml:space="preserve"><value>Contractgegevens bewerken</value></data>
+  <data name="EnergyEditTariff" xml:space="preserve"><value>Tariefgegevens bewerken</value></data>
+  <data name="EnergySupplier" xml:space="preserve"><value>Leverancier</value></data>
+  <data name="EnergyProduct" xml:space="preserve"><value>Product</value></data>
+  <data name="EnergySupplyStart" xml:space="preserve"><value>Start levering</value></data>
+  <data name="EnergySupplyEnd" xml:space="preserve"><value>Laatste leveringsdag</value></data>
+  <data name="EnergySupplyDates" xml:space="preserve"><value>Start levering: {0} · laatste leveringsdag: {1} · verlenging: {2}</value></data>
+  <data name="EnergyLinkedContract" xml:space="preserve"><value>Gekoppeld abonnement (alleen metadata)</value></data>
+  <data name="EnergyTariff" xml:space="preserve"><value>Tariefversie</value></data>
+  <data name="EnergyTariffHistory" xml:space="preserve"><value>Tariefhistorie</value></data>
+  <data name="EnergyNoTariffs" xml:space="preserve"><value>Nog geen toepasselijke tarieven ingevoerd.</value></data>
+  <data name="EnergyCorrectTariff" xml:space="preserve"><value>Deze versie corrigeren</value></data>
+  <data name="EnergyTariffDatesHelp" xml:space="preserve"><value>Kies de daadwerkelijke ingangsdatum, niet de datum op de kaart. Voeg bij gewijzigde afspraken een nieuwe versie toe. Zonder einddatum geldt een versie tot de volgende versie of het einde van levering.</value></data>
+  <data name="EnergyEffectiveFrom" xml:space="preserve"><value>Geldig vanaf</value></data>
+  <data name="EnergyEffectiveThrough" xml:space="preserve"><value>Geldig tot en met (optioneel)</value></data>
+  <data name="EnergyCardSource" xml:space="preserve"><value>Bron van tariefkaart</value></data>
+  <data name="EnergyCardIssueDate" xml:space="preserve"><value>Datum op tariefkaart</value></data>
+  <data name="EnergyCardMonthOnly" xml:space="preserve"><value>Alleen maand bekend (gebruik dag 1)</value></data>
+  <data name="EnergyBilling" xml:space="preserve"><value>Facturatieschema</value></data>
+  <data name="EnergyChooseBilling" xml:space="preserve"><value>Kies zelf je facturatieschema</value></data>
+  <data name="EnergyBillingSingle" xml:space="preserve"><value>Enkelvoudig tarief</value></data>
+  <data name="EnergyBillingDayNight" xml:space="preserve"><value>Dag-/nachttarief</value></data>
+  <data name="EnergyConsumption" xml:space="preserve"><value>Afname</value></data>
+  <data name="EnergyPricing" xml:space="preserve"><value>Afnameprijs</value></data>
+  <data name="EnergyPricingFixed" xml:space="preserve"><value>Vast</value></data>
+  <data name="EnergyPricingVariable" xml:space="preserve"><value>Variabel</value></data>
+  <data name="EnergyPricingDynamic" xml:space="preserve"><value>Dynamisch</value></data>
+  <data name="EnergyVariableHelp" xml:space="preserve"><value>Voer het geverifieerde tarief voor deze periode in. Gebruik een nieuwe tariefversie voor de volgende periode.</value></data>
+  <data name="EnergySingleRate" xml:space="preserve"><value>Enkelvoudig tarief (€/kWh)</value></data>
+  <data name="EnergyDayRate" xml:space="preserve"><value>Dagtarief (€/kWh)</value></data>
+  <data name="EnergyNightRate" xml:space="preserve"><value>Nachttarief (€/kWh)</value></data>
+  <data name="EnergyVat" xml:space="preserve"><value>Btw-behandeling</value></data>
+  <data name="EnergyVatUnknown" xml:space="preserve"><value>Btw onbekend</value></data>
+  <data name="EnergyVatIncluded" xml:space="preserve"><value>Inclusief btw</value></data>
+  <data name="EnergyVatExcluded" xml:space="preserve"><value>Exclusief btw</value></data>
+  <data name="EnergyVatNotApplicable" xml:space="preserve"><value>Geen btw van toepassing</value></data>
+  <data name="EnergyVatPercent" xml:space="preserve"><value>Btw (%)</value></data>
+  <data name="EnergyFormulaHelp" xml:space="preserve"><value>Formule in cent/kWh: coëfficiënt × marktprijs of index (€/MWh) + toeslag. Vul ook een expliciete nul in als er geen toeslag is.</value></data>
+  <data name="EnergyCoefficient" xml:space="preserve"><value>Coëfficiënt (enkelvoudig/dag)</value></data>
+  <data name="EnergyOffset" xml:space="preserve"><value>Toeslag (cent/kWh, enkelvoudig/dag)</value></data>
+  <data name="EnergyNightCoefficient" xml:space="preserve"><value>Coëfficiënt nacht</value></data>
+  <data name="EnergyNightOffset" xml:space="preserve"><value>Toeslag nacht (cent/kWh)</value></data>
+  <data name="EnergyInjection" xml:space="preserve"><value>Injectie</value></data>
+  <data name="EnergyInjectionUnknown" xml:space="preserve"><value>Onbekende injectievoorwaarden</value></data>
+  <data name="EnergyInjectionNone" xml:space="preserve"><value>Geen injectievergoeding van toepassing</value></data>
+  <data name="EnergyInjectionFixed" xml:space="preserve"><value>Vaste injectieprijs</value></data>
+  <data name="EnergyInjectionMonthlyIndex" xml:space="preserve"><value>Maandelijks geïndexeerd</value></data>
+  <data name="EnergyIndexTitle" xml:space="preserve"><value>Maandindexwaarden</value></data>
+  <data name="EnergyIndexSeries" xml:space="preserve"><value>Indexnaam zoals gebruikt in de tariefversie</value></data>
+  <data name="EnergyIndexEuro" xml:space="preserve"><value>Geverifieerde waarde (€/MWh)</value></data>
+  <data name="EnergyIndexSource" xml:space="preserve"><value>Bron van indexwaarde</value></data>
+  <data name="EnergyIndexHelp" xml:space="preserve"><value>Neem alleen een geverifieerde leveranciersindex over voor de maand waarop die van toepassing is. Een voorbeeldwaarde op een tariefkaart of een gemiddelde marktprijs is geen vervanging.</value></data>
+  <data name="EnergyIndexRequired" xml:space="preserve"><value>Vul een maand en geverifieerde indexwaarde in.</value></data>
+  <data name="EnergyFee" xml:space="preserve"><value>Vaste leveranciersvergoeding</value></data>
+  <data name="EnergyFeeAmount" xml:space="preserve"><value>Bedrag per aansluiting (EUR)</value></data>
+  <data name="EnergyFeePeriod" xml:space="preserve"><value>Periode van de vergoeding</value></data>
+  <data name="EnergyFeePeriodMonthly" xml:space="preserve"><value>Per maand</value></data>
+  <data name="EnergyFeePeriodQuarterly" xml:space="preserve"><value>Per kwartaal</value></data>
+  <data name="EnergyFeePeriodYearly" xml:space="preserve"><value>Per jaar</value></data>
+  <data name="EnergyFeeRule" xml:space="preserve"><value>Aanrekenregel</value></data>
+  <data name="EnergyFeeRuleUnknown" xml:space="preserve"><value>Onbekende aanrekenregel</value></data>
+  <data name="EnergyFeeRuleProRata" xml:space="preserve"><value>Evenredig met leveringsduur</value></data>
+  <data name="EnergyFeeRuleFullFirstYearThenProRata" xml:space="preserve"><value>Eerste jaar volledig verschuldigd, daarna evenredig</value></data>
+  <data name="EnergyFeeTerms" xml:space="preserve"><value>Overige regels en factuurmoment</value></data>
+  <data name="EnergyFeeSettlement" xml:space="preserve"><value>Aangerekend op de afrekenings- of slotfactuur.</value></data>
+  <data name="EnergyFeeAllocation" xml:space="preserve"><value>Vaste vergoeding · toegerekend (schatting)</value></data>
+  <data name="EnergyFeeCoverage" xml:space="preserve"><value>{0}/{1} dagen met een toepasbaar tarief hebben een toegerekend bedrag</value></data>
+  <data name="EnergyEarlyEndFee" xml:space="preserve"><value>Bij de opgegeven einddatum is volgens de vastgelegde eerstejaarsregel {0} verschuldigd. Dit is geen extra post in het deelsubtotaal.</value></data>
+  <data name="EnergyPdfPrefill" xml:space="preserve"><value>Invulvoorstel uit een Luminus-tariefkaart (pdf)</value></data>
+  <data name="EnergyPdfHelp" xml:space="preserve"><value>De app leest lokaal de tekstlaag. Controleer het voorstel met de bron en vul onbekende velden handmatig in. De kaart bepaalt niet je facturatieschema, leveringsdatums of ingangsdatum.</value></data>
+  <data name="EnergyPdfUnrecognized" xml:space="preserve"><value>Deze tariefkaart is niet herkend. Vul de tarieven handmatig in.</value></data>
+  <data name="EnergyPdfPage" xml:space="preserve"><value>Pagina {0}</value></data>
+  <data name="EnergyPdfRates" xml:space="preserve"><value>Enkelvoudig / dag / nacht: {0} / {1} / {2} €/kWh · vergoeding {3} €/jaar · btw afname {4}% / injectie {5}%</value></data>
+  <data name="EnergyPdfTerms" xml:space="preserve"><value>Injectieformule enkelvoudig/dag: {0}; nacht: {1} (cent/kWh). Aanrekenregel: {2}.</value></data>
+  <data name="EnergyApplyPdf" xml:space="preserve"><value>Neem voorstel over om te bewerken</value></data>
+  <data name="EnergyKeepPdf" xml:space="preserve"><value>Originele pdf bij deze versie bewaren</value></data>
+  <data name="EnergyDownloadPdf" xml:space="preserve"><value>Download bewaarde pdf</value></data>
+  <data name="EnergyPdfExpired" xml:space="preserve"><value>De tijdelijke pdf is verlopen. Upload opnieuw of zet bewaren uit; je invoer blijft staan.</value></data>
+  <data name="EnergyPdfOnly" xml:space="preserve"><value>Kies een geldig pdf-bestand.</value></data>
+  <data name="EnergyFileLimit" xml:space="preserve"><value>Het bestand is te groot voor verwerking.</value></data>
+  <data name="EnergyImportTitle" xml:space="preserve"><value>Kwartiermetingen importeren</value></data>
+  <data name="EnergyImportFile" xml:space="preserve"><value>Fluvius-kwartierexport (csv)</value></data>
+  <data name="EnergyImportHelp" xml:space="preserve"><value>Kies de oorspronkelijke puntkomma-gescheiden elektriciteitsexport (max. 20 MB en 100.000 regels). Het bestand blijft lokaal. De dag-/nachtregisters bepalen niet het facturatieschema.</value></data>
+  <data name="EnergyCsvOnly" xml:space="preserve"><value>Kies een csv-bestand van maximaal 20 MB.</value></data>
+  <data name="EnergyImportReview" xml:space="preserve"><value>Meetgegevens controleren</value></data>
+  <data name="EnergyImportSummary" xml:space="preserve"><value>{0} regels gelezen · {1} unieke bruikbare metingen · {2} al opgeslagen · {3} dubbel in bestand · {4} kwartieren met wijzigingen</value></data>
+  <data name="EnergyRegisterDay" xml:space="preserve"><value>Dagregister</value></data>
+  <data name="EnergyRegisterNight" xml:space="preserve"><value>Nachtregister</value></data>
+  <data name="EnergyImportIssues" xml:space="preserve"><value>{0} over te slaan regels ({1} getoond)</value></data>
+  <data name="EnergyImportRow" xml:space="preserve"><value>Regel {0}:</value></data>
+  <data name="EnergyCsvColumns" xml:space="preserve"><value>Onjuist aantal velden of ongeldige aanhalingstekens.</value></data>
+  <data name="EnergyCsvIdentity" xml:space="preserve"><value>Ongeldig EAN of meternummer.</value></data>
+  <data name="EnergyCsvTime" xml:space="preserve"><value>Geen geldig kwartier in Belgische tijd.</value></data>
+  <data name="EnergyCsvAmbiguousTime" xml:space="preserve"><value>Dubbelzinnig wintertijdkwartier; de juiste UTC-tijd is niet vast te stellen.</value></data>
+  <data name="EnergyCsvQuantity" xml:space="preserve"><value>Ongeldige hoeveelheid of geen kWh.</value></data>
+  <data name="EnergyCsvRegister" xml:space="preserve"><value>Afname/injectie of dag/nacht niet eenduidig.</value></data>
+  <data name="EnergyCsvStatus" xml:space="preserve"><value>Onbekende of onbruikbare validatiestatus.</value></data>
+  <data name="EnergyCsvConflictingRows" xml:space="preserve"><value>Het bestand bevat tegenstrijdige metingen binnen hetzelfde kwartier.</value></data>
+  <data name="EnergySkipIssues" xml:space="preserve"><value>Ik wil de afgekeurde regels overslaan. Ze tellen niet als nulmetingen.</value></data>
+  <data name="EnergyImportConflicts" xml:space="preserve"><value>Controleer {0} voorgestelde vervangingen</value></data>
+  <data name="EnergyBefore" xml:space="preserve"><value>Opgeslagen</value></data>
+  <data name="EnergyAfter" xml:space="preserve"><value>Na bevestiging</value></data>
+  <data name="EnergyConfirmReplace" xml:space="preserve"><value>Ik bevestig dat deze opgeslagen metingen worden vervangen.</value></data>
+  <data name="EnergyConfirmImport" xml:space="preserve"><value>Geldige metingen opslaan</value></data>
+  <data name="EnergyImportSaved" xml:space="preserve"><value>Meetgegevens opgeslagen.</value></data>
+  <data name="EnergyMonthlyCosts" xml:space="preserve"><value>Energiekosten per maand</value></data>
+  <data name="EnergyCostsNote" xml:space="preserve"><value>Alleen bekende bedragen inclusief toepasselijke btw; — betekent ontbrekend of niet van toepassing. Dit is geen factuur of voorschot. Dekking vergelijkt de metingen met alle kwartieren van de Belgische dag, inclusief vandaag.</value></data>
+  <data name="EnergyNoReadings" xml:space="preserve"><value>Geen metingen voor deze maand. Zonder metingen wordt geen huishoudsubtotaal berekend.</value></data>
+  <data name="EnergyCoverage" xml:space="preserve"><value>{0}/{1} kwartieren · {2} niet volledig geprijsd · {3} geschat of voorlopig</value></data>
+  <data name="EnergyWeightedRate" xml:space="preserve"><value>Gewogen prijs voor geprijsde kWh: {0} €/kWh</value></data>
+  <data name="EnergyPartialSubtotal" xml:space="preserve"><value>Deelsubtotaal</value></data>
+  <data name="EnergyOtherChargesMissing" xml:space="preserve"><value>Netkosten, capaciteitstarief, heffingen en andere niet ingevoerde kosten ontbreken.</value></data>
+  <data name="EnergyDailyDetails" xml:space="preserve"><value>Details per dag en gegevensdekking</value></data>
+  <data name="EnergyPublishedPrices" xml:space="preserve"><value>Gepubliceerde prijzen voor vandaag en morgen</value></data>
+  <data name="EnergyPublishedNote" xml:space="preserve"><value>Belgische day-aheadprijzen voor dynamische afname. Alleen de gekozen datums worden naar de prijsbron verstuurd. De leveranciersprijs bevat enkel de ingevoerde formule en btw.</value></data>
+  <data name="EnergyMarketSeries" xml:space="preserve"><value>Marktreeks volgens je contract</value></data>
+  <data name="EnergySeriesUnconfirmed" xml:space="preserve"><value>Niet bevestigd of andere reeks</value></data>
+  <data name="EnergySeriesBelgianDayAhead" xml:space="preserve"><value>Belgische day-aheadspotprijs (bevestigd)</value></data>
+  <data name="EnergySettlement" xml:space="preserve"><value>Contractinterval</value></data>
+  <data name="EnergySettlementHour" xml:space="preserve"><value>Per uur</value></data>
+  <data name="EnergySettlementQuarterHour" xml:space="preserve"><value>Per kwartier</value></data>
+  <data name="EnergyConfirmMarket" xml:space="preserve"><value>Bevestig eerst dat de Belgische day-aheadreeks en het gekozen interval overeenkomen met het contract.</value></data>
+  <data name="EnergyPriceSource" xml:space="preserve"><value>Marktgegevens:</value></data>
+  <data name="EnergyFetchPublished" xml:space="preserve"><value>Gepubliceerde prijzen ophalen</value></data>
+  <data name="EnergyFetchHistory" xml:space="preserve"><value>Dynamische prijzen voor deze maand ophalen</value></data>
+  <data name="EnergyPublishedCoverage" xml:space="preserve"><value>{0}/{1} prijzen beschikbaar</value></data>
+  <data name="EnergyFetchedAt" xml:space="preserve"><value>Laatst opgehaald: {0}</value></data>
+  <data name="EnergyPriceInterval" xml:space="preserve"><value>Belgische tijd (UTC-offset)</value></data>
+  <data name="EnergyMarketPrice" xml:space="preserve"><value>Marktprijs (€/MWh)</value></data>
+  <data name="EnergySupplierPrice" xml:space="preserve"><value>Leveranciersformule incl. btw (€/kWh)</value></data>
+  <data name="EnergyResolutionMismatch" xml:space="preserve"><value>De prijsbron gebruikt een ander interval dan dit contract. De marktprijs is zichtbaar, maar er wordt geen leveranciersprijs berekend.</value></data>
+  <data name="EnergyPricesMissing" xml:space="preserve"><value>Geen gepubliceerde prijzen beschikbaar voor deze periode.</value></data>
+  <data name="EnergyPricesSaved" xml:space="preserve"><value>{0} gepubliceerde marktprijzen opgeslagen.</value></data>
+  <data name="EnergyPriceBusy" xml:space="preserve"><value>Er loopt al een prijsaanvraag.</value></data>
+  <data name="EnergyPriceLimit" xml:space="preserve"><value>De prijsbron begrenst aanvragen. Probeer het later opnieuw; opgeslagen prijzen blijven beschikbaar.</value></data>
+  <data name="EnergyPriceFailed" xml:space="preserve"><value>De prijsbron is niet bereikbaar of gaf geen bruikbare reactie. Opgeslagen prijzen blijven beschikbaar.</value></data>
+  <data name="EnergySaved" xml:space="preserve"><value>Energiegegevens opgeslagen.</value></data>
+  <data name="EnergyLoadFailed" xml:space="preserve"><value>De energiegegevens konden niet worden geladen.</value></data>
 </root>

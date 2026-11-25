@@ -90,6 +90,10 @@
     {
         overview = HomeOverview.Create(State.Data, State.Year, State.Month, State.Today, State.OwnerId);
         attention = HomeAttention.Create(overview, State.Year, State.Month, L, UiCulture.Culture);
+        var contractChecks = SubscriptionContracts.Attention(SubscriptionContracts.Visible(State.Data, State.OwnerId), State.Today);
+        if (contractChecks.Count > 0)
+            attention = attention.Append(new HomeAttentionItem(L["ContractAttentionTitle"], L["ContractDashboardAttention", contractChecks.Select(c => c.Contract.Id).Distinct().Count()],
+                "abonnementen#contract-attention", L["ContractsTitle"], "calendar")).ToList();
 
         nextAction = attention.FirstOrDefault() ?? (State.Data.Accounts.Count == 0
             ? new(L["DashboardStartTitle"], L["DashboardStartNote"], "instellen", L["GetStarted"], "plus")

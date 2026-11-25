@@ -14,6 +14,22 @@ public sealed class ReceiptRecognition : IDisposable
 {
     private readonly SemaphoreSlim _worker = new(1, 1);
 
+    public async Task<(IReadOnlyList<string> Pages, ReceiptRecognitionState State)> ReadTariffPagesAsync(byte[] content, CancellationToken cancellationToken)
+    {
+        if (!await _worker.WaitAsync(TimeSpan.FromSeconds(15), cancellationToken)) return ([], ReceiptRecognitionState.Busy);
+        try
+        {
+            var bytes = await RunAsync("pdftotext", ["-f", "1", "-l", "2", "-layout", "-enc", "UTF-8", "-", "-"], content, 160_000, cancellationToken);
+            var pages = Encoding.UTF8.GetString(bytes).Split('\f').Take(2).ToArray();
+            return (pages, pages.All(string.IsNullOrWhiteSpace) ? ReceiptRecognitionState.NoText : ReceiptRecognitionState.Recognized);
+        }
+        catch (Win32Exception) { return ([], ReceiptRecognitionState.Unavailable); }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { return ([], ReceiptRecognitionState.TimedOut); }
+        catch (ReceiptToolException) { return ([], ReceiptRecognitionState.Failed); }
+        catch (IOException) { cancellationToken.ThrowIfCancellationRequested(); return ([], ReceiptRecognitionState.Failed); }
+        finally { _worker.Release(); }
+    }
+
     public async Task<(string Text, ReceiptRecognitionState State)> ReadAsync(ReceiptDocument document, CancellationToken cancellationToken)
     {
         if (!await _worker.WaitAsync(TimeSpan.FromSeconds(15), cancellationToken)) return ("", ReceiptRecognitionState.Busy);

@@ -1,0 +1,240 @@
+@implements IDisposable
+@inject IEnergyAdministration Energy
+
+<section class="card">
+    <h2>@L[Tariff == null ? "EnergyEditContract" : "EnergyEditTariff"]</h2>
+    <EditForm Model="Contract" OnValidSubmit="Submit">
+        <ValidationSummary />
+        <fieldset disabled="@Busy">
+            <legend>@L["EnergyContract"]</legend>
+            <div class="filters">
+                <label>EAN <InputText @bind-Value="Contract.Ean" maxlength="18" inputmode="numeric" readonly="@Existing" required /></label>
+                <label>@L["EnergySupplier"] <InputText @bind-Value="Contract.Supplier" maxlength="120" required /></label>
+                <label>@L["EnergyProduct"] <InputText @bind-Value="Contract.Product" maxlength="120" required /></label>
+                <label>@L["EnergySupplyStart"] <InputDate @bind-Value="Contract.SupplyStart" /></label>
+                <label>@L["EnergySupplyEnd"] <InputDate @bind-Value="Contract.SupplyEnd" /></label>
+                <label>@L["ContractRenewal"] <InputDate @bind-Value="Contract.Renewal" /></label>
+                <label>@L["EnergyLinkedContract"] <InputSelect @bind-Value="Contract.SubscriptionId"><option value="">@L["NoLink"]</option>
+                    @foreach (var link in Subscriptions) { <option value="@link.Id">@link.Name</option> }
+                </InputSelect></label>
+            </div>
+        </fieldset>
+        @if (Tariff is { } tariff)
+        {
+            <fieldset disabled="@Busy">
+                <legend>@L["EnergyTariff"]</legend>
+                <p class="muted">@L["EnergyTariffDatesHelp"]</p>
+                <div class="filters">
+                    <label>@L["EnergyEffectiveFrom"] <InputDate @bind-Value="from" required /></label>
+                    <label>@L["EnergyEffectiveThrough"] <InputDate @bind-Value="tariff.Through" /></label>
+                    <label>@L["EnergyCardSource"] <InputText @bind-Value="tariff.CardSource" maxlength="500" /></label>
+                    <label>@L["EnergyCardIssueDate"] <InputDate @bind-Value="tariff.CardIssued" /></label>
+                    <label class="check"><InputCheckbox @bind-Value="tariff.CardIssueMonthOnly" />@L["EnergyCardMonthOnly"]</label>
+                    <label>@L["EnergyBilling"] <InputSelect @bind-Value:get="billing" @bind-Value:set="ChangeBilling" required><option value="">@L["EnergyChooseBilling"]</option>
+                        @foreach (var value in Enum.GetValues<EnergyBilling>()) { <option value="@value">@L[$"EnergyBilling{value}"]</option> }
+                    </InputSelect></label>
+                </div>
+                <details open="@(pdf != null)">
+                    <summary>@L["EnergyPdfPrefill"]</summary>
+                    <p class="muted">@L["EnergyPdfHelp"]</p>
+                    <InputFile OnChange="ReadPdf" accept=".pdf,application/pdf" />
+                    @if (pdf is { } draft)
+                    {
+                        <p>@draft.FileName</p>
+                        @if (draft.State != ReceiptRecognitionState.Recognized) { <p class="notice warning">@L[$"PurchaseRecognition{draft.State}"]</p> }
+                        else if (draft.Card is not { } card) { <p class="notice warning">@L["EnergyPdfUnrecognized"]</p> }
+                        else
+                        {
+                            var pickedFee = billing == EnergyBilling.DayNight ? card.DayNightAnnualFee : card.SingleAnnualFee;
+                            var pickedFormula = billing == EnergyBilling.DayNight ? card.DayInjection : card.SingleInjection;
+                            <ul>
+                                <li>@L["EnergyPdfPage", 1]: @card.Product · @card.IssueMonth?.ToString("MMM yyyy", UiCulture.Culture)</li>
+                                <li>@L["EnergyPdfPage", 1]: @L["EnergyPdfRates", N(card.SingleRate), N(card.DayRate), N(card.NightRate), N(pickedFee), N(card.ConsumptionVat), N(card.InjectionVat)]</li>
+                                <li>@L["EnergyPdfPage", 2]: @L["EnergyPdfTerms", Formula(pickedFormula), billing == EnergyBilling.DayNight ? Formula(card.NightInjection) : "—", L[card.FirstYearRule ? "EnergyFeeRuleFullFirstYearThenProRata" : "Unknown"].Value]</li>
+                            </ul>
+                            <button type="button" @onclick="() => ApplyPdf(draft, card)" disabled="@(billing == null)">@L["EnergyApplyPdf"]</button>
+                        }
+                    }
+                    @if (pdf != null || tariff.DocumentName.Length > 0) { <label class="check"><InputCheckbox @bind-Value="keepDocument" />@L["EnergyKeepPdf"]</label> }
+                </details>
+            </fieldset>
+            <fieldset disabled="@Busy">
+                <legend>@L["EnergyConsumption"]</legend>
+                <div class="filters">
+                    <label>@L["EnergyPricing"] <InputSelect @bind-Value="tariff.Pricing">
+                        @foreach (var value in Enum.GetValues<EnergyPricing>()) { <option value="@value">@L[$"EnergyPricing{value}"]</option> }
+                    </InputSelect></label>
+                    @if (tariff.Pricing == EnergyPricing.Dynamic)
+                    {
+                        <label>@L["EnergyMarketSeries"] <InputSelect @bind-Value="tariff.MarketSeries">
+                            @foreach (var value in Enum.GetValues<EnergyMarketSeries>()) { <option value="@value">@L[$"EnergySeries{value}"]</option> }
+                        </InputSelect></label>
+                        <label>@L["EnergySettlement"] <InputSelect @bind-Value="tariff.Settlement">
+                            @foreach (var value in Enum.GetValues<EnergySettlement>()) { <option value="@value">@L[$"EnergySettlement{value}"]</option> }
+                        </InputSelect></label>
+                        <label>@L["EnergyCoefficient"] <InputNumber @bind-Value="tariff.MarketCoefficient" step="any" /></label>
+                        <label>@L["EnergyOffset"] <InputNumber @bind-Value="tariff.MarketOffset" step="any" /></label>
+                        @if (DayNight)
+                        {
+                            <label>@L["EnergyNightCoefficient"] <InputNumber @bind-Value="tariff.MarketNightCoefficient" step="any" /></label>
+                            <label>@L["EnergyNightOffset"] <InputNumber @bind-Value="tariff.MarketNightOffset" step="any" /></label>
+                        }
+                    }
+                    else
+                    {
+                        <label>@L[DayNight ? "EnergyDayRate" : "EnergySingleRate"] <InputNumber @bind-Value="tariff.ConsumptionRate" step="any" /></label>
+                        @if (DayNight) { <label>@L["EnergyNightRate"] <InputNumber @bind-Value="tariff.ConsumptionNightRate" step="any" /></label> }
+                    }
+                    <label>@L["EnergyVat"] <InputSelect @bind-Value="tariff.ConsumptionVat">@VatOptions()</InputSelect></label>
+                    @if (HasVat(tariff.ConsumptionVat)) { <label>@L["EnergyVatPercent"] <InputNumber @bind-Value="tariff.ConsumptionVatPercent" step="any" min="0" max="100" /></label> }
+                </div>
+                @if (tariff.Pricing == EnergyPricing.Variable) { <p class="muted">@L["EnergyVariableHelp"]</p> }
+                @if (tariff.Pricing == EnergyPricing.Dynamic) { <p class="muted">@L["EnergyFormulaHelp"]</p> }
+            </fieldset>
+            <fieldset disabled="@Busy">
+                <legend>@L["EnergyInjection"]</legend>
+                <div class="filters">
+                    <label>@L["Type"] <InputSelect @bind-Value="tariff.Injection">
+                        @foreach (var value in Enum.GetValues<EnergyInjection>()) { <option value="@value">@L[$"EnergyInjection{value}"]</option> }
+                    </InputSelect></label>
+                    @if (tariff.Injection == EnergyInjection.Fixed)
+                    {
+                        <label>@L[DayNight ? "EnergyDayRate" : "EnergySingleRate"] <InputNumber @bind-Value="tariff.InjectionRate" step="any" /></label>
+                        @if (DayNight) { <label>@L["EnergyNightRate"] <InputNumber @bind-Value="tariff.InjectionNightRate" step="any" /></label> }
+                    }
+                    @if (tariff.Injection == EnergyInjection.MonthlyIndex)
+                    {
+                        <label>@L["EnergyIndexSeries"] <InputText @bind-Value="tariff.InjectionIndex" maxlength="180" /></label>
+                        <label>@L["EnergyCoefficient"] <InputNumber @bind-Value="tariff.InjectionCoefficient" step="any" /></label>
+                        <label>@L["EnergyOffset"] <InputNumber @bind-Value="tariff.InjectionOffset" step="any" /></label>
+                        @if (DayNight)
+                        {
+                            <label>@L["EnergyNightCoefficient"] <InputNumber @bind-Value="tariff.InjectionNightCoefficient" step="any" /></label>
+                            <label>@L["EnergyNightOffset"] <InputNumber @bind-Value="tariff.InjectionNightOffset" step="any" /></label>
+                        }
+                    }
+                    @if (tariff.Injection is EnergyInjection.Fixed or EnergyInjection.MonthlyIndex)
+                    {
+                        <label>@L["EnergyVat"] <InputSelect @bind-Value="tariff.InjectionVat">@VatOptions()</InputSelect></label>
+                        @if (HasVat(tariff.InjectionVat)) { <label>@L["EnergyVatPercent"] <InputNumber @bind-Value="tariff.InjectionVatPercent" step="any" min="0" max="100" /></label> }
+                    }
+                </div>
+                @if (tariff.Injection == EnergyInjection.MonthlyIndex) { <p class="muted">@L["EnergyFormulaHelp"] @L["EnergyIndexHelp"]</p> }
+            </fieldset>
+            <fieldset disabled="@Busy">
+                <legend>@L["EnergyFee"]</legend>
+                <div class="filters">
+                    <label>@L["EnergyFeeAmount"] <InputNumber @bind-Value="tariff.FeeAmount" step="any" min="0" /></label>
+                    <label>@L["EnergyFeePeriod"] <InputSelect @bind-Value="tariff.FeePeriod">
+                        @foreach (var value in Enum.GetValues<EnergyFeePeriod>()) { <option value="@value">@L[$"EnergyFeePeriod{value}"]</option> }
+                    </InputSelect></label>
+                    <label>@L["EnergyFeeRule"] <InputSelect @bind-Value="tariff.FeeRule">
+                        @foreach (var value in Enum.GetValues<EnergyFeeRule>()) { <option value="@value">@L[$"EnergyFeeRule{value}"]</option> }
+                    </InputSelect></label>
+                    <label>@L["EnergyVat"] <InputSelect @bind-Value="tariff.FeeVat">@VatOptions()</InputSelect></label>
+                    @if (HasVat(tariff.FeeVat)) { <label>@L["EnergyVatPercent"] <InputNumber @bind-Value="tariff.FeeVatPercent" step="any" min="0" max="100" /></label> }
+                    <label>@L["EnergyFeeTerms"] <InputTextArea @bind-Value="tariff.FeeTerms" maxlength="1500" /></label>
+                </div>
+                <label>@L["Notes"] <InputTextArea @bind-Value="tariff.Notes" maxlength="3000" /></label>
+            </fieldset>
+        }
+        <div class="actions">
+            <button type="submit" class="primary" disabled="@(Busy || Tariff != null && (!from.HasValue || !billing.HasValue))">@L["Save"]</button>
+            <button type="button" disabled="@Busy" @onclick="OnCancel">@L["Cancel"]</button>
+        </div>
+    </EditForm>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public EnergyContract Contract { get; set; } = null!;
+    [Parameter] public EnergyTariff? Tariff { get; set; }
+    [Parameter] public bool Existing { get; set; }
+    [Parameter] public bool ExistingTariff { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public IEnumerable<SubscriptionContract> Subscriptions { get; set; } = [];
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<(EnergyContract Contract, EnergyTariff? Tariff, Guid? Upload, bool Keep)> OnSave { get; set; }
+    [Parameter, EditorRequired] public WebState State { get; set; } = null!;
+    private readonly CancellationTokenSource lifetime = new();
+    private EnergyPdfDraft? pdf;
+    private bool keepDocument, filledFromPdf;
+    private DateOnly? from;
+    private EnergyBilling? billing;
+    private bool DayNight => billing == EnergyBilling.DayNight;
+
+    protected override void OnInitialized()
+    {
+        if (ExistingTariff) { from = Tariff!.From; billing = Tariff.Billing; keepDocument = Tariff.DocumentName.Length > 0; }
+    }
+
+    private async Task ReadPdf(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        await State.RunAsync(async () =>
+        {
+            pdf = null;
+            keepDocument = false;
+            if (file.Size > PurchaseReceipts.MaximumDocumentBytes) throw new InvalidDataException(L["EnergyFileLimit"]);
+            await using var stream = file.OpenReadStream(PurchaseReceipts.MaximumDocumentBytes, lifetime.Token);
+            pdf = await Energy.ReadPdfAsync(stream, file.Name, lifetime.Token);
+        });
+    }
+
+    private void ApplyPdf(EnergyPdfDraft draft, LuminusCard card)
+    {
+        if (Tariff is not { } tariff || billing == null) return;
+        Contract.Supplier = "Luminus";
+        Contract.Product = card.Product;
+        tariff.CardSource = draft.FileName;
+        tariff.CardIssued = card.IssueMonth;
+        tariff.CardIssueMonthOnly = card.IssueMonth.HasValue;
+        tariff.Pricing = EnergyPricing.Fixed;
+        tariff.ConsumptionRate = DayNight ? card.DayRate : card.SingleRate;
+        tariff.ConsumptionNightRate = card.NightRate;
+        tariff.ConsumptionVat = card.ConsumptionVat.HasValue ? EnergyVat.Included : EnergyVat.Unknown;
+        tariff.ConsumptionVatPercent = card.ConsumptionVat;
+        var inject = DayNight ? card.DayInjection : card.SingleInjection;
+        tariff.Injection = inject != null ? EnergyInjection.MonthlyIndex : EnergyInjection.Unknown;
+        tariff.InjectionIndex = inject != null ? "Luminus Belpex" : "";
+        tariff.InjectionCoefficient = inject?.Coefficient; tariff.InjectionOffset = inject?.Offset;
+        tariff.InjectionNightCoefficient = card.NightInjection?.Coefficient; tariff.InjectionNightOffset = card.NightInjection?.Offset;
+        tariff.InjectionVat = card.InjectionVat.HasValue ? EnergyVat.Excluded : EnergyVat.Unknown;
+        tariff.InjectionVatPercent = card.InjectionVat;
+        tariff.FeeAmount = DayNight ? card.DayNightAnnualFee : card.SingleAnnualFee;
+        tariff.FeePeriod = EnergyFeePeriod.Yearly;
+        tariff.FeeVat = tariff.ConsumptionVat; tariff.FeeVatPercent = card.ConsumptionVat;
+        tariff.FeeRule = card.FirstYearRule ? EnergyFeeRule.FullFirstYearThenProRata : EnergyFeeRule.Unknown;
+        tariff.FeeTerms = card.SettlementBill ? L["EnergyFeeSettlement"] : "";
+        filledFromPdf = true;
+    }
+
+    private void ChangeBilling(EnergyBilling? value)
+    {
+        if (value != billing && filledFromPdf && Tariff is { } tariff)
+        {
+            // The first field now means a different rate. Do not silently use the previous PDF column.
+            tariff.ConsumptionRate = null; tariff.ConsumptionNightRate = null;
+            tariff.InjectionCoefficient = null; tariff.InjectionOffset = null;
+            tariff.InjectionNightCoefficient = null; tariff.InjectionNightOffset = null;
+            tariff.FeeAmount = null;
+            filledFromPdf = false;
+        }
+        billing = value;
+    }
+
+    private Task Submit()
+    {
+        if (Tariff is { } tariff)
+        {
+            if (!from.HasValue || !billing.HasValue) return Task.CompletedTask;
+            tariff.From = from.Value; tariff.Billing = billing.Value;
+        }
+        return OnSave.InvokeAsync((Contract, Tariff, pdf?.UploadId, keepDocument));
+    }
+
+    private RenderFragment VatOptions() => @<text>@foreach (var value in Enum.GetValues<EnergyVat>()) { <option value="@value">@L[$"EnergyVat{value}"]</option> }</text>;
+    private static bool HasVat(EnergyVat vat) => vat is EnergyVat.Included or EnergyVat.Excluded;
+    private static string N(decimal? value) => value?.ToString("0.############", UiCulture.Culture) ?? "—";
+    private static string Formula((decimal Coefficient, decimal Offset)? value) => value is { } f ? $"{N(f.Coefficient)} × Belpex + ({N(f.Offset)})" : "—";
+    public void Dispose() { lifetime.Cancel(); lifetime.Dispose(); if (pdf != null) Energy.DiscardPdf(pdf.UploadId); }
+}

@@ -26,6 +26,7 @@ public sealed class EditorField(string key, string label, string type, string va
     public bool Required { get; } = required;
     public bool ReadOnly { get; set; }
     public string Error { get; set; } = "";
+    public string Section { get; set; } = "";
     public List<FieldOption> Options { get; set; } = [];
     public HashSet<Guid> OwnerIds { get; set; } = [];
 }
@@ -51,6 +52,8 @@ public sealed class EditorDraft(string title, string revision)
     private bool _category;
     private bool _mortgage;
     private bool _simpleTransaction;
+    private bool _contract;
+    private IReadOnlyList<RecurringPayment> _contractPayments = [];
     public string Fingerprint => JsonSerializer.Serialize(new { Rule = _recognitionRuleId,
         Fields = Fields.Select(f => new { f.Key, f.Value, Owners = f.OwnerIds.OrderBy(id => id) }) });
 
@@ -68,6 +71,7 @@ public sealed class EditorDraft(string title, string revision)
                 field.Error = UiCulture.Text("InvalidDate");
             if (field.Type == "number" && !int.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out _))
                 field.Error = UiCulture.Text("FieldInteger");
+            if (_contract && field.Type == "url" && !SubscriptionContracts.SafeLink(text)) field.Error = UiCulture.Text("ContractLinkInvalid");
             if (field.Type == "money")
             {
                 if (!TryNumber(text, out var number) || (field.Key is not ("rate" or "monthlyRate") && decimal.Round(number, 2) != number))
@@ -75,8 +79,15 @@ public sealed class EditorDraft(string title, string revision)
                 else if (field.Key is "budget" or "buffer" or "earmarked" or "goal" or "value" or "tolerance" && number < 0)
                     field.Error = UiCulture.Text("FieldNonnegative");
                 else if (_simpleTransaction && field.Key == "amount" && number <= 0) field.Error = UiCulture.Text("FieldPositive");
+                else if (_contract && field.Key is "contractAmount" or "regularAmount" && (number < 0 || number > 1_000_000_000m)) field.Error = UiCulture.Text("ContractPriceInvalid");
+                else if (_contract && field.Key is "download" or "upload" or "dataLimit" && (number <= 0 || number > 1_000_000m)) field.Error = UiCulture.Text("ContractQuantityInvalid");
             }
             if (field.Key == "day" && int.TryParse(text, out var day) && day is < 1 or > 31) field.Error = UiCulture.Text("FieldDayRange");
+            if (_contract && field.Key == "noticePeriod" && int.TryParse(text, out var notice) && notice is < 0 or > 120) field.Error = UiCulture.Text("ContractNoticeInvalid");
+            if (_contract && field.Key == "streams" && int.TryParse(text, out var streams) && streams is < 1 or > 100) field.Error = UiCulture.Text("ContractStreamsInvalid");
+            if (_contract && field.Key == "country" && (text.Length != 2 || !text.All(char.IsAsciiLetter))) field.Error = UiCulture.Text("ContractCountryInvalid");
+            if (_contract && text.Length > (field.Key is "name" or "provider" or "plan" or "externalPayment" ? 200 : field.Key == "postcode" ? 20 : field.Key == "videoQuality" ? 100 : 2000))
+                field.Error = UiCulture.Text("ContractTextTooLong");
         }
         if (IsRecognition && Text("planning").Length > 0 && Text("account").Length == 0)
             Fields.Single(f => f.Key == "account").Error = UiCulture.Text("FieldRequired");
@@ -87,13 +98,25 @@ public sealed class EditorDraft(string title, string revision)
         if (start != null && end != null && IsFieldVisible(start) && IsFieldVisible(end) &&
             DateOnly.TryParse(start.Value, out var from) && DateOnly.TryParse(end.Value, out var through) && through < from)
             end.Error = UiCulture.Text("FieldEndBeforeStart");
+        if (_contract && start != null && DateOnly.TryParseExact(start.Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var contractStart))
+            foreach (var field in Fields.Where(f => f.Key is "renewal" or "commitment" or "trialEnd" or "promotionEnd"))
+                if (DateOnly.TryParseExact(field.Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) && date < contractStart)
+                    field.Error = UiCulture.Text("FieldEndBeforeStart");
         return Fields.All(f => f.Error.Length == 0);
     }
     private static bool TryNumber(string text, out decimal value) => decimal.TryParse(text.Trim().Replace(',', '.'),
         NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out value);
     public string Label(EditorField field) => _category && field.Key == "budget" && Text("purpose") == "Savings"
         ? UiCulture.Text("DefaultMonthlyTargetEuro") : field.Label;
-    public bool IsFieldVisible(EditorField field) => IsRecognition && field.Key is "amount" or "day" or "frequency" or "amountMode" or "start" or "end" or "mortgage" or "window"
+    public bool IsFieldVisible(EditorField field) => _contract ? field.Key switch
+    {
+        "externalPayment" => Text("paymentAccount").Length == 0,
+        "contractRecurring" => Text("paymentAccount").Length > 0,
+        "download" or "upload" or "unlimited" or "network" => Text("contractKind") is "Mobile" or "Internet" or "TelecomBundle",
+        "dataLimit" => Text("contractKind") is "Mobile" or "Internet" or "TelecomBundle" && !bool.Parse(Text("unlimited")),
+        "streams" or "videoQuality" or "ads" => Text("contractKind") == "Streaming",
+        _ => true
+    } : IsRecognition && field.Key is "amount" or "day" or "frequency" or "amountMode" or "start" or "end" or "mortgage" or "window"
         ? Text("planning").Length > 0 : IsRecognition && field.Key == "tolerance"
         ? Text("planning").Length > 0 && Text("amountMode") == "Fixed" : IsRecognition && field.Key == "direction"
         ? Text("planning").Length == 0 : _category && field.Key is "essential" or "exceptional"
@@ -107,7 +130,13 @@ public sealed class EditorDraft(string title, string revision)
         "occurrence" => Text("kind") != "Transfer" && Text("recurring").Length > 0,
         _ => true
     };
-    public IEnumerable<FieldOption> Options(EditorField field) => field.Options;
+    public IEnumerable<FieldOption> Options(EditorField field) => _contract && field.Key == "contractRecurring"
+        ? field.Options.Where(option => option.Value.Length == 0 || _contractPayments.Any(p => p.Id.ToString() == option.Value && p.AccountId.ToString() == Text("paymentAccount")))
+        : field.Options;
+    public void FieldChanged(EditorField field)
+    {
+        if (_contract && field.Key == "paymentAccount") Fields.Single(f => f.Key == "contractRecurring").Value = "";
+    }
     public EditorSaveProposal PrepareSave(HouseholdData data, DateOnly today)
     {
         if (_recognitionRuleId is not { } ruleId) return new(0, Apply, Apply);
@@ -330,6 +359,86 @@ public sealed class EditorDraft(string title, string revision)
     {
         var item = original ?? new RecurringPayment { AccountId = s.Data.Accounts.FirstOrDefault()?.Id ?? Guid.Empty, StartDate = s.Today, DayOfMonth = s.Today.Day };
         return Rule(s, s.Data.Rules.FirstOrDefault(r => r.RecurringPaymentId == item.Id), scheduled: item);
+    }
+    public static EditorDraft Contract(WebState s, SubscriptionContract? original = null, RecurringPayment? payment = null)
+    {
+        var item = original ?? new SubscriptionContract { OwnerId = s.OwnerId, Name = payment?.Name ?? "", Provider = payment?.Name ?? "",
+            AccountId = payment?.AccountId, RecurringPaymentId = payment?.Id, CategoryId = payment?.CategoryId,
+            Amount = Math.Abs(payment?.Amount ?? 0), StartDate = payment?.StartDate,
+            BillingCycle = payment?.Frequency switch { PaymentFrequency.Quarterly => ContractBillingCycle.Quarterly,
+                PaymentFrequency.Yearly => ContractBillingCycle.Yearly, _ => ContractBillingCycle.Monthly } };
+        var draft = new EditorDraft(UiCulture.Text("ContractTitle"), s.Revision)
+        { _contract = true, _contractPayments = s.Data.RecurringPayments.Where(p => p.Amount < 0 && !p.IsMortgage && p.Frequency != PaymentFrequency.Once).ToList(),
+            Note = UiCulture.Text("ContractEditorNote") };
+        draft.Field("name", "Name", "text", item.Name);
+        draft.Field("provider", "ContractProvider", "text", item.Provider);
+        draft.Field("plan", "ContractPlan", "text", item.Plan, false);
+        draft.Choice("contractKind", "Type", Enum.GetValues<ContractKind>().Select(k => new FieldOption(k.ToString(), UiCulture.Text($"ContractKind{k}"))), item.Kind.ToString());
+        draft.Choice("status", "Status", Enum.GetValues<ContractStatus>().Select(k => new FieldOption(k.ToString(), UiCulture.Text($"ContractStatus{k}"))), item.Status.ToString());
+        draft.Field("country", "ContractCountry", "text", item.CountryCode);
+        draft.Field("postcode", "ContractPostcode", "text", item.Postcode, false);
+        draft.Choice("owner", "Owner", new[] { new FieldOption("", UiCulture.Text("ContractShared")) }.Concat(s.Data.Owners.Select(o => new FieldOption(o.Id.ToString(), o.Name))), item.OwnerId?.ToString() ?? "");
+        draft.Choice("category", "Category", Categories(s.Data), item.CategoryId?.ToString() ?? "");
+        draft.Choice("paymentAccount", "ContractPaymentAccount", new[] { new FieldOption("", UiCulture.Text("ContractExternalPayment")) }.Concat(Accounts(s.Data)), item.AccountId?.ToString() ?? "");
+        draft.Field("externalPayment", "ContractExternalLabel", "text", item.ExternalPaymentLabel, false);
+        draft.Choice("contractRecurring", "ContractRecurringLink", new[] { new FieldOption("", UiCulture.Text("NoLink")) }.Concat(draft._contractPayments.Where(p => !s.Data.Contracts.Any(c => c.Id != item.Id && c.RecurringPaymentId == p.Id)).Select(p => new FieldOption(p.Id.ToString(), p.Name))), item.RecurringPaymentId?.ToString() ?? "");
+        draft.Money("contractAmount", "ContractPrice", item.Amount);
+        draft.Choice("billing", "ContractBilling", Enum.GetValues<ContractBillingCycle>().Select(k => new FieldOption(k.ToString(), UiCulture.Text($"ContractBilling{k}"))), item.BillingCycle.ToString());
+        draft.Field("regularAmount", "ContractRegularPrice", "money", item.RegularAmount?.ToString("0.00", Culture) ?? "", false);
+        draft.DateField("start", "ContractStart", item.StartDate, false);
+        draft.Field("indefinite", "ContractIndefinite", "checkbox", item.IsIndefinite.ToString());
+        draft.DateField("end", "ContractEnd", item.EndDate, false);
+        draft.DateField("renewal", "ContractRenewal", item.RenewalDate, false);
+        draft.DateField("commitment", "ContractCommitment", item.MinimumCommitmentUntil, false);
+        draft.Field("noticePeriod", "ContractNotice", "number", item.NoticePeriod?.ToString(CultureInfo.InvariantCulture) ?? "", false);
+        draft.Choice("noticeUnit", "ContractNoticeUnit", [new("Days", UiCulture.Text("ContractNoticeDays")), new("Months", UiCulture.Text("ContractNoticeMonths"))], item.NoticeUnit.ToString());
+        draft.DateField("deadline", "ContractExplicitDeadline", item.CancellationDeadline, false);
+        draft.DateField("trialEnd", "ContractTrialEnd", item.TrialEndsOn, false);
+        draft.DateField("promotionEnd", "ContractPromotionEnd", item.PromotionEndsOn, false);
+        draft.DateField("review", "ContractReview", item.ReviewOn, false);
+        draft.Field("cancelUrl", "ContractCancellationUrl", "url", item.CancellationUrl, false);
+        draft.Field("contractUrl", "ContractDocumentUrl", "url", item.ContractUrl, false);
+        draft.Field("download", "ContractDownload", "money", item.DownloadMbps?.ToString("0.##", Culture) ?? "", false);
+        draft.Field("upload", "ContractUpload", "money", item.UploadMbps?.ToString("0.##", Culture) ?? "", false);
+        draft.Field("unlimited", "ContractUnlimited", "checkbox", item.UnlimitedData.ToString());
+        draft.Field("dataLimit", "ContractDataLimit", "money", item.DataLimitGb?.ToString("0.##", Culture) ?? "", false);
+        draft.Field("network", "ContractNetwork", "text", item.NetworkAndConditions, false);
+        draft.Field("streams", "ContractStreams", "number", item.SimultaneousStreams?.ToString(CultureInfo.InvariantCulture) ?? "", false);
+        draft.Field("videoQuality", "ContractVideoQuality", "text", item.VideoQuality, false);
+        draft.Choice("ads", "ContractAds", [new("", UiCulture.Text("Unknown")), new("True", UiCulture.Text("ContractWithAds")), new("False", UiCulture.Text("ContractWithoutAds"))], item.HasAds?.ToString() ?? "");
+        draft.Field("notes", "ContractNotes", "text", item.Notes, false);
+        void Section(string title, params string[] keys)
+        { foreach (var field in draft.Fields.Where(f => keys.Contains(f.Key))) field.Section = UiCulture.Text(title); }
+        Section("ContractGeneralSection", "name", "provider", "plan", "contractKind", "status", "country", "postcode", "owner", "category");
+        Section("ContractPaymentSection", "paymentAccount", "externalPayment", "contractRecurring", "contractAmount", "billing", "regularAmount");
+        Section("ContractDatesSection", "start", "indefinite", "end", "renewal", "commitment", "noticePeriod", "noticeUnit", "deadline", "trialEnd", "promotionEnd", "review");
+        Section("ContractLinksSection", "cancelUrl", "contractUrl");
+        Section("ContractFeaturesSection", "download", "upload", "unlimited", "dataLimit", "network", "streams", "videoQuality", "ads");
+        Section("ContractNotesSection", "notes");
+        DateOnly? Date(string key) => draft.Text(key).Length == 0 ? null : draft.Date(key);
+        decimal? Number(string key) => draft.Text(key).Length == 0 ? null : draft.Number(key);
+        int? Integer(string key) => draft.Text(key).Length == 0 ? null : int.Parse(draft.Text(key), CultureInfo.InvariantCulture);
+        draft.Apply = d =>
+        {
+            var telecom = draft.Text("contractKind") is "Mobile" or "Internet" or "TelecomBundle";
+            var streaming = draft.Text("contractKind") == "Streaming";
+            SubscriptionContracts.Save(d, item with { Name = draft.Text("name"), Provider = draft.Text("provider"), Plan = draft.Text("plan"),
+                Kind = Enum.Parse<ContractKind>(draft.Text("contractKind")), Status = Enum.Parse<ContractStatus>(draft.Text("status")),
+                CountryCode = draft.Text("country"), Postcode = draft.Text("postcode"), OwnerId = draft.OptionalId("owner"), CategoryId = draft.OptionalId("category"),
+                AccountId = draft.OptionalId("paymentAccount"), ExternalPaymentLabel = draft.Text("externalPayment"),
+                RecurringPaymentId = draft.Text("paymentAccount").Length == 0 ? null : draft.OptionalId("contractRecurring"),
+                Amount = draft.Number("contractAmount"), RegularAmount = Number("regularAmount"), BillingCycle = Enum.Parse<ContractBillingCycle>(draft.Text("billing")),
+                StartDate = Date("start"), IsIndefinite = bool.Parse(draft.Text("indefinite")), EndDate = Date("end"),
+                RenewalDate = Date("renewal"), MinimumCommitmentUntil = Date("commitment"),
+                NoticePeriod = Integer("noticePeriod"), NoticeUnit = Enum.Parse<ContractNoticeUnit>(draft.Text("noticeUnit")), CancellationDeadline = Date("deadline"),
+                TrialEndsOn = Date("trialEnd"), PromotionEndsOn = Date("promotionEnd"), ReviewOn = Date("review"),
+                CancellationUrl = draft.Text("cancelUrl"), ContractUrl = draft.Text("contractUrl"), Notes = draft.Text("notes"),
+                DownloadMbps = telecom ? Number("download") : null, UploadMbps = telecom ? Number("upload") : null,
+                UnlimitedData = telecom && bool.Parse(draft.Text("unlimited")), DataLimitGb = telecom && !bool.Parse(draft.Text("unlimited")) ? Number("dataLimit") : null,
+                NetworkAndConditions = telecom ? draft.Text("network") : "", SimultaneousStreams = streaming ? Integer("streams") : null,
+                VideoQuality = streaming ? draft.Text("videoQuality") : "", HasAds = streaming && draft.Text("ads").Length > 0 ? bool.Parse(draft.Text("ads")) : null });
+        };
+        return draft;
     }
     public static bool CanCreateRecurring(HouseholdData data, Transaction transaction) => transaction.RecurringPaymentId == null &&
         !TransferMatching.IsInternal(data, transaction) && !TransactionAccounting.HasDetails(data, transaction.Id);

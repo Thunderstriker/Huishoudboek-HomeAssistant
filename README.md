@@ -57,6 +57,16 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   Herken vaste of wisselende bedragen, koppel vanuit een bankboeking en controleer
   voorstellen in één selectie. Een maandlijst onderscheidt herkende betalingen,
   controlepunten en wachten op bankgegevens; ontbrekende imports zijn geen betalingsachterstand.
+- **Abonnementen & contracten:** bewaar aanbieders, planvoorwaarden, prijzen, proefperiodes,
+  kortings-, verleng- en opzegdatums, ook voor betalingen buiten geregistreerde rekeningen.
+  Dashboard en wekelijkse controle tonen aandachtspunten. Koppel optioneel een bestaande
+  vaste post zonder de planning of bankboekingen te veranderen. Streamingkenmerken,
+  internet-/mobielsnelheden en datalimieten zijn vast te leggen; automatische
+  prijsvergelijkingen wachten op een geschikte gegevensbron met gebruiksrechten.
+- **Elektriciteit (Vlaanderen):** bewaar tariefhistorie, injectievoorwaarden en vaste
+  vergoedingen. Importeer lokale Fluvius-kwartiermetingen voor een deelsubtotaal of
+  gebruik een Luminus BasicFix-pdf als invulvoorstel. Haal Belgische day-aheadprijzen
+  op voor een dynamisch afnamecontract. Zie [de energiemodule](huishoudboek/DOCS.md#elektriciteit-vlaanderen).
 - **Jaaroverzicht:** inkomsten tegenover maandlasten, een uitgavendoughnut en de
   ontwikkeling van netto spaarbijdragen. Exacte bedragen en jaarbudgetten zijn uitklapbaar.
 - **Categorietrends:** bekijk historische uitgaven voor één categorie over 6, 12 of

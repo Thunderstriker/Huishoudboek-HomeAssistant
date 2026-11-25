@@ -45,8 +45,12 @@
                 <p class="muted">@L["ExistingRecognitionHelp"]</p>
             }
             <div class="fields">
+                @{ string previousSection = ""; }
                 @foreach (var field in Current.Fields.Where(Current.IsFieldVisible))
                 {
+                    @if (field.Section.Length > 0 && field.Section != previousSection)
+                    { <h3 class="editor-section">@field.Section</h3> }
+                    previousSection = field.Section;
                     @if (field.Type == "owners")
                     {
                         <div class="field-note"><strong>@field.Label</strong><div class="owner-choices" role="group" tabindex="-1" aria-invalid="@(field.Error.Length > 0 ? "true" : "false")" aria-describedby="@(field.Error.Length > 0 ? field.Key + "-error" : null)">
@@ -88,7 +92,7 @@
     protected override void OnInitialized() => baseline = Draft.Fingerprint;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     { if (focusInvalid) { focusInvalid = false; await JS.InvokeVoidAsync("huishoudboek.focusInvalid", form); } }
-    private void FieldChanged(EditorField field) { field.Error = ""; Current.Error = ""; }
+    private void FieldChanged(EditorField field) { field.Error = ""; Current.Error = ""; Current.FieldChanged(field); }
     private async Task BeforeNavigate(LocationChangingContext context)
     {
         if (State.Busy || HasChanges && !await JS.InvokeAsync<bool>("confirm", L["DraftDiscardWarning"].Value)) context.PreventNavigation();

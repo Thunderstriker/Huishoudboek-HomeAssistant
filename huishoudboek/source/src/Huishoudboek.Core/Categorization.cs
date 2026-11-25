@@ -59,6 +59,7 @@ public static class Categorization
         foreach (var t in data.Transactions.Where(t => t.CategoryId == categoryId)) t.CategoryId = null;
         foreach (var a in data.TransactionAllocations.Where(a => a.CategoryId == categoryId)) a.CategoryId = null;
         foreach (var r in data.RecurringPayments.Where(r => r.CategoryId == categoryId)) r.CategoryId = null;
+        foreach (var contract in data.Contracts.Where(c => c.CategoryId == categoryId)) contract.CategoryId = null;
         foreach (var r in data.PurchaseReceipts.Where(r => r.DefaultCategoryId == categoryId)) r.DefaultCategoryId = null;
         foreach (var i in data.PurchaseReceiptItems.Where(i => i.CategoryId == categoryId)) i.CategoryId = null;
         foreach (var fallback in receiptFallbacks) fallback.Allocation.CategoryId = fallback.Category;

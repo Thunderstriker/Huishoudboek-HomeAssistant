@@ -226,6 +226,7 @@ public sealed class HouseholdData
     public List<ReimbursementClaim> ReimbursementClaims { get; set; } = [];
     public List<TransferMatch> TransferMatches { get; set; } = [];
     public List<RecurringPayment> RecurringPayments { get; set; } = [];
+    public List<SubscriptionContract> Contracts { get; set; } = [];
     public List<CategorizationRule> Rules { get; set; } = [];
     public List<InvestmentValuation> Valuations { get; set; } = [];
     public List<InvestmentInstrument> Instruments { get; set; } = [];

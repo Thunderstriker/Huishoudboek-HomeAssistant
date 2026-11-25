@@ -1,0 +1,63 @@
+<section class="card">
+    <h3>@L["EnergyImportReview"]</h3>
+    <p>@L["EnergyImportSummary", Preview.File.Rows, Preview.File.Readings.Count, Preview.Unchanged, Preview.File.DuplicateRows, Preview.Conflicts]</p>
+    @foreach (var group in Preview.File.Readings.GroupBy(r => (r.Ean, r.Meter)))
+    {
+        <p><strong>EAN @group.Key.Ean · @group.Key.Meter</strong> · @Day(group.Min(r => r.StartUtc)) – @Day(group.Max(r => r.StartUtc))</p>
+        <ul>
+            @foreach (var register in group.GroupBy(r => (r.Direction, r.Register)))
+            {
+                <li>@L[$"Energy{register.Key.Direction}"] · @L[$"EnergyRegister{register.Key.Register}"] · @register.Count() · @N(register.Sum(r => r.Quantity)) kWh</li>
+            }
+        </ul>
+    }
+    @if (Preview.File.IssueCount > 0)
+    {
+        <details>
+            <summary>@L["EnergyImportIssues", Preview.File.IssueCount, Preview.File.Issues.Count]</summary>
+            <ul>@foreach (var issue in Preview.File.Issues) { <li>@L["EnergyImportRow", issue.Row] @L[$"EnergyCsv{issue.Problem}"]</li> }</ul>
+        </details>
+        <label class="check"><input type="checkbox" @bind="acknowledge" />@L["EnergySkipIssues"]</label>
+    }
+    @if (Preview.Conflicts > 0)
+    {
+        <details>
+            <summary>@L["EnergyImportConflicts", Preview.Conflicts]</summary>
+            <ul>
+                @foreach (var change in Preview.Changes.Where(c => c.NeedsReplacement).Skip(page * 20).Take(20))
+                {
+                    var reading = change.Before[0];
+                    <li><strong>@reading.Ean · @Local(reading.StartUtc)</strong>
+                        <div>@L["EnergyBefore"]: @Describe(change.Before)</div>
+                        <div>@L["EnergyAfter"]: @Describe(change.After)</div>
+                    </li>
+                }
+            </ul>
+            <div class="actions">
+                <button disabled="@(page == 0)" @onclick="() => page--">‹</button>
+                <span>@(page + 1) / @((Preview.Conflicts + 19) / 20)</span>
+                <button disabled="@((page + 1) * 20 >= Preview.Conflicts)" @onclick="() => page++">›</button>
+            </div>
+        </details>
+        <label class="check"><input type="checkbox" @bind="replace" />@L["EnergyConfirmReplace"]</label>
+    }
+    <div class="actions">
+        <button class="primary" disabled="@(Busy || Preview.Changes.Count == 0 || Preview.Conflicts > 0 && !replace || Preview.File.IssueCount > 0 && !acknowledge)"
+                @onclick="() => OnConfirm.InvokeAsync(replace)">@L["EnergyConfirmImport"]</button>
+        <button disabled="@Busy" @onclick="OnCancel">@L["Cancel"]</button>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public EnergyImportPreview Preview { get; set; } = null!;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<bool> OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    private bool acknowledge, replace;
+    private int page;
+    private string Describe(IEnumerable<EnergyReading> readings) => string.Join("; ", readings.Select(r =>
+        $"{r.Meter} · {L[$"Energy{r.Direction}"]}/{L[$"EnergyRegister{r.Register}"]}: {N(r.Quantity)} kWh ({r.Status})"));
+    private static string N(decimal value) => value.ToString("0.############", UiCulture.Culture);
+    private static string Day(DateTime time) => BelgianEnergyTime.Day(time).ToString("dd-MM-yyyy", UiCulture.Culture);
+    private static string Local(DateTime time) => TimeZoneInfo.ConvertTime(new DateTimeOffset(time), BelgianEnergyTime.Zone).ToString("dd-MM-yyyy HH:mm zzz", UiCulture.Culture);
+}

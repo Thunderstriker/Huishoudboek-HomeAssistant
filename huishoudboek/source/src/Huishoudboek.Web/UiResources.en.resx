@@ -3,6 +3,131 @@
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
   <data name="Language" xml:space="preserve"><value>Language</value></data>
+  <data name="ContractsTitle" xml:space="preserve"><value>Subscriptions &amp; contracts</value></data>
+  <data name="ContractTitle" xml:space="preserve"><value>Subscription or contract</value></data>
+  <data name="ContractGeneralSection" xml:space="preserve"><value>Contract details</value></data>
+  <data name="ContractPaymentSection" xml:space="preserve"><value>Payment and price</value></data>
+  <data name="ContractDatesSection" xml:space="preserve"><value>Dates and cancellation terms</value></data>
+  <data name="ContractLinksSection" xml:space="preserve"><value>Contract and cancellation links</value></data>
+  <data name="ContractFeaturesSection" xml:space="preserve"><value>Plan features</value></data>
+  <data name="ContractNotesSection" xml:space="preserve"><value>Your notes</value></data>
+  <data name="ContractsIntro" xml:space="preserve"><value>Keep prices, plan features and important dates, including payments outside tracked accounts. This register creates no bank entries or new recurring payments.</value></data>
+  <data name="ContractEditorNote" xml:space="preserve"><value>Leave unknown dates and terms blank. Select ‘Indefinite term’ if there is no fixed end date; you can still enter an effective stop date later. The regular price uses the same billing cycle as the current price. An explicit cancellation deadline overrides the calculation from the renewal date and notice period; months are calendar months. Linking an existing recurring payment is for reference only: amounts, schedules and bank entries remain unchanged. Shared contracts without an account remain visible under every owner filter.</value></data>
+  <data name="ContractProvider" xml:space="preserve"><value>Provider</value></data>
+  <data name="ContractPlan" xml:space="preserve"><value>Plan / product name (optional)</value></data>
+  <data name="ContractCountry" xml:space="preserve"><value>Country code (for example BE)</value></data>
+  <data name="ContractPostcode" xml:space="preserve"><value>Postcode / region (optional)</value></data>
+  <data name="ContractShared" xml:space="preserve"><value>Shared household</value></data>
+  <data name="ContractPaymentAccount" xml:space="preserve"><value>Payment account</value></data>
+  <data name="ContractExternalPayment" xml:space="preserve"><value>Outside tracked accounts</value></data>
+  <data name="ContractExternalLabel" xml:space="preserve"><value>External payment label (optional; no account number needed)</value></data>
+  <data name="ContractRecurringLink" xml:space="preserve"><value>Existing outgoing recurring payment (optional)</value></data>
+  <data name="ContractPrice" xml:space="preserve"><value>Current price per billing cycle (€)</value></data>
+  <data name="ContractBilling" xml:space="preserve"><value>Billing cycle</value></data>
+  <data name="ContractRegularPrice" xml:space="preserve"><value>Regular price after discount (€ per same cycle, optional)</value></data>
+  <data name="ContractStart" xml:space="preserve"><value>Start date (optional)</value></data>
+  <data name="ContractIndefinite" xml:space="preserve"><value>Indefinite term</value></data>
+  <data name="ContractEnd" xml:space="preserve"><value>End date / effective stop date (optional)</value></data>
+  <data name="ContractRenewal" xml:space="preserve"><value>Next renewal date</value></data>
+  <data name="ContractCommitment" xml:space="preserve"><value>Minimum commitment until (optional)</value></data>
+  <data name="ContractNotice" xml:space="preserve"><value>Notice period (optional; 0 = no notice period)</value></data>
+  <data name="ContractNoticeUnit" xml:space="preserve"><value>Notice period unit</value></data>
+  <data name="ContractNoticeDays" xml:space="preserve"><value>days</value></data>
+  <data name="ContractNoticeMonths" xml:space="preserve"><value>calendar months</value></data>
+  <data name="ContractExplicitDeadline" xml:space="preserve"><value>Explicit last cancellation date (optional)</value></data>
+  <data name="ContractDeadline" xml:space="preserve"><value>Last cancellation date</value></data>
+  <data name="ContractCalculatedDeadline" xml:space="preserve"><value>Calculated from your entered terms</value></data>
+  <data name="ContractTrialEnd" xml:space="preserve"><value>Trial ends on</value></data>
+  <data name="ContractPromotionEnd" xml:space="preserve"><value>Discount ends on (last discounted day)</value></data>
+  <data name="ContractReview" xml:space="preserve"><value>Review again on (optional)</value></data>
+  <data name="ContractCancellationUrl" xml:space="preserve"><value>Cancellation link</value></data>
+  <data name="ContractDocumentUrl" xml:space="preserve"><value>Contract or document link</value></data>
+  <data name="ContractDownload" xml:space="preserve"><value>Download speed (Mbps, optional)</value></data>
+  <data name="ContractUpload" xml:space="preserve"><value>Upload speed (Mbps, optional)</value></data>
+  <data name="ContractUnlimited" xml:space="preserve"><value>Unlimited data (check fair-use terms)</value></data>
+  <data name="ContractDataLimit" xml:space="preserve"><value>Data limit (GB per month, optional)</value></data>
+  <data name="ContractNetwork" xml:space="preserve"><value>Network, roaming, throttling, equipment and terms (optional)</value></data>
+  <data name="ContractStreams" xml:space="preserve"><value>Simultaneous streams (optional)</value></data>
+  <data name="ContractVideoQuality" xml:space="preserve"><value>Video quality (for example HD / 4K, optional)</value></data>
+  <data name="ContractAds" xml:space="preserve"><value>Advertising</value></data>
+  <data name="ContractWithAds" xml:space="preserve"><value>With ads</value></data>
+  <data name="ContractWithoutAds" xml:space="preserve"><value>Without ads</value></data>
+  <data name="ContractNotes" xml:space="preserve"><value>Notes / cancellation steps (optional)</value></data>
+  <data name="ContractMonthlyKnown" xml:space="preserve"><value>Known contract prices · per month</value></data>
+  <data name="ContractAnnualKnown" xml:space="preserve"><value>Indicative annual amount: {0}</value></data>
+  <data name="ContractTrackedCosts" xml:space="preserve"><value>Through tracked accounts</value></data>
+  <data name="ContractExternalCosts" xml:space="preserve"><value>Outside tracked accounts</value></data>
+  <data name="ContractPerMonth" xml:space="preserve"><value>Monthly equivalent of known prices</value></data>
+  <data name="ContractCostsNote" xml:space="preserve"><value>Only currently running contracts within the owner filter, using today's known price (weekly prices × 52). This is not an invoice forecast or recorded expense; temporary discounts, future changes and stop dates are not projected a year ahead. Search and type filters do not change this summary. External payments change no balances, budgets or cash forecasts.</value></data>
+  <data name="ContractUnknownPrices" xml:space="preserve"><value>The trial or discount has ended for {0} running contract(s); check their current prices. These contracts are excluded from price totals.</value></data>
+  <data name="ContractPriceUnknown" xml:space="preserve"><value>Check current price</value></data>
+  <data name="ContractFromRecurring" xml:space="preserve"><value>Copy from an existing recurring payment</value></data>
+  <data name="ContractFromRecurringNote" xml:space="preserve"><value>Use its name, account, category and price as suggestions. Fill in the provider, product name and contract dates yourself. The recurring payment stays unchanged and no duplicate schedule is created.</value></data>
+  <data name="ContractFromRecurringAction" xml:space="preserve"><value>Complete contract details</value></data>
+  <data name="ContractRegister" xml:space="preserve"><value>Contract register</value></data>
+  <data name="ContractAllKinds" xml:space="preserve"><value>All types</value></data>
+  <data name="ContractOnlyAttention" xml:space="preserve"><value>Only attention points</value></data>
+  <data name="ContractShowClosed" xml:space="preserve"><value>Show cancelled and expired contracts</value></data>
+  <data name="ContractSharedFilterNote" xml:space="preserve"><value>An explicit owner determines the filter. Without an owner, a contract follows its payment account; shared contracts without an account remain visible. This filter does not provide separate access rights.</value></data>
+  <data name="ContractNoResults" xml:space="preserve"><value>No contracts match this selection. Add a contract or change the filters.</value></data>
+  <data name="ContractSpeedSummary" xml:space="preserve"><value>Download: {0} Mbps · upload: {1} Mbps</value></data>
+  <data name="ContractDataSummary" xml:space="preserve"><value>Data limit: {0} GB per month</value></data>
+  <data name="ContractStreamingSummary" xml:space="preserve"><value>Simultaneous streams: {0} · video quality: {1}</value></data>
+  <data name="ContractDetails" xml:space="preserve"><value>Terms, links and notes</value></data>
+  <data name="ContractLinkedPayment" xml:space="preserve"><value>Linked recurring payment: {0} · {1} · {2}. Contract prices and payment schedules are not automatically synchronized.</value></data>
+  <data name="ContractDatesNote" xml:space="preserve"><value>Check deadlines with the provider. A past date is a review point, not a confirmed renewal, cancellation or overdue payment. Update the next renewal date and status explicitly. Minimum commitment and effective stop date are separate; the app cancels nothing automatically.</value></data>
+  <data name="ContractDelete" xml:space="preserve"><value>Delete contract</value></data>
+  <data name="ContractDeleteQuestion" xml:space="preserve"><value>Delete contract ‘{0}’ and its reminders? The linked recurring payment, bank entries and balances remain unchanged.</value></data>
+  <data name="ContractAttentionTitle" xml:space="preserve"><value>Contracts needing attention</value></data>
+  <data name="ContractAttentionNote" xml:space="preserve"><value>Dates in the next 30 days, past review points and unknown terms. These are in-app reminders, not push notifications or automatic cancellations.</value></data>
+  <data name="ContractCancellationPending" xml:space="preserve"><value>Cancellation requested — check confirmation</value></data>
+  <data name="ContractCancellationDue" xml:space="preserve"><value>Last cancellation date</value></data>
+  <data name="ContractRenewalDue" xml:space="preserve"><value>Check renewal date</value></data>
+  <data name="ContractRenewalUnknown" xml:space="preserve"><value>Next renewal date missing</value></data>
+  <data name="ContractDeadlineUnknown" xml:space="preserve"><value>Cancellation deadline or terms missing</value></data>
+  <data name="ContractTrialDue" xml:space="preserve"><value>Trial ending / ended</value></data>
+  <data name="ContractTrialUnknown" xml:space="preserve"><value>Trial end date missing</value></data>
+  <data name="ContractPromotionDue" xml:space="preserve"><value>Discount ending / ended</value></data>
+  <data name="ContractReviewDue" xml:space="preserve"><value>Review contract again</value></data>
+  <data name="ContractEndDue" xml:space="preserve"><value>Check end / stop date</value></data>
+  <data name="ContractCheckPastDate" xml:space="preserve"><value>Past date — review</value></data>
+  <data name="ContractShowAllAttention" xml:space="preserve"><value>Show all {0} attention points</value></data>
+  <data name="ContractShowLessAttention" xml:space="preserve"><value>Show fewer attention points</value></data>
+  <data name="ContractDashboardAttention" xml:space="preserve"><value>{0} contract(s) with upcoming dates, cancellations to check or unknown terms.</value></data>
+  <data name="ContractAlternativesTitle" xml:space="preserve"><value>Compare alternatives · later</value></data>
+  <data name="ContractAlternativesDeferred" xml:space="preserve"><value>Automatic prices and savings comparisons will follow only when a reliable source with suitable usage rights is available. No providers are scraped and no old prices are presented as current. Plan details are already stored for that later comparison.</value></data>
+  <data name="ContractComparePrivacy" xml:space="preserve"><value>Your contract details are not sent automatically. An external comparison link only opens the website; you choose what details to enter there.</value></data>
+  <data name="ContractBelgianComparison" xml:space="preserve"><value>Check Belgian telecom prices at Bestetarief (BIPT)</value></data>
+  <data name="ContractLinkInvalid" xml:space="preserve"><value>Use a complete http(s) link without credentials.</value></data>
+  <data name="ContractPriceInvalid" xml:space="preserve"><value>Choose a price between 0 and 1,000,000,000.</value></data>
+  <data name="ContractQuantityInvalid" xml:space="preserve"><value>Choose a value above 0 and no more than 1,000,000.</value></data>
+  <data name="ContractNoticeInvalid" xml:space="preserve"><value>Choose 0–120 days or calendar months, or leave the period blank.</value></data>
+  <data name="ContractStreamsInvalid" xml:space="preserve"><value>Choose 1–100 simultaneous streams, or leave the field blank.</value></data>
+  <data name="ContractCountryInvalid" xml:space="preserve"><value>Use two letters for the country code, for example BE.</value></data>
+  <data name="ContractTextTooLong" xml:space="preserve"><value>This text is too long for the contract field.</value></data>
+  <data name="ContractKindStreaming" xml:space="preserve"><value>Video / streaming</value></data>
+  <data name="ContractKindMobile" xml:space="preserve"><value>Mobile</value></data>
+  <data name="ContractKindInternet" xml:space="preserve"><value>Home internet</value></data>
+  <data name="ContractKindTelecomBundle" xml:space="preserve"><value>Telecom bundle</value></data>
+  <data name="ContractKindMusic" xml:space="preserve"><value>Music</value></data>
+  <data name="ContractKindSoftware" xml:space="preserve"><value>Software / AI</value></data>
+  <data name="ContractKindCloudStorage" xml:space="preserve"><value>Cloud storage</value></data>
+  <data name="ContractKindGaming" xml:space="preserve"><value>Gaming</value></data>
+  <data name="ContractKindGym" xml:space="preserve"><value>Sports / gym</value></data>
+  <data name="ContractKindNews" xml:space="preserve"><value>News / magazines</value></data>
+  <data name="ContractKindInsurance" xml:space="preserve"><value>Insurance</value></data>
+  <data name="ContractKindMaintenance" xml:space="preserve"><value>Maintenance contract</value></data>
+  <data name="ContractKindOther" xml:space="preserve"><value>Other</value></data>
+  <data name="ContractStatusActive" xml:space="preserve"><value>Active</value></data>
+  <data name="ContractStatusTrial" xml:space="preserve"><value>Trial</value></data>
+  <data name="ContractStatusCancellationRequested" xml:space="preserve"><value>Cancellation requested</value></data>
+  <data name="ContractStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="ContractStatusExpired" xml:space="preserve"><value>Expired</value></data>
+  <data name="ContractBillingWeekly" xml:space="preserve"><value>Weekly</value></data>
+  <data name="ContractBillingMonthly" xml:space="preserve"><value>Monthly</value></data>
+  <data name="ContractBillingQuarterly" xml:space="preserve"><value>Quarterly</value></data>
+  <data name="ContractBillingHalfYearly" xml:space="preserve"><value>Half-yearly</value></data>
+  <data name="ContractBillingYearly" xml:space="preserve"><value>Yearly</value></data>
   <data name="ParentCategory" xml:space="preserve"><value>Parent category</value></data>
   <data name="RootCategory" xml:space="preserve"><value>None — root category</value></data>
   <data name="Subcategory" xml:space="preserve"><value>Subcategory</value></data>
@@ -1623,4 +1748,146 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="FixHighlightedFields" xml:space="preserve"><value>Check the highlighted fields.</value></data>
   <data name="AllCategories" xml:space="preserve"><value>All categories</value></data>
   <data name="Close" xml:space="preserve"><value>Close</value></data>
+  <data name="EnergyTitle" xml:space="preserve"><value>Electricity (Flanders)</value></data>
+  <data name="EnergyIntro" xml:space="preserve"><value>Keep electricity contracts, tariff versions and quarter-hour readings. This does not change bank transactions, recurring payments, budgets or forecasts.</value></data>
+  <data name="EnergyHouseholdScope" xml:space="preserve"><value>Shared by the household. Monthly costs follow the EAN across contract changes, independently of the owner filter.</value></data>
+  <data name="EnergyContract" xml:space="preserve"><value>Electricity contract</value></data>
+  <data name="EnergyEditContract" xml:space="preserve"><value>Edit contract details</value></data>
+  <data name="EnergyEditTariff" xml:space="preserve"><value>Edit tariff details</value></data>
+  <data name="EnergySupplier" xml:space="preserve"><value>Supplier</value></data>
+  <data name="EnergyProduct" xml:space="preserve"><value>Product</value></data>
+  <data name="EnergySupplyStart" xml:space="preserve"><value>Supply start</value></data>
+  <data name="EnergySupplyEnd" xml:space="preserve"><value>Last day of supply</value></data>
+  <data name="EnergySupplyDates" xml:space="preserve"><value>Supply start: {0} · last day of supply: {1} · renewal: {2}</value></data>
+  <data name="EnergyLinkedContract" xml:space="preserve"><value>Linked subscription (metadata only)</value></data>
+  <data name="EnergyTariff" xml:space="preserve"><value>Tariff version</value></data>
+  <data name="EnergyTariffHistory" xml:space="preserve"><value>Tariff history</value></data>
+  <data name="EnergyNoTariffs" xml:space="preserve"><value>No applicable tariff has been entered yet.</value></data>
+  <data name="EnergyCorrectTariff" xml:space="preserve"><value>Correct this version</value></data>
+  <data name="EnergyTariffDatesHelp" xml:space="preserve"><value>Choose the actual effective date, not the card date. Add a new version when terms change. With no end date, a version applies until the next version starts or supply ends.</value></data>
+  <data name="EnergyEffectiveFrom" xml:space="preserve"><value>Effective from</value></data>
+  <data name="EnergyEffectiveThrough" xml:space="preserve"><value>Effective through (optional)</value></data>
+  <data name="EnergyCardSource" xml:space="preserve"><value>Tariff card source</value></data>
+  <data name="EnergyCardIssueDate" xml:space="preserve"><value>Tariff card date</value></data>
+  <data name="EnergyCardMonthOnly" xml:space="preserve"><value>Only the month is known (use day 1)</value></data>
+  <data name="EnergyBilling" xml:space="preserve"><value>Billing scheme</value></data>
+  <data name="EnergyChooseBilling" xml:space="preserve"><value>Choose your billing scheme</value></data>
+  <data name="EnergyBillingSingle" xml:space="preserve"><value>Single rate</value></data>
+  <data name="EnergyBillingDayNight" xml:space="preserve"><value>Day/night rates</value></data>
+  <data name="EnergyConsumption" xml:space="preserve"><value>Consumption</value></data>
+  <data name="EnergyPricing" xml:space="preserve"><value>Consumption pricing</value></data>
+  <data name="EnergyPricingFixed" xml:space="preserve"><value>Fixed</value></data>
+  <data name="EnergyPricingVariable" xml:space="preserve"><value>Variable</value></data>
+  <data name="EnergyPricingDynamic" xml:space="preserve"><value>Dynamic</value></data>
+  <data name="EnergyVariableHelp" xml:space="preserve"><value>Enter the verified rate for this period. Add a new tariff version for the next period.</value></data>
+  <data name="EnergySingleRate" xml:space="preserve"><value>Single rate (EUR/kWh)</value></data>
+  <data name="EnergyDayRate" xml:space="preserve"><value>Day rate (EUR/kWh)</value></data>
+  <data name="EnergyNightRate" xml:space="preserve"><value>Night rate (EUR/kWh)</value></data>
+  <data name="EnergyVat" xml:space="preserve"><value>VAT treatment</value></data>
+  <data name="EnergyVatUnknown" xml:space="preserve"><value>VAT unknown</value></data>
+  <data name="EnergyVatIncluded" xml:space="preserve"><value>VAT included</value></data>
+  <data name="EnergyVatExcluded" xml:space="preserve"><value>Before VAT</value></data>
+  <data name="EnergyVatNotApplicable" xml:space="preserve"><value>VAT not applicable</value></data>
+  <data name="EnergyVatPercent" xml:space="preserve"><value>VAT (%)</value></data>
+  <data name="EnergyFormulaHelp" xml:space="preserve"><value>Formula in cents/kWh: coefficient × market or index price (EUR/MWh) + adjustment. Enter an explicit zero if there is no adjustment.</value></data>
+  <data name="EnergyCoefficient" xml:space="preserve"><value>Coefficient (single/day)</value></data>
+  <data name="EnergyOffset" xml:space="preserve"><value>Adjustment (cents/kWh, single/day)</value></data>
+  <data name="EnergyNightCoefficient" xml:space="preserve"><value>Night coefficient</value></data>
+  <data name="EnergyNightOffset" xml:space="preserve"><value>Night adjustment (cents/kWh)</value></data>
+  <data name="EnergyInjection" xml:space="preserve"><value>Injection</value></data>
+  <data name="EnergyInjectionUnknown" xml:space="preserve"><value>Unknown injection terms</value></data>
+  <data name="EnergyInjectionNone" xml:space="preserve"><value>No injection compensation applies</value></data>
+  <data name="EnergyInjectionFixed" xml:space="preserve"><value>Fixed injection rate</value></data>
+  <data name="EnergyInjectionMonthlyIndex" xml:space="preserve"><value>Monthly index</value></data>
+  <data name="EnergyIndexTitle" xml:space="preserve"><value>Monthly index values</value></data>
+  <data name="EnergyIndexSeries" xml:space="preserve"><value>Index name used by the tariff version</value></data>
+  <data name="EnergyIndexEuro" xml:space="preserve"><value>Verified value (EUR/MWh)</value></data>
+  <data name="EnergyIndexSource" xml:space="preserve"><value>Index value source</value></data>
+  <data name="EnergyIndexHelp" xml:space="preserve"><value>Use a verified supplier index for the applicable month only. An illustrative card value or an average market price is not a substitute.</value></data>
+  <data name="EnergyIndexRequired" xml:space="preserve"><value>Enter a month and a verified index value.</value></data>
+  <data name="EnergyFee" xml:space="preserve"><value>Fixed supplier fee</value></data>
+  <data name="EnergyFeeAmount" xml:space="preserve"><value>Amount per connection (EUR)</value></data>
+  <data name="EnergyFeePeriod" xml:space="preserve"><value>Fee period</value></data>
+  <data name="EnergyFeePeriodMonthly" xml:space="preserve"><value>Per month</value></data>
+  <data name="EnergyFeePeriodQuarterly" xml:space="preserve"><value>Per quarter</value></data>
+  <data name="EnergyFeePeriodYearly" xml:space="preserve"><value>Per year</value></data>
+  <data name="EnergyFeeRule" xml:space="preserve"><value>Charging rule</value></data>
+  <data name="EnergyFeeRuleUnknown" xml:space="preserve"><value>Unknown charging rule</value></data>
+  <data name="EnergyFeeRuleProRata" xml:space="preserve"><value>Proportional to supply duration</value></data>
+  <data name="EnergyFeeRuleFullFirstYearThenProRata" xml:space="preserve"><value>Full first year, pro rata thereafter</value></data>
+  <data name="EnergyFeeTerms" xml:space="preserve"><value>Other charging rules and billing timing</value></data>
+  <data name="EnergyFeeSettlement" xml:space="preserve"><value>Charged on the settlement or final bill.</value></data>
+  <data name="EnergyFeeAllocation" xml:space="preserve"><value>Fixed fee allocation (estimated)</value></data>
+  <data name="EnergyFeeCoverage" xml:space="preserve"><value>{0}/{1} days with applicable terms have an allocated amount</value></data>
+  <data name="EnergyEarlyEndFee" xml:space="preserve"><value>Under the recorded first-year rule, {0} is due at the entered end date. This is not an extra line in the partial subtotal.</value></data>
+  <data name="EnergyPdfPrefill" xml:space="preserve"><value>Prefill from a Luminus tariff card (PDF)</value></data>
+  <data name="EnergyPdfHelp" xml:space="preserve"><value>The app reads the text layer locally. Check the draft against the source and fill unknown fields manually. The card does not choose your billing scheme, supply dates or effective date.</value></data>
+  <data name="EnergyPdfUnrecognized" xml:space="preserve"><value>This tariff card was not recognized. Enter the rates manually.</value></data>
+  <data name="EnergyPdfPage" xml:space="preserve"><value>Page {0}</value></data>
+  <data name="EnergyPdfRates" xml:space="preserve"><value>Single / day / night: {0} / {1} / {2} EUR/kWh · fee {3} EUR/year · consumption VAT {4}% / injection VAT {5}%</value></data>
+  <data name="EnergyPdfTerms" xml:space="preserve"><value>Single/day injection formula: {0}; night: {1} (cents/kWh). Charging rule: {2}.</value></data>
+  <data name="EnergyApplyPdf" xml:space="preserve"><value>Use draft values for editing</value></data>
+  <data name="EnergyKeepPdf" xml:space="preserve"><value>Keep the original PDF with this version</value></data>
+  <data name="EnergyDownloadPdf" xml:space="preserve"><value>Download saved PDF</value></data>
+  <data name="EnergyPdfExpired" xml:space="preserve"><value>The temporary PDF expired. Upload it again or turn off retention; your entries are kept.</value></data>
+  <data name="EnergyPdfOnly" xml:space="preserve"><value>Choose a valid PDF file.</value></data>
+  <data name="EnergyFileLimit" xml:space="preserve"><value>The file is too large to process.</value></data>
+  <data name="EnergyImportTitle" xml:space="preserve"><value>Import quarter-hour readings</value></data>
+  <data name="EnergyImportFile" xml:space="preserve"><value>Fluvius quarter-hour export (CSV)</value></data>
+  <data name="EnergyImportHelp" xml:space="preserve"><value>Choose the original semicolon-delimited electricity export (up to 20 MB and 100,000 rows). It stays local. Day and night registers do not determine the billing scheme.</value></data>
+  <data name="EnergyCsvOnly" xml:space="preserve"><value>Choose a CSV file of up to 20 MB.</value></data>
+  <data name="EnergyImportReview" xml:space="preserve"><value>Review readings</value></data>
+  <data name="EnergyImportSummary" xml:space="preserve"><value>{0} rows read · {1} usable unique readings · {2} already stored · {3} duplicated in file · {4} intervals with corrections</value></data>
+  <data name="EnergyRegisterDay" xml:space="preserve"><value>Day register</value></data>
+  <data name="EnergyRegisterNight" xml:space="preserve"><value>Night register</value></data>
+  <data name="EnergyImportIssues" xml:space="preserve"><value>{0} rows will be skipped ({1} shown)</value></data>
+  <data name="EnergyImportRow" xml:space="preserve"><value>Row {0}:</value></data>
+  <data name="EnergyCsvColumns" xml:space="preserve"><value>Incorrect field count or invalid quoting.</value></data>
+  <data name="EnergyCsvIdentity" xml:space="preserve"><value>Invalid EAN or meter identification.</value></data>
+  <data name="EnergyCsvTime" xml:space="preserve"><value>Not a valid quarter-hour interval in Belgian time.</value></data>
+  <data name="EnergyCsvAmbiguousTime" xml:space="preserve"><value>Ambiguous fall-back interval; the correct UTC time cannot be established.</value></data>
+  <data name="EnergyCsvQuantity" xml:space="preserve"><value>Invalid quantity or unit other than kWh.</value></data>
+  <data name="EnergyCsvRegister" xml:space="preserve"><value>Consumption/injection or day/night is ambiguous.</value></data>
+  <data name="EnergyCsvStatus" xml:space="preserve"><value>Unknown or unusable validation status.</value></data>
+  <data name="EnergyCsvConflictingRows" xml:space="preserve"><value>The file has conflicting readings for the same interval.</value></data>
+  <data name="EnergySkipIssues" xml:space="preserve"><value>Skip rejected rows. They will not count as zero readings.</value></data>
+  <data name="EnergyImportConflicts" xml:space="preserve"><value>Review {0} proposed replacements</value></data>
+  <data name="EnergyBefore" xml:space="preserve"><value>Stored</value></data>
+  <data name="EnergyAfter" xml:space="preserve"><value>After confirmation</value></data>
+  <data name="EnergyConfirmReplace" xml:space="preserve"><value>I confirm that these stored readings will be replaced.</value></data>
+  <data name="EnergyConfirmImport" xml:space="preserve"><value>Save valid readings</value></data>
+  <data name="EnergyImportSaved" xml:space="preserve"><value>Readings saved.</value></data>
+  <data name="EnergyMonthlyCosts" xml:space="preserve"><value>Monthly electricity costs</value></data>
+  <data name="EnergyCostsNote" xml:space="preserve"><value>Known amounts include applicable VAT; — means missing or not applicable. This is not a bill or advance. Coverage counts all quarters of the Belgian local day, including today.</value></data>
+  <data name="EnergyNoReadings" xml:space="preserve"><value>No readings for this month. Household costs are not calculated without readings.</value></data>
+  <data name="EnergyCoverage" xml:space="preserve"><value>{0}/{1} quarters · {2} not fully priced · {3} estimated or provisional</value></data>
+  <data name="EnergyWeightedRate" xml:space="preserve"><value>Weighted rate for priced kWh: {0} EUR/kWh</value></data>
+  <data name="EnergyPartialSubtotal" xml:space="preserve"><value>Partial subtotal</value></data>
+  <data name="EnergyOtherChargesMissing" xml:space="preserve"><value>Grid charges, capacity tariff, taxes and other unrecorded charges are missing.</value></data>
+  <data name="EnergyDailyDetails" xml:space="preserve"><value>Daily details and coverage</value></data>
+  <data name="EnergyPublishedPrices" xml:space="preserve"><value>Published prices for today and tomorrow</value></data>
+  <data name="EnergyPublishedNote" xml:space="preserve"><value>Belgian day-ahead prices for dynamic consumption. Only the requested dates are sent to the price source. The supplier rate includes only the entered formula and VAT.</value></data>
+  <data name="EnergyMarketSeries" xml:space="preserve"><value>Market series referenced by your contract</value></data>
+  <data name="EnergySeriesUnconfirmed" xml:space="preserve"><value>Unconfirmed or different series</value></data>
+  <data name="EnergySeriesBelgianDayAhead" xml:space="preserve"><value>Belgian day-ahead spot price (confirmed)</value></data>
+  <data name="EnergySettlement" xml:space="preserve"><value>Contract settlement interval</value></data>
+  <data name="EnergySettlementHour" xml:space="preserve"><value>Hourly</value></data>
+  <data name="EnergySettlementQuarterHour" xml:space="preserve"><value>Quarter-hourly</value></data>
+  <data name="EnergyConfirmMarket" xml:space="preserve"><value>Confirm that the Belgian day-ahead series and chosen interval match the contract first.</value></data>
+  <data name="EnergyPriceSource" xml:space="preserve"><value>Market data:</value></data>
+  <data name="EnergyFetchPublished" xml:space="preserve"><value>Fetch published prices</value></data>
+  <data name="EnergyFetchHistory" xml:space="preserve"><value>Fetch dynamic prices for this month</value></data>
+  <data name="EnergyPublishedCoverage" xml:space="preserve"><value>{0}/{1} prices available</value></data>
+  <data name="EnergyFetchedAt" xml:space="preserve"><value>Last fetched: {0}</value></data>
+  <data name="EnergyPriceInterval" xml:space="preserve"><value>Belgian time (UTC offset)</value></data>
+  <data name="EnergyMarketPrice" xml:space="preserve"><value>Market price (EUR/MWh)</value></data>
+  <data name="EnergySupplierPrice" xml:space="preserve"><value>Supplier formula incl. VAT (EUR/kWh)</value></data>
+  <data name="EnergyResolutionMismatch" xml:space="preserve"><value>The source uses a different interval from this contract. The market price is shown, but no supplier rate is calculated.</value></data>
+  <data name="EnergyPricesMissing" xml:space="preserve"><value>No published prices available for this period.</value></data>
+  <data name="EnergyPricesSaved" xml:space="preserve"><value>{0} published market prices saved.</value></data>
+  <data name="EnergyPriceBusy" xml:space="preserve"><value>A price request is already in progress.</value></data>
+  <data name="EnergyPriceLimit" xml:space="preserve"><value>The price source limits requests. Try again later; saved prices remain available.</value></data>
+  <data name="EnergyPriceFailed" xml:space="preserve"><value>The price source is unavailable or returned an unusable response. Saved prices remain available.</value></data>
+  <data name="EnergySaved" xml:space="preserve"><value>Electricity data saved.</value></data>
+  <data name="EnergyLoadFailed" xml:space="preserve"><value>Could not load the electricity data.</value></data>
 </root>

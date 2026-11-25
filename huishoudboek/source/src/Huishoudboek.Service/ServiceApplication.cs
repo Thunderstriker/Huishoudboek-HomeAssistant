@@ -50,6 +50,8 @@ public static class ServiceApplication
         builder.Services.AddScoped<IWebAdministration, WebAdministration>();
         builder.Services.AddSingleton<ReceiptRecognition>();
         builder.Services.AddScoped<IReceiptAdministration, ReceiptAdministration>();
+        builder.Services.AddSingleton<BelgianMarketClient>();
+        builder.Services.AddScoped<IEnergyAdministration, EnergyAdministration>();
         builder.Services.AddScoped<WebState>();
         builder.Services.AddScoped<UiPreferences>();
         builder.Services.AddSingleton(_ => new AdministrationCoordinator(options.DataDirectory, initialize, claim, allowUpgrade: homeAssistant.Enabled));
@@ -156,6 +158,8 @@ public static class ServiceApplication
             coordinator.ReceiptDocument(id) is { } document
                 ? Results.File(document.Content, document.ContentType, document.Name)
                 : Results.NotFound()).RequireAuthorization();
+        app.MapGet("/website/energy/tariffs/{id:guid}/document", (Guid id) =>
+            coordinator.EnergyDocument(id) is { } document ? Results.File(document.Content, "application/pdf", document.Name) : Results.NotFound()).RequireAuthorization();
         app.MapGet("/website/backup", () => Results.File(coordinator.OpenBackup(), "application/octet-stream", $"huishoudboek-backup-{DateTime.Now:yyyyMMdd-HHmmss}.db")).RequireAuthorization();
         app.MapGet("/website/export", () =>
         {

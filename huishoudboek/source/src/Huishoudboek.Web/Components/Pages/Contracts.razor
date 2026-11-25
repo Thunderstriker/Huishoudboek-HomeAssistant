@@ -1,0 +1,105 @@
+@page "/abonnementen"
+@attribute [Authorize]
+@inherits EditPageBase
+<PageTitle>@L["ContractsTitle"] · Huishoudboek</PageTitle>
+<h1>@L["ContractsTitle"]</h1>
+<div class="actions"><button class="primary" @onclick="() => Draft = EditorDraft.Contract(State)">+ @L["ContractTitle"]</button><a class="button" href="vaste-posten">@L["RecurringPayments"]</a></div>
+<p class="muted">@L["ContractsIntro"]</p>
+@{ var scope = SubscriptionContracts.Visible(State.Data, State.OwnerId).ToList(); var costs = SubscriptionContracts.Costs(scope, State.Today); }
+<div class="metrics">
+    <section class="card"><div class="metric-label">@L["ContractMonthlyKnown"]</div><div class="metric-value">@Money(costs.Annual / 12)</div><small>@L["ContractAnnualKnown", Money(costs.Annual)]</small></section>
+    <section class="card"><div class="metric-label">@L["ContractTrackedCosts"]</div><div class="metric-value">@Money(costs.TrackedAnnual / 12)</div><small>@L["ContractPerMonth"]</small></section>
+    <section class="card"><div class="metric-label">@L["ContractExternalCosts"]</div><div class="metric-value">@Money(costs.ExternalAnnual / 12)</div><small>@L["ContractPerMonth"]</small></section>
+</div>
+<p class="muted">@L["ContractCostsNote"]</p>
+@if (costs.UnknownPriceCount > 0) { <p class="notice warning">@L["ContractUnknownPrices", costs.UnknownPriceCount]</p> }
+<ContractAttentionList />
+<details class="card"><summary>@L["ContractFromRecurring"]</summary>
+    <p class="muted">@L["ContractFromRecurringNote"]</p>
+    <div class="actions"><label>@L["RecurringPayment"]<select @bind="seedPaymentId"><option value="">@L["ChooseRecurringPayment"]</option>
+    @foreach (var payment in State.Data.RecurringPayments.Where(p => p.Amount < 0 && !p.IsMortgage && p.Frequency != PaymentFrequency.Once && State.Scope.Contains(p.AccountId) && !State.Data.Contracts.Any(c => c.RecurringPaymentId == p.Id)))
+    { <option value="@payment.Id">@payment.Name · @State.AccountName(payment.AccountId)</option> }
+    </select></label><button disabled="@(SeedPayment == null)" @onclick="FromPayment">@L["ContractFromRecurringAction"]</button></div>
+</details>
+<section class="card contract-filters"><h2>@L["ContractRegister"]</h2>
+    <div class="filters">
+        <label>@L["Search"]<input type="search" @bind="search" @bind:event="oninput" /></label>
+        <label>@L["Type"]<select @bind="kind"><option value="">@L["ContractAllKinds"]</option>@foreach (var type in Enum.GetValues<ContractKind>()) { <option value="@type">@L[$"ContractKind{type}"]</option> }</select></label>
+        <label class="check"><input type="checkbox" @bind="attentionOnly" />@L["ContractOnlyAttention"]</label>
+        <label class="check"><input type="checkbox" @bind="showClosed" />@L["ContractShowClosed"]</label>
+    </div>
+    <p class="muted">@L["ContractSharedFilterNote"]</p>
+</section>
+@{ var attentionIds = SubscriptionContracts.Attention(scope, State.Today).Select(a => a.Contract.Id).ToHashSet();
+   var contracts = scope.Where(c => (showClosed || SubscriptionContracts.IsOpen(c)) && (kind.Length == 0 || c.Kind.ToString() == kind) &&
+       (!attentionOnly || attentionIds.Contains(c.Id)) && (search.Length == 0 || $"{c.Name} {c.Provider} {c.Plan} {c.ExternalPaymentLabel} {c.Notes}".Contains(search.Trim(), StringComparison.OrdinalIgnoreCase)))
+       .OrderBy(c => !SubscriptionContracts.IsOpen(c)).ThenBy(c => c.Name).ToList(); }
+@if (contracts.Count == 0) { <section class="card"><p>@L["ContractNoResults"]</p></section> }
+<div class="contract-list">
+@foreach (var contract in contracts)
+{
+    var amount = SubscriptionContracts.CurrentAmount(contract, State.Today);
+    var deadline = SubscriptionContracts.Deadline(contract);
+    var linked = State.Data.RecurringPayments.FirstOrDefault(p => p.Id == contract.RecurringPaymentId);
+    <article class="card contract-card" id="@($"contract-{contract.Id}")" @key="contract.Id">
+        <div class="page-heading"><div><h2>@contract.Name</h2><p>@contract.Provider @if (contract.Plan.Length > 0) { <span>· @contract.Plan</span> }</p></div><span class="badge">@L[$"ContractStatus{contract.Status}"]</span></div>
+        <p><span class="badge">@L[$"ContractKind{contract.Kind}"]</span>
+            @if (contract.IsIndefinite) { <span class="badge">@L["ContractIndefinite"]</span> }
+            · @contract.CountryCode @contract.Postcode
+        </p>
+        <div class="contract-price"><strong>@(amount is { } known ? Money(known) : L["ContractPriceUnknown"].Value)</strong> · @L[$"ContractBilling{contract.BillingCycle}"]</div>
+        <p class="muted">@(contract.AccountId == null ? L["ContractExternalPayment"].Value : State.AccountName(contract.AccountId))
+            @if (contract.ExternalPaymentLabel.Length > 0) { <span>· @contract.ExternalPaymentLabel</span> }
+            · @(contract.OwnerId is { } owner ? State.Data.Owners.First(o => o.Id == owner).Name : L["ContractShared"].Value)
+        </p>
+        <dl class="contract-dates">
+            @if (!contract.IsIndefinite || contract.RenewalDate != null) { <div><dt>@L["ContractRenewal"]</dt><dd>@Date(contract.RenewalDate)</dd></div> }
+            @if (!contract.IsIndefinite || deadline != null) { <div><dt>@L["ContractDeadline"]</dt><dd>@Date(deadline) @if (deadline != null && contract.CancellationDeadline == null) { <small>@L["ContractCalculatedDeadline"]</small> }</dd></div> }
+            @if (contract.TrialEndsOn != null) { <div><dt>@L["ContractTrialEnd"]</dt><dd>@Date(contract.TrialEndsOn)</dd></div> }
+            @if (contract.PromotionEndsOn != null) { <div><dt>@L["ContractPromotionEnd"]</dt><dd>@Date(contract.PromotionEndsOn)</dd></div> }
+            @if (contract.EndDate != null) { <div><dt>@L["ContractEnd"]</dt><dd>@Date(contract.EndDate)</dd></div> }
+        </dl>
+        @if (contract.Kind is ContractKind.Mobile or ContractKind.Internet or ContractKind.TelecomBundle)
+        {
+            <p>@L["ContractSpeedSummary", Quantity(contract.DownloadMbps), Quantity(contract.UploadMbps)]<br />@(contract.UnlimitedData ? L["ContractUnlimited"].Value : L["ContractDataSummary", Quantity(contract.DataLimitGb)].Value)</p>
+        }
+        @if (contract.Kind == ContractKind.Streaming)
+        { <p>@L["ContractStreamingSummary", contract.SimultaneousStreams?.ToString() ?? L["Unknown"].Value, contract.VideoQuality.Length > 0 ? contract.VideoQuality : L["Unknown"].Value] · @L[contract.HasAds == null ? "Unknown" : contract.HasAds.Value ? "ContractWithAds" : "ContractWithoutAds"]</p> }
+        <details><summary>@L["ContractDetails"]</summary>
+            <dl class="contract-dates">
+                <div><dt>@L["Category"]</dt><dd>@State.CategoryName(contract.CategoryId)</dd></div>
+                <div><dt>@L["ContractStart"]</dt><dd>@Date(contract.StartDate)</dd></div>
+                <div><dt>@L["ContractCommitment"]</dt><dd>@Date(contract.MinimumCommitmentUntil)</dd></div>
+                <div><dt>@L["ContractNotice"]</dt><dd>@(contract.NoticePeriod is { } notice ? $"{notice} {L[contract.NoticeUnit == ContractNoticeUnit.Months ? "ContractNoticeMonths" : "ContractNoticeDays"]}" : L["Unknown"].Value)</dd></div>
+                <div><dt>@L["ContractRegularPrice"]</dt><dd>@(contract.RegularAmount is { } regular ? Money(regular) : L["Unknown"].Value)</dd></div>
+                <div><dt>@L["ContractReview"]</dt><dd>@Date(contract.ReviewOn)</dd></div>
+            </dl>
+            @if (contract.NetworkAndConditions.Length > 0) { <p class="contract-notes">@contract.NetworkAndConditions</p> }
+            @if (contract.Notes.Length > 0) { <p class="contract-notes">@contract.Notes</p> }
+            @if (linked != null) { <p class="notice">@L["ContractLinkedPayment", linked.Name, Money(Math.Abs(linked.Amount)), EditorDraft.Frequency(linked.Frequency)] <a href="vaste-posten">@L["RecurringPayments"]</a></p> }
+            <p class="muted">@L["ContractDatesNote"]</p>
+            <div class="actions">
+            @if (contract.CancellationUrl.Length > 0) { <a class="button" href="@contract.CancellationUrl" target="_blank" rel="noopener noreferrer">@L["ContractCancellationUrl"] ↗</a> }
+            @if (contract.ContractUrl.Length > 0) { <a class="button" href="@contract.ContractUrl" target="_blank" rel="noopener noreferrer">@L["ContractDocumentUrl"] ↗</a> }
+            </div>
+        </details>
+        <div class="actions"><button @onclick="() => Draft = EditorDraft.Contract(State, contract)">@L["Edit"]</button><button @onclick="() => Delete(contract)">@L["Delete"]…</button></div>
+    </article>
+}
+</div>
+<section class="card"><h2>@L["ContractAlternativesTitle"]</h2><p>@L["ContractAlternativesDeferred"]</p>
+    <p class="muted">@L["ContractComparePrivacy"]</p>
+    @if (scope.Any(c => c.CountryCode == "BE" && c.Kind is ContractKind.Mobile or ContractKind.Internet or ContractKind.TelecomBundle))
+    { <a href="https://www.bestetarief.be/" target="_blank" rel="noopener noreferrer">@L["ContractBelgianComparison"] ↗</a> }
+</section>
+<EditDialogs Page="this" />
+@code {
+    private string search = "", kind = "";
+    private bool attentionOnly, showClosed;
+    private Guid? seedPaymentId;
+    private RecurringPayment? SeedPayment => State.Data.RecurringPayments.FirstOrDefault(p => p.Id == seedPaymentId && p.Amount < 0 && !p.IsMortgage && p.Frequency != PaymentFrequency.Once && State.Scope.Contains(p.AccountId) && !State.Data.Contracts.Any(c => c.RecurringPaymentId == p.Id));
+    private void FromPayment() { if (SeedPayment is { } payment) Draft = EditorDraft.Contract(State, payment: payment); }
+    private void Delete(SubscriptionContract contract) => Ask(L["ContractDelete"], L["ContractDeleteQuestion", contract.Name], d => d.Contracts.RemoveAll(c => c.Id == contract.Id), L["Delete"]);
+    private string Date(DateOnly? date) => date?.ToString("dd-MM-yyyy") ?? L["Unknown"].Value;
+    private string Quantity(decimal? quantity) => quantity?.ToString("0.##", UiCulture.Culture) ?? L["Unknown"].Value;
+}

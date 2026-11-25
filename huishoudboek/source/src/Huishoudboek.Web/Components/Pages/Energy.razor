@@ -1,0 +1,225 @@
+@page "/energie"
+@attribute [Authorize]
+@inherits PageBase
+@inject IEnergyAdministration Module
+
+<PageTitle>@L["EnergyTitle"] · Huishoudboek</PageTitle>
+<h1>@L["EnergyTitle"]</h1>
+<p class="muted">@L["EnergyIntro"]</p>
+@if (view == null)
+{
+    @if (initialLoading) { <p role="status">@L["LoadingRecords"]</p> }
+    else { <p>@L["EnergyLoadFailed"]</p><button disabled="@State.Busy" @onclick="Reload">@L["Refresh"]</button> }
+}
+else
+{
+    var selected = view.Settings.Contracts.FirstOrDefault(c => c.Id == view.ContractId);
+    @if (draftContract is { } contract)
+    {
+        <EnergyTermsEditor @key="contract.Id" Contract="contract" Tariff="draftTariff" Existing="view.Settings.Contracts.Any(c => c.Id == contract.Id)"
+            ExistingTariff="draftTariff != null && view.Settings.Tariffs.Any(t => t.Id == draftTariff.Id)" Busy="State.Busy" State="State"
+            Subscriptions="State.Data.Contracts.OrderBy(c => c.Name)" OnCancel="CloseTerms" OnSave="SaveTerms" />
+    }
+    else
+    {
+        <div class="actions">
+            <button class="primary" @onclick="() => EditTerms()">+ @L["EnergyContract"]</button>
+            <button @onclick="Reload">@L["Refresh"]</button>
+        </div>
+    }
+    @if (selected != null)
+    {
+        <section class="card">
+            <div class="filters">
+                <label>@L["EnergyContract"]
+                    <select value="@selected.Id" @onchange="SwitchContract" disabled="@(draftContract != null)">
+                        @foreach (var entry in view.Settings.Contracts.OrderBy(c => c.Ean).ThenByDescending(c => c.SupplyStart))
+                        { <option value="@entry.Id">@entry.Supplier · @entry.Product · @entry.Ean @entry.SupplyStart?.ToString("yyyy-MM-dd")</option> }
+                    </select>
+                </label>
+                <label>@L["Month"] <input type="month" min="1900-01" max="@MonthKey(CurrentMonth)" value="@MonthKey(month)" @onchange="SwitchMonth" /></label>
+            </div>
+            <p class="muted">@L["EnergyHouseholdScope"]</p>
+            <p>@L["EnergySupplyDates", Date(selected.SupplyStart), Date(selected.SupplyEnd), Date(selected.Renewal)]
+                @if (State.Data.Contracts.FirstOrDefault(c => c.Id == selected.SubscriptionId) is { } linked)
+                { <span> · <a href="@($"abonnementen#contract-{linked.Id}")">@linked.Name</a></span> }
+            </p>
+            @if (draftContract == null)
+            {
+                <div class="actions"><button @onclick="() => EditTerms(selected, onlyContract: true)">@L["EnergyEditContract"]</button>
+                    <button @onclick="() => EditTerms(selected)">+ @L["EnergyTariff"]</button></div>
+            }
+            <h2>@L["EnergyTariffHistory"]</h2>
+            @{ var terms = view.Settings.Tariffs.Where(t => t.ContractId == selected.Id).OrderByDescending(t => t.From).ToList(); }
+            @if (terms.Count == 0) { <p>@L["EnergyNoTariffs"]</p> }
+            @foreach (var tariff in terms)
+            {
+                var window = EnergyTerms.Windows(selected, terms).FirstOrDefault(w => w.Tariff.Id == tariff.Id);
+                var active = window != null && window.From <= BelgianEnergyTime.Today && window.Through >= BelgianEnergyTime.Today;
+                <details open="@active" @key="tariff.Id">
+                    <summary>@Date(tariff.From) – @Date(tariff.Through) · @L[$"EnergyPricing{tariff.Pricing}"] · @L[$"EnergyBilling{tariff.Billing}"]</summary>
+                    <EnergyTariffSummary Tariff="tariff" />
+                    @if (draftContract == null) { <button @onclick="() => EditTerms(selected, tariff)">@L["EnergyCorrectTariff"]</button> }
+                </details>
+            }
+        </section>
+        @if (view.Published.Count > 0)
+        {
+            <section class="card">
+                <h2>@L["EnergyPublishedPrices"]</h2>
+                <p class="muted">@L["EnergyPublishedNote"]</p>
+                <p>@L["EnergyPriceSource"] <a href="@EnergyChartsPrices.SourceUrl" target="_blank" rel="noopener noreferrer">Energy-Charts.info</a> · Bundesnetzagentur | SMARD.de ·
+                    <a href="@EnergyChartsPrices.LicenseUrl" target="_blank" rel="noopener noreferrer">CC BY 4.0</a></p>
+                @if (view.Published.Any(d => d.Tariff.MarketSeries == EnergyMarketSeries.BelgianDayAhead))
+                { <button @onclick="() => Fetch(true)">@L["EnergyFetchPublished"]</button> }
+                @foreach (var day in view.Published)
+                {
+                    <details>
+                        <summary>@Date(day.Day) · @L["EnergyPublishedCoverage", day.Slots.Count(p => p.Market != null), day.Slots.Count]</summary>
+                        @if (day.Tariff.MarketSeries == EnergyMarketSeries.Unconfirmed) { <p>@L["EnergyConfirmMarket"]</p> }
+                        else if (!day.Slots.Any(p => p.Market != null)) { <p>@L["EnergyPricesMissing"]</p> }
+                        else
+                        {
+                            var latest = day.Slots.Where(s => s.Market != null).Max(s => s.Market!.FetchedUtc);
+                            <p>@L["EnergyFetchedAt", Local(latest, "dd-MM-yyyy HH:mm zzz")]</p>
+                            @if (day.Slots.Any(s => s.Market != null && (s.EndUtc - s.StartUtc).TotalMinutes != (int)day.Tariff.Settlement)) { <p class="notice warning">@L["EnergyResolutionMismatch"]</p> }
+                            <div class="table-wrap" style="overflow-x:auto"><table>
+                                <thead><tr><th>@L["EnergyPriceInterval"]</th><th>@L["EnergyMarketPrice"]</th><th>@L["EnergySupplierPrice"]</th></tr></thead>
+                                <tbody>@foreach (var slot in day.Slots)
+                                {
+                                    <tr><td>@Local(slot.StartUtc) – @Local(slot.EndUtc)</td><td>@N(slot.Market?.EuroPerMwh)</td>
+                                        <td>@N(slot.DayRate) @if (day.Tariff.Billing == EnergyBilling.DayNight) { <span> / @N(slot.NightRate)</span> }</td></tr>
+                                }</tbody>
+                            </table></div>
+                        }
+                    </details>
+                }
+            </section>
+        }
+        @if (view.CanFetchHistorical)
+        { <div class="actions"><button @onclick="() => Fetch(false)">@L["EnergyFetchHistory"]</button></div> }
+        @if (view.Report is { } report) { <EnergyCostTable Report="report" /> }
+    }
+    <section class="card">
+        <h2>@L["EnergyImportTitle"]</h2>
+        <p class="muted">@L["EnergyImportHelp"]</p>
+        <label>@L["EnergyImportFile"] <InputFile @key="fileKey" OnChange="PreviewFile" accept=".csv,text/csv" /></label>
+    </section>
+    @if (preview is { } review) { <EnergyImportReview @key="review" Preview="review" Busy="State.Busy" OnCancel="ClearPreview" OnConfirm="Commit" /> }
+    <details class="card" open="@(index != null)">
+        <summary>@L["EnergyIndexTitle"]</summary>
+        <p class="muted">@L["EnergyIndexHelp"]</p>
+        @if (index is { } draft)
+        {
+            <EditForm Model="draft" OnValidSubmit="SaveIndex">
+                <ValidationSummary />
+                <div class="filters">
+                    <label>@L["EnergyIndexSeries"] <InputText @bind-Value="draft.Series" required maxlength="180" /></label>
+                    <label>@L["Month"] <input type="month" required min="1900-01" max="2199-12" value="@draft.MonthKey" @onchange="e => draft.MonthKey = e.Value?.ToString() ?? string.Empty" /></label>
+                    <label>@L["EnergyIndexEuro"] <InputNumber @bind-Value="draft.Value" required step="any" /></label>
+                    <label>@L["EnergyIndexSource"] <InputText @bind-Value="draft.Source" required maxlength="500" /></label>
+                </div>
+                <div class="actions"><button class="primary" type="submit">@L["Save"]</button><button type="button" @onclick="() => index = null">@L["Cancel"]</button></div>
+            </EditForm>
+        }
+        else
+        {
+            <div class="actions"><button @onclick="() => EditIndex()">+ @L["EnergyIndexTitle"]</button></div>
+        }
+        @foreach (var item in view.Settings.Indexes.Where(i => i.Month == month).OrderBy(i => i.Series))
+        {
+            <div class="actions">@item.Series · @MonthKey(item.Month) · @N(item.EuroPerMwh) €/MWh · @item.Source
+                <button disabled="@(index != null)" @onclick="() => EditIndex(item)">@L["Edit"]</button></div>
+        }
+    </details>
+}
+
+@code {
+    private readonly CancellationTokenSource lifetime = new();
+    private EnergyView? view;
+    private EnergyContract? draftContract;
+    private EnergyTariff? draftTariff;
+    private string? draftRevision;
+    private EnergyImportPreview? preview;
+    private IndexDraft? index;
+    private int fileKey;
+    private bool initialLoading = true;
+    private static DateOnly CurrentMonth => new(BelgianEnergyTime.Today.Year, BelgianEnergyTime.Today.Month, 1);
+    private DateOnly month = CurrentMonth;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { await Load(null, month); }
+        catch (Exception) { /* The empty state offers an explicit retry via the standard error handler. */ }
+        finally { initialLoading = false; }
+    }
+    private Task Reload() => State.RunAsync(() => Load(view?.ContractId, month));
+    private async Task Load(Guid? id, DateOnly period)
+    {
+        view = await Module.ReadAsync(id, period, lifetime.Token);
+        month = period;
+    }
+    private Task SwitchContract(ChangeEventArgs e) => Guid.TryParse(e.Value?.ToString(), out var id) ? State.RunAsync(() => Load(id, month)) : Task.CompletedTask;
+    private Task SwitchMonth(ChangeEventArgs e) => ParseMonth(e.Value?.ToString()) is { } date && date <= CurrentMonth
+        ? State.RunAsync(() => Load(view?.ContractId, date)) : Task.CompletedTask;
+    private void EditTerms(EnergyContract? contract = null, EnergyTariff? tariff = null, bool onlyContract = false)
+    {
+        draftContract = contract == null ? new() : contract with { };
+        draftTariff = onlyContract ? null : tariff == null ? new() : tariff with { };
+        draftRevision = view!.Revision;
+    }
+    private void CloseTerms() { draftContract = null; draftTariff = null; draftRevision = null; }
+    private Task SaveTerms((EnergyContract Contract, EnergyTariff? Tariff, Guid? Upload, bool Keep) draft) => State.RunAsync(async () =>
+    {
+        await Module.SaveAsync(draftRevision!, draft.Contract, draft.Tariff, draft.Upload, draft.Keep, lifetime.Token);
+        CloseTerms();
+        await Load(draft.Contract.Id, month);
+    }, L["EnergySaved"]);
+    private Task PreviewFile(InputFileChangeEventArgs e) => State.RunAsync(async () =>
+    {
+        preview = null;
+        var file = e.File;
+        if (file.Size > EnergyCsv.MaximumBytes || !file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)) { fileKey++; throw new InvalidDataException(L["EnergyCsvOnly"]); }
+        await using var stream = file.OpenReadStream(EnergyCsv.MaximumBytes, lifetime.Token);
+        preview = await Module.PreviewAsync(stream, lifetime.Token);
+    });
+    private void ClearPreview() { preview = null; fileKey++; }
+    private Task Commit(bool replace) => State.RunAsync(async () =>
+    {
+        if (preview is not { } batch) return;
+        await Module.CommitAsync(batch, replace, lifetime.Token);
+        ClearPreview();
+        await Load(view?.ContractId, month);
+    }, L["EnergyImportSaved"]);
+    private Task Fetch(bool current) => State.RunAsync(async () =>
+    {
+        if (view?.ContractId is not { } id) return;
+        var count = await Module.FetchPricesAsync(view.Revision, id, month, current, lifetime.Token);
+        await Load(id, month);
+        State.Message = L[count == 0 ? "EnergyPricesMissing" : "EnergyPricesSaved", count];
+    });
+    private void EditIndex(EnergyIndexValue? item = null) => index = new(item?.Id ?? Guid.NewGuid(), item?.Series ?? "", MonthKey(item?.Month ?? month), item?.EuroPerMwh, item?.Source ?? "", view!.Revision);
+    private Task SaveIndex() => State.RunAsync(async () =>
+    {
+        if (index is not { Value: { } amount } draft || ParseMonth(draft.MonthKey) is not { } date) throw new InvalidDataException(L["EnergyIndexRequired"]);
+        await Module.SaveIndexAsync(draft.Revision, new() { Id = draft.Id, Series = draft.Series, Month = date, EuroPerMwh = amount, Source = draft.Source }, lifetime.Token);
+        index = null;
+        await Load(view?.ContractId, month);
+    }, L["EnergySaved"]);
+    private sealed class IndexDraft(Guid id, string series, string month, decimal? value, string source, string revision)
+    {
+        public Guid Id { get; } = id;
+        public string Series { get; set; } = series;
+        public string MonthKey { get; set; } = month;
+        public decimal? Value { get; set; } = value;
+        public string Source { get; set; } = source;
+        public string Revision { get; } = revision;
+    }
+    private static DateOnly? ParseMonth(string? key) => DateOnly.TryParseExact($"{key}-01", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
+        && BelgianEnergyTime.Supported(date) ? date : null;
+    private static string MonthKey(DateOnly day) => day.ToString("yyyy-MM", CultureInfo.InvariantCulture);
+    private static string Date(DateOnly? day) => day?.ToString("dd-MM-yyyy", UiCulture.Culture) ?? "—";
+    private static string N(decimal? amount) => amount?.ToString("0.############", UiCulture.Culture) ?? "—";
+    private static string Local(DateTime time, string format = "HH:mm zzz") => TimeZoneInfo.ConvertTime(new DateTimeOffset(time), BelgianEnergyTime.Zone).ToString(format, UiCulture.Culture);
+    public override void Dispose() { lifetime.Cancel(); lifetime.Dispose(); base.Dispose(); }
+}

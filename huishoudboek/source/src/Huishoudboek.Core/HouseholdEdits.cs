@@ -98,6 +98,7 @@ public static class HouseholdEdits
     {
         var name = data.RecurringPayments.FirstOrDefault(r => r.Id == id)?.Name ?? "";
         data.RecurringPayments.RemoveAll(r => r.Id == id);
+        foreach (var contract in data.Contracts.Where(c => c.RecurringPaymentId == id)) contract.RecurringPaymentId = null;
         foreach (var rule in data.Rules.Where(r => r.RecurringPaymentId == id).ToList())
         {
             rule.RecurringPaymentId = null;

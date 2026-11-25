@@ -159,7 +159,7 @@ internal static class FinancialCalendarTests
             var backup = Path.Combine(directory, "backup.db"); source.Backup(backup);
             var target = new SqliteHouseholdStore(Path.Combine(directory, "target.db")); target.Restore(backup);
             var loaded = target.Load(); True(SpendingForecast.CategoryIds(loaded).Contains(leisure.Id));
-            True(!SpendingForecast.CategoryIds(loaded).Contains(f.Food.Id)); Equal(18L, Scalar(target.DatabasePath, "PRAGMA user_version"));
+            True(!SpendingForecast.CategoryIds(loaded).Contains(f.Food.Id)); Equal((long)SqliteHouseholdStore.SchemaVersion, Scalar(target.DatabasePath, "PRAGMA user_version"));
             foreach (var id in SpendingForecast.CategoryIds(loaded)) SpendingForecast.SetIncluded(loaded, id, false);
             target.Save(loaded); loaded = target.Load(); Equal(0, SpendingForecast.CategoryIds(loaded).Count);
             var emptyBackup = Path.Combine(directory, "empty.db"); target.Backup(emptyBackup); source.Restore(emptyBackup);
@@ -174,7 +174,7 @@ internal static class FinancialCalendarTests
             True(SpendingForecast.CategoryIds(loaded).Contains(f.Food.Id));
             Categorization.RenameCategory(loaded, f.Food.Id, "Synthetic renamed food"); store.Save(loaded);
             True(SpendingForecast.CategoryIds(store.Load()).Contains(f.Food.Id));
-            Equal(18L, Scalar(path, "PRAGMA user_version")); Equal(0, Directory.GetFiles(directory, "*.voor-versie-*.db").Length);
+            Equal((long)SqliteHouseholdStore.SchemaVersion, Scalar(path, "PRAGMA user_version")); Equal(0, Directory.GetFiles(directory, "*.voor-versie-*.db").Length);
         }));
         yield return ("Forecast category choices validate IDs and are cleaned on category deletion", () =>
         {
@@ -463,9 +463,9 @@ internal static class FinancialCalendarTests
             Sql(path, RecognitionTests.RemoveSchema17Tables + "PRAGMA user_version=16;");
             var store = new SqliteHouseholdStore(path, allowCreate: false); var loaded = store.Load();
             Equal(before, JsonSerializer.Serialize(loaded.Transactions)); Equal(0, loaded.SpendingHabits.Count);
-            Equal(18L, Scalar(path, "PRAGMA user_version"));
-            var backup = Directory.GetFiles(directory, "*.voor-versie-18-*.db").Single(); Equal(16L, Scalar(backup, "PRAGMA user_version"));
-            _ = new SqliteHouseholdStore(path, allowCreate: false); Equal(1, Directory.GetFiles(directory, "*.voor-versie-18-*.db").Length);
+            Equal((long)SqliteHouseholdStore.SchemaVersion, Scalar(path, "PRAGMA user_version"));
+            var backup = Directory.GetFiles(directory, $"*.voor-versie-{SqliteHouseholdStore.SchemaVersion}-*.db").Single(); Equal(16L, Scalar(backup, "PRAGMA user_version"));
+            _ = new SqliteHouseholdStore(path, allowCreate: false); Equal(1, Directory.GetFiles(directory, "*.voor-versie-*.db").Length);
         }));
         yield return ("Database backup and restore retain learning settings and older restores reset them safely", () => InDirectory(directory =>
         {

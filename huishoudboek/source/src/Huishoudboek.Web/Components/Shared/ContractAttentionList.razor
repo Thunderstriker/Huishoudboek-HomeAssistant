@@ -1,0 +1,13 @@
+@inherits PageBase
+@{ var attention = SubscriptionContracts.Attention(SubscriptionContracts.Visible(State.Data, State.OwnerId), State.Today); }
+@if (attention.Count > 0)
+{
+    <section class="card" id="contract-attention"><h2>@L["ContractAttentionTitle"]</h2><p class="muted">@L["ContractAttentionNote"]</p>
+        <ul>
+        @foreach (var item in attention.Take(expanded ? attention.Count : 8))
+        { <li><a href="@($"abonnementen#contract-{item.Contract.Id}")">@item.Contract.Name</a> · @L[item.Reason] @if (item.Date is { } date) { <span>· @date.ToString("dd-MM-yyyy") @if (date < State.Today) { <span class="badge">@L["ContractCheckPastDate"]</span> }</span> }</li> }
+        </ul>
+        @if (attention.Count > 8) { <button @onclick="() => expanded = !expanded">@L[expanded ? "ContractShowLessAttention" : "ContractShowAllAttention", attention.Count]</button> }
+    </section>
+}
+@code { private bool expanded; }

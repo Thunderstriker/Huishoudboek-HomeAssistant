@@ -38,6 +38,15 @@ public static class LocalPreviewData
             Recurring("Demo huur", "Wonen & hypotheek", -1250, 2), Recurring("Demo energie", "Energie & water", -165, 5),
             Recurring("Demo verzekering", "Verzekeringen", -92, 8), Recurring("Demo internet", "Abonnementen", -52, 12),
             Recurring("Demo sparen", "Sparen & beleggen", -650, 15) };
+        data.Contracts.Add(new() { Name = "Internet (demo)", Provider = "Fictieve internetaanbieder", Plan = "Demo 300",
+            Kind = ContractKind.Internet, AccountId = current.Id, CategoryId = categories["Abonnementen"].Id,
+            RecurringPaymentId = recurring[5].Id, Amount = 52, DownloadMbps = 300, UploadMbps = 30, UnlimitedData = true,
+            RenewalDate = today.AddDays(20), NoticePeriod = 30, ReviewOn = today.AddDays(7),
+            Notes = "Fictieve voorwaarden en prijzen, geen actueel aanbod." });
+        data.Contracts.Add(new() { Name = "Streaming (demo)", Provider = "Fictieve streamingaanbieder", Kind = ContractKind.Streaming,
+            OwnerId = sam.Id, ExternalPaymentLabel = "Andere rekening (demo)", Amount = 9, SimultaneousStreams = 2,
+            VideoQuality = "HD", HasAds = false, RenewalDate = today.AddDays(10), NoticePeriod = 0,
+            Notes = "Extern betaald voorbeeld; telt niet mee in bankuitgaven of cashprognoses." });
 
         for (var month = start; month <= today; month = month.AddMonths(1))
         {

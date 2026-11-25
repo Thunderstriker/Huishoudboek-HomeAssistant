@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.4
+
+- Abonnementen & contracten bij Planning, met aanbieders, productnamen, prijzen,
+  proefperiodes, kortingen, verlengdatums en opzegvoorwaarden. Expliciete deadlines
+  gaan vóór berekende datums; onbekende voorwaarden blijven controlepunten.
+- Contracten buiten geregistreerde rekeningen bijhouden, met aparte prijstotalen
+  en zonder bankboekingen, saldo-, budget- of prognosewijzigingen. Bestaande vaste
+  posten zijn optioneel te koppelen of als invoervoorstel over te nemen.
+- Mobiele/internetvoorwaarden en streamingkenmerken bewaren; zoeken, type- en
+  eigenaarfilters, contractlinks, notities en opgezegde/verlopen historie beschikbaar.
+  Dashboard en wekelijkse controle tonen komende datums en te controleren opzeggingen.
+- Databaseschema 19 bewaart contracten in volledige back-ups, met veiligheidskopie
+  vóór migratie en behoud van oudere administraties. Automatische prijsvergelijkingen
+  uitgesteld tot een betrouwbare gegevensbron met passende gebruiksrechten beschikbaar is.
+- Elektriciteit voor Vlaanderen bij Planning: tariefhistorie, enkelvoudige of
+  dag-/nachttarieven, injectie, btw en vaste vergoedingen. Luminus BasicFix-pdf's
+  geven lokaal een te controleren invulvoorstel; het origineel bewaren is optioneel.
+- Handmatige Fluvius-kwartierimport met controle op dubbels, correcties en zomer-/wintertijd.
+  Dag- en maandkosten tonen gegevensdekking en een deelsubtotaal, zonder bankboekingen
+  te wijzigen. Belgische day-aheadprijzen zijn alleen beschikbaar bij dynamische afname.
+- Databaseschema 20 neemt energiecontracten, tarieven, metingen en prijzen mee in
+  de volledige back-up, met een veiligheidskopie vóór migratie.
+- Contracten kunnen op **Onbepaalde duur** staan, zonder waarschuwingen voor ontbrekende
+  verleng- of opzegdatums. Ingevulde datums blijven controlepunten; schema 21 bewaart
+  de keuze zonder bestaande contracten automatisch aan te passen.
+- App- en containerversie bijgewerkt naar 0.4 voor installatie en updates via Home Assistant.
+
 ## 0.3.4
 
 - Subcategorieën aanmaken en bestaande categorieën onder een andere categorie of

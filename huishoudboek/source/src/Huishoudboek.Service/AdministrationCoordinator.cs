@@ -5,7 +5,7 @@ using Huishoudboek.Infrastructure;
 namespace Huishoudboek.Service;
 
 /// <summary>One writer, including the complete read/validate/write operation. Revisions are invalidated on restart and restore.</summary>
-public sealed class AdministrationCoordinator : IDisposable
+public sealed partial class AdministrationCoordinator : IDisposable
 {
     private readonly object _gate = new();
     private readonly AdministrationLease _lease;
@@ -150,6 +150,7 @@ public sealed class AdministrationCoordinator : IDisposable
             _store.Backup(safety);
             _store.Restore(uploadPath);
             _data = restored;
+            _energyRevision = NewRevision();
             _revision = revision;
             return _revision;
         }

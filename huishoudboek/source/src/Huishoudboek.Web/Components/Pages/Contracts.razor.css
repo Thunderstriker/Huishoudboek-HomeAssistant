@@ -1,0 +1,14 @@
+.contract-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: 1rem; }
+.contract-card { min-width: 0; scroll-margin-top: 5rem; }
+.contract-card h2 { margin-bottom: .25rem; overflow-wrap: anywhere; }
+.contract-card .page-heading { align-items: flex-start; }
+.contract-card .page-heading p { margin: .25rem 0; overflow-wrap: anywhere; }
+.contract-price { font-size: 1.15rem; margin: .75rem 0; }
+.contract-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 1rem 0; }
+.contract-dates dt { font-size: .85rem; opacity: .8; }
+.contract-dates dd { margin: .2rem 0 0; overflow-wrap: anywhere; }
+.contract-dates small { display: block; }
+.contract-notes { white-space: pre-wrap; overflow-wrap: anywhere; }
+.contract-card > .actions { margin-top: 1rem; }
+.contract-filters { margin: 1rem 0; }
+@media (max-width: 480px) { .contract-dates { grid-template-columns: 1fr; } }
