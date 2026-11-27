@@ -23,7 +23,7 @@ else
     else
     {
         <div class="actions">
-            <button class="primary" @onclick="() => EditTerms()">+ @L["EnergyContract"]</button>
+            <button class="primary" disabled="@(State.Busy || monthlyCharge != null)" @onclick="() => EditTerms()">+ @L["EnergyContract"]</button>
             <button @onclick="Reload">@L["Refresh"]</button>
         </div>
     }
@@ -32,12 +32,12 @@ else
         <section class="card">
             <div class="filters">
                 <label>@L["EnergyContract"]
-                    <select value="@selected.Id" @onchange="SwitchContract" disabled="@(draftContract != null)">
+                    <select value="@selected.Id" @onchange="SwitchContract" disabled="@(State.Busy || draftContract != null || monthlyCharge != null)">
                         @foreach (var entry in view.Settings.Contracts.OrderBy(c => c.Ean).ThenByDescending(c => c.SupplyStart))
                         { <option value="@entry.Id">@entry.Supplier · @entry.Product · @entry.Ean @entry.SupplyStart?.ToString("yyyy-MM-dd")</option> }
                     </select>
                 </label>
-                <label>@L["Month"] <input type="month" min="1900-01" max="@MonthKey(CurrentMonth)" value="@MonthKey(month)" @onchange="SwitchMonth" /></label>
+                <label>@L["Month"] <input type="month" min="1900-01" max="@MonthKey(CurrentMonth)" value="@MonthKey(SelectedMonth)" @onchange="SwitchMonth" disabled="@(State.Busy || monthlyCharge != null)" /></label>
             </div>
             <p class="muted">@L["EnergyHouseholdScope"]</p>
             <p>@L["EnergySupplyDates", Date(selected.SupplyStart), Date(selected.SupplyEnd), Date(selected.Renewal)]
@@ -46,9 +46,41 @@ else
             </p>
             @if (draftContract == null)
             {
-                <div class="actions"><button @onclick="() => EditTerms(selected, onlyContract: true)">@L["EnergyEditContract"]</button>
-                    <button @onclick="() => EditTerms(selected)">+ @L["EnergyTariff"]</button></div>
+                <div class="actions"><button disabled="@(State.Busy || monthlyCharge != null)" @onclick="() => EditTerms(selected, onlyContract: true)">@L["EnergyEditContract"]</button>
+                    <button disabled="@(State.Busy || monthlyCharge != null)" @onclick="() => EditTerms(selected)">+ @L["EnergyTariff"]</button></div>
             }
+        </section>
+        <EnergyMonthlyOverview Months="view.Months" Month="SelectedMonth" Busy="@(State.Busy || monthlyCharge != null)" OnSelect="SelectMonth" />
+        @if (view.Report is { } report)
+        {
+            <EnergyCostTable Report="report" Month="SelectedMonth">
+                <MonthlyChargeEditor>
+                    @if (monthlyCharge is { } charge)
+                    {
+                        <EditForm Model="charge" OnValidSubmit="SaveMonthlyCharge">
+                            <ValidationSummary />
+                            <p class="muted">@L["EnergyMonthlyChargesEditHelp", MonthKey(charge.Month), charge.Ean]</p>
+                            <div class="filters"><label>@L["EnergyMonthlyChargesAmount"]
+                                <InputNumber @bind-Value="charge.Amount" min="0" max="1000000" step="0.01" disabled="@State.Busy" />
+                            </label></div>
+                            <div class="actions">
+                                <button class="primary" type="submit" disabled="@State.Busy">@L["Save"]</button>
+                                <button type="button" @onclick="() => monthlyCharge = null" disabled="@State.Busy">@L["Cancel"]</button>
+                            </div>
+                        </EditForm>
+                    }
+                    else
+                    {
+                        <div class="actions"><button type="button" disabled="@(State.Busy || draftContract != null)" @onclick="() => EditMonthlyCharge(selected.Ean, report.MonthlyCharges)">@L["EnergyMonthlyChargesEdit"]</button></div>
+                    }
+                    @if (view.CanFetchHistorical)
+                    { <div class="actions"><button disabled="@State.Busy" @onclick="() => Fetch(false)">@L["EnergyFetchHistory"]</button></div> }
+                </MonthlyChargeEditor>
+            </EnergyCostTable>
+        }
+        <EnergySurchargeEditor @key="selected.Ean" Ean="@selected.Ean" Revision="@view.Revision" Year="SelectedMonth.Year" State="State"
+                               Rates="view.Settings.SurchargeRates.Where(rate => rate.Ean == selected.Ean).ToList()" OnSaved="() => Load(selected.Id, SelectedMonth)" />
+        <section class="card">
             <h2>@L["EnergyTariffHistory"]</h2>
             @{ var terms = view.Settings.Tariffs.Where(t => t.ContractId == selected.Id).OrderByDescending(t => t.From).ToList(); }
             @if (terms.Count == 0) { <p>@L["EnergyNoTariffs"]</p> }
@@ -59,7 +91,7 @@ else
                 <details open="@active" @key="tariff.Id">
                     <summary>@Date(tariff.From) – @Date(tariff.Through) · @L[$"EnergyPricing{tariff.Pricing}"] · @L[$"EnergyBilling{tariff.Billing}"]</summary>
                     <EnergyTariffSummary Tariff="tariff" />
-                    @if (draftContract == null) { <button @onclick="() => EditTerms(selected, tariff)">@L["EnergyCorrectTariff"]</button> }
+                    @if (draftContract == null) { <button disabled="@(State.Busy || monthlyCharge != null)" @onclick="() => EditTerms(selected, tariff)">@L["EnergyCorrectTariff"]</button> }
                 </details>
             }
         </section>
@@ -96,9 +128,6 @@ else
                 }
             </section>
         }
-        @if (view.CanFetchHistorical)
-        { <div class="actions"><button @onclick="() => Fetch(false)">@L["EnergyFetchHistory"]</button></div> }
-        @if (view.Report is { } report) { <EnergyCostTable Report="report" /> }
     }
     <section class="card">
         <h2>@L["EnergyImportTitle"]</h2>
@@ -106,30 +135,27 @@ else
         <label>@L["EnergyImportFile"] <InputFile @key="fileKey" OnChange="PreviewFile" accept=".csv,text/csv" disabled="@State.Busy" /></label>
     </section>
     @if (preview is { } review) { <EnergyImportReview @key="review" Preview="review" Busy="State.Busy" OnCancel="ClearPreview" OnConfirm="Commit" /> }
-    @if (view.QuarterHourConnections.Count > 0)
+    @if (view.ReadingConnections.Count > 0)
     {
         <details class="card">
-            <summary>@L["EnergyClearQuarterTitle"]</summary>
-            <p class="muted">@L["EnergyClearQuarterHelp"]</p>
+            <summary>@L["EnergyClearReadingsTitle"]</summary>
+            <p class="muted">@L["EnergyClearReadingsHelp"]</p>
             <div class="filters">
                 <label>EAN
-                    <select @bind="quarterEan" @bind:after="ResetQuarterPreview" disabled="@State.Busy">
-                        @foreach (var ean in view.QuarterHourConnections) { <option value="@ean">@ean</option> }
+                    <select @bind="clearEan" @bind:after="ResetClearPreview" disabled="@State.Busy">
+                        @foreach (var ean in view.ReadingConnections) { <option value="@ean">@ean</option> }
                     </select>
                 </label>
-                <label>@L["FromInclusive"] <input type="date" min="1900-01-01" max="2199-12-31" @bind="quarterFrom" @bind:after="ResetQuarterPreview" disabled="@State.Busy" /></label>
-                <label>@L["ThroughInclusive"] <input type="date" min="1900-01-01" max="2199-12-31" @bind="quarterThrough" @bind:after="ResetQuarterPreview" disabled="@State.Busy" /></label>
             </div>
-            @if (quarterFrom.HasValue && quarterThrough.HasValue && !QuarterRangeValid) { <p role="alert">@L["EnergyClearQuarterInvalidRange"]</p> }
-            @if (quarterClear is { Count: 0 }) { <p role="status">@L["EnergyClearQuarterNone"]</p> }
-            @if (preview != null) { <p class="muted">@L["EnergyClearQuarterFinishImport"]</p> }
-            <button type="button" @onclick="PreviewQuarterCleanup" disabled="@(State.Busy || preview != null || !QuarterRangeValid)">@L["EnergyClearQuarterPreview"]</button>
+            @if (readingsClear is { Count: 0 }) { <p role="status">@L["EnergyClearReadingsNone"]</p> }
+            @if (preview != null) { <p class="muted">@L["EnergyClearReadingsFinishImport"]</p> }
+            <button type="button" @onclick="PreviewReadingsCleanup" disabled="@(State.Busy || preview != null || clearEan == null)">@L["EnergyClearReadingsPreview"]</button>
         </details>
     }
-    @if (quarterClear is { Count: > 0 } cleanup)
+    @if (readingsClear is { Count: > 0 } cleanup)
     {
-        <Confirm Title="@L["EnergyClearQuarterTitle"]" Text="@L["EnergyClearQuarterConfirm", cleanup.Count, cleanup.Ean, Date(cleanup.From), Date(cleanup.Through)]"
-                 ActionLabel="@L["EnergyClearQuarterDelete"]" Cancel="ResetQuarterPreview" Accept="ClearQuarterHours" />
+        <Confirm Title="@L["EnergyClearReadingsTitle"]" Text="@L["EnergyClearReadingsConfirm", cleanup.Count, cleanup.Ean]"
+                 ActionLabel="@L["EnergyClearReadingsTitle"]" Cancel="ResetClearPreview" Accept="ClearReadings" />
     }
     <details class="card" open="@(index != null)">
         <summary>@L["EnergyIndexTitle"]</summary>
@@ -151,7 +177,7 @@ else
         {
             <div class="actions"><button @onclick="() => EditIndex()">+ @L["EnergyIndexTitle"]</button></div>
         }
-        @foreach (var item in view.Settings.Indexes.Where(i => i.Month == month).OrderBy(i => i.Series))
+        @foreach (var item in view.Settings.Indexes.Where(i => i.Month == SelectedMonth).OrderBy(i => i.Series))
         {
             <div class="actions">@item.Series · @MonthKey(item.Month) · @N(item.EuroPerMwh) €/MWh · @item.Source
                 <button disabled="@(index != null)" @onclick="() => EditIndex(item)">@L["Edit"]</button></div>
@@ -166,37 +192,43 @@ else
     private EnergyTariff? draftTariff;
     private string? draftRevision;
     private EnergyImportPreview? preview;
-    private EnergyQuarterClearPreview? quarterClear;
-    private string? quarterEan;
-    private DateOnly? quarterFrom, quarterThrough;
+    private EnergyReadingsClearPreview? readingsClear;
+    private string? clearEan;
+    private MonthlyChargeDraft? monthlyCharge;
     private IndexDraft? index;
     private int fileKey;
     private bool initialLoading = true;
     private static DateOnly CurrentMonth => new(BelgianEnergyTime.Today.Year, BelgianEnergyTime.Today.Month, 1);
-    private DateOnly month = CurrentMonth;
+    private DateOnly SelectedMonth => view?.Month ?? CurrentMonth;
 
     protected override async Task OnInitializedAsync()
     {
-        try { await Load(null, month); }
+        try { await Load(null, SelectedMonth); }
         catch (Exception) { /* The empty state offers an explicit retry via the standard error handler. */ }
         finally { initialLoading = false; }
     }
-    private Task Reload() => State.RunAsync(() => Load(view?.ContractId, month));
+    private Task Reload() => State.RunAsync(() => Load(view?.ContractId, SelectedMonth));
     private async Task Load(Guid? id, DateOnly period)
     {
         var oldId = view?.ContractId;
         view = await Module.ReadAsync(id, period, lifetime.Token);
-        if (view.ContractId != oldId || !view.QuarterHourConnections.Contains(quarterEan))
+        if (view.ContractId != oldId || !view.ReadingConnections.Contains(clearEan))
         {
             var selectedEan = view.Settings.Contracts.FirstOrDefault(c => c.Id == view.ContractId)?.Ean;
-            quarterEan = view.QuarterHourConnections.Contains(selectedEan) ? selectedEan : view.QuarterHourConnections.FirstOrDefault();
+            clearEan = view.ReadingConnections.Contains(selectedEan) ? selectedEan : view.ReadingConnections.FirstOrDefault();
         }
-        ResetQuarterPreview();
-        month = period;
+        ResetClearPreview();
     }
-    private Task SwitchContract(ChangeEventArgs e) => Guid.TryParse(e.Value?.ToString(), out var id) ? State.RunAsync(() => Load(id, month)) : Task.CompletedTask;
-    private Task SwitchMonth(ChangeEventArgs e) => ParseMonth(e.Value?.ToString()) is { } date && date <= CurrentMonth
-        ? State.RunAsync(() => Load(view?.ContractId, date)) : Task.CompletedTask;
+    private Task SwitchContract(ChangeEventArgs e) => monthlyCharge == null && Guid.TryParse(e.Value?.ToString(), out var id) ? State.RunAsync(() => Load(id, SelectedMonth)) : Task.CompletedTask;
+    private Task SwitchMonth(ChangeEventArgs e) => ParseMonth(e.Value?.ToString()) is { } date ? SelectMonth(date) : Task.CompletedTask;
+    private Task SelectMonth(DateOnly period)
+    {
+        if (State.Busy || monthlyCharge != null || period > CurrentMonth || period == SelectedMonth) return Task.CompletedTask;
+        if (view?.Months.Any(m => m.Month == period) != true) return State.RunAsync(() => Load(view?.ContractId, period));
+        view = view with { Month = period };
+        ResetClearPreview();
+        return Task.CompletedTask;
+    }
     private void EditTerms(EnergyContract? contract = null, EnergyTariff? tariff = null, bool onlyContract = false)
     {
         draftContract = contract == null ? new() : contract with { };
@@ -208,11 +240,12 @@ else
     {
         await Module.SaveAsync(draftRevision!, draft.Contract, draft.Tariff, draft.Upload, draft.Keep, lifetime.Token);
         CloseTerms();
-        await Load(draft.Contract.Id, month);
+        await Load(draft.Contract.Id, SelectedMonth);
     }, L["EnergySaved"]);
     private Task PreviewFile(InputFileChangeEventArgs e) => State.RunAsync(async () =>
     {
         preview = null;
+        ResetClearPreview();
         var file = e.File;
         if (file.Size > EnergyCsv.MaximumBytes || !file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)) { fileKey++; throw new InvalidDataException(L["EnergyCsvOnly"]); }
         await using var stream = file.OpenReadStream(EnergyCsv.MaximumBytes, lifetime.Token);
@@ -224,38 +257,52 @@ else
         if (preview is not { } batch) return;
         await Module.CommitAsync(batch, replace, lifetime.Token);
         ClearPreview();
-        await Load(view?.ContractId, month);
+        await Load(view?.ContractId, SelectedMonth);
     }, L["EnergyImportSaved"]);
-    private bool QuarterRangeValid => quarterFrom is { } from && quarterThrough is { } through &&
-        BelgianEnergyTime.Supported(from) && BelgianEnergyTime.Supported(through) && from <= through;
-    private void ResetQuarterPreview() => quarterClear = null;
-    private Task PreviewQuarterCleanup() => State.RunAsync(async () =>
+    private void ResetClearPreview() => readingsClear = null;
+    private Task PreviewReadingsCleanup() => State.RunAsync(async () =>
     {
-        if (preview != null || !QuarterRangeValid || quarterEan == null) return;
-        quarterClear = await Module.PreviewClearQuarterHoursAsync(quarterEan, quarterFrom!.Value, quarterThrough!.Value, lifetime.Token);
+        if (preview != null || clearEan == null) return;
+        readingsClear = await Module.PreviewClearReadingsAsync(clearEan, lifetime.Token);
     });
-    private Task ClearQuarterHours() => State.RunAsync(async () =>
+    private Task ClearReadings() => State.RunAsync(async () =>
     {
-        if (quarterClear is not { Count: > 0 } removal || preview != null) return;
-        var removed = await Module.ClearQuarterHoursAsync(removal, lifetime.Token);
-        ResetQuarterPreview();
-        await Load(view?.ContractId, month);
-        State.Message = L["EnergyClearQuarterSaved", removed];
+        if (readingsClear is not { Count: > 0 } removal || preview != null) return;
+        var removed = await Module.ClearReadingsAsync(removal, lifetime.Token);
+        ResetClearPreview();
+        await Load(view?.ContractId, SelectedMonth);
+        State.Message = L["EnergyClearReadingsSaved", removed];
     });
     private Task Fetch(bool current) => State.RunAsync(async () =>
     {
         if (view?.ContractId is not { } id) return;
-        var count = await Module.FetchPricesAsync(view.Revision, id, month, current, lifetime.Token);
-        await Load(id, month);
+        var count = await Module.FetchPricesAsync(view.Revision, id, SelectedMonth, current, lifetime.Token);
+        await Load(id, SelectedMonth);
         State.Message = L[count == 0 ? "EnergyPricesMissing" : "EnergyPricesSaved", count];
     });
-    private void EditIndex(EnergyIndexValue? item = null) => index = new(item?.Id ?? Guid.NewGuid(), item?.Series ?? "", MonthKey(item?.Month ?? month), item?.EuroPerMwh, item?.Source ?? "", view!.Revision);
+    private void EditMonthlyCharge(string ean, decimal? amount) => monthlyCharge = new(ean, SelectedMonth, amount, view!.Revision);
+    private Task SaveMonthlyCharge() => State.RunAsync(async () =>
+    {
+        if (monthlyCharge is not { } draft) return;
+        if (draft.Amount is { } amount && !EnergyTerms.ValidMonthlyCharge(amount)) throw new InvalidDataException(L["EnergyMonthlyChargesInvalid"]);
+        await Module.SaveMonthlyChargeAsync(draft.Revision, draft.Ean, draft.Month, draft.Amount, lifetime.Token);
+        monthlyCharge = null;
+        await Load(view?.ContractId, SelectedMonth);
+    }, L["EnergySaved"]);
+    private sealed class MonthlyChargeDraft(string ean, DateOnly month, decimal? amount, string revision)
+    {
+        public string Ean { get; } = ean;
+        public DateOnly Month { get; } = month;
+        public decimal? Amount { get; set; } = amount;
+        public string Revision { get; } = revision;
+    }
+    private void EditIndex(EnergyIndexValue? item = null) => index = new(item?.Id ?? Guid.NewGuid(), item?.Series ?? "", MonthKey(item?.Month ?? SelectedMonth), item?.EuroPerMwh, item?.Source ?? "", view!.Revision);
     private Task SaveIndex() => State.RunAsync(async () =>
     {
         if (index is not { Value: { } amount } draft || ParseMonth(draft.MonthKey) is not { } date) throw new InvalidDataException(L["EnergyIndexRequired"]);
         await Module.SaveIndexAsync(draft.Revision, new() { Id = draft.Id, Series = draft.Series, Month = date, EuroPerMwh = amount, Source = draft.Source }, lifetime.Token);
         index = null;
-        await Load(view?.ContractId, month);
+        await Load(view?.ContractId, SelectedMonth);
     }, L["EnergySaved"]);
     private sealed class IndexDraft(Guid id, string series, string month, decimal? value, string source, string revision)
     {

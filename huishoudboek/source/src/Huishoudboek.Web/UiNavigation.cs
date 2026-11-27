@@ -10,7 +10,7 @@ public static class UiNavigation
     { var today = DateOnly.FromDateTime(DateTime.Today); return end < today ? end : today; }
     public static ToolbarPeriod Period(string relativePath) => relativePath.Split('?', '#')[0].Trim('/') switch
     {
-        "" or "maand" or "budgetten" or "vaste-posten" or "categoriseren" or "vooruitblik" => ToolbarPeriod.Month,
+        "" or "maand" or "budgetten" or "vaste-posten" or "vooruitblik" => ToolbarPeriod.Month,
         "jaar" => ToolbarPeriod.Year,
         "rekeningen" or "beleggingen" or "hypotheek" or "weekcontrole" or "abonnementen" => ToolbarPeriod.Today,
         "transacties" or "categorietrends" or "kalender" => ToolbarPeriod.Independent,

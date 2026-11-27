@@ -6,7 +6,7 @@
 <PageTitle>@L["AdministrationImport"] · Huishoudboek</PageTitle>
 <h1>@L["AdministrationImport"]</h1>
 <section class="card"><h2>@L["YourRecords"]</h2><div class="actions">
-    <a class="button primary" href="importeren">@L["ImportExcelCsv"]</a><a class="button" href="website/export" data-enhance-nav="false">@L["ExportAllCsv"]</a><a class="button" href="website/backup" data-enhance-nav="false">@L["CreateBackup"]</a>
+    <a class="button primary" href="importeren">@L["ImportBankStatement"]</a><a class="button" href="website/export" data-enhance-nav="false">@L["ExportAllCsv"]</a><a class="button" href="website/backup" data-enhance-nav="false">@L["CreateBackup"]</a>
 </div><p class="muted">@L["BackupSecurityNote"]</p>
 <details id="database" open="@(HostSettings.HomeAssistant && State.Data.Accounts.Count == 0)"><summary>@L["ImportRestoreDatabase"]</summary>
 <p>@L["DatabasePreservesNote"]</p>
@@ -56,7 +56,7 @@
             if (restoreFile.Size > SqliteHouseholdStore.MaximumRestoreBytes) throw new InvalidDataException(L["BackupTooLarge"]);
             await using var stream = restoreFile.OpenReadStream(SqliteHouseholdStore.MaximumRestoreBytes);
             await Backend.RestoreAsync(stream, restoreRevision, CancellationToken.None);
-            State.OwnerId = null; State.ReviewBatchId = null; await State.LoadAsync();
+            State.OwnerId = null; await State.LoadAsync();
         }, L["DatabaseImported"]))
         { restoreConfirm = false; restoreFile = null; }
     }

@@ -617,13 +617,20 @@ internal static class FinancialCalendarTests
             True(Attribute.GetCustomAttributes(typeof(CalendarPage), typeof(RouteAttribute)).Cast<RouteAttribute>().Any(a => a.Template == "/kalender"));
             True(Attribute.IsDefined(typeof(CalendarPage), typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute)));
             var calendar = WebUtility.HtmlDecode(Render<CalendarPage>(state));
-            True(calendar.Contains($"<h1>{UiCulture.Text("CalendarTitle")}</h1>"));
+            True(Regex.IsMatch(calendar, $"<h1 id=\"cash-calendar-title\"[^>]*>{Regex.Escape(UiCulture.Text("CalendarTitle"))}</h1>"));
             True(calendar.Contains("class=\"calendar-grid\"")); True(calendar.Contains("id=\"spending-habits-title\""));
+            var summary = calendar.IndexOf("class=\"calendar-summary\"", StringComparison.Ordinal);
+            var legend = calendar.IndexOf("class=\"calendar-legend\"", StringComparison.Ordinal);
+            var grid = calendar.IndexOf("class=\"calendar-grid\"", StringComparison.Ordinal);
+            var notes = calendar.IndexOf("id=\"calendar-notes\"", StringComparison.Ordinal);
+            var settings = calendar.IndexOf("id=\"calendar-settings\"", StringComparison.Ordinal);
+            True(summary >= 0 && summary < legend && legend < grid && grid < notes && notes < settings);
+            True(!Regex.IsMatch(calendar, "<details[^>]*\\bid=\"calendar-(?:notes|settings)\"[^>]*\\bopen\\b"));
             True(calendar.Contains("href=\"vooruitblik\"")); True(calendar.Contains(f.Account.Name));
             True(!calendar.Contains(UiCulture.Text("PurchaseAmountQuestion")));
             var outlook = WebUtility.HtmlDecode(Render<Outlook>(state));
             True(!outlook.Contains("class=\"calendar-grid\"")); True(!outlook.Contains("id=\"spending-habits-title\""));
-            True(outlook.Contains("href=\"kalender\"")); True(outlook.Contains(UiCulture.Text("PurchaseAmountQuestion")));
+            True(outlook.Contains("href=\"kalender?instellingen=true#calendar-settings\"")); True(outlook.Contains(UiCulture.Text("PurchaseAmountQuestion")));
             True(outlook.Contains(UiCulture.Text("DailyBalanceForecast")));
         }));
         yield return ("The calendar page handles empty accounts and limits account choices and learning to the owner filter", () => WithCultures(() =>
@@ -642,17 +649,16 @@ internal static class FinancialCalendarTests
             state.OwnerId = Guid.NewGuid();
             True(WebUtility.HtmlDecode(Render<CalendarPage>(state)).Contains(UiCulture.Text("AddCurrentAccountNote")));
         }));
-        yield return ("Calendar navigation is active and expanded under Overviews rather than Planning in both languages", () => WithCultures(() =>
+        yield return ("Calendar is the first active link in Overviews in both languages", () => WithCultures(() =>
         {
             var html = WebUtility.HtmlDecode(Render<MainNavigation>(State(HouseholdData.CreateEmpty())));
             var overviews = Regex.Match(html, "<ul id=\"nav-overviews\"(?<attributes>[^>]*)>(?<entries>.*?)</ul>", RegexOptions.Singleline);
             True(overviews.Success); True(!overviews.Groups["attributes"].Value.Contains("hidden"));
             var entries = overviews.Groups["entries"].Value;
-            True(entries.Contains("href=\"kalender\"")); True(entries.Contains(UiCulture.Text("CalendarTitle")));
-            True(Regex.IsMatch(entries, "<a(?=[^>]*href=\"kalender\")(?=[^>]*aria-current=\"page\")[^>]*>"));
-            var planning = Regex.Match(html, "<ul id=\"nav-planning\"[^>]*>(?<entries>.*?)</ul>", RegexOptions.Singleline);
-            True(planning.Success); True(!planning.Groups["entries"].Value.Contains("href=\"kalender\""));
-            True(planning.Groups["entries"].Value.Contains("href=\"vooruitblik\""));
+            var firstLink = Regex.Match(entries, "<a\\b[^>]*>(?<label>.*?)</a>", RegexOptions.Singleline);
+            True(firstLink.Success && firstLink.Value.Contains("href=\"kalender\"") && firstLink.Value.Contains("aria-current=\"page\""));
+            Equal(UiCulture.Text("CalendarTitle"), firstLink.Groups["label"].Value);
+            True(entries.Contains("href=\"budgetten\""));
         }));
     }
 

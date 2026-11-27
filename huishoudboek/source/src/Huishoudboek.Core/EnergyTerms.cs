@@ -68,7 +68,8 @@ public static class EnergyTerms
 
     public static void Validate(EnergySettings settings)
     {
-        Require(Unique(settings.Contracts.Select(c => c.Id)) && Unique(settings.Tariffs.Select(t => t.Id)) && Unique(settings.Indexes.Select(i => i.Id)), "Ongeldige of dubbele energie-identificatie.");
+        Require(Unique(settings.Contracts.Select(c => c.Id)) && Unique(settings.Tariffs.Select(t => t.Id)) && Unique(settings.Indexes.Select(i => i.Id)) &&
+            Unique(settings.MonthlyCharges.Select(c => c.Id)) && Unique(settings.SurchargeRates.Select(c => c.Id)), "Ongeldige of dubbele energie-identificatie.");
         var contracts = settings.Contracts.ToDictionary(c => c.Id);
         foreach (var c in settings.Contracts)
             Require(ValidEan(c.Ean) && Text(c.Supplier, 120, true) && Text(c.Product, 120, true) && Date(c.SupplyStart) && Date(c.SupplyEnd) && Date(c.Renewal) && (c.SupplyStart == null || c.SupplyEnd == null || c.SupplyStart <= c.SupplyEnd),
@@ -110,7 +111,33 @@ public static class EnergyTerms
         foreach (var i in settings.Indexes)
             Require(Text(i.Series, 180, true) && Text(i.Source, 500, true) && Date(i.Month) && i.Month.Day == 1 && Market(i.EuroPerMwh) && keys.Add(IndexKey(i.Series, i.Month)),
                 "Vul per maand en indexnaam één geverifieerde waarde in €/MWh met bron in.");
+        var connections = settings.Contracts.Select(c => c.Ean).ToHashSet();
+        var chargeKeys = new HashSet<(string, DateOnly)>();
+        foreach (var charge in settings.MonthlyCharges)
+            Require(connections.Contains(charge.Ean) && Date(charge.Month) && charge.Month.Day == 1 && ValidMonthlyCharge(charge.Amount) &&
+                chargeKeys.Add((charge.Ean, charge.Month)), "Vul per EAN en maand één geldig bedrag voor Fluvius en heffingen in.");
+        foreach (var group in settings.SurchargeRates.GroupBy(rate => rate.Ean))
+        {
+            DateOnly? through = null;
+            foreach (var rate in group.OrderBy(rate => rate.From))
+            {
+                Require(connections.Contains(rate.Ean) && Date(rate.From) && Date(rate.Through) && rate.From <= rate.Through &&
+                    Text(rate.Source, 500, true) && ValidSurcharge(rate.SupplierPerKwh, 10) && ValidSurcharge(rate.NetworkPerKwh, 10) &&
+                    ValidSurcharge(rate.TaxPerKwh, 10) && ValidSurcharge(rate.CapacityPerKwMonth, 10_000) && ValidSurcharge(rate.DataPerYear, 10_000) &&
+                    (rate.SupplierPerKwh ?? rate.NetworkPerKwh ?? rate.TaxPerKwh ?? rate.CapacityPerKwMonth ?? rate.DataPerYear).HasValue,
+                    "Vul een bron, geldige datums en minstens één toeslag in (inclusief btw).");
+                Require(through == null || through < rate.From, "Per EAN mogen toeslagperiodes elkaar niet overlappen.");
+                through = rate.Through;
+            }
+        }
     }
+
+    public static bool ValidMonthlyCharge(decimal amount) => amount is >= 0 and <= 1_000_000 && decimal.Round(amount, 2) == amount;
+    private static bool ValidSurcharge(decimal? amount, decimal maximum) => amount == null || amount >= 0 && amount <= maximum;
+
+    public static bool ValidMonthlyPeak(EnergyMonthlyPeak peak) => peak.Id != Guid.Empty && ValidEan(peak.Ean) && Text(peak.Meter, 100, true)
+        && BelgianEnergyTime.Supported(peak.Month) && peak.Month.Day == 1 && peak.Kw is >= 0 and <= 1_000_000
+        && ReadingQuality(peak.Status) != 0 && (!peak.Status.Equals("Geen verbruik", StringComparison.OrdinalIgnoreCase) || peak.Kw == 0);
 
     public static (string, DateOnly) IndexKey(string series, DateOnly date) => (series.Trim().ToUpperInvariant(), new(date.Year, date.Month, 1));
 

@@ -1,0 +1,92 @@
+@implements IDisposable
+@inject IEnergyAdministration Energy
+
+<details class="card" open="@(draft != null)">
+    <summary>@L["EnergySurchargeRates"]</summary>
+    <p class="muted">@L["EnergySurchargeHelp"]</p>
+    @if (draft is { } rate)
+    {
+        <EditForm Model="rate" OnValidSubmit="() => Save(rate, false)">
+            <ValidationSummary />
+            <fieldset disabled="@State.Busy">
+                <legend>@L["EnergySurchargeRates"]</legend>
+                @if (Rates.All(item => item.Id != rate.Id))
+                {
+                    <p><button type="button" @onclick="() => UsePublishedRates(rate)">@L["EnergySurchargePreset"]</button></p>
+                    <p class="muted">@L["EnergySurchargePresetHelp"]
+                        <a href="https://www.luminus.be/nl/prive/hulp-en-contact/hoe-worden-de-tarieven-voor-groene-stroom-en-wkk-bepaald-nl/" target="_blank" rel="noopener noreferrer">Luminus ↗</a> ·
+                        <a href="https://www.fluvius.be/sites/fluvius/files/2025-11/distributienettarieven-elektriciteit-afname-fluvius-antwerpen-01012026-31122026.xlsx" target="_blank" rel="noopener noreferrer">Fluvius ↗</a>
+                    </p>
+                }
+                <div class="filters">
+                    <label>@L["EnergyEffectiveFrom"] <InputDate @bind-Value="rate.From" required /></label>
+                    <label>@L["EnergyEffectiveThrough"] <InputDate @bind-Value="rate.Through" required /></label>
+                    <label>@L["EnergyGreenWkkRate"] <InputNumber @bind-Value="rate.SupplierPerKwh" min="0" max="10" step="any" /></label>
+                    <label>@L["EnergyNetworkUsageRate"] <InputNumber @bind-Value="rate.NetworkPerKwh" min="0" max="10" step="any" /></label>
+                    <label>@L["EnergyTaxUsageRate"] <InputNumber @bind-Value="rate.TaxPerKwh" min="0" max="10" step="any" /></label>
+                    <label>@L["EnergyCapacityRate"] <InputNumber @bind-Value="rate.CapacityPerKwMonth" min="0" max="10000" step="any" /></label>
+                    <label>@L["EnergyDataRate"] <InputNumber @bind-Value="rate.DataPerYear" min="0" max="10000" step="any" /></label>
+                    <label>@L["EnergySurchargeSource"] <InputText @bind-Value="rate.Source" maxlength="500" required /></label>
+                </div>
+                <div class="actions">
+                    <button class="primary" type="submit">@L["Save"]</button><button type="button" @onclick="() => draft = null">@L["Cancel"]</button>
+                </div>
+            </fieldset>
+        </EditForm>
+    }
+    else
+    {
+        <button type="button" disabled="@State.Busy" @onclick="() => Edit()">+ @L["EnergySurchargeRates"]</button>
+    }
+    @foreach (var entry in Rates.OrderByDescending(r => r.From))
+    {
+        <div class="actions" @key="entry.Id">
+            <span>@entry.From.ToString("dd-MM-yyyy") – @entry.Through.ToString("dd-MM-yyyy") · @entry.Source</span>
+            <button type="button" disabled="@(State.Busy || draft != null || removal != null)" @onclick="() => Edit(entry)">@L["Edit"]</button>
+            <button type="button" disabled="@(State.Busy || draft != null || removal != null)" @onclick="() => { removal = entry; editRevision = Revision; }">@L["Delete"]</button>
+        </div>
+    }
+</details>
+@if (removal is { } candidate)
+{
+    <Confirm Title="@L["EnergySurchargeRates"]" Text="@L["EnergySurchargeRemove"]" ActionLabel="@L["Delete"]"
+             Cancel="() => removal = null" Accept="() => Save(candidate, true)" />
+}
+
+@code {
+    [Parameter, EditorRequired] public string Ean { get; set; } = "";
+    [Parameter, EditorRequired] public string Revision { get; set; } = "";
+    [Parameter] public int Year { get; set; }
+    [Parameter] public IReadOnlyList<EnergySurchargeRates> Rates { get; set; } = [];
+    [Parameter, EditorRequired] public WebState State { get; set; } = null!;
+    [Parameter] public EventCallback OnSaved { get; set; }
+    private readonly CancellationTokenSource lifetime = new();
+    private EnergySurchargeRates? draft, removal;
+    private string editRevision = "";
+
+    private void Edit(EnergySurchargeRates? current = null)
+    {
+        editRevision = Revision;
+        draft = current == null ? new() { Ean = Ean, From = new(Year, 1, 1), Through = new(Year, 12, 31) } : current with { };
+    }
+
+    private void UsePublishedRates(EnergySurchargeRates rate)
+    {
+        // Published residential 2026 rates for digital, peak-measured low voltage in Fluvius Antwerpen.
+        draft = rate with
+        {
+            From = new(2026, 1, 1), Through = new(2026, 12, 31), SupplierPerKwh = .0156m, NetworkPerKwh = .0505027m * 1.06m,
+            CapacityPerKwMonth = 4.1169714m * 1.06m, DataPerYear = 17.85m * 1.06m, Source = "Luminus & Fluvius Antwerpen 2026"
+        };
+    }
+
+    private Task Save(EnergySurchargeRates rate, bool remove) => State.RunAsync(async () =>
+    {
+        await Energy.SaveSurchargeRatesAsync(editRevision, rate, remove, lifetime.Token);
+        draft = null;
+        removal = null;
+        await OnSaved.InvokeAsync();
+    }, L["EnergySaved"]);
+
+    public void Dispose() { lifetime.Cancel(); lifetime.Dispose(); }
+}

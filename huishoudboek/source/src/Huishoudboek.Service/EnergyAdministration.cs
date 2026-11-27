@@ -49,6 +49,18 @@ public sealed class EnergyAdministration(AdministrationCoordinator coordinator, 
         await Task.Run(() => coordinator.SaveEnergyIndex(revision, value), token);
     }
 
+    public async Task SaveMonthlyChargeAsync(string revision, string ean, DateOnly month, decimal? amount, CancellationToken token)
+    {
+        await AuthorizeAsync(token);
+        await Task.Run(() => coordinator.SaveEnergyMonthlyCharge(revision, ean, month, amount), token);
+    }
+
+    public async Task SaveSurchargeRatesAsync(string revision, EnergySurchargeRates rates, bool remove, CancellationToken token)
+    {
+        await AuthorizeAsync(token);
+        await Task.Run(() => coordinator.SaveEnergySurchargeRates(revision, rates, remove), token);
+    }
+
     public async Task<EnergyImportPreview> PreviewAsync(Stream source, CancellationToken token)
     {
         await AuthorizeAsync(token);
@@ -64,16 +76,16 @@ public sealed class EnergyAdministration(AdministrationCoordinator coordinator, 
         await Task.Run(() => coordinator.CommitEnergy(preview, replace), token);
     }
 
-    public async Task<EnergyQuarterClearPreview> PreviewClearQuarterHoursAsync(string ean, DateOnly from, DateOnly through, CancellationToken token)
+    public async Task<EnergyReadingsClearPreview> PreviewClearReadingsAsync(string ean, CancellationToken token)
     {
         await AuthorizeAsync(token);
-        return await Task.Run(() => coordinator.PreviewClearEnergyQuarterHours(ean, from, through), token);
+        return await Task.Run(() => coordinator.PreviewClearEnergyReadings(ean), token);
     }
 
-    public async Task<int> ClearQuarterHoursAsync(EnergyQuarterClearPreview preview, CancellationToken token)
+    public async Task<int> ClearReadingsAsync(EnergyReadingsClearPreview preview, CancellationToken token)
     {
         await AuthorizeAsync(token);
-        return await Task.Run(() => coordinator.ClearEnergyQuarterHours(preview), token);
+        return await Task.Run(() => coordinator.ClearEnergyReadings(preview), token);
     }
 
     public async Task<EnergyPdfDraft> ReadPdfAsync(Stream source, string name, CancellationToken token)

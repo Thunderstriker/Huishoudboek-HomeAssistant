@@ -51,7 +51,8 @@
             <NavLink href="" Match="NavLinkMatch.All"><DashboardIcon Name="activity" /><span>@L["StartDashboard"]</span></NavLink>
             <NavLink href="transacties"><DashboardIcon Name="wallet" /><span>@L["Transactions"]</span></NavLink>
             <a href="transacties?entry=expense"><DashboardIcon Name="plus" /><span>@L["AddExpense"]</span></a>
-            <button type="button" @onclick="() => navigationOpen = true" aria-haspopup="dialog" aria-label="@L["OpenNavigation"]"><DashboardIcon Name="sliders" /><span>@L["OpenNavigation"]</span></button>
+            <NavLink href="vooruitblik" Match="NavLinkMatch.All"><DashboardIcon Name="calendar" /><span>@L["NavigationOutlook"]</span></NavLink>
+            <NavLink href="meer" Match="NavLinkMatch.All"><DashboardIcon Name="sliders" /><span>@L["NavigationMore"]</span></NavLink>
         </nav>
     </div>
 </div>

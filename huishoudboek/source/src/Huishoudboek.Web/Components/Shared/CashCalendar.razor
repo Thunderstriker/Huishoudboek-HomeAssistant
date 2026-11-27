@@ -2,21 +2,17 @@
 
 <section class="cash-calendar" aria-labelledby="cash-calendar-title">
     <div class="calendar-heading">
-        <div><h2 id="cash-calendar-title">@L["CalendarTitle"]</h2><p class="muted">@Forecast.Account.Name · @L["CalendarHorizon", End.ToString("dd-MM-yyyy")]</p></div>
-        <div class="calendar-navigation" role="group" aria-label="@L["CalendarNavigation"]">
-            <button type="button" @onclick="() => MoveMonth(-1)" disabled="@(month <= FirstMonth)" aria-label="@L["PreviousMonth"]">←</button>
-            <button type="button" @onclick="Today">@L["CalendarToday"]</button>
-            <strong aria-live="polite">@month.ToString("MMMM yyyy", UiCulture.Culture)</strong>
-            <button type="button" @onclick="() => MoveMonth(1)" disabled="@(month.AddMonths(1) > End)" aria-label="@L["NextMonth"]">→</button>
+        <h1 id="cash-calendar-title">@L["CalendarTitle"]</h1>
+        <div class="calendar-controls">
+            @AccountPicker
+            <div class="calendar-navigation" role="group" aria-label="@L["CalendarNavigation"]">
+                <button type="button" @onclick="() => MoveMonth(-1)" disabled="@(month <= FirstMonth)" aria-label="@L["PreviousMonth"]">←</button>
+                <button type="button" @onclick="Today">@L["CalendarToday"]</button>
+                <strong aria-live="polite">@month.ToString("MMMM yyyy", UiCulture.Culture)</strong>
+                <button type="button" @onclick="() => MoveMonth(1)" disabled="@(month.AddMonths(1) > End)" aria-label="@L["NextMonth"]">→</button>
+            </div>
         </div>
     </div>
-    <p class="muted">@L["CalendarIntro"]</p>
-    @if (Forecast.StaleImports || Forecast.LimitedHistory)
-    { <p class="notice warning" role="status">@L["CalendarUncertain"] <a href="importeren">@L["ImportExcelCsv"] →</a></p> }
-    @if (Forecast.Learning.Patterns.Any(p => p.Preference?.Enabled == true && (!p.Ready || !p.Strong)))
-    { <p class="notice warning" role="status">@L["CalendarLearningUncertain"] <a href="#spending-habits-title">@L["HabitTitle"] →</a></p> }
-    @if (Forecast.Learning.Patterns.Any(p => !p.Active))
-    { <p class="notice" role="status">@L["CalendarLearningNotApplied"] <a href="#spending-habits-title">@L["HabitTitle"] →</a></p> }
     <div class="calendar-summary">
         <div><span>@L["CalendarNextRisk"]</span><strong>@(nextRisk?.ToString("dd-MM-yyyy") ?? L["None"].Value)</strong></div>
         <div><span>@L["CalendarLowest"]</span><strong>@Money(calendarLowest)</strong><small>@calendarLowestDate.ToString("dd-MM-yyyy")</small></div>
@@ -69,23 +65,6 @@
             </button>
         }
     </div>
-    <p class="muted">@L["CalendarBalanceNote"]</p>
-
-    @if (Forecast.UncertainReserve > 0)
-    { <p class="notice">@L["RecurringReserveNote", Money(Forecast.UncertainReserve)]</p> }
-    @if (CommittedReserve > 0)
-    { <p class="notice">@L["CalendarCommittedReserve", Money(CommittedReserve)]</p> }
-    @if (Forecast.PendingHabitReserve > 0)
-    {
-        <details class="notice warning"><summary>@L["CalendarPendingReserve", Money(Forecast.PendingHabitReserve)]</summary>
-            <p>@L["CalendarPendingHelp", SpendingLearning.BookingWindowDays]</p>
-            @foreach (var pending in Forecast.ExpectedSpending.Where(e => e.IsPending).OrderBy(e => e.Date))
-            {
-                <div class="pending-row"><span>@pending.Date.ToString("dd-MM-yyyy") · @State.CategoryName(pending.CategoryId) · ≈ @Money(pending.Amount)</span>
-                    <button type="button" disabled="@State.Busy" @onclick="() => Skip(pending)">@L["CalendarSkip"]</button></div>
-            }
-        </details>
-    }
 
     <section class="calendar-detail" aria-labelledby="calendar-detail-title" aria-live="polite">
         <h3 id="calendar-detail-title">@selectedDate.ToString("dddd d MMMM yyyy", UiCulture.Culture)</h3>
@@ -119,11 +98,37 @@
             { <p>@L["CalendarAdjusted", State.CategoryName(State.Data.SpendingHabits.Single(h => h.Id == adjustment.HabitId).CategoryId), Money(adjustment.Amount)] <button type="button" disabled="@State.Busy" @onclick="() => Reset(adjustment.Id)">@L["CalendarReset"]</button></p> }
         }
     </section>
-    <details class="calendar-method"><summary>@L["CalendarMethodTitle"]</summary><p>@L["CalendarMethod"]</p><p>@L["CalendarThreshold", Money(Math.Max(25, Forecast.DailyVariableEstimate * 2))]</p></details>
+    <details class="calendar-method" id="calendar-notes">
+        <summary>@L["CalendarMethodTitle"]</summary>
+        @if (Forecast.StaleImports || Forecast.LimitedHistory)
+        { <p class="notice warning" role="status">@L["CalendarUncertain"] <a href="@($"importeren?account={Forecast.Account.Id:D}")">@L["ImportBankStatement"] →</a></p> }
+        @if (Forecast.Learning.Patterns.Any(p => p.Preference?.Enabled == true && (!p.Ready || !p.Strong)))
+        { <p class="notice warning" role="status">@L["CalendarLearningUncertain"] <a href="kalender?instellingen=true#calendar-settings">@L["HabitTitle"] →</a></p> }
+        @if (Forecast.Learning.Patterns.Any(p => !p.Active))
+        { <p class="notice" role="status">@L["CalendarLearningNotApplied"] <a href="kalender?instellingen=true#calendar-settings">@L["HabitTitle"] →</a></p> }
+        @if (Forecast.UncertainReserve > 0)
+        { <p class="notice">@L["RecurringReserveNote", Money(Forecast.UncertainReserve)]</p> }
+        @if (CommittedReserve > 0)
+        { <p class="notice">@L["CalendarCommittedReserve", Money(CommittedReserve)]</p> }
+        @if (Forecast.PendingHabitReserve > 0)
+        {
+            <details class="notice warning"><summary>@L["CalendarPendingReserve", Money(Forecast.PendingHabitReserve)]</summary>
+                <p>@L["CalendarPendingHelp", SpendingLearning.BookingWindowDays]</p>
+                @foreach (var pending in Forecast.ExpectedSpending.Where(e => e.IsPending).OrderBy(e => e.Date))
+                {
+                    <div class="pending-row"><span>@pending.Date.ToString("dd-MM-yyyy") · @State.CategoryName(pending.CategoryId) · ≈ @Money(pending.Amount)</span>
+                        <button type="button" disabled="@State.Busy" @onclick="() => Skip(pending)">@L["CalendarSkip"]</button></div>
+                }
+            </details>
+        }
+        <p>@L["CalendarIntro"]</p><p>@L["CalendarHorizon", End.ToString("dd-MM-yyyy")] · @L["CalendarBalanceNote"]</p>
+        <p>@L["CalendarMethod"]</p><p>@L["CalendarThreshold", Money(Math.Max(25, Forecast.DailyVariableEstimate * 2))]</p>
+    </details>
 </section>
 
 @code {
     [Parameter, EditorRequired] public AccountCashFlow Forecast { get; set; } = null!;
+    [Parameter] public RenderFragment? AccountPicker { get; set; }
     private DateOnly month, selectedDate;
     private Guid accountId;
     private Dictionary<DateOnly, DailyBalance> days = [];

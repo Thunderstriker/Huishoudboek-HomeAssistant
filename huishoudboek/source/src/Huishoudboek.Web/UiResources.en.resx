@@ -207,6 +207,27 @@
   <data name="MainNavigation" xml:space="preserve"><value>Main navigation</value></data>
   <data name="NavigationOverviews" xml:space="preserve"><value>Overviews</value></data>
   <data name="NavigationPlanning" xml:space="preserve"><value>Planning</value></data>
+  <data name="NavigationOutlook" xml:space="preserve"><value>Outlook</value></data>
+  <data name="NavigationMore" xml:space="preserve"><value>More</value></data>
+  <data name="MoreAccounts" xml:space="preserve"><value>Accounts &amp; assets</value></data>
+  <data name="MoreHousehold" xml:space="preserve"><value>Household</value></data>
+  <data name="MoreRecords" xml:space="preserve"><value>Backup, restore &amp; export</value></data>
+  <data name="MoreTransactionTools" xml:space="preserve"><value>More transaction actions</value></data>
+  <data name="ReviewTasks" xml:space="preserve"><value>To review</value></data>
+  <data name="OutlookUpcoming" xml:space="preserve"><value>Upcoming payments</value></data>
+  <data name="OutlookPurchase" xml:space="preserve"><value>Can I afford this?</value></data>
+  <data name="OutlookEstimateUncertain" xml:space="preserve"><value>Incomplete or older bank data, uncertain payments or limited history can affect this estimate.</value></data>
+  <data name="ImportBankStatement" xml:space="preserve"><value>Import bank statement</value></data>
+  <data name="ImportOptions" xml:space="preserve"><value>Adjust dates and column mapping</value></data>
+  <data name="ImportOptionalPeriod" xml:space="preserve"><value>Leave both dates blank to see all entries in the file. Enter both to filter entries or to confirm a complete statement period later.</value></data>
+  <data name="ImportDatesInvalid" xml:space="preserve"><value>Enter both dates (earlier to later), or leave both blank.</value></data>
+  <data name="ImportMappingNeeded" xml:space="preserve"><value>Not all columns were recognized. Choose a bank profile or map the columns below, then preview again.</value></data>
+  <data name="ImportReviewEntries" xml:space="preserve"><value>Review entries</value></data>
+  <data name="ImportSelectedPeriod" xml:space="preserve"><value>Selected period: {0} to {1}</value></data>
+  <data name="ImportObservedPeriod" xml:space="preserve"><value>Dates in the file: {0} to {1} (no date filter)</value></data>
+  <data name="ImportNoObservedPeriod" xml:space="preserve"><value>No readable transaction dates in the file</value></data>
+  <data name="ImportCoverageExplicitDates" xml:space="preserve"><value>Transaction dates do not prove statement completeness. Want to confirm a complete statement period?</value></data>
+  <data name="ImportSetDates" xml:space="preserve"><value>Enter statement dates</value></data>
   <data name="NavigationAdministration" xml:space="preserve"><value>Administration</value></data>
   <data name="LocalPrivate" xml:space="preserve"><value>Local · EUR · private</value></data>
   <data name="NoBankConnection" xml:space="preserve"><value>No bank connection</value></data>
@@ -306,7 +327,7 @@
   <data name="GetStarted" xml:space="preserve"><value>Get started</value></data>
   <data name="SetupAndNavigation" xml:space="preserve"><value>Setup &amp; navigation</value></data>
   <data name="NavigationPreferences" xml:space="preserve"><value>Navigation preferences</value></data>
-  <data name="HideWeeklyReview" xml:space="preserve"><value>Hide weekly review from navigation</value></data>
+  <data name="HideWeeklyReview" xml:space="preserve"><value>Hide To review on the dashboard</value></data>
   <data name="NavigationPreferenceNote" xml:space="preserve"><value>Remembered in this browser for this app. Restore it under Administration &amp; import → Setup &amp; navigation. Your financial data is unchanged.</value></data>
   <data name="NavigationPreferenceSessionOnly" xml:space="preserve"><value>Browser storage is unavailable; this preference lasts only for this session. Restore it under Administration &amp; import → Setup &amp; navigation.</value></data>
   <data name="SpendingAboveIncomeBadge" xml:space="preserve"><value>Spending above income</value></data>
@@ -525,7 +546,7 @@
   <data name="PlanIncomeBills" xml:space="preserve"><value>Plan income &amp; recurring bills</value></data>
   <data name="SafeSpendingNote" xml:space="preserve"><value>From today, {0}, regardless of the month filter. An estimate, not a guarantee. Current accounts only; savings are not transferred automatically.</value></data>
   <data name="AddCurrentAccountNote" xml:space="preserve"><value>Add a current account with an opening balance to calculate spending headroom.</value></data>
-  <data name="EstimatedSpendable" xml:space="preserve"><value>Estimated spendable · reserved per account</value></data>
+  <data name="EstimatedSpendable" xml:space="preserve"><value>Estimated spending room until next income</value></data>
   <data name="SpendableSumNote" xml:space="preserve"><value>Sum of separate spending headroom until the next income; not freely interchangeable.</value></data>
   <data name="BillsNextDays" xml:space="preserve"><value>Known payments in the next {0} days</value></data>
   <data name="BillsEstimateNote" xml:space="preserve"><value>Dated planned payments only. Uncertain reserves are shown separately below; additional variable spending is excluded.</value></data>
@@ -830,7 +851,7 @@ This entry replaces only this planned payment. Check that it is the same payment
 {3} rules, {4} monthly budgets and default budget {5} are removed.
 Receipt defaults and item categories using this category are cleared; items without their own category follow the receipt default. Receipt details and payments are preserved.
 Amounts, bank text, balances, principal repayments and import history are preserved. Savings/own-account treatment also ends for earlier entries; reports change. No immediate undo; make a backup first if needed.</value></data>
-  <data name="ImportAccountNote" xml:space="preserve"><value>Each import records entries only on the selected account, using the amount from the file. Other accounts are not automatically matched or adjusted; import each account's own file. Matching previous imports are skipped by default; uncertain matches need review. Check currency, account and opening date. Nothing is saved until explicit confirmation.</value></data>
+  <data name="ImportAccountNote" xml:space="preserve"><value>Choose the account the statement belongs to. You review the entries before anything is saved; other accounts are not changed.</value></data>
   <data name="AfterImportBothAccounts" xml:space="preserve"><value>After importing both accounts, you can</value></data>
   <data name="ImportTransferReportingNote" xml:space="preserve"><value>for reporting, without extra entries or balance adjustments.</value></data>
   <data name="ImportFileHint" xml:space="preserve"><value>File (.xls, .xlsx or .csv; maximum 50 MB and 100,000 non-empty rows)</value></data>
@@ -930,7 +951,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="WeeklyBills" xml:space="preserve"><value>Review payments from today through the next 7 days</value></data>
   <data name="WeeklyNoBills" xml:space="preserve"><value>No unlinked payments planned in the next 7 days.</value></data>
   <data name="WeeklyNoPlan" xml:space="preserve"><value>No recurring expenses set up yet. Add your bills to Recurring payments; this does not confirm that nothing is due.</value></data>
-  <data name="WeeklyCoverageNote" xml:space="preserve"><value>This review follows the owner filter, not the selected month. An import is recent when it contains bank entries from the last 7 days; a quiet account may therefore show a warning. Suggestions are never confirmed automatically.</value></data>
+  <data name="WeeklyCoverageNote" xml:space="preserve"><value>This review follows the owner filter, not the selected month. Imported entries or a confirmed statement period within the last 7 days count. Suggestions are never confirmed automatically.</value></data>
   <data name="CreateOwnerFirst" xml:space="preserve"><value>Create an owner first, then add your first account.</value></data>
   <data name="OpeningAndBalanceChecks" xml:space="preserve"><value>Opening balances and balance checks</value></data>
   <data name="OpeningConfirmationNote" xml:space="preserve"><value>The opening balance is the balance before the first entry on the opening date, not today's balance. € 0 can be correct too. Confirm it after comparing with your bank; then check the balance including imported entries.</value></data>
@@ -1592,7 +1613,8 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="CalendarAdjust" xml:space="preserve"><value>Adjust expectation · {0}</value></data>
   <data name="CalendarAdjusted" xml:space="preserve"><value>{0}: custom expectation {1} (0 = skipped).</value></data>
   <data name="CalendarReset" xml:space="preserve"><value>Restore automatic</value></data>
-  <data name="CalendarMethodTitle" xml:space="preserve"><value>How does the calendar work?</value></data>
+  <data name="CalendarMethodTitle" xml:space="preserve"><value>Explanations and warnings</value></data>
+  <data name="CalendarSettings" xml:space="preserve"><value>Forecast settings and spending patterns</value></data>
   <data name="CalendarMethod" xml:space="preserve"><value>Red takes precedence over orange, yellow and green. A balance below zero is red; below the cash buffer plus earmarked funds or at least three outgoing items is orange. Historical days have no forecast colour. Risk is account-specific: money in other accounts is not implicitly transferred. Unconfirmed reserves appear separately, without an invented payment date.</value></data>
   <data name="CalendarThreshold" xml:space="preserve"><value>Yellow means expected daily outgoings exceed {0}: twice the ordinary daily average, with a minimum threshold of €25.</value></data>
   <data name="CalendarReasonShortfall" xml:space="preserve"><value>The lowest projected balance is negative, possibly before income on the same day.</value></data>
@@ -1835,7 +1857,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="EnergyFileLimit" xml:space="preserve"><value>The file is too large to process.</value></data>
   <data name="EnergyImportTitle" xml:space="preserve"><value>Import meter readings</value></data>
   <data name="EnergyImportFile" xml:space="preserve"><value>Fluvius daily or quarter-hour export (CSV)</value></data>
-  <data name="EnergyImportHelp" xml:space="preserve"><value>Choose the original semicolon-delimited electricity export (up to 20 MB and 100,000 rows). It stays local. Day and night registers do not determine the billing scheme.</value></data>
+  <data name="EnergyImportHelp" xml:space="preserve"><value>Choose the original Fluvius CSV with 15-minute readings, daily totals or peak demand (up to 20 MB and 100,000 rows). It stays local. Day and night registers do not determine the billing scheme.</value></data>
   <data name="EnergyReadingDailyTotal" xml:space="preserve"><value>Daily totals</value></data>
   <data name="EnergyReadingQuarterHour" xml:space="preserve"><value>Quarter-hour readings</value></data>
   <data name="EnergyCsvOnly" xml:space="preserve"><value>Choose a CSV file of up to 20 MB.</value></data>
@@ -1849,7 +1871,7 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="EnergyCsvIdentity" xml:space="preserve"><value>Invalid EAN or meter identification.</value></data>
   <data name="EnergyCsvTime" xml:space="preserve"><value>Not a valid quarter-hour interval or daily total in Belgian time.</value></data>
   <data name="EnergyCsvAmbiguousTime" xml:space="preserve"><value>Ambiguous fall-back interval; the correct UTC time cannot be established.</value></data>
-  <data name="EnergyCsvQuantity" xml:space="preserve"><value>Invalid quantity or unit other than kWh.</value></data>
+  <data name="EnergyCsvQuantity" xml:space="preserve"><value>Invalid quantity or unit (kWh for energy; kW for peak demand).</value></data>
   <data name="EnergyCsvMissingQuantity" xml:space="preserve"><value>Blank daily total; no measured quantity was provided.</value></data>
   <data name="EnergyCsvRegister" xml:space="preserve"><value>Consumption/injection or day/night is ambiguous.</value></data>
   <data name="EnergyCsvStatus" xml:space="preserve"><value>Unknown or unusable validation status.</value></data>
@@ -1861,23 +1883,58 @@ Amounts, bank text, balances, principal repayments and import history are preser
   <data name="EnergyConfirmReplace" xml:space="preserve"><value>I confirm that these stored readings will be replaced.</value></data>
   <data name="EnergyConfirmImport" xml:space="preserve"><value>Save valid readings</value></data>
   <data name="EnergyImportSaved" xml:space="preserve"><value>Readings saved.</value></data>
-  <data name="EnergyClearQuarterTitle" xml:space="preserve"><value>Clear earlier 15-minute readings</value></data>
-  <data name="EnergyClearQuarterHelp" xml:space="preserve"><value>Choose an EAN and the dates to clear. Daily totals and 15-minute readings outside those dates are kept. To keep 15-minute readings for a new contract, choose an end date before that contract starts.</value></data>
-  <data name="EnergyClearQuarterInvalidRange" xml:space="preserve"><value>Choose a valid start date and an end date on or after it.</value></data>
-  <data name="EnergyClearQuarterNone" xml:space="preserve"><value>No 15-minute readings found for this EAN on the selected dates.</value></data>
-  <data name="EnergyClearQuarterFinishImport" xml:space="preserve"><value>Finish or cancel the current import before clearing 15-minute readings.</value></data>
-  <data name="EnergyClearQuarterPreview" xml:space="preserve"><value>Review readings to clear</value></data>
-  <data name="EnergyClearQuarterConfirm" xml:space="preserve"><value>Clear {0} 15-minute readings for EAN {1} from {2} through {3}. Daily totals and readings for other EANs or dates will be kept. This cannot be undone; keep the original CSV if you may need it again.</value></data>
-  <data name="EnergyClearQuarterDelete" xml:space="preserve"><value>Clear 15-minute readings</value></data>
-  <data name="EnergyClearQuarterSaved" xml:space="preserve"><value>Cleared {0} 15-minute readings.</value></data>
-  <data name="EnergyMonthlyCosts" xml:space="preserve"><value>Monthly electricity costs</value></data>
+  <data name="EnergyClearReadingsTitle" xml:space="preserve"><value>Clear all imported readings</value></data>
+  <data name="EnergyClearReadingsHelp" xml:space="preserve"><value>Choose an EAN to clear all 15-minute readings, daily totals and monthly peaks for that connection, regardless of date.</value></data>
+  <data name="EnergyClearReadingsNone" xml:space="preserve"><value>No imported readings found for this EAN.</value></data>
+  <data name="EnergyClearReadingsFinishImport" xml:space="preserve"><value>Finish or cancel the current import before clearing readings.</value></data>
+  <data name="EnergyClearReadingsPreview" xml:space="preserve"><value>Review readings to clear</value></data>
+  <data name="EnergyClearReadingsConfirm" xml:space="preserve"><value>Clear all {0} imported readings for EAN {1}, including 15-minute readings, daily totals and monthly peaks. Other EANs, contracts, tariffs and entered charges will be kept. This cannot be undone; keep the original CSV files if you may need them again.</value></data>
+  <data name="EnergyClearReadingsSaved" xml:space="preserve"><value>Cleared {0} imported readings.</value></data>
+  <data name="EnergyYearOverview" xml:space="preserve"><value>Monthly electricity costs · {0}</value></data>
+  <data name="EnergyYearOverviewHelp" xml:space="preserve"><value>Compare known costs for this EAN. The injection credit is subtracted from the partial subtotal. Choose a month for the breakdown and reading coverage.</value></data>
+  <data name="EnergyGoToMonthDetails" xml:space="preserve"><value>Go to the selected month</value></data>
+  <data name="EnergyMonthDetails" xml:space="preserve"><value>Monthly breakdown · {0}</value></data>
+  <data name="EnergySupplierFeeShort" xml:space="preserve"><value>Fixed supplier fee (estimated)</value></data>
+  <data name="EnergyConsumptionDays" xml:space="preserve"><value>Days with consumption readings</value></data>
   <data name="EnergyCostsNote" xml:space="preserve"><value>Known amounts include applicable VAT; — means missing or not applicable. This is not a bill or advance. Daily totals fill gaps in quarter-hour coverage, but dynamic consumption costs use only recorded quarter-hours.</value></data>
-  <data name="EnergyNoReadings" xml:space="preserve"><value>No readings for this month. Household costs are not calculated without readings.</value></data>
+  <data name="EnergyNoReadings" xml:space="preserve"><value>No readings for this month. Only manually entered monthly charges can be shown.</value></data>
   <data name="EnergyCoverage" xml:space="preserve"><value>{0}/{1} quarters · {2} not fully priced · {3} estimated or provisional</value></data>
   <data name="EnergyDailyCoverage" xml:space="preserve"><value>Daily totals used: {0}/{1} days · {2} incomplete · {3} not fully priced · {4} estimated or provisional</value></data>
   <data name="EnergyWeightedRate" xml:space="preserve"><value>Weighted rate for priced kWh: {0} EUR/kWh</value></data>
   <data name="EnergyPartialSubtotal" xml:space="preserve"><value>Partial subtotal</value></data>
-  <data name="EnergyOtherChargesMissing" xml:space="preserve"><value>Grid charges, capacity tariff, taxes and other unrecorded charges are missing.</value></data>
+  <data name="EnergyOtherChargesMissing" xml:space="preserve"><value>Missing readings, rates and unrecorded charges are not included.</value></data>
+  <data name="EnergyMonthlyCharges" xml:space="preserve"><value>Fluvius and government levies</value></data>
+  <data name="EnergyMonthlyChargesNote" xml:space="preserve"><value>Manually entered monthly amount that overrides calculated network charges and levies.</value></data>
+  <data name="EnergyMonthlyChargesEdit" xml:space="preserve"><value>Edit monthly Fluvius charges and levies</value></data>
+  <data name="EnergyMonthlyChargesEditHelp" xml:space="preserve"><value>Enter the total network charges and government levies for {0} and EAN {1}. It replaces those calculated charges for this month, not the supplier charges. Leave blank to use the calculation.</value></data>
+  <data name="EnergyMonthlyChargesAmount" xml:space="preserve"><value>Amount in euros (including any VAT)</value></data>
+  <data name="EnergyMonthlyChargesInvalid" xml:space="preserve"><value>Enter a non-negative amount with no more than two decimal places.</value></data>
+  <data name="EnergyDailyChargesNote" xml:space="preserve"><value>Fixed network costs and manual monthly amounts are included only in the monthly subtotal.</value></data>
+  <data name="EnergySurchargeRates" xml:space="preserve"><value>Surcharges and network tariffs</value></data>
+  <data name="EnergySurchargeHelp" xml:space="preserve"><value>Set a rate period for this EAN. Enter amounts including VAT. Leave unknown amounts blank; enter 0 only if the charge does not apply. Per-kWh rates apply to gross consumption, not injection.</value></data>
+  <data name="EnergySurchargePreset" xml:space="preserve"><value>Use Luminus and Fluvius Antwerpen 2026</value></data>
+  <data name="EnergySurchargePresetHelp" xml:space="preserve"><value>For a Luminus household and a peak-measured digital low-voltage meter in Fluvius Antwerpen. Review the proposal and enter verified government levies separately.</value></data>
+  <data name="EnergySurchargeSource" xml:space="preserve"><value>Source of the surcharge rates</value></data>
+  <data name="EnergySurchargeRemove" xml:space="preserve"><value>Remove this surcharge period. Imported readings and manual monthly amounts will be kept.</value></data>
+  <data name="EnergyGreenWkk" xml:space="preserve"><value>Green electricity and CHP</value></data>
+  <data name="EnergyGreenWkkRate" xml:space="preserve"><value>Green electricity and CHP (€/kWh)</value></data>
+  <data name="EnergyNetworkUsage" xml:space="preserve"><value>Variable network charges</value></data>
+  <data name="EnergyNetworkUsageRate" xml:space="preserve"><value>Variable network charges (€/kWh)</value></data>
+  <data name="EnergyTaxUsage" xml:space="preserve"><value>Variable government levies</value></data>
+  <data name="EnergyTaxUsageRate" xml:space="preserve"><value>Government levies (€/kWh)</value></data>
+  <data name="EnergyCapacity" xml:space="preserve"><value>Capacity charge · estimate</value></data>
+  <data name="EnergyCapacityRate" xml:space="preserve"><value>Capacity charge (€/kW per month)</value></data>
+  <data name="EnergyDataCharge" xml:space="preserve"><value>Data management · allocated</value></data>
+  <data name="EnergyDataRate" xml:space="preserve"><value>Data management (€/year)</value></data>
+  <data name="EnergyUsageSurcharges" xml:space="preserve"><value>Variable surcharges</value></data>
+  <data name="EnergyFixedNetworkCharges" xml:space="preserve"><value>Fixed or manual network charges</value></data>
+  <data name="EnergySurchargeCoverage" xml:space="preserve"><value>Variable surcharges fully calculated for {0}/{1} days.</value></data>
+  <data name="EnergyMonthlyChargeOverride" xml:space="preserve"><value>The manual monthly amount replaces calculated network charges and government levies. Clear that amount to use the calculation.</value></data>
+  <data name="EnergyMonthlyPeak" xml:space="preserve"><value>Monthly peak</value></data>
+  <data name="EnergyPeakImportRange" xml:space="preserve"><value>{0} monthly peaks · {1} – {2}</value></data>
+  <data name="EnergyPeakMissing" xml:space="preserve"><value>No peak for this month. Import the Fluvius peak-demand CSV to estimate the capacity charge.</value></data>
+  <data name="EnergyPeakCoverage" xml:space="preserve"><value>Monthly peak: {0} kW. Estimated average: {1} kW from {2}/12 months (minimum 2.5 kW per month).</value></data>
+  <data name="EnergyPeakProvisional" xml:space="preserve"><value>Uses provisional or in-progress readings.</value></data>
   <data name="EnergyDailyDetails" xml:space="preserve"><value>Daily details and coverage</value></data>
   <data name="EnergyPublishedPrices" xml:space="preserve"><value>Published prices for today and tomorrow</value></data>
   <data name="EnergyPublishedNote" xml:space="preserve"><value>Belgian day-ahead prices for dynamic consumption. Only the requested dates are sent to the price source. The supplier rate includes only the entered formula and VAT.</value></data>

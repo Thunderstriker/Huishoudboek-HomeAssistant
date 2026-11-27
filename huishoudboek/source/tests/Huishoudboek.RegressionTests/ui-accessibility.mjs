@@ -12,7 +12,7 @@ let checks = 0;
 try {
     for (const theme of ["light", "dark"]) {
         for (const path of ["", "maand", "jaar", "kalender", "categorietrends", "budgetten", "transacties", "vooruitblik",
-            "inzichten", "rekeningen", "aankopen", "beleggingen", "hypotheek", "importeren"]) {
+            "inzichten", "rekeningen", "aankopen", "beleggingen", "hypotheek", "importeren", "meer", "weekcontrole"]) {
             await page.goto(new URL(path, base).href);
             await page.waitForSelector('html[data-interactive="true"]');
             assert.match(await page.locator(".topbar strong").innerText(), /demo/);

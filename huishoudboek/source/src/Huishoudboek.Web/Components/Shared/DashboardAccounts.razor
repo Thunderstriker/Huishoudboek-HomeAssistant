@@ -44,9 +44,9 @@
                 <article class="account-card @(account.Kind == AccountKind.Current ? "current-account" : account.Kind == AccountKind.Investment ? "investment-account" : "savings-account")" data-account-id="@account.Id" @key="account.Id">
                     <span class="account-symbol"><DashboardIcon Name="@(account.Kind == AccountKind.Investment ? "trends" : account.Kind == AccountKind.Savings ? "savings" : "wallet")" /></span>
                     <div class="account-copy"><h3><a href="@UiNavigation.Transactions(account: account.Id, owner: State.OwnerId)">@account.Name</a></h3><span class="account-kind">@Kind(account.Kind)</span></div>
-                    <div class="metric-value @(item.Balance.Total < 0 ? "negative" : "")"><span class="sr-only">@L[account.Kind == AccountKind.Investment ? "DashboardRecordedValue" : "DashboardRecordedBalance"]: </span>@Money(item.Balance.Total)</div>
+                    <div class="metric-value @(item.Balance.Total < 0 ? "negative" : "")"><small class="recorded-balance-label">@L[account.Kind == AccountKind.Investment ? "DashboardRecordedValue" : "DashboardRecordedBalance"]</small>@Money(item.Balance.Total)</div>
                     <div class="account-freshness">
-                        @if (item.StaleImports) { <a class="freshness-status warning" href="importeren">@L["CheckImport"] <span aria-hidden="true">↗</span></a> }
+                        @if (item.StaleImports) { <a class="freshness-status warning" href="@($"importeren?account={account.Id:D}")">@L["CheckImport"] <span aria-hidden="true">↗</span></a> }
                         else { <span class="freshness-status">@L["DashboardRecentImport"]</span> }
                         <span class="import-through">@L["DashboardImportedThrough", item.ImportedThrough?.ToString("dd-MM-yyyy") ?? L["Unknown"].Value]</span>
                     </div>

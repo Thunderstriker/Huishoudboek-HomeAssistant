@@ -1,10 +1,10 @@
-<section class="card">
-    <h2>@L["EnergyMonthlyCosts"]</h2>
+<section class="card" id="energy-month-details">
+    <h2>@L["EnergyMonthDetails", Month.ToString("MMMM yyyy", UiCulture.Culture)]</h2>
     <p class="muted">@L["EnergyCostsNote"]</p>
     @if (!Report.HasReadings) { <p>@L["EnergyNoReadings"]</p> }
-    else
-    {
-        <div class="metrics">
+    <div class="metrics">
+        @if (Report.HasReadings)
+        {
             <div><strong>@L["EnergyConsumption"]</strong><div>@N(Report.Consumption.Kwh) kWh · @Euro(Report.Consumption.Amount)</div>
                 @Coverage(Report.Consumption, Report.Expected, Report.Days.Count)
                 <small>@L["EnergyWeightedRate", N(Report.Consumption.WeightedPrice)]</small></div>
@@ -12,13 +12,40 @@
                 @Coverage(Report.Injection, Report.ExpectedInjection, Report.Days.Count)
                 <small>@L["EnergyWeightedRate", N(Report.Injection.WeightedPrice)]</small></div>
             <div><strong>@L["EnergyFeeAllocation"]</strong><div>@Euro(Report.AllocatedFee)</div><small>@L["EnergyFeeCoverage", Report.FeeDays, Report.ApplicableDays]</small></div>
-            <div><strong>@L["EnergyPartialSubtotal"]</strong><div>@Euro(Report.PartialSubtotal)</div><small>@L["EnergyOtherChargesMissing"]</small></div>
+        }
+        <div><strong>@L["EnergyMonthlyCharges"]</strong><div>@Euro(Report.MonthlyCharges)</div><small>@L["EnergyMonthlyChargesNote"]</small></div>
+        <div><strong>@L["EnergyPartialSubtotal"]</strong><div>@Euro(Report.PartialSubtotal)</div><small>@L["EnergyOtherChargesMissing"]</small></div>
+    </div>
+    @if (Report.HasSurchargeRates)
+    {
+        <div class="metrics">
+            <div><strong>@L["EnergyGreenWkk"]</strong><div>@Euro(Report.UsageSurcharges.Supplier)</div></div>
+            <div><strong>@L["EnergyNetworkUsage"]</strong><div>@Euro(Report.UsageSurcharges.Network)</div></div>
+            <div><strong>@L["EnergyTaxUsage"]</strong><div>@Euro(Report.UsageSurcharges.Tax)</div></div>
+            <div><strong>@L["EnergyCapacity"]</strong><div>@Euro(Report.CapacityCharge)</div></div>
+            <div><strong>@L["EnergyDataCharge"]</strong><div>@Euro(Report.DataCharge)</div></div>
         </div>
+        <p class="muted">@L["EnergySurchargeCoverage", Report.CoveredSurchargeDays, Report.Days.Count]</p>
+        @if (Report.MonthlyCharges.HasValue) { <p class="notice">@L["EnergyMonthlyChargeOverride"]</p> }
+        else if (Report.HasCapacityRate && Report.Peak == null) { <p class="muted">@L["EnergyPeakMissing"]</p> }
+    }
+    @if (Report.Peak is { } peak)
+    {
+        <p class="muted">@L["EnergyPeakCoverage", N(peak.MonthKw), N(peak.AverageKw), peak.Months]
+            @if (peak.Provisional) { <span>@L["EnergyPeakProvisional"]</span> }
+        </p>
+    }
+    @MonthlyChargeEditor
+    @if (Report.HasReadings)
+    {
         <details>
             <summary>@L["EnergyDailyDetails"]</summary>
+            @if (Report.FixedNetworkCharges.HasValue) { <p class="muted">@L["EnergyDailyChargesNote"]</p> }
             <div class="table-wrap" style="overflow-x:auto">
                 <table>
-                    <thead><tr><th>@L["Date"]</th><th>@L["EnergyConsumption"]</th><th>@L["EnergyInjection"]</th><th>@L["EnergyFeeAllocation"]</th><th>@L["EnergyPartialSubtotal"]</th></tr></thead>
+                    <thead><tr><th>@L["Date"]</th><th>@L["EnergyConsumption"]</th><th>@L["EnergyInjection"]</th><th>@L["EnergyFeeAllocation"]</th>
+                        @if (Report.HasSurchargeRates) { <th>@L["EnergyUsageSurcharges"]</th> }
+                        <th>@L["EnergyPartialSubtotal"]</th></tr></thead>
                     <tbody>
                         @foreach (var day in Report.Days)
                         {
@@ -27,6 +54,7 @@
                                 <td>@N(day.Consumption.Kwh) kWh · @Euro(day.Consumption.Amount)<br />@Coverage(day.Consumption, day.Expected)<small>@L["EnergyWeightedRate", N(day.Consumption.WeightedPrice)]</small></td>
                                 <td>@N(day.Injection.Kwh) kWh · @Euro(day.Injection.Amount)<br />@Coverage(day.Injection, day.InjectionNotApplicable && !day.Injection.Kwh.HasValue ? 0 : day.Expected)<small>@L["EnergyWeightedRate", N(day.Injection.WeightedPrice)]</small></td>
                                 <td>@Euro(day.AllocatedFee)</td>
+                                @if (Report.HasSurchargeRates) { <td>@Euro(day.UsageSurcharges.Total)</td> }
                                 <td>@Euro(day.PartialSubtotal)</td>
                             </tr>
                         }
@@ -40,6 +68,8 @@
 
 @code {
     [Parameter, EditorRequired] public EnergyCostReport Report { get; set; } = null!;
+    [Parameter, EditorRequired] public DateOnly Month { get; set; }
+    [Parameter] public RenderFragment? MonthlyChargeEditor { get; set; }
     private RenderFragment Coverage(EnergyComponent component, int expected, int days = 1) => @<text>
         @if (expected == 0)
         {

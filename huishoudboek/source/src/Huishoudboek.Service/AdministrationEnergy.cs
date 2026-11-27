@@ -16,16 +16,27 @@ public sealed partial class AdministrationCoordinator
             var settings = _store.ReadEnergySettings();
             var contract = settings.Contracts.FirstOrDefault(c => c.Id == contractId) ?? settings.Contracts
                 .OrderByDescending(c => c.SupplyEnd == null || c.SupplyEnd >= today).ThenByDescending(c => c.SupplyStart).ThenBy(c => c.Supplier).FirstOrDefault();
-            var quarterHourConnections = _store.ReadQuarterHourConnections();
-            if (contract == null) return new(_energyRevision, settings, null, null, [], false, quarterHourConnections);
+            var readingConnections = _store.ReadEnergyReadingConnections();
+            if (contract == null) return new(_energyRevision, settings, null, month, [], [], readingConnections);
 
-            var historyEnd = month.AddMonths(1);
-            var historyThrough = Min(historyEnd.AddDays(-1), today);
+            var historyStart = new DateOnly(month.Year, 1, 1);
+            var historyEnd = new DateOnly(month.Year + 1, 1, 1);
+            var afterCurrentMonth = MonthOf(today).AddMonths(1);
+            var afterSelectedMonth = month.AddMonths(1);
+            if (historyEnd > afterCurrentMonth) historyEnd = afterCurrentMonth > afterSelectedMonth ? afterCurrentMonth : afterSelectedMonth;
             var contractWindows = EnergyTerms.Windows(contract, settings.Tariffs).ToList();
-            var canFetchHistory = DynamicRanges(contractWindows, month, historyThrough).Count != 0;
-            var usesMarketHistory = DynamicRanges(MeterWindows(settings, contract), month, historyThrough).Count != 0;
-            var report = EnergyCosts.Calculate(settings, contract, month, today, _store.ReadEnergyReadings(contract.Ean, month, historyEnd),
-                usesMarketHistory ? _store.ReadEnergyPrices(month, historyEnd) : []);
+            var usesMarketHistory = DynamicRanges(MeterWindows(settings, contract), historyStart, Min(historyEnd.AddDays(-1), today)).Count != 0;
+            var readings = _store.ReadEnergyReadings(contract.Ean, historyStart, historyEnd).ToLookup(r => MonthOf(BelgianEnergyTime.Day(r.StartUtc)));
+            var peaks = _store.ReadEnergyPeaks(contract.Ean, historyStart.AddMonths(-11), historyEnd);
+            var historicalPrices = usesMarketHistory ? _store.ReadEnergyPrices(historyStart, historyEnd) : [];
+            var prices = historicalPrices.ToLookup(p => MonthOf(BelgianEnergyTime.Day(p.StartUtc)));
+            var months = new List<EnergyMonthReport>();
+            for (var period = historyStart; period < historyEnd; period = period.AddMonths(1))
+            {
+                var costs = EnergyCosts.Calculate(settings, contract, period, today, readings[period], prices[period], peaks);
+                var canFetch = DynamicRanges(contractWindows, period, Min(period.AddMonths(1).AddDays(-1), today)).Count != 0;
+                months.Add(new(period, costs, canFetch));
+            }
             var publish = new List<EnergyPublishedDay>();
             var windows = contractWindows.Where(w => w.Tariff.Pricing == EnergyPricing.Dynamic && w.From <= today.AddDays(1) && w.Through >= today).ToList();
             if (windows.Count != 0)
@@ -35,7 +46,7 @@ public sealed partial class AdministrationCoordinator
                     if (windows.FirstOrDefault(w => w.From <= day && w.Through >= day) is { } w)
                         publish.Add(new(day, w.Tariff, EnergyCosts.Published(w, day, market)));
             }
-            return new(_energyRevision, settings, contract.Id, report, publish, canFetchHistory, quarterHourConnections);
+            return new(_energyRevision, settings, contract.Id, month, months, publish, readingConnections);
         }
     }
 
@@ -74,9 +85,52 @@ public sealed partial class AdministrationCoordinator
         }
     }
 
+    public void SaveEnergyMonthlyCharge(string revision, string ean, DateOnly month, decimal? amount)
+    {
+        CheckMonth(month);
+        lock (_gate)
+        {
+            CheckEnergyRevision(revision);
+            var settings = _store.ReadEnergySettings();
+            if (!settings.Contracts.Any(c => c.Ean == ean)) throw new InvalidDataException("Kies een opgeslagen energiecontract.");
+            var existing = settings.MonthlyCharges.FindIndex(c => c.Ean == ean && c.Month == month);
+            if (amount is { } value)
+            {
+                if (existing < 0) settings.MonthlyCharges.Add(new() { Ean = ean, Month = month, Amount = value });
+                else if (settings.MonthlyCharges[existing].Amount == value) return;
+                else settings.MonthlyCharges[existing] = settings.MonthlyCharges[existing] with { Amount = value };
+            }
+            else if (existing >= 0) settings.MonthlyCharges.RemoveAt(existing);
+            else return;
+
+            _store.SaveEnergySettings(settings);
+            _energyRevision = NewRevision();
+        }
+    }
+
     public EnergyImportPreview PreviewEnergy(EnergyCsvFile file)
     {
         lock (_gate) return _store.PreviewEnergyImport(file, _energyRevision);
+    }
+
+    public void SaveEnergySurchargeRates(string revision, EnergySurchargeRates rates, bool remove = false)
+    {
+        lock (_gate)
+        {
+            CheckEnergyRevision(revision);
+            var settings = _store.ReadEnergySettings();
+            var existing = settings.SurchargeRates.FindIndex(rate => rate.Id == rates.Id);
+            if (existing >= 0 && settings.SurchargeRates[existing].Ean != rates.Ean)
+                throw new InvalidDataException("Een toeslagperiode hoort bij één EAN.");
+            if (remove)
+            {
+                if (existing < 0) return;
+                settings.SurchargeRates.RemoveAt(existing);
+            }
+            else Replace(settings.SurchargeRates, rates with { Source = rates.Source.Trim() }, rate => rate.Id == rates.Id);
+            _store.SaveEnergySettings(settings);
+            _energyRevision = NewRevision();
+        }
     }
 
     public void CommitEnergy(EnergyImportPreview preview, bool replace)
@@ -88,17 +142,17 @@ public sealed partial class AdministrationCoordinator
         }
     }
 
-    public EnergyQuarterClearPreview PreviewClearEnergyQuarterHours(string ean, DateOnly from, DateOnly through)
+    public EnergyReadingsClearPreview PreviewClearEnergyReadings(string ean)
     {
-        lock (_gate) return new(_energyRevision, ean, from, through, _store.CountQuarterHourReadings(ean, from, through));
+        lock (_gate) return new(_energyRevision, ean, _store.CountEnergyReadings(ean));
     }
 
-    public int ClearEnergyQuarterHours(EnergyQuarterClearPreview preview)
+    public int ClearEnergyReadings(EnergyReadingsClearPreview preview)
     {
         lock (_gate)
         {
             CheckEnergyRevision(preview.Revision);
-            var count = _store.ClearQuarterHourReadings(preview.Ean, preview.From, preview.Through, preview.Count);
+            var count = _store.ClearEnergyReadings(preview.Ean, preview.Count);
             _energyRevision = NewRevision();
             return count;
         }
@@ -149,6 +203,7 @@ public sealed partial class AdministrationCoordinator
     private static IEnumerable<EnergyWindow> MeterWindows(EnergySettings settings, EnergyContract contract) =>
         settings.Contracts.Where(c => c.Ean == contract.Ean).SelectMany(c => EnergyTerms.Windows(c, settings.Tariffs));
     private static bool ConfirmedDynamic(EnergyTariff t) => t.Pricing == EnergyPricing.Dynamic && t.MarketSeries == EnergyMarketSeries.BelgianDayAhead;
+    private static DateOnly MonthOf(DateOnly day) => new(day.Year, day.Month, 1);
     private static DateOnly Min(DateOnly a, DateOnly b) => a < b ? a : b;
     private static void CheckMonth(DateOnly month)
     {

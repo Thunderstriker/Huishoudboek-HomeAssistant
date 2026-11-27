@@ -189,7 +189,7 @@ internal static class SubscriptionContractTests
             var c = Contract() with { RenewalDate = null, NoticePeriod = null };
             state.Data.Contracts.AddRange([c, Contract() with { EndDate = Today.AddDays(20) }]);
             new SqliteHouseholdStore(path).Save(state.Data);
-            Sql(path, EnergyTests.RemoveSchema22Resolution + "ALTER TABLE [SubscriptionContract] DROP COLUMN [IsIndefinite]; PRAGMA user_version=20;");
+            Sql(path, EnergyTests.RemoveSchema23Charges + EnergyTests.RemoveSchema22Resolution + "ALTER TABLE [SubscriptionContract] DROP COLUMN [IsIndefinite]; PRAGMA user_version=20;");
             var expected = JsonSerializer.Serialize(state.Data.Contracts);
             Equal(expected, JsonSerializer.Serialize(SqliteHouseholdStore.ReadBackup(path).Contracts));
             Equal(20L, Scalar(path, "PRAGMA user_version"));

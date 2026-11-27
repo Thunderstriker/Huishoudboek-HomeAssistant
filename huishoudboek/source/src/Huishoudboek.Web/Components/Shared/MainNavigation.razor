@@ -1,5 +1,4 @@
 @implements IDisposable
-@inject UiPreferences Preferences
 @inject NavigationManager NavigationManager
 
 <nav class="primary-navigation" aria-label="@L["MainNavigation"]">
@@ -9,7 +8,7 @@
             <li @key="section.Id" class="nav-section">
                 @if (section.Path is { } path)
                 {
-                    <NavLink class="nav-item" href="@path.TrimStart('/')" Match="@(path == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)" aria-current="@(IsCurrent(path) ? "page" : null)">
+                    <NavLink class="@(section.Related.Any(IsCurrent) ? "nav-item section-current" : "nav-item")" href="@path.TrimStart('/')" Match="NavLinkMatch.All" aria-current="@(IsCurrent(path) ? "page" : null)">
                         <DashboardIcon Name="@section.Icon" /><span class="nav-label">@L[section.Label]</span>
                     </NavLink>
                 }
@@ -24,7 +23,6 @@
                     <ul id="@Target(section.Id)" class="nav-submenu" hidden="@(expandedSection != section.Id)">
                         @foreach (var entry in section.Entries)
                         {
-                            if (entry.Path == "/weekcontrole" && (!Preferences.Loaded || Preferences.HideWeeklyReview)) { continue; }
                             <li @key="entry.Path">
                                 <NavLink href="@entry.Path.TrimStart('/')" aria-current="@(IsCurrent(entry.Path) ? "page" : null)">@L[entry.Label]</NavLink>
                             </li>
@@ -40,21 +38,17 @@
     [Parameter] public string IdPrefix { get; set; } = "";
     private string Target(string section) => (IdPrefix.Length > 0 ? IdPrefix + "-" : "") + "nav-" + section;
     private sealed record NavigationEntry(string Path, string Label);
-    private sealed record NavigationSection(string Id, string Icon, string Label, string? Path, NavigationEntry[] Entries);
+    private sealed record NavigationSection(string Id, string Icon, string Label, string? Path, NavigationEntry[] Entries, params string[] Related);
 
     private static readonly NavigationSection[] Sections = [
-        new("dashboard", "activity", "StartDashboard", "/", []),
-        new("overviews", "calendar", "NavigationOverviews", null, [
-            new("/maand", "MonthlyOverview"), new("/jaar", "AnnualOverview"), new("/kalender", "CalendarTitle"),
-            new("/categorietrends", "CategoryTrends"), new("/inzichten", "FinancialInsights"), new("/beleggingen", "InvestmentsTitle")]),
-        new("transactions", "wallet", "Transactions", null, [
-            new("/transacties", "Transactions"), new("/aankopen", "PurchasesTitle"), new("/maaltijdcheques", "MealVouchersTitle"), new("/categoriseren", "Categorize"), new("/herkenning", "TransactionRecognition"), new("/weekcontrole", "WeeklyReviewTitle")]),
-        new("planning", "budget", "NavigationPlanning", null, [
-            new("/vooruitblik", "FinancialOutlook"), new("/budgetten", "Budgets"),
-            new("/vaste-posten", "RecurringPayments"), new("/abonnementen", "ContractsTitle"), new("/energie", "EnergyTitle"), new("/hypotheek", "Mortgage")]),
-        new("accounts", "savings", "Accounts", "/rekeningen", []),
-        new("administration", "sliders", "NavigationAdministration", null, [
-            new("/beheer", "AdministrationImport"), new("/importeren", "ImportExcelCsv"), new("/instellen", "SetupTitle")])];
+        new("dashboard", "activity", "StartDashboard", "/", [], "/weekcontrole"),
+        new("transactions", "wallet", "Transactions", "/transacties", [], "/categoriseren", "/herkenning", "/importeren", "/overboekingen"),
+        new("outlook", "calendar", "NavigationOutlook", "/vooruitblik", [], "/vaste-posten"),
+        new("overviews", "budget", "NavigationOverviews", null, [
+            new("/kalender", "CalendarTitle"), new("/maand", "MonthlyOverview"), new("/jaar", "AnnualOverview"), new("/budgetten", "Budgets"),
+            new("/categorietrends", "CategoryTrends"), new("/inzichten", "FinancialInsights")]),
+        new("more", "sliders", "NavigationMore", "/meer", [], "/rekeningen", "/aankopen", "/maaltijdcheques", "/abonnementen", "/energie",
+            "/hypotheek", "/beleggingen", "/beheer", "/instellen")];
 
     private string currentPath = "";
     private string? expandedSection;
@@ -62,7 +56,6 @@
     protected override void OnInitialized()
     {
         UpdateLocation(NavigationManager.Uri);
-        Preferences.Changed += Changed;
         NavigationManager.LocationChanged += LocationChanged;
     }
 
@@ -87,11 +80,8 @@
         StateHasChanged();
     });
 
-    private void Changed() => _ = InvokeAsync(StateHasChanged);
-
     public void Dispose()
     {
-        Preferences.Changed -= Changed;
         NavigationManager.LocationChanged -= LocationChanged;
     }
 }

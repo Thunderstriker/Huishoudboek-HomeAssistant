@@ -14,7 +14,7 @@ namespace Huishoudboek.Infrastructure;
 public sealed partial class SqliteHouseholdStore : IAdministrationStore
 {
     public const long MaximumRestoreBytes = 256L * 1024 * 1024;
-    public const int SchemaVersion = 22;
+    public const int SchemaVersion = 24;
     private readonly string _path;
     public string DatabasePath => _path;
 
@@ -43,6 +43,8 @@ public sealed partial class SqliteHouseholdStore : IAdministrationStore
             foreach (var type in EntityTypes) CreateTable(connection, transaction, type);
             CreateReceiptDocuments(connection, transaction);
             CreateEnergyTables(connection, transaction);
+            CreateEnergyMonthlyCharges(connection, transaction);
+            CreateEnergySurchargesAndPeaks(connection, transaction);
             Execute(connection, transaction, "CREATE INDEX ix_transactions_date_account ON [Transaction] ([Date], [AccountId])");
             Execute(connection, transaction, $"PRAGMA user_version={SchemaVersion}");
             transaction.Commit();
@@ -200,6 +202,8 @@ public sealed partial class SqliteHouseholdStore : IAdministrationStore
         else if (version < 21) Execute(connection, tx, "ALTER TABLE [SubscriptionContract] ADD COLUMN [IsIndefinite] INTEGER NOT NULL DEFAULT 0");
         if (version < 20) CreateEnergyTables(connection, tx);
         else if (version < 22) UpgradeEnergyReadingResolution(connection, tx);
+        if (version < 23) CreateEnergyMonthlyCharges(connection, tx);
+        if (version < 24) CreateEnergySurchargesAndPeaks(connection, tx);
         Execute(connection, tx, $"PRAGMA user_version={SchemaVersion}");
         tx.Commit();
         CheckDatabase(connection);

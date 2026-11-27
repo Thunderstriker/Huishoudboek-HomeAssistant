@@ -1,6 +1,7 @@
 @page "/"
 @attribute [Authorize]
 @inherits EditPageBase
+@inject UiPreferences Preferences
 <PageTitle>@L["StartDashboard"] · Huishoudboek</PageTitle>
 
 <div class="dashboard">
@@ -8,7 +9,9 @@
     <div class="actions dashboard-quick-actions" role="group" aria-label="@L["QuickActions"]">
         <button class="primary" disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State)"><DashboardIcon Name="plus" />@L["AddExpense"]</button>
         <button disabled="@(State.Scope.Count == 0)" @onclick="() => Draft = EditorDraft.SimpleTransaction(State, true)">@L["AddIncome"]</button>
-        <a class="button" href="importeren">@L["ImportExcelCsv"]</a>
+        <a class="button" href="importeren">@L["ImportBankStatement"]</a>
+        @if (State.Data.Accounts.Count > 0 && Preferences.Loaded && !Preferences.HideWeeklyReview)
+        { <a class="button" href="weekcontrole">@L["ReviewTasks"]</a> }
     </div>
 
     <div class="dashboard-overview">
@@ -49,7 +52,7 @@
         <section class="surface recent-card" aria-labelledby="dashboard-recent-heading">
             <div class="panel-heading"><div class="panel-title"><span class="panel-icon"><DashboardIcon Name="activity" /></span><h2 id="dashboard-recent-heading">@L["DashboardRecentActivity"]</h2></div><a class="text-link" href="transacties?allDates=true">@L["Transactions"] <span aria-hidden="true">↗</span></a></div>
             @if (overview.Recent.Count == 0)
-            { <div class="empty-state"><DashboardIcon Name="activity" /><p>@L["DashboardNoRecent"]</p><a class="button" href="importeren">@L["ImportExcelCsv"]</a></div> }
+            { <div class="empty-state"><DashboardIcon Name="activity" /><p>@L["DashboardNoRecent"]</p><a class="button" href="importeren">@L["ImportBankStatement"]</a></div> }
             else
             {
                 <ul class="dashboard-list recent-list">
@@ -83,9 +86,12 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
+        Preferences.Changed += PreferencesChanged;
         Rebuild();
     }
     protected override void OnStateChanged() => Rebuild();
+    private void PreferencesChanged() => _ = InvokeAsync(StateHasChanged);
+    public override void Dispose() { Preferences.Changed -= PreferencesChanged; base.Dispose(); }
     private void Rebuild()
     {
         overview = HomeOverview.Create(State.Data, State.Year, State.Month, State.Today, State.OwnerId);

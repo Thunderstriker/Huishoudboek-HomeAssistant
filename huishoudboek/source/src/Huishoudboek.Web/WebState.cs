@@ -11,7 +11,6 @@ public sealed class WebState(IWebAdministration backend)
     public int Year { get; set; } = DateTime.Today.Year;
     public int Month { get; set; } = DateTime.Today.Month;
     public Guid? OwnerId { get; set; }
-    public Guid? ReviewBatchId { get; set; }
     public bool Loaded { get; private set; }
     public bool Busy { get; private set; }
     public string Message { get; set; } = "";

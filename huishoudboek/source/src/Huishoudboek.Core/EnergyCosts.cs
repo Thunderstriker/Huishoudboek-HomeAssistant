@@ -12,16 +12,33 @@ public sealed record EnergyComponent(decimal? Kwh, decimal? Amount, decimal Pric
 
 public sealed record EnergyDayCost(DateOnly Day, int Expected, EnergyComponent Consumption, EnergyComponent Injection, decimal? AllocatedFee, bool InjectionNotApplicable)
 {
-    public decimal? PartialSubtotal => EnergyCosts.Subtotal(Consumption.Amount, Injection.Amount, AllocatedFee);
+    public EnergyUsageSurcharges UsageSurcharges { get; init; } = new(null, null, null);
+    public decimal? PartialSubtotal => EnergyCosts.Subtotal(Consumption.Amount, Injection.Amount, AllocatedFee, UsageSurcharges.Total);
 }
 
+public sealed record EnergyUsageSurcharges(decimal? Supplier, decimal? Network, decimal? Tax)
+{
+    public decimal? Total => EnergyCosts.SumKnown([Supplier, Network, Tax]);
+}
+
+public sealed record EnergyPeakEstimate(decimal MonthKw, decimal AverageKw, int Months, bool Provisional);
+
 public sealed record EnergyCostReport(IReadOnlyList<EnergyDayCost> Days, EnergyComponent Consumption, EnergyComponent Injection, decimal? AllocatedFee,
-    int FeeDays, int ApplicableDays, decimal? EarlyEndFee)
+    int FeeDays, int ApplicableDays, decimal? EarlyEndFee, decimal? MonthlyCharges)
 {
     public int Expected => Days.Sum(d => d.Expected);
     public int ExpectedInjection => Days.Where(d => !d.InjectionNotApplicable || d.Injection.Kwh.HasValue).Sum(d => d.Expected);
     public bool HasReadings => Consumption.Kwh.HasValue || Injection.Kwh.HasValue;
-    public decimal? PartialSubtotal => EnergyCosts.Subtotal(Consumption.Amount, Injection.Amount, AllocatedFee);
+    public EnergyUsageSurcharges UsageSurcharges { get; init; } = new(null, null, null);
+    public decimal? CapacityCharge { get; init; }
+    public decimal? DataCharge { get; init; }
+    public EnergyPeakEstimate? Peak { get; init; }
+    public bool HasSurchargeRates { get; init; }
+    public bool HasCapacityRate { get; init; }
+    public int CoveredSurchargeDays { get; init; }
+    public decimal? FixedNetworkCharges => EnergyCosts.SumKnown([MonthlyCharges, CapacityCharge, DataCharge]);
+    public decimal? PartialSubtotal => EnergyCosts.Subtotal(Consumption.Amount, Injection.Amount, AllocatedFee,
+        EnergyCosts.SumKnown([UsageSurcharges.Total, FixedNetworkCharges]));
 }
 
 public sealed record EnergyPriceSlot(DateTime StartUtc, DateTime EndUtc, EnergyMarketPrice? Market, decimal? DayRate, decimal? NightRate);
@@ -29,18 +46,24 @@ public sealed record EnergyPriceSlot(DateTime StartUtc, DateTime EndUtc, EnergyM
 public static class EnergyCosts
 {
     public static EnergyCostReport Calculate(EnergySettings settings, EnergyContract selected, DateOnly month, DateOnly today,
-        IEnumerable<EnergyReading> readings, IEnumerable<EnergyMarketPrice> marketPrices)
+        IEnumerable<EnergyReading> readings, IEnumerable<EnergyMarketPrice> marketPrices, IEnumerable<EnergyMonthlyPeak>? peaks = null)
     {
         var from = new DateOnly(month.Year, month.Month, 1);
         var through = from.AddMonths(1).AddDays(-1);
         if (through > today) through = today;
-        var windows = settings.Contracts.Where(c => c.Ean == selected.Ean).SelectMany(c => EnergyTerms.Windows(c, settings.Tariffs)).OrderBy(w => w.From).ToList();
+        var charges = settings.MonthlyCharges.SingleOrDefault(c => c.Ean == selected.Ean && c.Month == from)?.Amount;
+        var rates = settings.SurchargeRates.Where(rate => rate.Ean == selected.Ean && rate.From <= through && rate.Through >= from).ToList();
+        var peak = EstimatePeak(peaks ?? [], selected.Ean, from, today);
+        var contracts = settings.Contracts.Where(c => c.Ean == selected.Ean).ToList();
+        var windows = contracts.SelectMany(c => EnergyTerms.Windows(c, settings.Tariffs)).OrderBy(w => w.From).ToList();
         var indexes = settings.Indexes.ToDictionary(i => EnergyTerms.IndexKey(i.Series, i.Month));
         var prices = marketPrices.ToDictionary(p => (p.Series, p.StartUtc, p.EndUtc));
         var byDay = readings.Where(r => r.Ean == selected.Ean).ToLookup(r => BelgianEnergyTime.Day(r.StartUtc));
         var days = new List<EnergyDayCost>();
         var hasReadings = false;
         var applicable = 0;
+        var coveredSurchargeDays = 0;
+        var fixedDays = new Dictionary<EnergySurchargeRates, int>();
         for (var day = from; day <= through; day = day.AddDays(1))
         {
             var window = windows.FirstOrDefault(w => w.From <= day && w.Through >= day);
@@ -52,11 +75,38 @@ public static class EnergyCosts
             var injection = MeasureDay(byDay[day].Where(r => r.Direction == EnergyDirection.Injection), expected,
                 r => InjectionRate(tariff, r, day, indexes));
             hasReadings |= consumption.Kwh.HasValue || injection.Kwh.HasValue;
-            days.Add(new(day, expected, consumption, injection, window == null ? null : EnergyTerms.AllocatedFee(window, day), tariff?.Injection == EnergyInjection.None));
+            var rate = rates.Count != 0 && contracts.Any(c => (c.SupplyStart == null || c.SupplyStart <= day) && (c.SupplyEnd == null || c.SupplyEnd >= day))
+                ? rates.FirstOrDefault(rate => rate.From <= day && day <= rate.Through) : null;
+            var supplier = consumption.Kwh * rate?.SupplierPerKwh;
+            // A saved monthly network/tax amount is an override, not an additional network charge.
+            var network = charges.HasValue ? null : consumption.Kwh * rate?.NetworkPerKwh;
+            var tax = charges.HasValue ? null : consumption.Kwh * rate?.TaxPerKwh;
+            if (supplier.HasValue && (charges.HasValue || (network.HasValue && tax.HasValue))) coveredSurchargeDays++;
+            if (!charges.HasValue && rate != null) fixedDays[rate] = fixedDays.GetValueOrDefault(rate) + 1;
+            days.Add(new(day, expected, consumption, injection, window == null ? null : EnergyTerms.AllocatedFee(window, day), tariff?.Injection == EnergyInjection.None)
+            { UsageSurcharges = new(supplier, network, tax) });
         }
         if (!hasReadings) days = days.Select(d => d with { AllocatedFee = null }).ToList();
         return new(days, Total(days.Select(d => d.Consumption)), Total(days.Select(d => d.Injection)), SumKnown(days.Select(d => d.AllocatedFee)),
-            days.Count(d => d.AllocatedFee.HasValue), applicable, EnergyTerms.FirstYearFeeOnEarlyEnd(selected, windows.Where(w => w.Contract.Id == selected.Id).ToList()));
+            days.Count(d => d.AllocatedFee.HasValue), applicable, EnergyTerms.FirstYearFeeOnEarlyEnd(selected, windows.Where(w => w.Contract.Id == selected.Id).ToList()), charges)
+        {
+            UsageSurcharges = new(SumKnown(days.Select(d => d.UsageSurcharges.Supplier)), SumKnown(days.Select(d => d.UsageSurcharges.Network)),
+                SumKnown(days.Select(d => d.UsageSurcharges.Tax))),
+            CapacityCharge = SumKnown(fixedDays.Select(pair => pair.Key.CapacityPerKwMonth == 0 ? 0 :
+                pair.Key.CapacityPerKwMonth * peak?.AverageKw * pair.Value / DateTime.DaysInMonth(from.Year, from.Month))),
+            DataCharge = SumKnown(fixedDays.Select(pair => pair.Key.DataPerYear * pair.Value / (DateTime.IsLeapYear(from.Year) ? 366 : 365))),
+            Peak = peak, HasSurchargeRates = rates.Count > 0, HasCapacityRate = fixedDays.Keys.Any(rate => rate.CapacityPerKwMonth > 0),
+            CoveredSurchargeDays = coveredSurchargeDays
+        };
+    }
+
+    private static EnergyPeakEstimate? EstimatePeak(IEnumerable<EnergyMonthlyPeak> peaks, string ean, DateOnly month, DateOnly today)
+    {
+        if (month > today) return null;
+        var history = peaks.Where(p => p.Ean == ean && p.Month >= month.AddMonths(-11) && p.Month <= month).ToList();
+        var current = history.FirstOrDefault(p => p.Month == month);
+        return current == null ? null : new(current.Kw, history.Average(p => Math.Max(2.5m, p.Kw)), history.Count,
+            today < month.AddMonths(1) || history.Any(p => EnergyTerms.ReadingQuality(p.Status) == 2));
     }
 
     // Expose actual market resolution, but never price the supplier formula at a different resolution.
@@ -165,6 +215,7 @@ public static class EnergyCosts
         };
     }
 
-    private static decimal? SumKnown(IEnumerable<decimal?> values) => values.Aggregate((decimal?)null, (sum, v) => v.HasValue ? (sum ?? 0) + v.Value : sum);
-    internal static decimal? Subtotal(decimal? consumption, decimal? injection, decimal? fee) => SumKnown([consumption, -injection, fee]);
+    internal static decimal? SumKnown(IEnumerable<decimal?> values) => values.Aggregate((decimal?)null, (sum, v) => v.HasValue ? (sum ?? 0) + v.Value : sum);
+    internal static decimal? Subtotal(decimal? consumption, decimal? injection, decimal? fee, decimal? monthlyCharges = null) =>
+        SumKnown([consumption, -injection, fee, monthlyCharges]);
 }

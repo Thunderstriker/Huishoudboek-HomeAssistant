@@ -103,6 +103,8 @@ node huishoudboek/source/tests/Huishoudboek.RegressionTests/ui-accessibility.mjs
 `http://127.0.0.1:5199/`. Met `UI_SCREENSHOT_DIR` bewaart de UI-test schermafbeeldingen
 in een map buiten de repository. De UI-test controleert invoer, conceptbeveiliging,
 filters, eigenaarbehoud, grafieken, mobiel menu, themaopslag en begeleide import.
+De routes via Te controleren, Vooruitblik en Meer en de directe importbeoordeling
+met handmatige kolomkeuze voor onbekende bestanden worden ook getest.
 De importcontrole toetst herhaalde en overlappende afschriften, extra gelijke betalingen,
 onzekere matches, expliciete dubbelwaarschuwingen en afschriftdekking in beide talen.
 De categoriecontrole maakt testcategorieën en bankboekingen aan, verplaatst geneste
@@ -111,6 +113,6 @@ van categorie-id's/budgetten en verwijdert een ouder met behoud van haar kindere
 Dit gebeurt in het Nederlands op desktop en in het Engels op mobiel.
 De contractcontrole volgt de koppelingen vanuit Vaste posten en bankboekingen op
 desktop en mobiel, ook nadat het gekoppelde democontract is opgezegd.
-De aanvullende toegankelijkheidscontrole toetst 14 pagina's in beide thema's op
+De aanvullende toegankelijkheidscontrole toetst 16 pagina's in beide thema's op
 tekstcontrast, veldlabels en geldige ARIA-waarden. Alleen die diagnostische browsercontext
 omzeilt CSP om axe te injecteren; de appbeveiliging en normale UI-test blijven ongewijzigd.

@@ -1,7 +1,9 @@
-.cash-calendar { margin: 1.5rem 0; padding: 1.3rem; border: 1px solid var(--border); border-radius: 14px; background: #fff; }
-.calendar-heading, .calendar-navigation { display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap; }
-.calendar-heading h2 { margin: 0; }.calendar-heading p { margin: .3rem 0; }.calendar-navigation strong { min-width: 9rem; text-align: center; }
-.calendar-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; margin: 1.25rem 0; }
+.cash-calendar { margin: 0 0 1rem; padding: 1.3rem; border: 1px solid var(--border); border-radius: 14px; background: #fff; }
+.calendar-heading, .calendar-controls, .calendar-navigation { display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap; }
+.calendar-heading h1 { margin: 0; font-size: 1.55rem; }.calendar-navigation strong { min-width: 9rem; text-align: center; }
+.calendar-controls ::deep .calendar-account { flex-direction: row; align-items: center; max-width: 100%; }
+.calendar-controls ::deep select { width: auto; min-width: 0; }
+.calendar-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; margin: .8rem 0; }
 .calendar-summary > div { display: flex; flex-direction: column; padding: .8rem; border-radius: 10px; background: #f3f6f2; }
 .calendar-summary span { font-size: .82rem; color: var(--muted); }.calendar-summary strong { font-size: 1.3rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .calendar-legend { display: flex; flex-wrap: wrap; gap: .5rem 1rem; list-style: none; padding: 0; font-size: .85rem; }.calendar-legend li { display: flex; align-items: center; gap: .4rem; }
@@ -23,4 +25,5 @@
 .calendar-item-list li.estimate-item { border-radius: 4px; padding: .6rem; margin: .4rem 0; }.calendar-item-list li.estimate-item small { color: inherit; }
 .estimate-adjustment { display: flex; align-items: end; flex-wrap: wrap; gap: .5rem; margin: .7rem 0; }.estimate-adjustment label { max-width: 22rem; flex: 1; }.calendar-method { margin-top: 1.2rem; }.calendar-method summary { cursor: pointer; }
 @media(max-width:850px) { .cash-calendar { padding: .8rem; }.calendar-day { min-height: 110px; }.day-chip { font-size: .65rem; }.day-balance { font-size: .7rem; } }
+@media(max-width:600px) { .calendar-controls { width: 100%; } }
 @media(max-width:600px) { .calendar-heading { align-items: stretch; }.calendar-navigation { width: 100%; gap: .3rem; }.calendar-navigation strong { min-width: 0; flex: 1; font-size: .9rem; }.calendar-navigation button { min-width: 44px; min-height: 44px; padding: .4rem; }.calendar-summary { gap: .4rem; }.calendar-summary > div { padding: .5rem; }.calendar-summary strong { font-size: 1rem; }.calendar-summary span { font-size: .7rem; }.calendar-weekdays, .calendar-grid { gap: 2px; }.calendar-day { min-height: 82px; padding: .3rem; gap: .2rem; }.day-items { display: none; }.day-estimates { gap: 2px; }.estimate-chip { flex-direction: row; align-items: center; flex-wrap: wrap; gap: .1rem .2rem; padding: 2px; font-size: .6rem; }.estimate-text { display: none; }.estimate-chip b { min-width: 0; overflow-wrap: anywhere; }.mobile-count { display: block; font-size: .6rem; }.day-balance { font-size: .65rem; }.day-heading { font-size: .8rem; }.pending-row { align-items: start; }.estimate-adjustment label { flex-basis: 100%; }.estimate-adjustment button, .pending-row button { min-height: 44px; }.calendar-legend { font-size: .75rem; } }

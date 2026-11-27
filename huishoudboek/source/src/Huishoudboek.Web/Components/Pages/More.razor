@@ -1,0 +1,35 @@
+@page "/meer"
+@attribute [Authorize]
+@inherits PageBase
+@inject WebHostSettings HostSettings
+<PageTitle>@L["NavigationMore"] · Huishoudboek</PageTitle>
+<h1>@L["NavigationMore"]</h1>
+<div class="feature-index">
+    <section class="card">
+        <h2>@L["MoreAccounts"]</h2>
+        <ul>
+            <li><a href="rekeningen">@L["AccountsOwners"]</a></li>
+            <li><a href="beleggingen">@L["InvestmentsTitle"]</a></li>
+            <li><a href="hypotheek">@L["Mortgage"]</a></li>
+        </ul>
+    </section>
+    <section class="card">
+        <h2>@L["MoreHousehold"]</h2>
+        <ul>
+            <li><a href="aankopen">@L["PurchasesTitle"]</a></li>
+            <li><a href="maaltijdcheques">@L["MealVouchersTitle"]</a></li>
+            <li><a href="abonnementen">@L["ContractsTitle"]</a></li>
+            <li><a href="energie">@L["EnergyTitle"]</a></li>
+        </ul>
+    </section>
+    <section class="card">
+        <h2>@L["NavigationAdministration"]</h2>
+        <ul>
+            <li><a href="instellen">@L["SetupTitle"]</a></li>
+            <li><a href="beheer">@L["MoreRecords"]</a></li>
+            <li><a href="beheer#importgeschiedenis">@L["ImportHistory"]</a></li>
+            @if (HostSettings.HomeAssistant || HostSettings.LocalPreview)
+            { <li><a href="beheer#dashboardkaarten">@L["CardSetupTitle"]</a></li> }
+        </ul>
+    </section>
+</div>

@@ -77,6 +77,38 @@ public sealed record EnergyIndexValue
     public string Source { get; init; } = "";
 }
 
+public sealed record EnergyMonthlyCharge
+{
+    public Guid Id { get; init; } = Guid.NewGuid();
+    public string Ean { get; init; } = "";
+    public DateOnly Month { get; init; }
+    public decimal Amount { get; init; } // EUR including applicable VAT
+}
+
+public sealed record EnergySurchargeRates
+{
+    public Guid Id { get; init; } = Guid.NewGuid();
+    public string Ean { get; init; } = "";
+    public DateOnly From { get; set; }
+    public DateOnly Through { get; set; }
+    public decimal? SupplierPerKwh { get; set; }
+    public decimal? NetworkPerKwh { get; set; }
+    public decimal? TaxPerKwh { get; set; }
+    public decimal? CapacityPerKwMonth { get; set; }
+    public decimal? DataPerYear { get; set; }
+    public string Source { get; set; } = "";
+}
+
+public sealed record EnergyMonthlyPeak
+{
+    public Guid Id { get; init; } = Guid.NewGuid();
+    public string Ean { get; init; } = "";
+    public string Meter { get; init; } = "";
+    public DateOnly Month { get; init; }
+    public decimal Kw { get; init; }
+    public string Status { get; init; } = "";
+}
+
 public sealed record EnergyReading
 {
     public Guid Id { get; init; } = Guid.NewGuid();
@@ -108,7 +140,11 @@ public sealed record EnergyMarketPrice
     public DateTime FetchedUtc { get; init; }
 }
 
-public sealed record EnergySettings(List<EnergyContract> Contracts, List<EnergyTariff> Tariffs, List<EnergyIndexValue> Indexes);
+public sealed record EnergySettings(List<EnergyContract> Contracts, List<EnergyTariff> Tariffs, List<EnergyIndexValue> Indexes)
+{
+    public List<EnergyMonthlyCharge> MonthlyCharges { get; init; } = [];
+    public List<EnergySurchargeRates> SurchargeRates { get; init; } = [];
+}
 public sealed record EnergyTariffDocument(Guid TariffId, string Name, byte[] Content);
 
 public static class BelgianEnergyTime

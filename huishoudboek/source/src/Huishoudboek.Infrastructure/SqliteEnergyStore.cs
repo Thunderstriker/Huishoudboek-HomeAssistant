@@ -25,6 +25,19 @@ public sealed partial class SqliteHouseholdStore
         CreateEnergyReadingIndex(c, tx);
     }
 
+    private static void CreateEnergyMonthlyCharges(SqliteConnection c, SqliteTransaction tx)
+    {
+        CreateTable(c, tx, typeof(EnergyMonthlyCharge), requireValues: true);
+        Execute(c, tx, "CREATE UNIQUE INDEX ix_energy_monthly_charge ON EnergyMonthlyCharge(Ean, Month)");
+    }
+
+    private static void CreateEnergySurchargesAndPeaks(SqliteConnection c, SqliteTransaction tx)
+    {
+        CreateTable(c, tx, typeof(EnergySurchargeRates), requireValues: true);
+        CreateTable(c, tx, typeof(EnergyMonthlyPeak), requireValues: true);
+        Execute(c, tx, "CREATE UNIQUE INDEX ix_energy_monthly_peak ON EnergyMonthlyPeak(Ean, Month)");
+    }
+
     public EnergySettings ReadEnergySettings()
     {
         using var c = Open(_path, true);
@@ -34,8 +47,12 @@ public sealed partial class SqliteHouseholdStore
         return result;
     }
 
-    private static EnergySettings ReadEnergySettings(SqliteConnection c, SqliteTransaction tx) => new(
-        Read<EnergyContract>(c, tx), Read<EnergyTariff>(c, tx), Read<EnergyIndexValue>(c, tx));
+    private static EnergySettings ReadEnergySettings(SqliteConnection c, SqliteTransaction tx, int version = SchemaVersion) => new(
+        Read<EnergyContract>(c, tx), Read<EnergyTariff>(c, tx), Read<EnergyIndexValue>(c, tx))
+    {
+        MonthlyCharges = version >= 23 ? Read<EnergyMonthlyCharge>(c, tx) : [],
+        SurchargeRates = version >= 24 ? Read<EnergySurchargeRates>(c, tx) : []
+    };
 
     public void SaveEnergySettings(EnergySettings settings, EnergyTariffDocument? newDocument = null)
     {
@@ -43,7 +60,8 @@ public sealed partial class SqliteHouseholdStore
         using var c = Open(_path);
         using var tx = c.BeginTransaction();
         CheckEnergyLinks(c, tx, settings);
-        Write(c, tx, settings.Contracts); Write(c, tx, settings.Tariffs); Write(c, tx, settings.Indexes);
+        Write(c, tx, settings.Contracts); Write(c, tx, settings.Tariffs); Write(c, tx, settings.Indexes); Write(c, tx, settings.MonthlyCharges);
+        Write(c, tx, settings.SurchargeRates);
         Execute(c, tx, "DELETE FROM energy_tariff_documents WHERE tariff_id NOT IN (SELECT Id FROM EnergyTariff WHERE DocumentName <> '')");
         if (newDocument != null) WriteEnergyDocument(c, tx, newDocument);
         CheckEnergyDocuments(c, tx, settings);
@@ -73,48 +91,57 @@ public sealed partial class SqliteHouseholdStore
         ReadRows<EnergyReading>(c, tx, filterAndOrder: "WHERE Ean=$ean AND StartUtc >= $from AND StartUtc < $until ORDER BY StartUtc, Resolution, Direction, Register",
             parameters: [("$ean", ean), ("$from", Iso(from)), ("$until", Iso(until))]);
 
-    public List<string> ReadQuarterHourConnections()
+    public List<EnergyMonthlyPeak> ReadEnergyPeaks(string ean, DateOnly from, DateOnly until)
+    {
+        using var c = Open(_path, true);
+        using var tx = c.BeginTransaction(deferred: true);
+        return EnergyPeaks(c, tx, ean, from, until).ToList();
+    }
+
+    private static IEnumerable<EnergyMonthlyPeak> EnergyPeaks(SqliteConnection c, SqliteTransaction tx, string ean, DateOnly from, DateOnly until) =>
+        ReadRows<EnergyMonthlyPeak>(c, tx, filterAndOrder: "WHERE Ean=$ean AND Month >= $from AND Month < $until ORDER BY Month",
+            parameters: [("$ean", ean), ("$from", Iso(from)), ("$until", Iso(until))]);
+
+    public List<string> ReadEnergyReadingConnections()
     {
         using var c = Open(_path, true);
         using var command = c.CreateCommand();
-        command.CommandText = "SELECT DISTINCT Ean FROM EnergyReading WHERE Resolution=$resolution ORDER BY Ean";
-        command.Parameters.AddWithValue("$resolution", (int)EnergyReadingResolution.QuarterHour);
+        command.CommandText = "SELECT Ean FROM EnergyReading UNION SELECT Ean FROM EnergyMonthlyPeak ORDER BY Ean";
         using var reader = command.ExecuteReader();
         var result = new List<string>();
         while (reader.Read()) result.Add(reader.GetString(0));
         return result;
     }
 
-    public int CountQuarterHourReadings(string ean, DateOnly from, DateOnly through)
+    public int CountEnergyReadings(string ean)
     {
         using var c = Open(_path, true);
-        using var command = QuarterHourRangeCommand(c, null, "SELECT count(*) FROM EnergyReading", ean, from, through);
-        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+        using var tx = c.BeginTransaction(deferred: true);
+        using var readings = ReadingConnectionCommand(c, tx, "SELECT count(*) FROM EnergyReading", ean);
+        using var peaks = ReadingConnectionCommand(c, tx, "SELECT count(*) FROM EnergyMonthlyPeak", ean);
+        return Convert.ToInt32(readings.ExecuteScalar(), CultureInfo.InvariantCulture) + Convert.ToInt32(peaks.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
-    public int ClearQuarterHourReadings(string ean, DateOnly from, DateOnly through, int expectedCount)
+    public int ClearEnergyReadings(string ean, int expectedCount)
     {
-        if (expectedCount <= 0) throw new InvalidOperationException("Controleer eerst welke kwartiermetingen worden verwijderd.");
+        if (expectedCount <= 0) throw new InvalidOperationException("Controleer eerst welke metingen worden verwijderd.");
         using var c = Open(_path);
         using var tx = c.BeginTransaction();
-        using var command = QuarterHourRangeCommand(c, tx, "DELETE FROM EnergyReading", ean, from, through);
-        var count = command.ExecuteNonQuery();
-        if (count != expectedCount) throw new InvalidOperationException("De kwartiermetingen zijn intussen gewijzigd. Controleer de selectie opnieuw.");
+        using var command = ReadingConnectionCommand(c, tx, "DELETE FROM EnergyReading", ean);
+        using var peaks = ReadingConnectionCommand(c, tx, "DELETE FROM EnergyMonthlyPeak", ean);
+        var count = command.ExecuteNonQuery() + peaks.ExecuteNonQuery();
+        if (count != expectedCount) throw new InvalidOperationException("De metingen zijn intussen gewijzigd. Controleer de selectie opnieuw.");
         tx.Commit();
         return count;
     }
 
-    private static SqliteCommand QuarterHourRangeCommand(SqliteConnection c, SqliteTransaction? tx, string operation, string ean, DateOnly from, DateOnly through)
+    private static SqliteCommand ReadingConnectionCommand(SqliteConnection c, SqliteTransaction? tx, string operation, string ean)
     {
-        if (!EnergyTerms.ValidEan(ean) || !BelgianEnergyTime.Supported(from) || !BelgianEnergyTime.Supported(through) || through < from)
-            throw new InvalidDataException("Kies een geldige aansluiting en een periode voor de kwartiermetingen.");
+        if (!EnergyTerms.ValidEan(ean)) throw new InvalidDataException("Kies een geldig EAN voor de metingen.");
         var command = c.CreateCommand();
         command.Transaction = tx;
-        command.CommandText = operation + " WHERE Ean=$ean AND StartUtc >= $from AND StartUtc < $until AND Resolution=$resolution";
+        command.CommandText = operation + " WHERE Ean=$ean";
         command.Parameters.AddWithValue("$ean", ean);
-        command.Parameters.AddWithValue("$from", Iso(BelgianEnergyTime.MidnightUtc(from)));
-        command.Parameters.AddWithValue("$until", Iso(BelgianEnergyTime.MidnightUtc(through.AddDays(1))));
-        command.Parameters.AddWithValue("$resolution", (int)EnergyReadingResolution.QuarterHour);
         return command;
     }
 
@@ -127,17 +154,20 @@ public sealed partial class SqliteHouseholdStore
 
     private static EnergyImportPreview CompareEnergyImport(SqliteConnection c, SqliteTransaction tx, EnergyCsvFile file, string revision)
     {
-        if (file.Readings.Count > ImportService.MaximumRows || file.Readings.Any(r => !EnergyTerms.ValidReading(r)))
+        if ((long)file.Readings.Count + file.Peaks.Count > ImportService.MaximumRows || file.Readings.Any(r => !EnergyTerms.ValidReading(r)) ||
+            file.Peaks.Any(p => !EnergyTerms.ValidMonthlyPeak(p)) || file.Peaks.Select(p => (p.Ean, p.Month)).Distinct().Count() != file.Peaks.Count)
             throw new InvalidDataException("De import bevat ongeldige meetgegevens.");
         var groups = file.Readings.GroupBy(r => (r.Ean, r.StartUtc.Year, r.StartUtc.Month)).ToList();
-        if (groups.Select(g => g.Key.Ean).Distinct().Count() > 25 || file.Readings.Select(r => (r.Ean, r.Meter)).Distinct().Count() > 50)
+        if (groups.Select(g => g.Key.Ean).Union(file.Peaks.Select(p => p.Ean)).Count() > 25 ||
+            file.Readings.Select(r => (r.Ean, r.Meter)).Union(file.Peaks.Select(p => (p.Ean, p.Meter))).Count() > 50)
             throw new InvalidDataException("Importeer maximaal 25 aansluitingen en 50 meters per meterbestand.");
         var existing = groups.SelectMany(g =>
         {
             var dates = g.Select(r => r.StartUtc).ToHashSet();
             return EnergyReadings(c, tx, g.Key.Ean, dates.Min(), dates.Max().AddMinutes(15)).Where(r => dates.Contains(r.StartUtc));
         });
-        return EnergyCsv.Compare(file, existing, revision);
+        var peaks = file.Peaks.GroupBy(p => p.Ean).SelectMany(g => EnergyPeaks(c, tx, g.Key, g.Min(p => p.Month), g.Max(p => p.Month).AddMonths(1)));
+        return EnergyCsv.Compare(file, existing, revision, peaks);
     }
 
     public bool CommitEnergyImport(EnergyCsvFile file, bool replace)
@@ -146,7 +176,7 @@ public sealed partial class SqliteHouseholdStore
         using var tx = c.BeginTransaction();
         var preview = CompareEnergyImport(c, tx, file, "");
         if (preview.Conflicts > 0 && !replace) throw new InvalidOperationException("Bevestig de getoonde vervangingen om deze batch op te slaan.");
-        if (preview.Changes.Count == 0) return false;
+        if (preview.ChangeCount == 0) return false;
         using var command = c.CreateCommand();
         command.Transaction = tx;
         command.CommandText = "DELETE FROM EnergyReading WHERE Ean=$ean AND StartUtc=$start AND Resolution=$resolution";
@@ -161,6 +191,16 @@ public sealed partial class SqliteHouseholdStore
             command.ExecuteNonQuery();
         }
         Insert(c, tx, preview.Changes.SelectMany(change => change.After));
+        using var replacePeak = c.CreateCommand();
+        replacePeak.Transaction = tx;
+        replacePeak.CommandText = "DELETE FROM EnergyMonthlyPeak WHERE Id=$id";
+        var peakId = replacePeak.Parameters.AddWithValue("$id", "");
+        foreach (var change in preview.PeakChanges.Where(change => change.Before != null))
+        {
+            peakId.Value = change.Before!.Id.ToString();
+            replacePeak.ExecuteNonQuery();
+        }
+        Insert(c, tx, preview.PeakChanges.Select(change => change.Before == null ? change.After : change.After with { Id = change.Before.Id }));
         tx.Commit();
         return true;
     }
@@ -238,7 +278,7 @@ public sealed partial class SqliteHouseholdStore
     private static void ValidateEnergyBackup(SqliteConnection c, HouseholdData household, int version)
     {
         using var tx = c.BeginTransaction(deferred: true);
-        var settings = ReadEnergySettings(c, tx);
+        var settings = ReadEnergySettings(c, tx, version);
         EnergyTerms.Validate(settings);
         var subscriptionIds = household.Contracts.Select(c => c.Id).ToHashSet();
         if (settings.Contracts.Any(c => c.SubscriptionId is { } id && !subscriptionIds.Contains(id))) throw new InvalidDataException("Het gekoppelde abonnement ontbreekt in de back-up.");
@@ -256,6 +296,16 @@ public sealed partial class SqliteHouseholdStore
             if (!EnergyTerms.ValidPrice(p) || (priorPrice is { } q && q.Series == p.Series && q.EndUtc > p.StartUtc)) throw new InvalidDataException("Ongeldige of overlappende marktprijzen in de back-up.");
             priorPrice = p;
         }
+        if (version >= 24)
+        {
+            EnergyMonthlyPeak? previousPeak = null;
+            foreach (var peak in ReadRows<EnergyMonthlyPeak>(c, tx, filterAndOrder: "ORDER BY Ean, Month"))
+            {
+                if (!EnergyTerms.ValidMonthlyPeak(peak) || previousPeak is { } p && p.Ean == peak.Ean && p.Month == peak.Month)
+                    throw new InvalidDataException("Ongeldige of overlappende maandpieken in de back-up.");
+                previousPeak = peak;
+            }
+        }
     }
 
     private static void RestoreEnergy(SqliteConnection c, SqliteTransaction tx, SqliteConnection source)
@@ -264,12 +314,15 @@ public sealed partial class SqliteHouseholdStore
         var version = Version(source);
         if (version < 20)
         {
-            foreach (var table in new[] { "EnergyContract", "EnergyTariff", "EnergyIndexValue", "EnergyReading", "EnergyMarketPrice" }) Execute(c, tx, $"DELETE FROM [{table}]");
+            foreach (var table in new[] { "EnergyContract", "EnergyTariff", "EnergyIndexValue", "EnergyReading", "EnergyMarketPrice", "EnergyMonthlyCharge", "EnergySurchargeRates", "EnergyMonthlyPeak" })
+                Execute(c, tx, $"DELETE FROM [{table}]");
             return;
         }
         using var sourceTx = source.BeginTransaction(deferred: true);
-        var settings = ReadEnergySettings(source, sourceTx);
-        Write(c, tx, settings.Contracts); Write(c, tx, settings.Tariffs); Write(c, tx, settings.Indexes);
+        var settings = ReadEnergySettings(source, sourceTx, version);
+        Write(c, tx, settings.Contracts); Write(c, tx, settings.Tariffs); Write(c, tx, settings.Indexes); Write(c, tx, settings.MonthlyCharges);
+        Write(c, tx, settings.SurchargeRates);
+        Write(c, tx, version >= 24 ? ReadRows<EnergyMonthlyPeak>(source, sourceTx) : []);
         Write(c, tx, ReadRows<EnergyReading>(source, sourceTx, version));
         Write(c, tx, ReadRows<EnergyMarketPrice>(source, sourceTx));
         using var command = source.CreateCommand();
@@ -281,4 +334,5 @@ public sealed partial class SqliteHouseholdStore
     }
 
     private static string Iso(DateTime time) => time.ToString("O", CultureInfo.InvariantCulture);
+    private static string Iso(DateOnly day) => day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 }

@@ -23,13 +23,12 @@ beleggingen bewaren ook hun handelsvaluta. Optionele koersaanvragen vereisen int
   en percentages, plus werkelijke bedragen tegenover de maandprognose. De maandcijfers
   staan direct bovenaan, zonder startchecklist of bestedingsplanner erboven.
   Budgetten en overschrijdingen staan in de bijbehorende tabel.
-- **Instellen en wekelijkse controle:** aparte pagina's; Instellen staat onder Beheer & import.
-  De wekelijkse controle is per browser te verbergen en daar ook weer te herstellen.
+- **Instellen en wekelijkse controle:** Instellen staat onder **Meer**. Open de
+  wekelijkse controle via **Te controleren** op het dashboard; de link is per browser te verbergen.
 - **Financiële vooruitblik:** maanduitleg en bestedingsruimte tot het volgende inkomen,
   komende betalingen over 7/30 dagen en dagelijkse saldi per betaalrekening. Met
   minimale cashbuffer, aankoopcontrole, laagste saldo/datum en waarschuwingen bij oude imports.
-- **Financiële kalender:** eigen pagina onder **Overzichten**, ook bereikbaar vanuit
-  Financiële vooruitblik. De maandkalender combineert vaste posten en inkomsten met
+- **Financiële kalender:** eigen pagina bovenaan **Overzichten**. De maandkalender combineert vaste posten en inkomsten met
   geaccepteerde weekpatronen tot 90 dagen vooruit. De app leert aankoopdagen uit bankteksten en
   gecontroleerde bonnen, ook wanneer weekendinkopen pas maandag zijn geboekt.
   Controleer en accepteer voorstellen bij **Geleerde bestedingspatronen**;
@@ -58,7 +57,8 @@ beleggingen bewaren ook hun handelsvaluta. Optionele koersaanvragen vereisen int
 - Negatieve bedragen staan onder de nullijn; exacte bedragen blijven beschikbaar
   in tabellen of samenvattingen. De grafieken passen zich aan de schermbreedte aan.
   Chart.js is lokaal meegeleverd onder de MIT-licentie.
-- Excel/CSV-import met automatische Argenta-herkenning, gedeelde transactieherkenning
+- Bankafschriften via **Transacties → Bankafschrift importeren**, met directe beoordeling
+  van herkende Excel/CSV-bestanden en gedeelde transactieherkenning
   met leesbare namen, optionele categorieën en vaste-postplanning,
   CSV-export en volledige databaseback-ups met herstel.
 - Elke bankimport werkt alleen de gekozen rekening bij, met de bedragen uit het
@@ -95,7 +95,7 @@ Controleer de tijdzone, start de app en open de webinterface via Home Assistant.
 Een apart appwachtwoord of API-token is niet nodig.
 
 Begin met een lege administratie of importeer uw bestaande Huishoudboek-database
-(`.db`) via **Beheer & import**. Importeren vervangt de volledige administratie.
+(`.db`) via **Meer → Back-up, herstel & export**. Importeren vervangt de volledige administratie.
 De actieve database blijft daarna in de permanente opslag van deze app.
 Er is geen synchronisatie met een Windows-kopie.
 

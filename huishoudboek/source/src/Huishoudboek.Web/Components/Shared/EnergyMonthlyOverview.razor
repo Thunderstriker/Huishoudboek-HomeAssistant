@@ -1,0 +1,45 @@
+<section class="card" aria-labelledby="energy-monthly-heading">
+    <h2 id="energy-monthly-heading">@L["EnergyYearOverview", Month.Year]</h2>
+    <p class="muted">@L["EnergyYearOverviewHelp"] <a href="#energy-month-details">@L["EnergyGoToMonthDetails"]</a></p>
+    <div class="energy-month-table" tabindex="0" role="region" aria-labelledby="energy-monthly-heading">
+        <table>
+            <thead><tr>
+                <th scope="col">@L["Month"]</th>
+                <th scope="col">@L["EnergyPartialSubtotal"]</th>
+                <th scope="col">@L["EnergyConsumption"]</th>
+                <th scope="col">@L["EnergyInjection"]</th>
+                <th scope="col">@L["EnergySupplierFeeShort"]</th>
+                <th scope="col">@L["EnergyUsageSurcharges"]</th>
+                <th scope="col">@L["EnergyFixedNetworkCharges"]</th>
+                <th scope="col">@L["EnergyConsumptionDays"]</th>
+            </tr></thead>
+            <tbody>
+                @foreach (var entry in Months)
+                {
+                    var active = entry.Month == Month;
+                    var costs = entry.Costs;
+                    <tr @key="entry.Month" class="@(active ? "selected-month" : null)">
+                        <th scope="row"><button type="button" class="@(active ? "primary" : null)" aria-current="@(active ? "true" : null)"
+                            disabled="@Busy" @onclick="() => OnSelect.InvokeAsync(entry.Month)">@entry.Month.ToString("MMMM", UiCulture.Culture)</button></th>
+                        <td><strong>@Euro(costs.PartialSubtotal)</strong></td>
+                        <td>@Euro(costs.Consumption.Amount)<small>@Kwh(costs.Consumption.Kwh)</small></td>
+                        <td>@Euro(costs.Injection.Amount)<small>@Kwh(costs.Injection.Kwh)</small></td>
+                        <td>@Euro(costs.AllocatedFee)</td>
+                        <td>@Euro(costs.UsageSurcharges.Total)</td>
+                        <td>@Euro(costs.FixedNetworkCharges)</td>
+                        <td>@costs.Days.Count(d => d.Consumption.Kwh.HasValue)/@costs.Days.Count</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<EnergyMonthReport> Months { get; set; } = [];
+    [Parameter, EditorRequired] public DateOnly Month { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<DateOnly> OnSelect { get; set; }
+    private static string Euro(decimal? amount) => amount.HasValue ? Money(amount.Value) : "—";
+    private static string? Kwh(decimal? amount) => amount is { } kwh ? $"{kwh.ToString("0.##", UiCulture.Culture)} kWh" : null;
+}

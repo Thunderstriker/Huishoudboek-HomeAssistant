@@ -1,0 +1,4 @@
+.energy-month-table { overflow-x: auto; }
+.energy-month-table td { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.energy-month-table small { display: block; }
+.energy-month-table .selected-month th { box-shadow: inset 3px 0 var(--accent); }

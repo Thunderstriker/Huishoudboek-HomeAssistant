@@ -233,6 +233,16 @@ public static class ImportService
         return result;
     }
 
+    public static bool HasRequiredMapping(IReadOnlyList<string> headers, ImportProfile profile) =>
+        !string.IsNullOrWhiteSpace(profile.DateColumn) && !string.IsNullOrWhiteSpace(profile.DescriptionColumn) &&
+        (!string.IsNullOrWhiteSpace(profile.AmountColumn) ||
+         !string.IsNullOrWhiteSpace(profile.DebitColumn) && !string.IsNullOrWhiteSpace(profile.CreditColumn)) &&
+        new[] { profile.DateColumn, profile.DescriptionColumn, profile.ExtraDescriptionColumn, profile.AmountColumn,
+            string.IsNullOrWhiteSpace(profile.AmountColumn) ? profile.DebitColumn : "",
+            string.IsNullOrWhiteSpace(profile.AmountColumn) ? profile.CreditColumn : "", profile.DirectionColumn, profile.CurrencyColumn,
+            profile.AccountReferenceColumn, profile.BalanceColumn, profile.FallbackDescriptionColumn }
+            .All(column => string.IsNullOrWhiteSpace(column) || headers.Contains(column));
+
     public static ImportProfile SuggestProfile(IReadOnlyList<string> headers)
     {
         if (BankImportProfiles.Detect(headers) is { } bank) return bank;

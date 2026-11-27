@@ -75,8 +75,11 @@
 </div>
 <EditDialogs Page="this" />
 @code {
+    [SupplyParameterFromQuery(Name = "inbox")] public bool OpenInbox { get; set; }
+    [SupplyParameterFromQuery(Name = "batch")] public Guid? RequestedBatch { get; set; }
     private string mode = "groups", search = "", ownDescription = "";
-    private Guid? accountId, batchId, groupCategory, assignCategory, lastReview, lastOwner;
+    private Guid? accountId, batchId, groupCategory, assignCategory, lastOwner;
+    private (bool Inbox, Guid? Batch) appliedQuery;
     private Guid? walkDraftId;
     private string? assignmentRevision;
     private bool includeTransfers;
@@ -108,7 +111,12 @@
         .Concat(CategoryHierarchy.Ordered(State.Data).Select(e => ((Guid?)e.Category.Id, e.Path, FilteredRows.Count(t => Categorization.HasCategory(State.Data, t, e.Category.Id)))));
     protected override void OnParametersSet()
     {
-        if (State.ReviewBatchId is { } review && review != lastReview) { batchId = review; lastReview = review; State.ReviewBatchId = null; includeTransfers = true; mode = "groups"; FilterChanged(); }
+        var query = (OpenInbox, RequestedBatch);
+        if (query == appliedQuery) return;
+        appliedQuery = query;
+        batchId = RequestedBatch;
+        includeTransfers = RequestedBatch != null;
+        SetMode(OpenInbox ? "inbox" : "groups");
     }
     protected override void OnStateChanged()
     {
@@ -124,7 +132,7 @@
     private void PrefillWalk() { if (Current is { } t) { walkDraftId = t.Id; assignmentRevision = State.Revision; ownDescription = t.UserDescription; } }
     private void Skip() { if (Current is { } t) skipped.Add(t.Id); ResetDraft(); PrefillWalk(); }
     private void LatestImport() { batchId = State.Data.ImportBatches.Where(b => !b.Undone).OrderByDescending(b => b.ImportedAt).FirstOrDefault()?.Id; FilterChanged(); }
-    private void ClearFilters() { accountId = null; batchId = null; search = ""; includeTransfers = false; State.ReviewBatchId = null; FilterChanged(); }
+    private void ClearFilters() { accountId = null; batchId = null; search = ""; includeTransfers = false; FilterChanged(); }
     private void Select(Transaction t, bool value)
     {
         if (value) selected.Add(t.Id); else selected.Remove(t.Id);

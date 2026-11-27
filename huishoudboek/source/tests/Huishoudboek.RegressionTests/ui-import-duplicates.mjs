@@ -20,13 +20,16 @@ function csv(rows) {
     return "Datum;Naam / Omschrijving;Mededelingen;Bedrag (EUR);Af Bij\n" +
         rows.map(([name, amount]) => `${date};${name};Test only;${amount};Af`).join("\n") + "\n";
 }
-async function preview(rows, english = false) {
+async function preview(rows) {
     await ready();
-    date ||= (await page.locator("#from").inputValue()).replaceAll("-", "");
-    account ||= await page.locator("#importAccount").inputValue();
+    const yesterday = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10);
+    date ||= yesterday.replaceAll("-", "");
+    account ||= await page.locator('#importAccount option:not([value=""])').first().getAttribute("value");
     await page.locator("#importAccount").selectOption(account);
     await page.locator("#importFile").setInputFiles({ name: prefix + ".csv", mimeType: "text/csv", buffer: Buffer.from(csv(rows)) });
-    await page.getByRole("button", { name: english ? "Continue to detection" : "Doorgaan naar herkenning", exact: true }).click();
+    await page.locator("#import-options summary").click();
+    await page.locator("#from").fill(yesterday);
+    await page.locator("#through").fill(yesterday);
     await page.locator("#preview").click();
     await page.waitForSelector("#previewPanel");
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
@@ -104,7 +107,7 @@ try {
     await page.setViewportSize({ width: 1440, height: 1000 });
     // Exercise the English import independently of the navigation's language controls.
     await context.addCookies([{ name: ".AspNetCore.Culture", value: "c=en-GB|uic=en-GB", url: base }]);
-    await preview([shop, shop, shop, other], true);
+    await preview([shop, shop, shop, other]);
     assert.match(await page.locator(".import-duplicate-summary").innerText(), /0 new · 4 already imported · 0 to review/);
     assert.equal(await page.getByRole("button", { name: "Select new rows only", exact: true }).count(), 1);
     assert.equal(await page.getByRole("link", { name: "View existing entry", exact: true }).count(), 4);

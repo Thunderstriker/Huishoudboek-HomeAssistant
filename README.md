@@ -14,8 +14,8 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   compacte mobiele navigatie en directe koppelingen naar bronboekingen. Transacties
   hebben categorie-, bedrag-, bankrichting- en periodefilters met banktotalen.
   Kies licht, donker of het systeemthema; categoriekleuren blijven gelijk tussen overzichten.
-- **Begeleide invoer:** bankimport in vier stappen met mobiele beoordeling en een
-  selectiesamenvatting. Gedeelde invoervensters tonen veldfouten en beschermen gewijzigde
+- **Begeleide invoer:** kies een rekening en bestand en beoordeel een herkend afschrift
+  direct, ook mobiel. Periode en kolommen blijven aanpasbaar. Invoervensters tonen veldfouten en beschermen gewijzigde
   invoer bij verlaten. Budgettempo is indicatief en vereist bevestigde afschriftdekking;
   saldoverloop over 7/30/90 dagen blijft een schatting naast de exacte prognosetabel.
 - **Dashboard als startpagina:** saldi van vandaag per rekening, maandcijfers,
@@ -26,12 +26,12 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
 - **Losse Home Assistant-dashboardkaarten (proefversie):** plaats het maandoverzicht,
   de uitgavenverdeling en de compacte financiële vrijheidskaart op een eigen dashboard.
   Via ingress, zonder extra poort of app-token; alleen voor vertrouwde beheerders.
-  Het kaartbestand is apart te installeren via **Beheer & import**. Zie de
+  Het kaartbestand is apart te installeren via **Meer → Home Assistant-dashboardkaarten**. Zie de
   [installatie-instructies](huishoudboek/DOCS.md#losse-home-assistant-dashboardkaarten-proefversie).
 - **Instellen en wekelijkse controle:** aparte pagina's met een checklist voor rekeningen, beginsaldi,
   imports, banksaldocontrole, categorisatie en budgetten/vaste posten. Daarna een compacte
-  review voor recente imports, uitzonderingen en betalingen over 7 dagen. Instellen staat
-  onder Beheer & import; de wekelijkse controle kunt u in deze browser verbergen en herstellen.
+  review voor recente imports, uitzonderingen en betalingen over 7 dagen. **Instellen** staat
+  onder **Meer**; **Te controleren** op het dashboard opent de wekelijkse controle.
 - **Licht mobiel gebruik:** snelle uitgave-/inkomsteninvoer en een telefoonvriendelijke
   transactielijst met uitklapbare bankgegevens en acties; desktop behoudt de tabel.
 - **Maandoverzicht:** inkomsten, lasten, netto opzijgezet en het bedrag dat overblijft,
@@ -43,7 +43,7 @@ Dit is een **Home Assistant-app/add-on**, geen HACS-integratie.
   bekende betalingen over 7/30 dagen en dagelijkse saldi per betaalrekening,
   met het laagste saldo en zijn datum. Stel een minimale cashbuffer in en controleer
   een aankoopbedrag. Verouderde imports en ontbrekende gegevens krijgen waarschuwingen.
-- **Financiële kalender:** eigen pagina onder **Overzichten**, met vaste posten,
+- **Financiële kalender:** eigen pagina bovenaan **Overzichten**, met vaste posten,
   inkomsten en lokaal geleerde weekpatronen tot 90 dagen vooruit, met kleur én tekst
   voor betaaldruk en mogelijke tekorten.
   Aankoopdatums uit bankteksten of gecontroleerde bonnen onderscheiden weekendinkopen
@@ -192,7 +192,7 @@ anders zowel de Windows-app als de financiële Windows-service voordat u een
 `.db` kopieert: een kopie van een actieve SQLite-database kan recente wijzigingen missen.
 Database-import vervangt de volledige administratie en voegt geen databases samen.
 
-Maak regelmatig een databaseback-up via **Beheer & import** en bewaar een kopie
+Maak regelmatig een databaseback-up via **Meer → Back-up, herstel & export** en bewaar een kopie
 buiten Home Assistant. CSV-export is geen volledige back-up. Databasebestanden
 en back-ups worden niet door de app versleuteld; publiceer ze nooit in deze repository.
 
@@ -257,7 +257,7 @@ aanmeldscherm. Alleen de expliciete `--preview`-startoptie activeert dit; de nor
 websiteaanmelding en Home Assistant-ingress blijven ongewijzigd. Verzoeken vanaf
 andere computers of met een niet-lokale Host-header worden geweigerd. Gebruik
 geen reverse proxy of tunnel voor deze niet-beveiligde demo. Eventueel kunt u via
-**Beheer & import** een **back-upkopie** uit Home Assistant importeren. Dat vervangt alleen
+**Meer → Back-up, herstel & export** een **back-upkopie** uit Home Assistant importeren. Dat vervangt alleen
 de previewadministratie; er is geen synchronisatie met Home Assistant. Behandel
 ook deze lokale kopie en eventuele back-ups als gevoelige financiële gegevens:
 iedereen op uw computer die de preview kan openen heeft volledige toegang.

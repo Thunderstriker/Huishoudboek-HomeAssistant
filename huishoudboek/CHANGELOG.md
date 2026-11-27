@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.4.3
+
+- Eenvoudigere navigatie op desktop en mobiel: banktaken bij Transacties, komende
+  betalingen bij Vooruitblik en minder gebruikte onderdelen onder Meer.
+- Financiële kalender staat als eerste onder Overzichten. De samenvatting, legenda
+  en maandkalender staan bovenaan; waarschuwingen en instellingen zijn eronder uitklapbaar.
+- **Te controleren** op het dashboard opent de wekelijkse controle met rechtstreekse
+  links naar de juiste rekening, saldocontrole en boekingen zonder categorie.
+- Herkende bankafschriften direct beoordelen na rekening- en bestandskeuze. Periode
+  en kolommen zijn aanpasbaar; dubbels, afschriftdekking en saldocontrole blijven bewaakt.
+- Geregistreerd saldo, maandresultaat na sparen en geschatte bestedingsruimte zijn
+  duidelijker onderscheiden, met waarschuwingen bij onvolledige prognosegegevens
+  en beter leesbare betaaldatums op het dashboard.
+- Bevat ook de elektriciteitsverbeteringen uit de sectie 0.4.2.1.
+- App- en containerversie bijgewerkt naar 0.4.3.
+
+## 0.4.2.1
+
+- Alle geïmporteerde kwartiermetingen en dagtotalen wissen voor één gekozen EAN,
+  met controle vóór bevestiging. Andere aansluitingen en contractgegevens blijven bewaard.
+- Fluviuskosten en overheidsheffingen per EAN en maand invoeren, los van de vaste
+  leveranciersvergoeding. Het bedrag telt één keer mee in het maandsubtotaal;
+  schema 23 bewaart de invoer in volledige back-ups.
+- Elektriciteitskosten per maand vergelijken in een jaartabel met afname, injectie,
+  vaste kosten en meetdekking. Open een maand voor de uitsplitsing per dag.
+- De pdf-import herkent ook Luminus BasicFix-tariefkaarten met de tabelkoppen
+  Dag/Nacht en zonder regiokop. Netkosten en voorbeeldprijzen worden niet overgenomen.
+- Fluvius-maandpieken importeren uit de CSV Piekvermogen. Het geschatte
+  capaciteitstarief gebruikt de beschikbare pieken, met zichtbare dekking en voorlopige waarden.
+- Groene stroom en WKK, variabele netkosten, heffingen en databeheer per tariefperiode
+  berekenen, met een invulvoorstel voor Luminus en Fluvius Antwerpen in 2026.
+  Een handmatig maandbedrag voorkomt dubbeltelling; schema 24 bewaart toeslagen en pieken.
+
 ## 0.4.2
 
 - Fluvius-dagtotalen importeren naast kwartiermetingen, met behoud van dag-/nachtregisters

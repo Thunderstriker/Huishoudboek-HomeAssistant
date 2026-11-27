@@ -4,14 +4,19 @@
 <PageTitle>@L["FinancialOutlook"] · Huishoudboek</PageTitle>
 @{ var overview = DetailedReporting.Dashboard(State.Data, State.Year, State.Month, State.Today, State.OwnerId); var report = overview.Report; }
 <h1>@L["FinancialOutlook"]</h1>
+<nav class="actions outlook-links" aria-label="@L["FinancialOutlook"]">
+    <a class="button" href="vooruitblik?betalingen=true#komende-betalingen">@L["OutlookUpcoming"]</a>
+    <a class="button" href="vooruitblik#aankoopcontrole">@L["OutlookPurchase"]</a>
+</nav>
 <section class="notice @(report.NeedsAttention ? "warning" : "success")" id="maandstatus">
     <h2>@L[StatusKey(report)] · @(new DateTime(State.Year, State.Month, 1).ToString("MMMM yyyy", UiCulture.Culture))</h2>
     <p>@Explanation(report)</p>
     <small>@L["ActualBalancesNote", overview.AsOf.ToString("dd-MM-yyyy")]</small>
 </section>
-<SafeSpending />
+<SafeSpending ShowUpcoming="ShowUpcoming" />
 
 @code {
+    [SupplyParameterFromQuery(Name = "betalingen")] public bool ShowUpcoming { get; set; }
     private string StatusKey(MonthlyReport report) => State.Data.Accounts.Count == 0 ? "WelcomeAddAccounts" :
         report.BeforeSavings < 0 ? "SpentMoreThanReceived" : report.Categories.Any(c => c.IsOverBudget) ? "CategoryOverBudget" :
         report.SavingsExceedSurplus ? "SavingsAboveSurplus" :

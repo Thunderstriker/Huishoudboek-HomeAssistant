@@ -1,29 +1,43 @@
 @inherits PageBase
 @{
-    var accounts = State.Data.Accounts.Where(a => State.Scope.Contains(a.Id)).ToList();
-    var stale = accounts.Count(a => FirstWeek.ImportedThrough(State.Data, a.Id, State.Today) is not { } date || date < State.Today.AddDays(-7));
-    var uncheckedBalances = accounts.Count(a => !FirstWeek.BalanceChecked(State.Data, a, State.Today));
+    var accounts = State.Data.Accounts.Where(a => State.Scope.Contains(a.Id)).OrderBy(a => a.Name).ToList();
+    var stale = accounts.Select(a => (Account: a, Through: FirstWeek.ImportedThrough(State.Data, a.Id, State.Today)))
+        .Where(a => a.Through is not { } date || date < State.Today.AddDays(-7)).ToList();
+    var uncheckedBalances = accounts.Where(a => !FirstWeek.BalanceChecked(State.Data, a, State.Today)).ToList();
     var uncategorized = FirstWeek.UncategorizedCount(State.Data, State.Today, State.Scope);
     var recurring = RecurringSchedule.Candidates(State.Data, State.Today).Select(c => c.Transaction).Where(t => State.Scope.Contains(t.AccountId)).DistinctBy(t => t.Id).Count();
     var bills = FirstWeek.Upcoming(State.Data, State.Today, State.Scope);
 }
 @if (accounts.Count > 0)
 {
-    <section class="card" id="weekly-review"><details open>
-        <summary><strong>@L["WeeklyReviewTitle"]</strong> · @L["WeeklyReviewSummary"]</summary>
-        <ol class="workflow-list">
-            <li><a href="importeren">@L["WeeklyImport"]</a><span class="badge">@L[stale == 0 ? "WeeklyImportsCurrent" : "WeeklyImportsStale", stale]</span></li>
-            <li><strong>@L["WeeklyExceptions"]</strong><div class="actions">
-                <a href="categoriseren">@L["WeeklyUncategorized", uncategorized]</a>
-                <a href="vaste-posten">@L["WeeklyRecurring", recurring]</a>
-                <a href="rekeningen#balance-checks">@L["WeeklyBalances", uncheckedBalances]</a>
-            </div></li>
-            <li><a href="vaste-posten">@L["WeeklyBills"]</a><span class="badge">@bills.Count</span>
-                @if (bills.Count == 0) { <p class="muted">@L[State.Data.RecurringPayments.Any(r => State.Scope.Contains(r.AccountId) && r.Amount < 0) ? "WeeklyNoBills" : "WeeklyNoPlan"]</p> }
-                @foreach (var bill in bills)
-                { <div class="weekly-bill"><span>@bill.DueDate.ToString("dd-MM-yyyy") · @bill.Payment.Name<small> · @State.AccountName(bill.Payment.AccountId)</small></span><strong>@Money(-bill.Payment.Amount)</strong></div> }
-            </li>
-        </ol>
-        <p class="muted">@L["WeeklyCoverageNote"]</p>
-    </details></section>
+    <div class="feature-index" id="weekly-review">
+        <section class="card">
+            <h2>@L["ImportBankStatement"]</h2>
+            <p>@L[stale.Count == 0 ? "WeeklyImportsCurrent" : "WeeklyImportsStale", stale.Count]</p>
+            <ul>@foreach (var item in stale)
+                { <li><a href="@($"importeren?account={item.Account.Id:D}")">@item.Account.Name</a> <small>@L["DashboardImportedThrough", item.Through?.ToString("dd-MM-yyyy") ?? L["Unknown"].Value]</small></li> }
+            </ul>
+            <a href="importeren">@L["WeeklyImport"] →</a>
+        </section>
+        <section class="card">
+            <h2>@L["WeeklyExceptions"]</h2>
+            <ul>
+                <li><a href="categoriseren?inbox=true">@L["WeeklyUncategorized", uncategorized]</a></li>
+                <li><a href="vaste-posten#koppelen">@L["WeeklyRecurring", recurring]</a></li>
+            </ul>
+            <h3>@L["WeeklyBalances", uncheckedBalances.Count]</h3>
+            <ul>@foreach (var account in uncheckedBalances)
+                { <li><a href="@($"rekeningen#balance-checks-{account.Id:D}")">@account.Name</a></li> }
+            </ul>
+        </section>
+        <section class="card">
+            <h2><a href="vooruitblik?betalingen=true#komende-betalingen">@L["OutlookUpcoming"]</a></h2>
+            <p>@L["WeeklyBills"] · @bills.Count</p>
+            @if (bills.Count == 0) { <p class="muted">@L[State.Data.RecurringPayments.Any(r => State.Scope.Contains(r.AccountId) && r.Amount < 0) ? "WeeklyNoBills" : "WeeklyNoPlan"]</p> }
+            @foreach (var bill in bills)
+            { <div class="weekly-bill"><span>@bill.DueDate.ToString("dd-MM-yyyy") · @bill.Payment.Name<small> · @State.AccountName(bill.Payment.AccountId)</small></span><strong>@Money(-bill.Payment.Amount)</strong></div> }
+        </section>
+    </div>
+    <p class="muted">@L["WeeklyCoverageNote"]</p>
 }
+else { <p>@L["DashboardNoAccounts"] <a href="rekeningen">@L["Accounts"] →</a></p> }

@@ -1,5 +1,5 @@
 <section class="surface upcoming-card" aria-labelledby="dashboard-upcoming-heading">
-    <div class="panel-heading"><div class="panel-title"><span class="panel-icon"><DashboardIcon Name="calendar" /></span><h2 id="dashboard-upcoming-heading">@L["DashboardComingUp"]</h2></div><a class="text-link" href="vooruitblik">@L["FinancialOutlook"] <span aria-hidden="true">↗</span></a></div>
+    <div class="panel-heading"><div class="panel-title"><span class="panel-icon"><DashboardIcon Name="calendar" /></span><h2 id="dashboard-upcoming-heading">@L["DashboardComingUp"]</h2></div><a class="text-link" href="vooruitblik?betalingen=true#komende-betalingen">@L["OutlookUpcoming"] <span aria-hidden="true">↗</span></a></div>
     @if (Overview.CashFlow.Accounts.Count == 0)
     { <p class="empty-note">@L["CardNoCurrentAccounts"]</p> }
     else
@@ -19,7 +19,7 @@
                     </li>
                 }
             </ul>
-            @if (Overview.Upcoming.Count > 3) { <a class="text-link more-payments" href="vooruitblik">@L["DashboardMorePayments", Overview.Upcoming.Count - 3] →</a> }
+            @if (Overview.Upcoming.Count > 3) { <a class="text-link more-payments" href="vooruitblik?betalingen=true#komende-betalingen">@L["DashboardMorePayments", Overview.Upcoming.Count - 3] →</a> }
         }
         <div class="next-income"><h3><DashboardIcon Name="arrow-down" />@L["NextIncome"]</h3>
             @foreach (var account in Overview.CashFlow.Accounts)

@@ -23,6 +23,7 @@ internal static class UxTests
             Equal(ToolbarPeriod.Year, UiNavigation.Period("/jaar"));
             Equal(ToolbarPeriod.Independent, UiNavigation.Period("kalender"));
             Equal(ToolbarPeriod.Independent, UiNavigation.Period("categorietrends"));
+            Equal(ToolbarPeriod.None, UiNavigation.Period("categoriseren?inbox=true"));
             Equal(ToolbarPeriod.Today, UiNavigation.Period("rekeningen"));
             Equal(ToolbarPeriod.History, UiNavigation.Period("inzichten"));
             Equal(ToolbarPeriod.None, UiNavigation.Period("beheer"));
@@ -157,6 +158,21 @@ internal static class UxTests
             True(desktop.Contains("id=\"nav-overviews\"")); True(mobile.Contains("id=\"mobile-nav-overviews\""));
             True(mobile.Contains("aria-controls=\"mobile-nav-overviews\""));
         }));
+        yield return ("Task navigation keeps specialist destinations and account checks reachable in both languages", () => WithCultures(() =>
+        {
+            var state = Fixture();
+            var nav = WebUtility.HtmlDecode(Render<MainNavigation>(state));
+            Equal(5, Regex.Matches(nav, "<li class=\"nav-section\">").Count);
+            foreach (var target in new[] { "transacties", "vooruitblik", "meer", "budgetten" }) True(nav.Contains($"href=\"{target}\""));
+            var more = WebUtility.HtmlDecode(Render<More>(state));
+            foreach (var target in new[] { "rekeningen", "beleggingen", "hypotheek", "aankopen", "maaltijdcheques", "abonnementen", "energie", "instellen", "beheer", "beheer#dashboardkaarten" })
+                True(more.Contains($"href=\"{target}\""));
+            var weekly = WebUtility.HtmlDecode(Render<WeeklyReview>(state));
+            var account = state.Data.Accounts[0].Id;
+            True(weekly.Contains($"href=\"importeren?account={account:D}\""));
+            True(weekly.Contains($"href=\"rekeningen#balance-checks-{account:D}\""));
+            True(weekly.Contains("href=\"categoriseren?inbox=true\""));
+        }));
     }
 
     private static WebState Fixture()
@@ -169,7 +185,7 @@ internal static class UxTests
     }
     internal static string Render<T>(WebState state, IDictionary<string, object?>? parameters = null) where T : IComponent
     {
-        var services = new ServiceCollection(); services.AddLogging(); services.AddLocalization(); services.AddSingleton(state);
+        var services = new ServiceCollection(); services.AddLogging(); services.AddLocalization(); services.AddSingleton(state); services.AddSingleton(new WebHostSettings(LocalPreview: true));
         services.AddSingleton<IInvestmentAdministration>(new NoInvestments());
         services.AddSingleton<IReceiptAdministration>(new NoReceipts());
         services.AddSingleton<IJSRuntime>(new NoJs()); services.AddSingleton<UiPreferences>(); services.AddSingleton<NavigationManager>(new TestNavigation());

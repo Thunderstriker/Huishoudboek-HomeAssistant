@@ -29,13 +29,13 @@ beginnen op hoofdniveau, zonder verlies van boekingen of budgetten.
 
 ## Financiële kalender en geleerde bestedingen
 
-Open **Overzichten → Financiële kalender** en kies een betaalrekening. De kalender
-en geleerde bestedingspatronen staan op deze eigen pagina, ook bereikbaar vanuit
-**Financiële vooruitblik**. Aankoopcontrole en gedetailleerde prognosetabellen blijven
-daar beschikbaar en gebruiken dezelfde berekening. De kalender heeft een eigen
+Open **Overzichten → Financiële kalender** en kies zo nodig een betaalrekening.
+De samenvatting, legenda en maandkalender staan bovenaan. Waarschuwingen, uitleg en
+ramingsinstellingen zijn eronder uitklapbaar. Aankoopcontrole en gedetailleerde
+prognosetabellen staan bij **Financiële vooruitblik** en gebruiken dezelfde berekening. De kalender heeft een eigen
 maandkeuze en toont maximaal 90 dagen vooruit, los van de maand in de werkbalk.
-Vaste posten en inkomsten verschijnen direct. Bij **Categorieën voor automatische
-raming** kiest u welke variabele kosten de prognose mag schatten: standaard
+Vaste posten en inkomsten verschijnen direct. Open **Ramingsinstellingen en
+bestedingspatronen** om te kiezen welke variabele kosten de prognose mag schatten: standaard
 **Voeding** en **Medische kosten**. De keuze geldt voor alle rekeningen en voor zowel
 kalender als Financiële vooruitblik; de leerpatronen blijven per rekening.
 Uitgesloten categorieën worden niet automatisch afgetrokken, ook niet via een
@@ -211,7 +211,7 @@ banksplitsing kan de app die eerste betaling niet betrouwbaar reconstrueren.
 
 ## Abonnementen & contracten
 
-Open **Planning → Abonnementen & contracten** (`/abonnementen`). Deze pagina gebruikt
+Open **Meer → Abonnementen & contracten** (`/abonnementen`). Deze pagina gebruikt
 de peildatum van vandaag, niet de maandkeuze. De contractregistratie is gescheiden
 van de boekhouding: toevoegen, wijzigen en verwijderen maken geen bankboekingen
 of vaste posten en veranderen geen saldi, uitgaven, budgetten of cashprognoses.
@@ -308,19 +308,23 @@ energievergelijkingen en automatische verbruiksinvoer.
 
 ## Elektriciteit (Vlaanderen)
 
-Open **Planning → Elektriciteit (Vlaanderen)**. Voeg een contract toe met het EAN
+Open **Meer → Elektriciteit (Vlaanderen)**. Voeg een contract toe met het EAN
 van de aansluiting en kies bij de tariefversie zelf enkelvoudig of dag/nacht. Vul
 de werkelijke ingangsdatum op basis van je contract in; de uitgiftedatum van de kaart
 is geen ingangsdatum. Voeg een nieuwe versie toe wanneer voorwaarden wijzigen. Gebruik
 een correctie alleen voor verkeerde invoer van een bestaande versie. Voor een nieuwe
 leverancier op hetzelfde EAN vul je de laatste leveringsdag van het vorige contract in.
-Het maandoverzicht volgt de aansluiting over contractwissels heen. Een koppeling met
-Abonnementen & contracten is optioneel en voegt geen bedragen of vaste posten toe.
+Het kostenoverzicht volgt het EAN over contractwissels heen. De jaartabel vergelijkt
+afname, injectievergoeding, vaste kosten en dagen met afnamemetingen. Kies een maand
+in de tabel voor de kosten en dekking per dag, of gebruik de maandkiezer voor een ander
+jaar. Een koppeling met Abonnementen & contracten is optioneel en voegt geen bedragen
+of vaste posten toe.
 
-- **Tariefkaart:** een Vlaamse Luminus BasicFix-elektriciteits-pdf met tekstlaag kan
-  lokaal een invulvoorstel leveren. Kies eerst je facturatieschema. Controleer alle
-  velden met de bron, vooral de ingangsdatum, btw en voorwaarden. Het voorbeeld van
-  een indexwaarde op de kaart wordt niet overgenomen. Het origineel wordt alleen in
+- **Tariefkaart:** een Luminus BasicFix-elektriciteits-pdf met tekstlaag kan lokaal
+  een invulvoorstel leveren, ook bij de gedeelde residentiële kaart zonder regiokop.
+  Kies eerst je facturatieschema. Controleer alle velden met de bron, vooral de
+  ingangsdatum, btw en voorwaarden. Voorbeeldprijzen, voorbeeldindexen en netkosten
+  worden niet overgenomen. Het origineel wordt alleen in
   de database bewaard als je dat aanvinkt. Voor de losse service is `pdftotext`
   (Poppler) op het zoekpad nodig; de Home Assistant-add-on bevat het al.
 - **Meetgegevens:** upload de oorspronkelijke UTF-8-elektriciteits-CSV met dag- of
@@ -329,11 +333,10 @@ Abonnementen & contracten is optioneel en voegt geen bedragen of vaste posten to
   voorgestelde correcties vóór vervanging. Lege hoeveelheden en dubbelzinnige
   wintertijdkwartieren worden overgeslagen, niet op nul gezet. Er is geen automatische
   meterinvoer.
-- **Eerdere kwartiermetingen wissen:** kies bij de import het EAN en de begin- en
-  einddatum, controleer het aantal te wissen metingen en bevestig. Beide datums
-  tellen mee. Dagtotalen en kwartiermetingen buiten de selectie blijven staan.
-  Wil je kwartiermetingen voor een nieuw contract behouden, kies dan een einddatum
-  vóór de start van dat contract. Bewaar zo nodig de oorspronkelijke CSV.
+- **Alle geïmporteerde metingen wissen:** kies bij de import een EAN, controleer
+  het aantal te wissen metingen en bevestig. Alle kwartiermetingen, dagtotalen en maandpieken
+  voor dat EAN worden gewist, ook van eerdere contracten. Andere EAN's, contracten,
+  tarieven en ingevoerde kosten blijven staan. Bewaar zo nodig de oorspronkelijke CSV-bestanden.
 - **Dekking:** het overzicht gebruikt een volledig gemeten kwartierdag als die er is.
   Anders vullen dagtotalen voor afname en injectie de historie aan, zonder overlappende
   kwartieren op te tellen. Van dagtotalen kunnen bekende dag-/nachttarieven en
@@ -344,8 +347,23 @@ Abonnementen & contracten is optioneel en voegt geen bedragen of vaste posten to
   leverancier voor die maand in, in €/MWh, met bron. De formule is in cent/kWh.
   De dagtoerekening van de vaste vergoeding is een schatting op basis van de
   leveringsperiode. De volledige eerstejaarsvergoeding bij een vroeg einde staat
-  afzonderlijk indien bekend en wordt niet dubbel meegeteld. Netkosten, heffingen,
-  capaciteitstarief, voorschotten en werkelijke facturen worden niet berekend.
+  afzonderlijk indien bekend en wordt niet dubbel meegeteld. Niet-ingevoerde kosten,
+  voorschotten en werkelijke factuurtotalen worden niet berekend.
+- **Toeslagen en nettarieven:** stel per EAN geldigheidsdatums en bedragen inclusief btw
+  in. Groene stroom en WKK, variabele netkosten en heffingen worden per kWh bruto-afname
+  berekend. Databeheer wordt per dag toegerekend. Het invulvoorstel voor 2026 gebruikt
+  de [Luminus-tabel voor Vlaamse particulieren](https://www.luminus.be/nl/prive/hulp-en-contact/hoe-worden-de-tarieven-voor-groene-stroom-en-wkk-bepaald-nl/)
+  en de [Fluvius-tarieflijst Antwerpen voor digitale laagspanningsmeters met piekmeting](https://www.fluvius.be/sites/fluvius/files/2025-11/distributienettarieven-elektriciteit-afname-fluvius-antwerpen-01012026-31122026.xlsx).
+  Controleer welke tarieven gelden en vul alleen geverifieerde overheidsheffingen in.
+  Een handmatig bedrag onder **Maandkosten** vervangt berekende netkosten en
+  overheidsheffingen voor die maand; het vervangt geen leverancierskosten. Laat het
+  handmatige veld leeg om de berekende bedragen te gebruiken.
+- **Capaciteitstarief:** importeer de UTF-8-CSV **Piekvermogen** op dezelfde plek als
+  de verbruiks-CSV's. De maandpiek in kW staat los van het verbruik in kWh. De schatting
+  gebruikt het gemiddelde van de beschikbare maandpieken van de gekozen maand en de
+  elf voorgaande maanden, met minimaal 2,5 kW per maand. Onvolledige historie en
+  voorlopige pieken zijn zichtbaar; zonder piek voor de gekozen maand blijft het
+  bedrag onbekend. Dit is geen officiële facturatiepiek of jaarafrekening.
 - **Dynamische afname:** bevestig dat je contract de Belgische day-aheadspotprijs
   gebruikt en kies uur- of kwartierafrekening zoals beschreven in het contract. Je
   kunt gepubliceerde prijzen voor vandaag en morgen of de gekozen maand ophalen
@@ -360,13 +378,14 @@ Abonnementen & contracten is optioneel en voegt geen bedragen of vaste posten to
 De module is gedeeld voor het huishouden en wijzigt geen bankboekingen, budgetten,
 vaste posten of prognoses. Tarieven, metingen, optioneel bewaarde pdf's en marktprijzen
 gaan vanaf schema 20 mee in de volledige SQLite-back-up, niet in de transactie-CSV.
-Schema 22 bewaart ook dagtotalen naast kwartiermetingen.
+Schema 22 bewaart ook dagtotalen naast kwartiermetingen; schema 23 bewaart de ingevoerde maandkosten.
+Schema 24 bewaart maandpieken en toeslagperiodes.
 Bij migratie wordt eerst een veiligheidskopie gemaakt. Gas, leveranciersvergelijkingen
 en automatische Home Assistant-/P1-invoer zijn niet inbegrepen.
 
 ## Beleggingen en Alpha Vantage
 
-Open **Overzichten → Beleggingen** (`/beleggingen`). De startpagina toont bij aanwezige
+Open **Meer → Beleggingen** (`/beleggingen`). De startpagina toont bij aanwezige
 effectenregistraties automatisch een compacte samenvatting en maximaal drie positiekaarten.
 Beide gebruiken de posities van vandaag en het eigenaarfilter, onafhankelijk van de maandkeuze.
 Er zijn bewust **geen beleggingsgrafieken**.
@@ -622,24 +641,25 @@ geheim; eerdere quotes en de verbruiksteller blijven bestaan.
 
 ## Dashboard, maandoverzicht en aparte werkpagina's
 
-De zijbalk is op elke pagina diepgroen en bevat zes hoofdkeuzes:
+De zijbalk bevat vijf hoofdkeuzes:
 
-- **Dashboard**: direct naar de startpagina.
-- **Overzichten**: maandoverzicht, jaaroverzicht, categorietrends, inzichten en beleggingen.
-- **Transacties**: transacties, aankopen & garanties, categoriseren en wekelijkse controle (tenzij verborgen).
-- **Planning**: financiële vooruitblik, budgetten, vaste posten en hypotheek.
-- **Rekeningen**: direct naar de rekeningen.
-- **Beheer**: beheer & import, Excel/CSV importeren en instellen.
+- **Dashboard**: saldi, maandcijfers, snel invoeren en **Te controleren**.
+- **Transacties**: zoeken, toevoegen, bankafschriften importeren en categoriseren;
+  herkenningsregels en uitgebreide invoer staan onder **Meer transactieacties**.
+- **Vooruitblik**: komende betalingen, aankoopcontrole en vaste posten.
+- **Overzichten**: financiële kalender, maandoverzicht, jaaroverzicht, budgetten,
+  categorietrends en inzichten.
+- **Meer**: rekeningen, beleggen, hypotheek, aankopen, maaltijdcheques, contracten,
+  elektriciteit, instellen, back-ups, importgeschiedenis en Home Assistant-kaarten.
 
-Klik op een groep om het submenu te openen of te sluiten; er staat steeds hoogstens
-één groep open. De groep van de huidige pagina opent automatisch, ook bij een directe
-link of de terugknop van de browser. Op kleine schermen staan de hoofdkeuzes in twee kolommen.
+**Overzichten** opent een submenu. Op kleine schermen staan Dashboard, Transacties,
+snel uitgave toevoegen, Vooruitblik en Meer onderaan; het menu bovenaan bevat alle hoofdkeuzes.
 
 De startpagina **Dashboard** (`/`) begint met een centrale momentopname van de gekozen
 maand en daarnaast compacte geregistreerde rekeningsaldi van vandaag, met de actualiteit
 van de bankgegevens erbij. Standaard staan de betaalrekeningen (zichtrekeningen) aan.
-Er staat geen introductiekop of rij actieknoppen boven de cijfers. Importeren en
-transacties invoeren blijven bereikbaar via de navigatie en de bijbehorende pagina's.
+De snelkoppelingen boven de cijfers geven toegang tot invoer, bankimport en de
+wekelijkse controle. Geregistreerde saldi zijn geen live bankgegevens.
 Via **Aanpassen** (Rekeningen kiezen) kunt u ook spaar- en beleggingsrekeningen tonen
 of alle rekeningsaldi verbergen. De keuze wordt per browser
 bewaard, niet in de financiële database; zonder browseropslag alleen voor de sessie.
@@ -694,7 +714,7 @@ Er zijn acht kaarten die onafhankelijk naast andere Home Assistant-kaarten passe
 
 1. Gebruik Home Assistant OS met Supervisor en **Home Assistant Core 2026.11 of nieuwer**.
    Deze proefversie gebruikt de `supervisor/ingress/...`-WebSocket-opdrachten.
-2. Open Huishoudboek als Home Assistant-beheerder en ga naar **Beheer & import →
+2. Open Huishoudboek als Home Assistant-beheerder en ga naar **Meer →
    Home Assistant-dashboardkaarten**. Download `huishoudboek-card.js`.
 3. Bewaar dit bestand in de Home Assistant-configuratiemap als
    `/config/www/huishoudboek-card.js`. Maak de map `www` zo nodig aan met uw bestaande
@@ -724,7 +744,7 @@ addon: abcdef12_huishoudboek
 widget: import-status
 ```
 
-De categorietrend vereist ook een categorie-id (te vinden bij **Beheer & import →
+De categorietrend vereist ook een categorie-id (te vinden bij **Meer →
 Home Assistant-dashboardkaarten → Categorie-id's**):
 
 ```yaml
@@ -795,7 +815,7 @@ views:
 | `addon` | Volledige app-id, inclusief repository-id | verplicht |
 | `widget` | Een van de acht waarden hierboven | verplicht |
 | `period` | `current` of een aangehaalde maand, bijvoorbeeld `"2026-10"` (1900–2200) | `current` |
-| `owner` | Een eigenaar-UUID uit **Beheer & import → Eigenaar-id's** | hele huishouden |
+| `owner` | Een eigenaar-UUID uit **Meer → Home Assistant-dashboardkaarten → Eigenaar-id's** | hele huishouden |
 | `theme` | `auto`, `light`, `dark` | Home Assistant-thema |
 | `language` | `auto`, `nl`, `en` | Home Assistant-taal; niet-Nederlands wordt Engels |
 | `refresh_interval` | Geheel aantal seconden, 60–3600 | `300` |
@@ -888,7 +908,7 @@ onvoldoende inzichtenhistorie, een app-herstart en een niet-beheerdersaccount.
 #### Realistische lokale galerij
 
 Start vanuit de repository `./preview.ps1` en open
-**http://127.0.0.1:5099/kaarten/preview**, of kies de galerij bij **Beheer & import →
+**http://127.0.0.1:5099/kaarten/preview**, of kies de galerij bij **Meer →
 Home Assistant-dashboardkaarten** in de lokale preview. Bij een andere `-Port` gebruikt
 u die poort. Er is geen Home Assistant-installatie of aanmelding nodig.
 
@@ -1037,19 +1057,18 @@ het eigenaarfilter blijft gelden en gedeelde rekeningen tellen eenmaal.
 Alle grafieken werken lokaal, passen zich aan de schermbreedte aan en respecteren
 de browservoorkeur voor minder animatie.
 
-**Instellen** staat rechtstreeks onder **Beheer → Instellen** en blijft ook bereikbaar
-via **Beheer & import → Instellen & navigatie**. **Wekelijkse controle** staat onder
-**Transacties**. Kies op die pagina of onder
-**Beheer & import → Instellen & navigatie** voor **Wekelijkse controle verbergen in de
-navigatie** om de menulink te verbergen; vink dit daar weer uit om hem te herstellen.
+**Instellen** staat onder **Meer**. Open de wekelijkse controle via **Te controleren**
+op het dashboard. Kies op die pagina of onder **Meer → Back-up, herstel & export →
+Instellen & navigatie** voor **Te controleren verbergen op het dashboard**; vink dit
+daar weer uit om de koppeling te herstellen.
 De voorkeur wordt alleen in deze browser voor deze app bewaard, niet in de financiële
 database of back-ups. Bij geblokkeerde browseropslag geldt hij alleen voor deze sessie.
-De pagina blijft via Beheer & import bereikbaar en financiële controles veranderen niet.
+De pagina blijft via **Back-up, herstel & export** bereikbaar en financiële controles veranderen niet.
 
 ## Nieuw beginnen: uw eerste week
 
 Een bestaande database is niet nodig. Kies op het lege dashboard **Aan de slag**,
-of open **Beheer & import → Instellen**, en volg **Uw eerste week**:
+of open **Meer → Instellen**, en volg **Uw eerste week**:
 
 1. Maak bij **Rekeningen** eerst een eigenaar aan en daarna uw rekeningen met IBAN.
 2. Kies een openingsdatum en het saldo **vóór** de eerste boeking op die datum.
@@ -1073,8 +1092,8 @@ boekingen na de controledatum heropenen de saldocontrole; alleen categorisatie d
 ### Licht dagelijks gebruik en wekelijkse controle
 
 Bij **Transacties** bieden **Uitgave toevoegen** en **Inkomst toevoegen** een kort formulier.
-Voer een positief bedrag in; de knop bepaalt het teken. **Uitgebreide boeking** blijft
-beschikbaar voor transfers, hypotheekbetalingen en vaste-postkoppelingen. De editor
+Voer een positief bedrag in; de knop bepaalt het teken. **Uitgebreide boeking** onder
+**Meer transactieacties** blijft beschikbaar voor transfers, hypotheekbetalingen en vaste-postkoppelingen. De editor
 verbergt tegenrekening/aflossing wanneer die niet van toepassing zijn. Importeert u later
 dezelfde handmatige boeking, dan wordt deze opnieuw toegevoegd tenzij u de regel
 handmatig uitvinkt in het importvoorbeeld.
@@ -1083,8 +1102,9 @@ Op schermen tot 700 px vervangt een compacte lijst de transactietabel. Tik op ee
 voor de oorspronkelijke banktekst, eventuele hypotheek-/transfer-/vaste-postgegevens,
 banksaldo en acties. Filters, categorieën, paginering en financiële verwerking blijven gelijk.
 
-Open wekelijks de pagina **Wekelijkse controle**: importeer, bekijk categorieën,
-vaste-postvoorstellen en saldi, en controleer betalingen van vandaag tot over 7 dagen.
+Open op het dashboard **Te controleren**: importeer voor de juiste rekening, bekijk
+boekingen zonder categorie, vaste-postvoorstellen en saldi, en controleer betalingen
+van vandaag tot over 7 dagen.
 De controle volgt het eigenaarfilter maar niet de gekozen maand. Recente bankboekingen
 of expliciet bevestigde volledige afschriftperioden tellen voor de importactualiteit;
 een oude export opnieuw uploaden maakt een rekening dus niet actueel. Ook rustige
@@ -1101,7 +1121,7 @@ zonder ingestelde planning is dit geen bevestiging dat er niets te betalen is.
    kunnen nog in SQLite-WAL-bestanden staan. De app kan ontbrekende WAL-gegevens
    niet achteraf herkennen of terughalen.
 2. Open in de Home Assistant-app **Instellen → Bestaande database importeren**,
-   of **Beheer & import → Bestaande database importeren / back-up herstellen**.
+   of **Meer → Back-up, herstel & export → Bestaande database importeren / back-up herstellen**.
 3. Selecteer uw `.db`-bestand (maximaal **256 MB**) en kies
    **Bestaande database importeren…**. Selecteren alleen slaat niets op.
 4. Controleer de waarschuwing en bevestig expliciet met **Database importeren**.
@@ -1128,6 +1148,13 @@ er is standaard geen externe API-poort. De losse read-only sensorintegratie is e
 ander product en is niet automatisch met deze ingress-only app verbonden.
 
 ## Excel/CSV importeren per rekening
+
+Open **Bankafschrift importeren** op Dashboard of Transacties, kies de rekening en
+het bestand en klik op **Boekingen bekijken**. Controleer rekening, periode en
+herkenning vóór opslaan. Standaard ziet u alle boekingen uit het bestand, ongeacht
+de gekozen dashboardmaand. Geef onder **Periode en herkenning aanpassen** zo nodig
+een eigen periode, werkblad of kolommen op. Als herkenning niet lukt, opent de app
+de opties voor correctie. Na bevestiging volgt de saldocontrole.
 
 - ING (NL CSV), Rabobank (NL CSV) en KBC/CBC (BE CSV) zijn beschikbaar als kant-en-klare
   profielen en worden bij bekende kolomkoppen automatisch herkend. Argenta en het
@@ -1162,13 +1189,15 @@ ander product en is niet automatisch met deze ingress-only app verbonden.
 - Bestaande opgeslagen transfers worden niet herschreven. Het oude handmatige type
   kan nog beide saldi beïnvloeden; importeer diezelfde beweging niet nogmaals zonder
   eerst op dubbelen te controleren. De financiële velden zijn in de editor beschermd.
-- Bevestig optioneel in het voorbeeld dat het afschrift **alle bankboekingen** voor
+- Vul eerst begin- en einddatum van het afschrift in als u de volledigheid van die
+  periode wilt bevestigen. De eerste en laatste boekingsdatum zijn daarvoor geen bewijs.
+  Bevestig vervolgens in het voorbeeld dat het afschrift **alle bankboekingen** voor
   de gekozen rekening en periode bevat. Dit kan alleen als elke regel geldig en
   geselecteerd of al geïmporteerd is; uitgevinkte onzekere matches tellen niet als dekking.
   Dekking loopt nooit voorbij vandaag; een leeg afschrift kan een periode
   zonder activiteit bevestigen. Een gefilterde of gedeeltelijke export bevestigt u niet.
 - Bij oudere imports is de volledige periode onbekend. Controleer uw bankafschrift
-  en gebruik **Beheer & import → Importgeschiedenis → Afschriftperiode bevestigen**.
+  en gebruik **Meer → Importgeschiedenis → Afschriftperiode bevestigen**.
   U hoeft een bestand niet opnieuw te importeren alleen om de periode vast te leggen.
   Zonder import kunt u dezelfde volledigheid per rekening bevestigen onder
   **Rekeningen → Bankperioden bevestigen · ook zonder import**.
@@ -1600,7 +1629,7 @@ Controleer de herkenningskwaliteit met uw eigen winkelbonnen voordat u daarop ve
   oudere apps. De normale Windows-service blijft automatische upgrades weigeren.
 - Alleen een werkelijk nieuwe installatie begint met een lege administratie en
   standaardcategorieën, zonder fictieve bedragen. U kunt ook zelf rekeningen aanmaken.
-- Download regelmatig een databaseback-up via **Beheer & import → Back-up maken**.
+- Download regelmatig een databaseback-up via **Meer → Back-up, herstel & export → Back-up maken**.
   CSV is geen volledige back-up. Bewaar ook een kopie buiten de VM.
 - Neem deze app op in Home Assistant-back-ups. De instelling **cold backup** stopt
   de app tijdens de back-up, zodat SQLite-bestanden samen consistent worden vastgelegd.

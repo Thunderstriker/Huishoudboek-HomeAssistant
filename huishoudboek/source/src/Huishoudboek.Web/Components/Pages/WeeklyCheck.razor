@@ -2,7 +2,7 @@
 @attribute [Authorize]
 @inherits PageBase
 <PageTitle>@L["WeeklyReviewTitle"] · Huishoudboek</PageTitle>
-<h1>@L["WeeklyReviewTitle"]</h1>
+<div class="page-heading"><div><h1>@L["ReviewTasks"]</h1><p class="muted">@L["WeeklyReviewTitle"] · @State.Today.ToString("dd-MM-yyyy")</p></div><a class="button" href="">@L["StartDashboard"]</a></div>
 @if (State.Data.Accounts.Count == 0)
 {
     <p><a class="button primary" href="instellen">@L["GetStarted"]</a></p>

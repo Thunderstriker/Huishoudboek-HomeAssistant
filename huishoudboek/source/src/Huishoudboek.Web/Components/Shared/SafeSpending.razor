@@ -9,14 +9,15 @@
     }
     else
     {
-        <SpendingForecastCategories Editable="false" />
-        <div class="metrics">
+        <div id="komende-betalingen" class="metrics">
             <div><div class="metric-label">@L["EstimatedSpendable"]</div><div class="metric-value">@Money(forecast.EstimatedSpendable)</div><small>@L["SpendableSumNote"]</small></div>
             <div><div class="metric-label">@L["BillsNextDays", 7]</div><div class="metric-value">@Money(forecast.Bills7Days)</div></div>
             <div><div class="metric-label">@L["BillsNextDays", 30]</div><div class="metric-value">@Money(forecast.Bills30Days)</div><small>@L["BillsEstimateNote"]</small></div>
         </div>
         @if (forecast.Accounts.Any(a => a.BufferAtRisk))
         { <p class="notice warning" role="alert">@L["BufferRiskWarning"]</p> }
+        @if (forecast.Accounts.Any(a => a.StaleImports || a.LimitedHistory || a.HasUncertainty))
+        { <p class="muted">@L["OutlookEstimateUncertain"]</p> }
         <div class="table-scroll"><table><thead><tr><th>@L["Account"]</th><th class="money">@L["BalanceToday"]</th><th>@L["NextIncome"]</th><th class="money">@L["Buffer"]</th><th class="money">@L["SpendableUntilIncome"]</th><th class="money">@L["LowestExpectedBalance"]</th><th>@L["LowestBalanceDate"]</th></tr></thead><tbody>
         @foreach (var account in forecast.Accounts)
         {
@@ -24,9 +25,13 @@
         }
         </tbody></table></div>
         <label>@L["Account"]<select value="@selected.Account.Id" @onchange="e => accountId = Guid.Parse(e.Value!.ToString()!)">@foreach (var account in forecast.Accounts) { <option value="@account.Account.Id">@account.Account.Name</option> }</select></label>
-        <CashBalanceTimeline Forecast="selected" Today="State.Today" />
-        <p><a href="kalender">@L["CalendarTitle"] →</a></p>
-        <div class="fields">
+        <details open="@ShowUpcoming" id="betalingsdetails"><summary>@L["UpcomingPayments"] · @selected.Account.Name · @L["Days", 30]</summary>
+            <div class="table-scroll"><table><thead><tr><th>@L["ExpectedDate"]</th><th>@L["Payment"]</th><th class="money">@L["Amount"]</th><th>@L["Source"]</th></tr></thead><tbody>
+            @foreach (var bill in selected.Events.Where(e => e.Amount < 0 && e.Date <= State.Today.AddDays(30)))
+            { <tr><td>@(bill.IsUncertain ? L["PaymentTimingUnknown"].Value : bill.PurchaseDate <= State.Today ? L["CalendarBookedOn", bill.DueDate.ToString("dd-MM-yyyy")].Value : bill.Date.ToString("dd-MM-yyyy"))</td><td>@bill.Name @if (bill.IsUncertain) { <small>@L["RecurringUnconfirmedDate", bill.DueDate.ToString("dd-MM-yyyy")]</small> }</td><td class="money">@Money(-bill.Amount)</td><td>@L[bill.IsUncertain ? "UnconfirmedReserve" : bill.PurchaseDate <= State.Today ? "CalendarCommitted" : bill.TransactionId != null ? "RecordedEntry" : "RecurringEstimate"]</td></tr> }
+            </tbody></table></div>
+        </details>
+        <div class="fields" id="aankoopcontrole">
             <label>@L["PurchaseAmountQuestion"]<input type="text" inputmode="decimal" @bind="purchase" @bind:event="oninput" /></label>
         </div>
         @if (decimal.TryParse(purchase, NumberStyles.AllowDecimalPoint, UiCulture.Culture, out var amount) && amount > 0 && decimal.Round(amount, 2) == amount)
@@ -40,6 +45,7 @@
             </p>
         }
         else { <p class="muted">@L["PositiveAmountHint", UiCulture.Culture.NumberFormat.NumberDecimalSeparator]</p> }
+        <CashBalanceTimeline Forecast="selected" Today="State.Today" />
         <div class="actions"><button @onclick="() => Draft = EditorDraft.CashBuffer(State, selected.Account)">@L["SetBuffer"] · @selected.Account.Name</button></div>
         @if (selected.Account.EarmarkedAmount > 0)
         { <p class="muted">@L["FreedomEarmarked"]: @Money(selected.Account.EarmarkedAmount). <a href="inzichten">@L["FreedomAccounts"] →</a></p> }
@@ -50,12 +56,6 @@
         { <p class="muted">@L["RecurringReserveNote", Money(selected.UncertainReserve)] <a href="vaste-posten">@L["RecurringPayments"]</a></p> }
         @if (selected.Warnings.Count > 0)
         { <details class="notice warning"><summary>@L["AccountAttention", selected.Account.Name] (@selected.Warnings.Count)</summary><ul>@foreach (var warning in UiCashFlow.Warnings(State.Data, selected, State.Today)) { <li>@warning</li> }</ul><a href="vaste-posten">@L["RecurringPayments"]</a></details> }
-        <details><summary>@L["UpcomingPayments"] · @selected.Account.Name · @L["Days", 30]</summary>
-            <div class="table-scroll"><table><thead><tr><th>@L["ExpectedDate"]</th><th>@L["Payment"]</th><th class="money">@L["Amount"]</th><th>@L["Source"]</th></tr></thead><tbody>
-            @foreach (var bill in selected.Events.Where(e => e.Amount < 0 && e.Date <= State.Today.AddDays(30)))
-            { <tr><td>@(bill.IsUncertain ? L["PaymentTimingUnknown"].Value : bill.PurchaseDate <= State.Today ? L["CalendarBookedOn", bill.DueDate.ToString("dd-MM-yyyy")].Value : bill.Date.ToString("dd-MM-yyyy"))</td><td>@bill.Name @if (bill.IsUncertain) { <small>@L["RecurringUnconfirmedDate", bill.DueDate.ToString("dd-MM-yyyy")]</small> }</td><td class="money">@Money(-bill.Amount)</td><td>@L[bill.IsUncertain ? "UnconfirmedReserve" : bill.PurchaseDate <= State.Today ? "CalendarCommitted" : bill.TransactionId != null ? "RecordedEntry" : "RecurringEstimate"]</td></tr> }
-            </tbody></table></div>
-        </details>
         <details id="daily-forecast-table"><summary>@L["DailyBalanceForecast"] · @selected.Account.Name · @L["ThroughDate", selected.Days.Last().Date.ToString("dd-MM-yyyy")]</summary>
             <p class="muted">@L["DailyBalanceNote"]</p>
             <div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th class="money">@L["OpeningBalance"]</th><th class="money">@L["Receipts"]</th><th class="money">@L["PaymentsAndReserves"]</th><th class="money">@L["ExtraDaily"]</th><th class="money">@L["LowestBalance"]</th><th class="money">@L["ClosingBalance"]</th></tr></thead><tbody>
@@ -65,6 +65,7 @@
         </details>
     }
     <details><summary>@L["EstimateAssumptions"]</summary>
+        @if (selected != null) { <SpendingForecastCategories Editable="false" /> }
         <ul>
             <li>@L["AssumptionImports", CashFlow.StaleAfterDays]</li>
             <li>@L["AssumptionRecurring"]</li>
@@ -77,6 +78,7 @@
 </section>
 <EditDialogs Page="this" />
 @code {
+    [Parameter] public bool ShowUpcoming { get; set; }
     private Guid? accountId;
     private string purchase = 150m.ToString("F2", UiCulture.Culture);
 }

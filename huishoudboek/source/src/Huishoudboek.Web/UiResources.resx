@@ -207,6 +207,27 @@
   <data name="MainNavigation" xml:space="preserve"><value>Hoofdnavigatie</value></data>
   <data name="NavigationOverviews" xml:space="preserve"><value>Overzichten</value></data>
   <data name="NavigationPlanning" xml:space="preserve"><value>Planning</value></data>
+  <data name="NavigationOutlook" xml:space="preserve"><value>Vooruitblik</value></data>
+  <data name="NavigationMore" xml:space="preserve"><value>Meer</value></data>
+  <data name="MoreAccounts" xml:space="preserve"><value>Rekeningen &amp; vermogen</value></data>
+  <data name="MoreHousehold" xml:space="preserve"><value>Huishouden</value></data>
+  <data name="MoreRecords" xml:space="preserve"><value>Back-up, herstel &amp; export</value></data>
+  <data name="MoreTransactionTools" xml:space="preserve"><value>Meer transactieacties</value></data>
+  <data name="ReviewTasks" xml:space="preserve"><value>Te controleren</value></data>
+  <data name="OutlookUpcoming" xml:space="preserve"><value>Komende betalingen</value></data>
+  <data name="OutlookPurchase" xml:space="preserve"><value>Kan ik dit uitgeven?</value></data>
+  <data name="OutlookEstimateUncertain" xml:space="preserve"><value>Onvolledige of oudere bankgegevens, onzekere betalingen of beperkte historie kunnen de schatting beïnvloeden.</value></data>
+  <data name="ImportBankStatement" xml:space="preserve"><value>Bankafschrift importeren</value></data>
+  <data name="ImportOptions" xml:space="preserve"><value>Periode en herkenning aanpassen</value></data>
+  <data name="ImportOptionalPeriod" xml:space="preserve"><value>Laat beide datums leeg om alle boekingen uit het bestand te zien. Vul beide in om te filteren of later een volledige afschriftperiode te bevestigen.</value></data>
+  <data name="ImportDatesInvalid" xml:space="preserve"><value>Vul beide datums in (van vroeg naar laat), of laat beide leeg.</value></data>
+  <data name="ImportMappingNeeded" xml:space="preserve"><value>Niet alle kolommen zijn herkend. Kies een bankprofiel of koppel de kolommen hieronder en bekijk het voorbeeld opnieuw.</value></data>
+  <data name="ImportReviewEntries" xml:space="preserve"><value>Boekingen bekijken</value></data>
+  <data name="ImportSelectedPeriod" xml:space="preserve"><value>Gekozen periode: {0} t/m {1}</value></data>
+  <data name="ImportObservedPeriod" xml:space="preserve"><value>Datums in het bestand: {0} t/m {1} (geen periodefilter)</value></data>
+  <data name="ImportNoObservedPeriod" xml:space="preserve"><value>Geen leesbare boekingsdatums in het bestand</value></data>
+  <data name="ImportCoverageExplicitDates" xml:space="preserve"><value>Boekingsdatums bewijzen niet dat een afschrift volledig is. Wilt u een volledige periode bevestigen?</value></data>
+  <data name="ImportSetDates" xml:space="preserve"><value>Afschriftperiode invullen</value></data>
   <data name="NavigationAdministration" xml:space="preserve"><value>Beheer</value></data>
   <data name="LocalPrivate" xml:space="preserve"><value>Lokaal · EUR · privé</value></data>
   <data name="NoBankConnection" xml:space="preserve"><value>Geen bankverbinding</value></data>
@@ -306,7 +327,7 @@
   <data name="GetStarted" xml:space="preserve"><value>Aan de slag</value></data>
   <data name="SetupAndNavigation" xml:space="preserve"><value>Instellen &amp; navigatie</value></data>
   <data name="NavigationPreferences" xml:space="preserve"><value>Navigatievoorkeuren</value></data>
-  <data name="HideWeeklyReview" xml:space="preserve"><value>Wekelijkse controle verbergen in de navigatie</value></data>
+  <data name="HideWeeklyReview" xml:space="preserve"><value>Te controleren verbergen op het dashboard</value></data>
   <data name="NavigationPreferenceNote" xml:space="preserve"><value>Onthouden in deze browser voor deze app. Herstel dit via Beheer &amp; import → Instellen &amp; navigatie. Uw financiële gegevens veranderen niet.</value></data>
   <data name="NavigationPreferenceSessionOnly" xml:space="preserve"><value>Browseropslag is niet beschikbaar; deze voorkeur geldt alleen voor deze sessie. Herstel dit via Beheer &amp; import → Instellen &amp; navigatie.</value></data>
   <data name="SpendingAboveIncomeBadge" xml:space="preserve"><value>Uitgaven boven inkomen</value></data>
@@ -525,7 +546,7 @@
   <data name="PlanIncomeBills" xml:space="preserve"><value>Inkomsten &amp; vaste lasten plannen</value></data>
   <data name="SafeSpendingNote" xml:space="preserve"><value>Vanaf vandaag, {0}, ongeacht het maandfilter. Schatting, geen garantie. Alleen betaalrekeningen; spaargeld wordt niet automatisch overgeboekt.</value></data>
   <data name="AddCurrentAccountNote" xml:space="preserve"><value>Voeg een betaalrekening met beginsaldo toe om bestedingsruimte te berekenen.</value></data>
-  <data name="EstimatedSpendable" xml:space="preserve"><value>Geschat besteedbaar · per rekening gereserveerd</value></data>
+  <data name="EstimatedSpendable" xml:space="preserve"><value>Geschat besteedbaar tot volgend inkomen</value></data>
   <data name="SpendableSumNote" xml:space="preserve"><value>Som van afzonderlijke bestedingsruimtes tot het volgende inkomen; niet vrij uitwisselbaar.</value></data>
   <data name="BillsNextDays" xml:space="preserve"><value>Bekende betalingen komende {0} dagen</value></data>
   <data name="BillsEstimateNote" xml:space="preserve"><value>Alleen gedateerde geplande betalingen. Onzekere reserves staan hieronder apart; extra variabele uitgaven zijn niet inbegrepen.</value></data>
@@ -830,7 +851,7 @@ Deze boeking vervangt alleen deze geplande betaling. Controleer dat het dezelfde
 {3} regels, {4} maandbudgetten en standaardbudget {5} worden verwijderd.
 Bonstandaarden en regelcategorieën met deze categorie worden gewist; regels zonder eigen categorie volgen de bonstandaard. Aankoopgegevens en betalingen blijven behouden.
 Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden. De verwerking als sparen/eigen rekeningbeweging vervalt ook voor eerdere boekingen; rapporten veranderen. Geen directe undo; maak zo nodig eerst een back-up.</value></data>
-  <data name="ImportAccountNote" xml:space="preserve"><value>Elke import boekt alleen op de gekozen rekening, met het bedrag uit het bestand. Andere rekeningen worden niet automatisch gekoppeld of aangepast; importeer voor elke rekening het eigen bestand. Overeenkomende eerdere imports worden standaard overgeslagen; onzekere overeenkomsten vragen controle. Controleer valuta, rekening en openingsdatum. Er wordt pas na expliciete bevestiging opgeslagen.</value></data>
+  <data name="ImportAccountNote" xml:space="preserve"><value>Kies de rekening waarop het afschrift hoort. U bekijkt de boekingen vóór er iets wordt opgeslagen; andere rekeningen veranderen niet.</value></data>
   <data name="AfterImportBothAccounts" xml:space="preserve"><value>Na import van beide rekeningen kunt u</value></data>
   <data name="ImportTransferReportingNote" xml:space="preserve"><value>voor rapportage, zonder extra boekingen of saldoaanpassingen.</value></data>
   <data name="ImportFileHint" xml:space="preserve"><value>Bestand (.xls, .xlsx of .csv; maximaal 50 MB en 100.000 niet-lege regels)</value></data>
@@ -930,7 +951,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="WeeklyBills" xml:space="preserve"><value>Bekijk betalingen van vandaag tot over 7 dagen</value></data>
   <data name="WeeklyNoBills" xml:space="preserve"><value>Geen ongekoppelde betalingen gepland in de komende 7 dagen.</value></data>
   <data name="WeeklyNoPlan" xml:space="preserve"><value>Nog geen vaste uitgaven ingesteld. Voeg uw rekeningen toe aan Vaste posten; dit is geen bevestiging dat er niets te betalen is.</value></data>
-  <data name="WeeklyCoverageNote" xml:space="preserve"><value>Deze controle volgt het eigenaarfilter, niet de gekozen maand. Een import is recent bij bankboekingen in de laatste 7 dagen; een rustige rekening kan dus een waarschuwing geven. Voorstellen worden nooit automatisch bevestigd.</value></data>
+  <data name="WeeklyCoverageNote" xml:space="preserve"><value>Deze controle volgt het eigenaarfilter, niet de gekozen maand. Recente importboekingen of een bevestigde afschriftperiode binnen de laatste 7 dagen tellen mee. Voorstellen worden nooit automatisch bevestigd.</value></data>
   <data name="CreateOwnerFirst" xml:space="preserve"><value>Maak eerst een eigenaar aan en voeg daarna uw eerste rekening toe.</value></data>
   <data name="OpeningAndBalanceChecks" xml:space="preserve"><value>Beginsaldi en saldocontrole</value></data>
   <data name="OpeningConfirmationNote" xml:space="preserve"><value>Het beginsaldo is het saldo vóór de eerste boeking op de openingsdatum, niet het saldo van vandaag. Ook € 0 kan correct zijn. Bevestig na vergelijking met uw bank; controleer daarna het saldo inclusief geïmporteerde boekingen.</value></data>
@@ -1592,7 +1613,8 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="CalendarAdjust" xml:space="preserve"><value>Verwachting aanpassen · {0}</value></data>
   <data name="CalendarAdjusted" xml:space="preserve"><value>{0}: eigen verwachting {1} (0 = overgeslagen).</value></data>
   <data name="CalendarReset" xml:space="preserve"><value>Automatisch herstellen</value></data>
-  <data name="CalendarMethodTitle" xml:space="preserve"><value>Hoe werkt de kalender?</value></data>
+  <data name="CalendarMethodTitle" xml:space="preserve"><value>Toelichting en waarschuwingen</value></data>
+  <data name="CalendarSettings" xml:space="preserve"><value>Ramingsinstellingen en bestedingspatronen</value></data>
   <data name="CalendarMethod" xml:space="preserve"><value>Rood gaat vóór oranje, geel en groen. Een saldo onder nul is rood; onder de cashbuffer plus gereserveerd geld of minstens drie uitgaande posten is oranje. Historische dagen krijgen geen prognosekleur. De rekening bepaalt het risico: geld op andere rekeningen wordt niet automatisch overgeboekt. Onbevestigde reserves staan apart, zonder verzonnen betaaldatum.</value></data>
   <data name="CalendarThreshold" xml:space="preserve"><value>Geel betekent dat de verwachte daguitgaven hoger zijn dan {0}: tweemaal het gewone daggemiddelde, met minimaal €25 als drempel.</value></data>
   <data name="CalendarReasonShortfall" xml:space="preserve"><value>Het laagste verwachte saldo is negatief, mogelijk vóór een ontvangst op dezelfde dag.</value></data>
@@ -1835,7 +1857,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="EnergyFileLimit" xml:space="preserve"><value>Het bestand is te groot voor verwerking.</value></data>
   <data name="EnergyImportTitle" xml:space="preserve"><value>Meetgegevens importeren</value></data>
   <data name="EnergyImportFile" xml:space="preserve"><value>Fluvius-export met dag- of kwartiertotalen (csv)</value></data>
-  <data name="EnergyImportHelp" xml:space="preserve"><value>Kies de oorspronkelijke puntkomma-gescheiden elektriciteitsexport (max. 20 MB en 100.000 regels). Het bestand blijft lokaal. De dag-/nachtregisters bepalen niet het facturatieschema.</value></data>
+  <data name="EnergyImportHelp" xml:space="preserve"><value>Kies de oorspronkelijke Fluvius-CSV met kwartiermetingen, dagtotalen of Piekvermogen (max. 20 MB en 100.000 regels). Het bestand blijft lokaal. De dag-/nachtregisters bepalen niet het facturatieschema.</value></data>
   <data name="EnergyReadingDailyTotal" xml:space="preserve"><value>Dagtotalen</value></data>
   <data name="EnergyReadingQuarterHour" xml:space="preserve"><value>Kwartiermetingen</value></data>
   <data name="EnergyCsvOnly" xml:space="preserve"><value>Kies een csv-bestand van maximaal 20 MB.</value></data>
@@ -1849,7 +1871,7 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="EnergyCsvIdentity" xml:space="preserve"><value>Ongeldig EAN of meternummer.</value></data>
   <data name="EnergyCsvTime" xml:space="preserve"><value>Geen geldig kwartier of dagtotaal in Belgische tijd.</value></data>
   <data name="EnergyCsvAmbiguousTime" xml:space="preserve"><value>Dubbelzinnig wintertijdkwartier; de juiste UTC-tijd is niet vast te stellen.</value></data>
-  <data name="EnergyCsvQuantity" xml:space="preserve"><value>Ongeldige hoeveelheid of geen kWh.</value></data>
+  <data name="EnergyCsvQuantity" xml:space="preserve"><value>Ongeldige hoeveelheid of verkeerde eenheid (kWh voor energie; kW voor piekvermogen).</value></data>
   <data name="EnergyCsvMissingQuantity" xml:space="preserve"><value>Leeg dagtotaal; er is geen gemeten hoeveelheid ingevuld.</value></data>
   <data name="EnergyCsvRegister" xml:space="preserve"><value>Afname/injectie of dag/nacht niet eenduidig.</value></data>
   <data name="EnergyCsvStatus" xml:space="preserve"><value>Onbekende of onbruikbare validatiestatus.</value></data>
@@ -1861,23 +1883,58 @@ Bedragen, bankteksten, saldi, aflossingen en importgeschiedenis blijven behouden
   <data name="EnergyConfirmReplace" xml:space="preserve"><value>Ik bevestig dat deze opgeslagen metingen worden vervangen.</value></data>
   <data name="EnergyConfirmImport" xml:space="preserve"><value>Geldige metingen opslaan</value></data>
   <data name="EnergyImportSaved" xml:space="preserve"><value>Meetgegevens opgeslagen.</value></data>
-  <data name="EnergyClearQuarterTitle" xml:space="preserve"><value>Eerdere kwartiermetingen wissen</value></data>
-  <data name="EnergyClearQuarterHelp" xml:space="preserve"><value>Kies een EAN en de periode die je wilt wissen. Dagtotalen en kwartiermetingen buiten die periode blijven bewaard. Wil je kwartiermetingen voor een nieuw contract behouden, kies dan een einddatum vóór de start van dat contract.</value></data>
-  <data name="EnergyClearQuarterInvalidRange" xml:space="preserve"><value>Kies een geldige begindatum en een einddatum op of na de begindatum.</value></data>
-  <data name="EnergyClearQuarterNone" xml:space="preserve"><value>Geen kwartiermetingen gevonden voor dit EAN in de gekozen periode.</value></data>
-  <data name="EnergyClearQuarterFinishImport" xml:space="preserve"><value>Rond de lopende import af of annuleer deze voordat je kwartiermetingen wist.</value></data>
-  <data name="EnergyClearQuarterPreview" xml:space="preserve"><value>Controleer wat wordt gewist</value></data>
-  <data name="EnergyClearQuarterConfirm" xml:space="preserve"><value>Wis {0} kwartiermetingen voor EAN {1} van {2} t/m {3}. Dagtotalen en metingen buiten dit EAN of deze periode blijven staan. Je kunt dit niet ongedaan maken; bewaar zo nodig de oorspronkelijke CSV.</value></data>
-  <data name="EnergyClearQuarterDelete" xml:space="preserve"><value>Kwartiermetingen wissen</value></data>
-  <data name="EnergyClearQuarterSaved" xml:space="preserve"><value>{0} kwartiermetingen gewist.</value></data>
-  <data name="EnergyMonthlyCosts" xml:space="preserve"><value>Energiekosten per maand</value></data>
+  <data name="EnergyClearReadingsTitle" xml:space="preserve"><value>Alle geïmporteerde metingen wissen</value></data>
+  <data name="EnergyClearReadingsHelp" xml:space="preserve"><value>Kies een EAN om alle kwartiermetingen, dagtotalen en maandpieken voor die aansluiting te wissen, ongeacht de datum.</value></data>
+  <data name="EnergyClearReadingsNone" xml:space="preserve"><value>Geen geïmporteerde metingen gevonden voor dit EAN.</value></data>
+  <data name="EnergyClearReadingsFinishImport" xml:space="preserve"><value>Rond de lopende import af of annuleer deze voordat je metingen wist.</value></data>
+  <data name="EnergyClearReadingsPreview" xml:space="preserve"><value>Controleer wat wordt gewist</value></data>
+  <data name="EnergyClearReadingsConfirm" xml:space="preserve"><value>Wis alle {0} geïmporteerde metingen voor EAN {1}: kwartiermetingen, dagtotalen en maandpieken. Andere EAN's, contracten, tarieven en ingevoerde kosten blijven bewaard. Je kunt dit niet ongedaan maken; bewaar zo nodig de oorspronkelijke CSV-bestanden.</value></data>
+  <data name="EnergyClearReadingsSaved" xml:space="preserve"><value>{0} geïmporteerde metingen gewist.</value></data>
+  <data name="EnergyYearOverview" xml:space="preserve"><value>Elektriciteitskosten per maand · {0}</value></data>
+  <data name="EnergyYearOverviewHelp" xml:space="preserve"><value>Vergelijk de bekende kosten voor dit EAN. De injectievergoeding wordt afgetrokken van het deelsubtotaal. Kies een maand voor details en meetdekking.</value></data>
+  <data name="EnergyGoToMonthDetails" xml:space="preserve"><value>Naar de gekozen maand</value></data>
+  <data name="EnergyMonthDetails" xml:space="preserve"><value>Maandkosten · {0}</value></data>
+  <data name="EnergySupplierFeeShort" xml:space="preserve"><value>Vaste leveranciersvergoeding (schatting)</value></data>
+  <data name="EnergyConsumptionDays" xml:space="preserve"><value>Dagen met afnamemetingen</value></data>
   <data name="EnergyCostsNote" xml:space="preserve"><value>Alleen bekende bedragen inclusief toepasselijke btw; — betekent ontbrekend of niet van toepassing. Dit is geen factuur of voorschot. Dagtotalen vullen ontbrekende kwartierdekking aan, maar dynamische afnamekosten tellen alleen gemeten kwartieren mee.</value></data>
-  <data name="EnergyNoReadings" xml:space="preserve"><value>Geen metingen voor deze maand. Zonder metingen wordt geen huishoudsubtotaal berekend.</value></data>
+  <data name="EnergyNoReadings" xml:space="preserve"><value>Geen metingen voor deze maand. Alleen handmatig ingevoerde maandkosten kunnen worden getoond.</value></data>
   <data name="EnergyCoverage" xml:space="preserve"><value>{0}/{1} kwartieren · {2} niet volledig geprijsd · {3} geschat of voorlopig</value></data>
   <data name="EnergyDailyCoverage" xml:space="preserve"><value>Dagtotalen gebruikt: {0}/{1} dagen · {2} onvolledig · {3} niet volledig geprijsd · {4} geschat of voorlopig</value></data>
   <data name="EnergyWeightedRate" xml:space="preserve"><value>Gewogen prijs voor geprijsde kWh: {0} €/kWh</value></data>
   <data name="EnergyPartialSubtotal" xml:space="preserve"><value>Deelsubtotaal</value></data>
-  <data name="EnergyOtherChargesMissing" xml:space="preserve"><value>Netkosten, capaciteitstarief, heffingen en andere niet ingevoerde kosten ontbreken.</value></data>
+  <data name="EnergyOtherChargesMissing" xml:space="preserve"><value>Ontbrekende metingen, tarieven en niet-ingevoerde kosten tellen niet mee.</value></data>
+  <data name="EnergyMonthlyCharges" xml:space="preserve"><value>Fluvius en overheidsheffingen</value></data>
+  <data name="EnergyMonthlyChargesNote" xml:space="preserve"><value>Handmatig maandbedrag dat de berekende netkosten en heffingen vervangt.</value></data>
+  <data name="EnergyMonthlyChargesEdit" xml:space="preserve"><value>Maandbedrag voor Fluvius en heffingen aanpassen</value></data>
+  <data name="EnergyMonthlyChargesEditHelp" xml:space="preserve"><value>Vul het totaal aan netkosten en overheidsheffingen in voor {0} en EAN {1}. Het vervangt voor deze maand de berekende netkosten en heffingen, niet de leverancierskosten. Laat leeg om de berekening te gebruiken.</value></data>
+  <data name="EnergyMonthlyChargesAmount" xml:space="preserve"><value>Bedrag in euro (inclusief eventuele btw)</value></data>
+  <data name="EnergyMonthlyChargesInvalid" xml:space="preserve"><value>Vul een bedrag vanaf nul in met maximaal twee decimalen.</value></data>
+  <data name="EnergyDailyChargesNote" xml:space="preserve"><value>Vaste netkosten en handmatige maandbedragen tellen alleen mee in het maandsubtotaal.</value></data>
+  <data name="EnergySurchargeRates" xml:space="preserve"><value>Toeslagen en nettarieven</value></data>
+  <data name="EnergySurchargeHelp" xml:space="preserve"><value>Stel per EAN een tariefperiode in. Gebruik bedragen inclusief btw; laat onbekende bedragen leeg en vul 0 alleen in als de kost niet van toepassing is. De tarieven per kWh gelden voor bruto-afname, niet voor injectie.</value></data>
+  <data name="EnergySurchargePreset" xml:space="preserve"><value>Gebruik Luminus en Fluvius Antwerpen 2026</value></data>
+  <data name="EnergySurchargePresetHelp" xml:space="preserve"><value>Voor een particulier bij Luminus en een digitale laagspanningsmeter met piekmeting in Fluvius Antwerpen. Controleer het voorstel; vul de geverifieerde overheidsheffingen zelf in.</value></data>
+  <data name="EnergySurchargeSource" xml:space="preserve"><value>Bron van de toeslagen</value></data>
+  <data name="EnergySurchargeRemove" xml:space="preserve"><value>Verwijder deze toeslagperiode. De geïmporteerde metingen en handmatige maandbedragen blijven bewaard.</value></data>
+  <data name="EnergyGreenWkk" xml:space="preserve"><value>Groene stroom en WKK</value></data>
+  <data name="EnergyGreenWkkRate" xml:space="preserve"><value>Groene stroom en WKK (€/kWh)</value></data>
+  <data name="EnergyNetworkUsage" xml:space="preserve"><value>Variabele netkosten</value></data>
+  <data name="EnergyNetworkUsageRate" xml:space="preserve"><value>Variabele netkosten (€/kWh)</value></data>
+  <data name="EnergyTaxUsage" xml:space="preserve"><value>Variabele overheidsheffingen</value></data>
+  <data name="EnergyTaxUsageRate" xml:space="preserve"><value>Overheidsheffingen (€/kWh)</value></data>
+  <data name="EnergyCapacity" xml:space="preserve"><value>Capaciteitstarief · schatting</value></data>
+  <data name="EnergyCapacityRate" xml:space="preserve"><value>Capaciteitstarief (€/kW per maand)</value></data>
+  <data name="EnergyDataCharge" xml:space="preserve"><value>Databeheer · toegerekend</value></data>
+  <data name="EnergyDataRate" xml:space="preserve"><value>Databeheer (€/jaar)</value></data>
+  <data name="EnergyUsageSurcharges" xml:space="preserve"><value>Variabele toeslagen</value></data>
+  <data name="EnergyFixedNetworkCharges" xml:space="preserve"><value>Vaste of handmatige netkosten</value></data>
+  <data name="EnergySurchargeCoverage" xml:space="preserve"><value>Variabele toeslagen volledig berekend voor {0}/{1} dagen.</value></data>
+  <data name="EnergyMonthlyChargeOverride" xml:space="preserve"><value>Het handmatige maandbedrag vervangt de berekende netkosten en overheidsheffingen. Wis dat bedrag om de berekening te gebruiken.</value></data>
+  <data name="EnergyMonthlyPeak" xml:space="preserve"><value>Maandpiek</value></data>
+  <data name="EnergyPeakImportRange" xml:space="preserve"><value>{0} maandpieken · {1} – {2}</value></data>
+  <data name="EnergyPeakMissing" xml:space="preserve"><value>Geen maandpiek voor deze maand. Importeer de Fluvius-export Piekvermogen om het capaciteitstarief te schatten.</value></data>
+  <data name="EnergyPeakCoverage" xml:space="preserve"><value>Maandpiek: {0} kW. Geschat gemiddelde: {1} kW op basis van {2}/12 maanden (minimum 2,5 kW per maand).</value></data>
+  <data name="EnergyPeakProvisional" xml:space="preserve"><value>Gebruikt voorlopige of nog lopende metingen.</value></data>
   <data name="EnergyDailyDetails" xml:space="preserve"><value>Details per dag en gegevensdekking</value></data>
   <data name="EnergyPublishedPrices" xml:space="preserve"><value>Gepubliceerde prijzen voor vandaag en morgen</value></data>
   <data name="EnergyPublishedNote" xml:space="preserve"><value>Belgische day-aheadprijzen voor dynamische afname. Alleen de gekozen datums worden naar de prijsbron verstuurd. De leveranciersprijs bevat enkel de ingevoerde formule en btw.</value></data>

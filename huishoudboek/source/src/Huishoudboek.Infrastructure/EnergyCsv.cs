@@ -8,11 +8,17 @@ namespace Huishoudboek.Infrastructure;
 
 public enum EnergyCsvProblem { Columns, Identity, Time, AmbiguousTime, Quantity, MissingQuantity, Register, Status, ConflictingRows }
 public sealed record EnergyCsvIssue(int Row, EnergyCsvProblem Problem);
-public sealed record EnergyCsvFile(IReadOnlyList<EnergyReading> Readings, int Rows, int DuplicateRows, int IssueCount, IReadOnlyList<EnergyCsvIssue> Issues);
+public sealed record EnergyCsvFile(IReadOnlyList<EnergyReading> Readings, int Rows, int DuplicateRows, int IssueCount, IReadOnlyList<EnergyCsvIssue> Issues)
+{
+    public IReadOnlyList<EnergyMonthlyPeak> Peaks { get; init; } = [];
+}
 public sealed record EnergyReadingChange(IReadOnlyList<EnergyReading> Before, IReadOnlyList<EnergyReading> After, bool NeedsReplacement);
+public sealed record EnergyPeakChange(EnergyMonthlyPeak? Before, EnergyMonthlyPeak After);
 public sealed record EnergyImportPreview(string Revision, EnergyCsvFile File, int Unchanged, IReadOnlyList<EnergyReadingChange> Changes)
 {
-    public int Conflicts => Changes.Count(c => c.NeedsReplacement);
+    public IReadOnlyList<EnergyPeakChange> PeakChanges { get; init; } = [];
+    public int ChangeCount => Changes.Count + PeakChanges.Count;
+    public int Conflicts => Changes.Count(c => c.NeedsReplacement) + PeakChanges.Count(c => c.Before != null);
 }
 
 public static class EnergyCsv
@@ -62,6 +68,7 @@ public static class EnergyCsv
             var issues = new List<EnergyCsvIssue>();
             var issueCount = 0;
             var parsed = new List<(EnergyReading Reading, int Row)>();
+            var parsedPeaks = new List<(EnergyMonthlyPeak Peak, int Row)>();
             void Issue(int row, EnergyCsvProblem problem) { issueCount++; if (issues.Count < 150) issues.Add(new(row, problem)); }
             while (csv.Read())
             {
@@ -78,6 +85,20 @@ public static class EnergyCsv
                 if (!EnergyTerms.ValidEan(point) || Cell(meter).Length is 0 or > 100) { Issue(row, EnergyCsvProblem.Identity); continue; }
                 if (!DateOnly.TryParseExact(Cell(date), "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day) || !BelgianEnergyTime.Supported(day))
                 { Issue(row, EnergyCsvProblem.Time); continue; }
+                if (Normalize(Cell(register)) == "piekvermogen")
+                {
+                    if (day.Day != 1 || !DateOnly.TryParseExact(Cell(dateEnd), "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var until)
+                        || until != day.AddMonths(1) || !Clock(Cell(start), day, false, out var a) || a.TimeOfDay != TimeSpan.Zero
+                        || !Clock(Cell(end), until, false, out var b) || b.TimeOfDay != TimeSpan.Zero)
+                    { Issue(row, EnergyCsvProblem.Time); continue; }
+                    if (Cell(volume).Length == 0) { Issue(row, EnergyCsvProblem.MissingQuantity); continue; }
+                    if (!Cell(unit).Equals("kW", StringComparison.OrdinalIgnoreCase) || !Quantity(Cell(volume), out var kw))
+                    { Issue(row, EnergyCsvProblem.Quantity); continue; }
+                    var peakReading = new EnergyMonthlyPeak { Ean = point, Meter = Cell(meter), Month = day, Kw = kw, Status = Cell(status) };
+                    if (!EnergyTerms.ValidMonthlyPeak(peakReading)) { Issue(row, EnergyCsvProblem.Status); continue; }
+                    parsedPeaks.Add((peakReading, row));
+                    continue;
+                }
                 var lastDay = day;
                 if (dateEnd >= 0 && (!DateOnly.TryParseExact(Cell(dateEnd), "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out lastDay) ||
                     lastDay < day || lastDay > day.AddDays(1))) { Issue(row, EnergyCsvProblem.Time); continue; }
@@ -97,7 +118,7 @@ public static class EnergyCsv
                     if (candidates.Length != 1) { Issue(row, candidates.Length > 1 ? EnergyCsvProblem.AmbiguousTime : EnergyCsvProblem.Time); continue; }
                     (from, to) = candidates[0];
                 }
-                if (!decimal.TryParse(Cell(volume), NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, Belgian, out var kwh) || kwh is < 0 or > 1_000_000 ||
+                if (!Quantity(Cell(volume), out var kwh) ||
                     (unit >= 0 && !Cell(unit).Equals("kWh", StringComparison.OrdinalIgnoreCase))) { Issue(row, EnergyCsvProblem.Quantity); continue; }
                 var detail = Cell(description);
                 var registerWords = Words(Cell(register));
@@ -128,13 +149,22 @@ public static class EnergyCsv
                 { foreach (var item in group) Issue(item.Row, EnergyCsvProblem.ConflictingRows); continue; }
                 foreach (var key in keys) { accepted.Add(key.First().Reading); duplicates += key.Count() - 1; }
             }
-            return new(accepted, rows, duplicates, issueCount, issues.OrderBy(i => i.Row).ToList());
+            var acceptedPeaks = new List<EnergyMonthlyPeak>();
+            foreach (var group in parsedPeaks.GroupBy(p => PeakSlot(p.Peak)))
+            {
+                var first = group.First().Peak;
+                if (group.Skip(1).Any(p => !Same(first, p.Peak)))
+                { foreach (var item in group) Issue(item.Row, EnergyCsvProblem.ConflictingRows); continue; }
+                acceptedPeaks.Add(first);
+                duplicates += group.Count() - 1;
+            }
+            return new(accepted, rows, duplicates, issueCount, issues.OrderBy(i => i.Row).ToList()) { Peaks = acceptedPeaks };
         }
         catch (Exception ex) when (ex is CsvHelperException or DecoderFallbackException)
         { throw new InvalidDataException("Ongeldig CSV-formaat of tekencodering. Gebruik de oorspronkelijke UTF-8-export van Fluvius."); }
     }
 
-    public static EnergyImportPreview Compare(EnergyCsvFile file, IEnumerable<EnergyReading> existing, string revision)
+    public static EnergyImportPreview Compare(EnergyCsvFile file, IEnumerable<EnergyReading> existing, string revision, IEnumerable<EnergyMonthlyPeak>? peaks = null)
     {
         var previous = existing.ToLookup(Slot);
         var changes = new List<EnergyReadingChange>();
@@ -162,9 +192,21 @@ public static class EnergyCsv
             }
             if (changed) changes.Add(new(before, after.Values.ToList(), conflict));
         }
-        return new(revision, file, unchanged, changes);
+        var oldPeaks = (peaks ?? []).ToDictionary(PeakSlot);
+        var peakChanges = new List<EnergyPeakChange>();
+        foreach (var peak in file.Peaks)
+        {
+            var before = oldPeaks.GetValueOrDefault(PeakSlot(peak));
+            if (before != null && Same(before, peak)) unchanged++;
+            else peakChanges.Add(new(before, peak));
+        }
+        return new(revision, file, unchanged, changes) { PeakChanges = peakChanges };
     }
 
+    private static bool Quantity(string text, out decimal quantity) =>
+        decimal.TryParse(text, NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, Belgian, out quantity) && quantity is >= 0 and <= 1_000_000;
+    private static (string Ean, DateOnly Month) PeakSlot(EnergyMonthlyPeak peak) => (peak.Ean, peak.Month);
+    private static bool Same(EnergyMonthlyPeak a, EnergyMonthlyPeak b) => a.Meter == b.Meter && a.Kw == b.Kw && a.Status.Equals(b.Status, StringComparison.OrdinalIgnoreCase);
     private static (string Ean, DateTime StartUtc, EnergyReadingResolution Resolution) Slot(EnergyReading r) => (r.Ean, r.StartUtc, r.Resolution);
     private static (EnergyDirection, EnergyRegister) Key(EnergyReading r) => (r.Direction, r.Register);
     private static bool Same(EnergyReading a, EnergyReading b) => a.Meter == b.Meter && a.Quantity == b.Quantity && a.Unit == b.Unit &&

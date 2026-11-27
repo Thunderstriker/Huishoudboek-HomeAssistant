@@ -4,24 +4,35 @@
 <PageTitle>@L["CalendarTitle"] · Huishoudboek</PageTitle>
 @{ var forecast = CashFlow.Project(State.Data, State.Today, State.Scope, minimumDays: 90); var selected = forecast.Accounts.FirstOrDefault(a => a.Account.Id == accountId) ?? forecast.Accounts.FirstOrDefault(); }
 
-<div class="page-heading">
+@if (selected == null)
+{
     <h1>@L["CalendarTitle"]</h1>
-    <a class="button" href="vooruitblik">@L["FinancialOutlook"]</a>
-</div>
-<section class="card">
-    @if (selected == null)
-    {
+    <section class="card">
         <p>@L["AddCurrentAccountNote"]</p>
-    }
-    else
-    {
-        <label>@L["Account"]<select value="@selected.Account.Id" @onchange="e => accountId = Guid.Parse(e.Value!.ToString()!)">@foreach (var account in forecast.Accounts) { <option value="@account.Account.Id">@account.Account.Name</option> }</select></label>
+    </section>
+}
+else
+{
+    <CashCalendar Forecast="selected">
+        <AccountPicker>
+            @if (forecast.Accounts.Count > 1)
+            {
+                <label class="calendar-account"><span>@L["Account"]</span><select value="@selected.Account.Id" @onchange="e => accountId = Guid.Parse(e.Value!.ToString()!)">
+                    @foreach (var account in forecast.Accounts) { <option value="@account.Account.Id">@account.Account.Name</option> }
+                </select></label>
+            }
+            else { <small>@selected.Account.Name</small> }
+        </AccountPicker>
+    </CashCalendar>
+    <details class="card" id="calendar-settings" open="@ShowSettings">
+        <summary>@L["CalendarSettings"]</summary>
         <SpendingForecastCategories />
-        <CashCalendar Forecast="selected" />
         <SpendingHabits Analysis="selected.Learning" />
-    }
-</section>
+    </details>
+}
+<p><a href="vooruitblik">@L["FinancialOutlook"] →</a></p>
 
 @code {
+    [SupplyParameterFromQuery(Name = "instellingen")] public bool ShowSettings { get; set; }
     private Guid? accountId;
 }

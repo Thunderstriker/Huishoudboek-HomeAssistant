@@ -42,7 +42,7 @@
 {
     var opening = FirstWeek.OpeningConfirmed(State.Data, account); var checkedBalance = FirstWeek.BalanceChecked(State.Data, account, State.Today);
     var review = State.Data.AccountReviews.FirstOrDefault(r => r.AccountId == account.Id);
-    <div class="account-check" @key="account.Id"><h3>@account.Name</h3>
+    <div class="account-check" id="@($"balance-checks-{account.Id:D}")" @key="account.Id"><h3>@account.Name</h3>
         <p>@L["OpeningDate"]: @account.OpeningDate.ToString("dd-MM-yyyy") · @L["OpeningBalanceEuro"]: @Money(account.OpeningBalance) <span class="badge">@L[opening ? "SetupDone" : "SetupTodo"]</span></p>
         <p>@L["CashBalance"] (@State.Today.ToString("dd-MM-yyyy")): <strong>@Money(Finance.Balance(State.Data, account, State.Today))</strong> <span class="badge">@L[checkedBalance ? "SetupDone" : "SetupTodo"]</span>
         @if (review?.CheckedThrough is { } date) { <small>@L["LastBalanceCheck", date.ToString("dd-MM-yyyy")]</small> }</p>
@@ -56,6 +56,7 @@
 <section class="card" id="owners"><div class="page-heading"><h2>@L["Owners"]</h2><button @onclick="() => Draft = EditorDraft.Owner(State)">+ @L["Owner"]</button></div>
 <div class="table-scroll"><table><thead><tr><th>@L["Name"]</th><th></th></tr></thead><tbody>@foreach (var o in State.Data.Owners) { <tr><td>@o.Name</td><td><button @onclick="() => Draft = EditorDraft.Owner(State, o)">@L["EditName"]</button></td></tr> }</tbody></table></div>
 <p class="muted">@L["SharedAccountsNote"]</p></section>
+<div class="actions"><a class="button" href="beleggingen">@L["InvestmentsTitle"]</a><a class="button" href="hypotheek">@L["Mortgage"]</a></div>
 <section class="card"><div class="page-heading"><h2>@L["SecuritiesValuations"]</h2><button @onclick="() => Draft = EditorDraft.Valuation(State)">+ @L["Valuation"]</button></div>
 <p class="muted">@L["SecuritiesNote"]</p>
 <div class="table-scroll"><table><thead><tr><th>@L["Date"]</th><th>@L["InvestmentAccount"]</th><th class="money">@L["SecuritiesValue"]</th><th></th></tr></thead><tbody>

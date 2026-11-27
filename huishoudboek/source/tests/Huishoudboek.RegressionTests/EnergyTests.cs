@@ -11,7 +11,9 @@ using Microsoft.Data.Sqlite;
 
 internal static class EnergyTests
 {
-    internal const string RemoveSchema20Tables = "DROP TABLE EnergyContract; DROP TABLE EnergyTariff; DROP TABLE EnergyIndexValue; DROP TABLE EnergyReading; DROP TABLE EnergyMarketPrice; DROP TABLE energy_tariff_documents;";
+    private const string RemoveSchema24RatesAndPeaks = "DROP TABLE EnergySurchargeRates; DROP TABLE EnergyMonthlyPeak;";
+    internal const string RemoveSchema23Charges = RemoveSchema24RatesAndPeaks + "DROP TABLE EnergyMonthlyCharge;";
+    internal const string RemoveSchema20Tables = RemoveSchema23Charges + "DROP TABLE EnergyContract; DROP TABLE EnergyTariff; DROP TABLE EnergyIndexValue; DROP TABLE EnergyReading; DROP TABLE EnergyMarketPrice; DROP TABLE energy_tariff_documents;";
     internal const string RemoveSchema22Resolution = "DROP INDEX ix_energy_reading_slot; ALTER TABLE EnergyReading DROP COLUMN Resolution; " +
         "CREATE UNIQUE INDEX ix_energy_reading_slot ON EnergyReading(Ean, StartUtc, Direction, Register);";
     private const string Ean = "000000000000000001";
@@ -56,6 +58,33 @@ internal static class EnergyTests
             Equal<decimal?>(null, report.EarlyEndFee); Equal<decimal?>(2m, report.AllocatedFee); Equal(2, report.FeeDays);
             var noData = EnergyCosts.Calculate(new([later], [t], []), later, November, November.AddDays(29), [], []);
             True(!noData.HasReadings); Equal<decimal?>(null, noData.PartialSubtotal);
+        });
+        yield return ("Fluvius charges and levies add once per EAN and month, not to daily costs", () =>
+        {
+            var june = new DateOnly(2026, 6, 1);
+            var july = june.AddMonths(1);
+            var c = Contract() with { SupplyStart = june };
+            var t = Tariff(c) with { From = june, ConsumptionRate = 1m, FeeAmount = 30m, FeePeriod = EnergyFeePeriod.Monthly,
+                FeeRule = EnergyFeeRule.ProRata, Injection = EnergyInjection.Fixed, InjectionRate = 1m };
+            var other = Contract() with { Ean = "000000000000000002" };
+            var readings = new[] { Daily(june, 92.11m), Daily(june, 2m, direction: EnergyDirection.Injection) };
+            var charges = new EnergyMonthlyCharge { Ean = c.Ean, Month = june, Amount = 14.37m };
+            var settings = new EnergySettings([c, other], [t], []) { MonthlyCharges = [charges, charges with { Id = Guid.NewGuid(), Month = july, Amount = 13.89m }] };
+            EnergyTerms.Validate(settings);
+
+            var baseline = EnergyCosts.Calculate(settings with { MonthlyCharges = [] }, c, june, july, readings, []);
+            var report = EnergyCosts.Calculate(settings, c, june, july, readings, []);
+            Equal<decimal?>(120.11m, baseline.PartialSubtotal);
+            Equal<decimal?>(134.48m, report.PartialSubtotal);
+            Equal<decimal?>(14.37m, report.MonthlyCharges);
+            True(report.Days.SequenceEqual(baseline.Days));
+
+            var julyReport = EnergyCosts.Calculate(settings, c, july, july, [], []);
+            True(!julyReport.HasReadings);
+            Equal<decimal?>(13.89m, julyReport.PartialSubtotal);
+            Equal<decimal?>(null, EnergyCosts.Calculate(settings, c, july.AddMonths(1), july.AddMonths(1), [], []).MonthlyCharges);
+            Equal<decimal?>(null, EnergyCosts.Calculate(settings, other, june, july, [], []).MonthlyCharges);
+            Throws<InvalidDataException>(() => EnergyTerms.Validate(settings with { MonthlyCharges = [charges, charges with { Id = Guid.NewGuid() }] }));
         });
         yield return ("Energy dynamic prices preserve negative and zero values and match only the configured time unit", () =>
         {
@@ -220,6 +249,39 @@ internal static class EnergyTests
             Equal((November.AddDays(1), November.AddDays(1)), coordinator.PlanEnergyFetch(view.Revision, c.Id, November, true, November).Single());
             True(view.Published.Single().Slots.All(p => p.Market == null));
         }));
+        yield return ("Energy year overview compares the selected EAN across supplier changes and prices the correct months", () => InDirectory(directory =>
+        {
+            using var coordinator = new AdministrationCoordinator(directory, initialize: true);
+            var june = new DateOnly(2026, 6, 1);
+            var july = june.AddMonths(1);
+            var today = july.AddDays(1);
+            var fixedContract = Contract() with { SupplyStart = june, SupplyEnd = july.AddDays(-1) };
+            var dynamicContract = Contract() with { SupplyStart = july };
+            var otherContract = Contract() with { Ean = "000000000000000002", SupplyStart = june };
+            var view = coordinator.ReadEnergy(null, june, today);
+            coordinator.SaveEnergy(view.Revision, fixedContract, Tariff(fixedContract) with { From = june, ConsumptionRate = .50m, FeeAmount = null }, null, false);
+            view = coordinator.ReadEnergy(fixedContract.Id, june, today);
+            coordinator.SaveEnergy(view.Revision, dynamicContract, Tariff(dynamicContract) with { From = july, Pricing = EnergyPricing.Dynamic, FeeAmount = null,
+                MarketSeries = EnergyMarketSeries.BelgianDayAhead, MarketCoefficient = .1m, MarketOffset = 2m }, null, false);
+            view = coordinator.ReadEnergy(dynamicContract.Id, july, today);
+            coordinator.SaveEnergy(view.Revision, otherContract, null, null, false);
+            var readings = new[] { Daily(june, 10), Reading(july, 0, 4), Daily(june, 100) with { Ean = otherContract.Ean } };
+            coordinator.CommitEnergy(coordinator.PreviewEnergy(new(readings, readings.Length, 0, 0, [])), false);
+            view = coordinator.ReadEnergy(dynamicContract.Id, june, today);
+            coordinator.SaveEnergyPrices(view.Revision, [Price(BelgianEnergyTime.MidnightUtc(july), 15, 100m)]);
+            coordinator.SaveEnergyMonthlyCharge(view.Revision, fixedContract.Ean, june, 14.37m);
+
+            view = coordinator.ReadEnergy(dynamicContract.Id, june, today);
+            True(view.Months.Select(m => m.Month.Month).SequenceEqual(Enumerable.Range(1, 7)));
+            Equal<decimal?>(null, view.Months[0].Costs.PartialSubtotal);
+            Equal<decimal?>(19.37m, view.Report!.PartialSubtotal);
+            True(!view.CanFetchHistorical);
+            var julyView = view with { Month = july };
+            Equal<decimal?>(.48m, julyView.Report!.PartialSubtotal);
+            Equal(2, julyView.Report.Days.Count);
+            True(julyView.CanFetchHistorical);
+            Equal(12, coordinator.ReadEnergy(fixedContract.Id, june.AddYears(-1), today).Months.Count);
+        }));
         yield return ("Energy BasicFix PDF prefill extracts labeled rates and formulas, never the illustrative index", () =>
         {
             string[] pages = ["""
@@ -252,6 +314,47 @@ internal static class EnergyTests
             Equal(card.DayRate, wrapped.DayRate); Equal(card.SingleInjection, wrapped.SingleInjection); Equal(card.NightInjection, wrapped.NightInjection);
             Equal<decimal?>(null, LuminusTariffCard.Parse([pages[0].Replace("Energieprijs", "Onbekende rij")])!.NightRate);
             True(LuminusTariffCard.Parse([pages[0].Replace("Vlaanderen", "Wallonië")]) == null);
+        });
+        yield return ("Energy BasicFix PDF prefill supports the shared residential layout without taking regional or example charges", () =>
+        {
+            string[] pages = ["""
+                Luminus BasicFix Elektriciteit                                         Verbruikers: residentieel
+                                                                                       Tarief: vast
+                (augustus 2025)
+                6% BTW
+                Luminus energieprijzen (incl. BTW)1:
+                                           Enkelvoudige     Tweevoudige          Exclusief
+                                               meter            meter            nacht meter       VL     WAL
+                                                             Dag       Nacht
+                Geleverde energie (c€/kWh)     17,91        22,55      14,22       16,70         4,21     5,22
+                Vergoeding geïnjecteerde energie (c€/kWh)    2,25       2,26        2,27
+                Vaste vergoeding (€/jaar)      26,00             27,00              -
+                BTW bedraagt 0%.
+                """, """
+                Tariefformule voor de vergoeding van geïnjecteerde energie
+                (excl. BTW):
+                Index (excl. BTW): Belpex = 99,99 €/MWh (voorbeeld); Dag (dagmeter) = 0,0428              Netkosten
+                x Belpex - 0,5467; Dag (dag- en nachtmeter) = 0,0333 x Belpex + 0,4444; Nacht = 0,0123 x Belpex
+                - 0,4567;
+                Uw tarief wordt maandelijks geïndexeerd.
+                In het eerste jaar na de start van levering is de klant de jaarlijkse vaste vergoeding verschuldigd
+                in verhouding tot de werkelijke verdere duur van onafgebroken levering
+                De vaste vergoeding wordt aangerekend op de afrekenings- of slotfactuur.
+                """];
+            var card = LuminusTariffCard.Parse(pages)!;
+            Equal("BasicFix Elektriciteit", card.Product); Equal<DateOnly?>(new DateOnly(2025, 8, 1), card.IssueMonth);
+            Equal<decimal?>(.1791m, card.SingleRate); Equal<decimal?>(.2255m, card.DayRate); Equal<decimal?>(.1422m, card.NightRate);
+            Equal<decimal?>(26m, card.SingleAnnualFee); Equal<decimal?>(27m, card.DayNightAnnualFee);
+            Equal<decimal?>(6m, card.ConsumptionVat); Equal<decimal?>(0m, card.InjectionVat);
+            Equal<(decimal, decimal)?>((.0428m, -.5467m), card.SingleInjection);
+            Equal<(decimal, decimal)?>((.0333m, .4444m), card.DayInjection);
+            Equal<(decimal, decimal)?>((.0123m, -.4567m), card.NightInjection);
+            True(card.FirstYearRule && card.SettlementBill);
+
+            True(LuminusTariffCard.Parse([pages[0] + "\nRegio: Wallonië", pages[1]]) == null);
+            True(LuminusTariffCard.Parse([pages[0].Replace("Tarief: vast", "Tarief: variabel"), pages[1]]) == null);
+            True(LuminusTariffCard.Parse([pages[0].Replace("Luminus BasicFix", "BasicFix"), pages[1]]) == null);
+            Equal<(decimal, decimal)?>(null, LuminusTariffCard.Parse([pages[0]])!.SingleInjection);
         });
         yield return ("Energy schema 19 migration takes safety copy; SQLite backup restores terms, readings, prices and optional PDF without bank changes", () => InDirectory(directory =>
         {
@@ -290,10 +393,10 @@ internal static class EnergyTests
             var path = Path.Combine(directory, "energy.db"); var initial = new SqliteHouseholdStore(path);
             var quarter = Csv(Row("01-11-2026", "00:00", "00:15", "1"));
             initial.CommitEnergyImport(quarter, false);
-            Sql(path, RemoveSchema22Resolution + "PRAGMA user_version=21;");
+            Sql(path, RemoveSchema23Charges + RemoveSchema22Resolution + "PRAGMA user_version=21;");
 
             var store = new SqliteHouseholdStore(path, allowCreate: false);
-            var old = Directory.GetFiles(directory, "*.voor-versie-22-*.db").Single();
+            var old = Directory.GetFiles(directory, $"*.voor-versie-{SqliteHouseholdStore.SchemaVersion}-*.db").Single();
             var target = new SqliteHouseholdStore(Path.Combine(directory, "target.db"));
             List<EnergyReading> Read(SqliteHouseholdStore db) => db.ReadEnergyReadings(Ean, November, November.AddDays(1));
             target.Restore(old); Equal(quarter.Readings.Single(), Read(target).Single());
@@ -318,39 +421,170 @@ internal static class EnergyTests
             var backup = Path.Combine(directory, "backup.db"); store.Backup(backup); target.Restore(backup);
             True(Read(store).SequenceEqual(Read(target)));
         }));
-        yield return ("Clearing quarters previews the exact Belgian-date range, protects other readings and rejects stale confirmation", () => InDirectory(directory =>
+        yield return ("Schema 23 preserves existing history and backs up monthly charges, including zero and edits across contracts", () => InDirectory(directory =>
+        {
+            var path = Path.Combine(directory, "huishoudboek.db"); var initial = new SqliteHouseholdStore(path);
+            var c = Contract() with { SupplyEnd = November.AddDays(14) };
+            var next = Contract() with { SupplyStart = November.AddDays(15) };
+            var t = Tariff(c);
+            initial.SaveEnergySettings(new([c, next], [t], []));
+            var day = Daily(November, 7);
+            initial.CommitEnergyImport(new([day], 1, 0, 0, []), false);
+            Sql(path, RemoveSchema23Charges + "PRAGMA user_version=22;");
+
+            using var coordinator = new AdministrationCoordinator(directory, claim: true, allowUpgrade: true);
+            var store = new SqliteHouseholdStore(path, allowCreate: false);
+            var old = Directory.GetFiles(directory, $"*.voor-versie-{SqliteHouseholdStore.SchemaVersion}-*.db").Single();
+            var view = coordinator.ReadEnergy(c.Id, November, November);
+            Equal<decimal?>(null, view.Report!.MonthlyCharges);
+            Equal(t, view.Settings.Tariffs.Single());
+            Equal(day, store.ReadEnergyReadings(Ean, November, November.AddMonths(1)).Single());
+            Throws<InvalidDataException>(() => coordinator.SaveEnergyMonthlyCharge(view.Revision, Ean, November, 14.371m));
+            Throws<InvalidDataException>(() => coordinator.SaveEnergyMonthlyCharge(view.Revision, Ean, November, -1m));
+            Throws<InvalidDataException>(() => coordinator.SaveEnergyMonthlyCharge(view.Revision, Ean, November.AddDays(1), 14.37m));
+            coordinator.SaveEnergyMonthlyCharge(view.Revision, Ean, November, 14.37m);
+            Throws<AdministrationConflictException>(() => coordinator.SaveEnergyMonthlyCharge(view.Revision, Ean, November, null));
+            view = coordinator.ReadEnergy(next.Id, November, November);
+            Equal<decimal?>(14.37m, view.Report!.MonthlyCharges);
+            var charge = view.Settings.MonthlyCharges.Single();
+
+            var backup = Path.Combine(directory, "backup.db"); store.Backup(backup);
+            var target = new SqliteHouseholdStore(Path.Combine(directory, "target.db")); target.Restore(backup);
+            Equal(charge, target.ReadEnergySettings().MonthlyCharges.Single());
+            target.Restore(old);
+            Equal(0, target.ReadEnergySettings().MonthlyCharges.Count);
+            Equal(day, target.ReadEnergyReadings(Ean, November, November.AddMonths(1)).Single());
+
+            coordinator.SaveEnergyMonthlyCharge(view.Revision, Ean, November, 0m);
+            view = coordinator.ReadEnergy(next.Id, November, November);
+            Equal<decimal?>(0m, view.Report!.MonthlyCharges);
+            Equal(charge.Id, view.Settings.MonthlyCharges.Single().Id);
+            coordinator.SaveEnergyMonthlyCharge(view.Revision, Ean, November, null);
+            Equal(0, store.ReadEnergySettings().MonthlyCharges.Count);
+        }));
+        yield return ("Fluvius peak CSV keeps monthly kW and provisional status separate from energy, rejects bad periods and detects duplicates", () =>
+        {
+            var first = PeakRow("01-10-2026", "01-11-2026", "3,111");
+            var latest = PeakRow("01-11-2026", "01-12-2026", "6,008", "Voorlopig");
+            var file = ReadCsv(FluviusHeader, first, first, latest, FluviusRow("01-11-2026", "02-11-2026", "2,5"),
+                PeakRow("01-09-2026", "01-10-2026", "3,25", unit: "kWh"), PeakRow("01-08-2026", "31-08-2026", "2,5"));
+            Equal(2, file.Peaks.Count); Equal(1, file.Readings.Count); Equal(1, file.DuplicateRows); Equal(2, file.IssueCount);
+            Equal(3.111m, file.Peaks[0].Kw); Equal(November, file.Peaks[1].Month); Equal("Voorlopig", file.Peaks[1].Status);
+            var conflicting = ReadCsv(FluviusHeader, first, first.Replace("3,111", "3,112"));
+            Equal(0, conflicting.Peaks.Count); True(conflicting.Issues.All(i => i.Problem == EnergyCsvProblem.ConflictingRows));
+        });
+        yield return ("Surcharges price gross daily consumption once; capacity uses available peak history with the monthly floor and preserves manual overrides", () =>
+        {
+            var c = Contract() with { SupplyStart = November.AddMonths(-12) };
+            var t = Tariff(c) with { FeeAmount = null, Injection = EnergyInjection.Fixed, InjectionRate = .10m };
+            var rate = new EnergySurchargeRates { Ean = Ean, From = November, Through = November.AddMonths(1).AddDays(-1), Source = "Synthetic",
+                SupplierPerKwh = .0156m, NetworkPerKwh = .05m, TaxPerKwh = .04m, CapacityPerKwMonth = 4m, DataPerYear = 18.25m };
+            var settings = new EnergySettings([c], [t], []) { SurchargeRates = [rate] };
+            EnergyTerms.Validate(settings);
+            Throws<InvalidDataException>(() => EnergyTerms.Validate(settings with { SurchargeRates = [rate, rate with { Id = Guid.NewGuid() }] }));
+            EnergyReading[] readings = [Daily(November, 7), Daily(November, 3, EnergyRegister.Night), Reading(November, 0, 2),
+                Daily(November, 2, direction: EnergyDirection.Injection)];
+            EnergyMonthlyPeak[] peaks = [Peak(November, 3m), Peak(November.AddMonths(-1), 1m), Peak(November.AddMonths(-12), 9m),
+                Peak(November, 8m) with { Ean = "000000000000000002" }];
+            var report = EnergyCosts.Calculate(settings, c, November, November.AddMonths(1), readings, [], peaks);
+            Equal(new EnergyPeakEstimate(3m, 2.75m, 2, false), report.Peak);
+            Equal(new EnergyUsageSurcharges(.156m, .5m, .4m), report.UsageSurcharges);
+            Equal<decimal?>(11m, report.CapacityCharge); Equal<decimal?>(1.5m, report.DataCharge);
+            Equal(1, report.CoveredSurchargeDays);
+            Equal(report.Consumption.Amount - .20m + 1.056m + 11m + 1.5m, report.PartialSubtotal);
+            Equal<decimal?>(null, EnergyCosts.Calculate(settings, c, November, November.AddMonths(1), readings, [], peaks.Skip(1)).CapacityCharge);
+            True(EnergyCosts.Calculate(settings, c, November, November.AddDays(20), readings, [], peaks).Peak!.Provisional);
+
+            settings.MonthlyCharges.Add(new() { Ean = Ean, Month = November, Amount = 0m });
+            var manual = EnergyCosts.Calculate(settings, c, November, November.AddMonths(1), readings, [], peaks);
+            Equal(new EnergyUsageSurcharges(.156m, null, null), manual.UsageSurcharges);
+            Equal<decimal?>(null, manual.CapacityCharge); Equal<decimal?>(null, manual.DataCharge);
+            Equal(report.Consumption.Amount - .20m + .156m, manual.PartialSubtotal);
+        });
+        yield return ("Schema 24 migrates and backs up surcharge periods and peaks; confirmed peak corrections and clearing are scoped by EAN", () => InDirectory(directory =>
+        {
+            var path = Path.Combine(directory, "huishoudboek.db");
+            var initial = new SqliteHouseholdStore(path);
+            var c = Contract(); var tariff = Tariff(c);
+            var manual = new EnergyMonthlyCharge { Ean = Ean, Month = November.AddMonths(-1), Amount = 12.5m };
+            initial.SaveEnergySettings(new([c], [tariff], []) { MonthlyCharges = [manual] });
+            Sql(path, RemoveSchema24RatesAndPeaks + "PRAGMA user_version=23;");
+            using var coordinator = new AdministrationCoordinator(directory, claim: true, allowUpgrade: true);
+            var store = new SqliteHouseholdStore(path, allowCreate: false);
+            var old = Directory.GetFiles(directory, "*.voor-versie-24-*.db").Single();
+            var view = coordinator.ReadEnergy(c.Id, November, November.AddMonths(1));
+            Equal(manual, view.Settings.MonthlyCharges.Single());
+            var rate = new EnergySurchargeRates { Ean = Ean, From = November, Through = November.AddMonths(1), SupplierPerKwh = .0156m, Source = "Synthetic" };
+            coordinator.SaveEnergySurchargeRates(view.Revision, rate);
+            Throws<AdministrationConflictException>(() => coordinator.SaveEnergySurchargeRates(view.Revision, rate, true));
+            const string otherEan = "000000000000000002";
+            var peak = Peak(November, 3m);
+            var batch = new EnergyCsvFile([Daily(November, 1)], 3, 0, 0, []) { Peaks = [peak, Peak(November, 2m) with { Ean = otherEan }] };
+            var preview = coordinator.PreviewEnergy(batch);
+            Equal(3, preview.ChangeCount); Equal(0, preview.Conflicts);
+            coordinator.CommitEnergy(preview, false);
+            Equal(3, coordinator.PreviewEnergy(batch).Unchanged);
+            var changed = new EnergyCsvFile([], 1, 0, 0, []) { Peaks = [peak with { Kw = 4m }] };
+            var correction = coordinator.PreviewEnergy(changed);
+            Equal(1, correction.Conflicts);
+            Throws<InvalidOperationException>(() => coordinator.CommitEnergy(correction, false));
+            coordinator.CommitEnergy(correction, true);
+            view = coordinator.ReadEnergy(c.Id, November, November.AddMonths(1));
+            Equal(4m, view.Report!.Peak!.MonthKw);
+
+            var backup = Path.Combine(directory, "rates-peaks.db"); store.Backup(backup);
+            var target = new SqliteHouseholdStore(Path.Combine(directory, "target.db")); target.Restore(backup);
+            Equal(rate, target.ReadEnergySettings().SurchargeRates.Single());
+            Equal(peak with { Kw = 4m }, target.ReadEnergyPeaks(Ean, November, November.AddMonths(1)).Single());
+            target.Restore(old);
+            Equal(0, target.ReadEnergySettings().SurchargeRates.Count); Equal(manual, target.ReadEnergySettings().MonthlyCharges.Single());
+            Equal(0, target.ReadEnergyPeaks(Ean, November, November.AddMonths(1)).Count);
+            Equal(2, coordinator.ClearEnergyReadings(coordinator.PreviewClearEnergyReadings(Ean)));
+            Equal(0, store.CountEnergyReadings(Ean)); Equal(1, store.CountEnergyReadings(otherEan));
+            Equal(rate, store.ReadEnergySettings().SurchargeRates.Single());
+        }));
+        yield return ("Clearing an EAN deletes all imported readings, protects other data and rejects stale confirmation", () => InDirectory(directory =>
         {
             using var coordinator = new AdministrationCoordinator(directory, initialize: true);
             var store = new SqliteHouseholdStore(Path.Combine(directory, "huishoudboek.db"));
-            var day = new DateOnly(2026, 10, 25); // 25-hour day, and the next day can belong to a newer contract.
+            var day = new DateOnly(2026, 10, 25);
             const string otherEan = "000000000000000002";
-            var before = Reading(day.AddDays(-1), 95 * 15, 1);
+            var before = Reading(day.AddMonths(-1), 0, 1) with { Meter = "older-meter" };
             var first = Reading(day, 0, 1);
             var last = Reading(day, 99 * 15, 1);
-            var after = Reading(day.AddDays(1), 0, 1);
-            var other = Reading(day, 0, 1) with { Ean = otherEan };
+            var after = Reading(day.AddMonths(1), 0, 1, direction: EnergyDirection.Injection);
+            var other = Daily(day, 4) with { Ean = otherEan };
             var daily = Daily(day, 7);
             coordinator.CommitEnergy(coordinator.PreviewEnergy(new([before, first, last, after, other, daily], 6, 0, 0, [])), false);
 
             var view = coordinator.ReadEnergy(null, new(2026, 10, 1), day.AddDays(1));
-            True(view.QuarterHourConnections.SequenceEqual([Ean, otherEan])); // No contract is required to remove previously imported readings.
-            var cleanup = coordinator.PreviewClearEnergyQuarterHours(Ean, day, day);
-            Equal(2, cleanup.Count);
-            var empty = coordinator.PreviewClearEnergyQuarterHours(Ean, day.AddDays(2), day.AddDays(2));
+            True(view.ReadingConnections.SequenceEqual([Ean, otherEan])); // Daily-only EANs appear even without a contract.
+            var c = Contract(); var t = Tariff(c);
+            coordinator.SaveEnergy(view.Revision, c, t, null, false);
+            view = coordinator.ReadEnergy(c.Id, November, November);
+            coordinator.SaveEnergyMonthlyCharge(view.Revision, Ean, November, 13.89m);
+            var cleanup = coordinator.PreviewClearEnergyReadings(Ean);
+            Equal(5, cleanup.Count);
+            var empty = coordinator.PreviewClearEnergyReadings("000000000000000003");
             Equal(0, empty.Count);
-            Throws<InvalidOperationException>(() => coordinator.ClearEnergyQuarterHours(empty));
-            Throws<InvalidDataException>(() => coordinator.PreviewClearEnergyQuarterHours(Ean, day.AddDays(1), day));
-            Throws<InvalidOperationException>(() => store.ClearQuarterHourReadings(Ean, day, day, 3));
-            Equal(2, store.CountQuarterHourReadings(Ean, day, day));
+            Throws<InvalidOperationException>(() => coordinator.ClearEnergyReadings(empty));
+            Throws<InvalidDataException>(() => coordinator.PreviewClearEnergyReadings("invalid"));
+            Throws<InvalidOperationException>(() => store.ClearEnergyReadings(Ean, 4));
+            Equal(5, store.CountEnergyReadings(Ean));
 
             var newReading = new EnergyCsvFile([Reading(day, 15, 2)], 1, 0, 0, []);
             coordinator.CommitEnergy(coordinator.PreviewEnergy(newReading), false);
-            Throws<AdministrationConflictException>(() => coordinator.ClearEnergyQuarterHours(cleanup));
+            Throws<AdministrationConflictException>(() => coordinator.ClearEnergyReadings(cleanup));
             var import = coordinator.PreviewEnergy(newReading);
-            Equal(3, coordinator.ClearEnergyQuarterHours(coordinator.PreviewClearEnergyQuarterHours(Ean, day, day)));
+            Equal(6, coordinator.ClearEnergyReadings(coordinator.PreviewClearEnergyReadings(Ean)));
             Throws<AdministrationConflictException>(() => coordinator.CommitEnergy(import, false));
-            True(store.ReadEnergyReadings(Ean, day.AddDays(-1), day.AddDays(2)).SequenceEqual([before, daily, after]));
+            Equal(0, store.CountEnergyReadings(Ean));
             Equal(other, store.ReadEnergyReadings(otherEan, day, day.AddDays(1)).Single());
+            view = coordinator.ReadEnergy(c.Id, November, November.AddMonths(1));
+            True(view.ReadingConnections.SequenceEqual([otherEan]));
+            True(!view.Report!.HasReadings);
+            Equal<decimal?>(13.89m, view.Report.PartialSubtotal);
+            Equal(c, view.Settings.Contracts.Single()); Equal(t, view.Settings.Tariffs.Single());
         }));
         yield return ("Energy cost UI translates coverage and labels all incomplete charges as a partial subtotal", () =>
         {
@@ -359,13 +593,27 @@ internal static class EnergyTests
             {
                 var c = Contract(); var r = EnergyCosts.Calculate(new([c], [Tariff(c)], []), c, November, November, [Reading(November, 0, 0)], []);
                 var totals = EnergyCosts.Calculate(new([c], [Tariff(c)], []), c, November, November, [Daily(November, 5), Daily(November, 3, EnergyRegister.Night)], []);
+                var chargesOnly = EnergyCosts.Calculate(new([c], [Tariff(c)], []) { MonthlyCharges = [new() { Ean = c.Ean, Month = November, Amount = 14.37m }] },
+                    c, November, November, [], []);
                 foreach (var name in new[] { "nl-NL", "en-US" })
                 {
                     CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(name);
-                    var html = WebUtility.HtmlDecode(UxTests.Render<EnergyCostTable>(new WebState(null!), new Dictionary<string, object?> { ["Report"] = r }));
+                    string RenderCosts(EnergyCostReport report) => WebUtility.HtmlDecode(UxTests.Render<EnergyCostTable>(new WebState(null!),
+                        new Dictionary<string, object?> { ["Month"] = November, ["Report"] = report }));
+                    var html = RenderCosts(r);
                     True(html.Contains(UiCulture.Text("EnergyPartialSubtotal"))); True(html.Contains(UiCulture.Text("EnergyOtherChargesMissing"))); True(html.Contains("1/96"));
-                    var daily = WebUtility.HtmlDecode(UxTests.Render<EnergyCostTable>(new WebState(null!), new Dictionary<string, object?> { ["Report"] = totals }));
+                    var daily = RenderCosts(totals);
                     True(daily.Contains(UiCulture.Text("EnergyDailyCoverage", 1, 1, 0, 0, 0))); True(!daily.Contains("1/96"));
+                    var charges = RenderCosts(chargesOnly);
+                    True(charges.Contains(UiCulture.Text("EnergyMonthlyCharges"))); True(charges.Contains(UiCulture.Text("EnergyNoReadings")));
+                    True(charges.Contains(14.37m.ToString("0.00", UiCulture.Culture)));
+                    var year = WebUtility.HtmlDecode(UxTests.Render<EnergyMonthlyOverview>(new WebState(null!), new Dictionary<string, object?>
+                    {
+                        ["Month"] = November,
+                        ["Months"] = new EnergyMonthReport[] { new(November.AddMonths(-1), totals, false), new(November, chargesOnly, false) }
+                    }));
+                    True(year.Contains(UiCulture.Text("EnergyYearOverview", November.Year))); True(year.Contains("aria-current=\"true\""));
+                    True(year.Contains("8 kWh")); True(year.Contains("0/1")); True(year.Contains("1/1"));
                 }
             }
             finally { CultureInfo.CurrentUICulture = previous; }
@@ -388,6 +636,9 @@ internal static class EnergyTests
         Reading(day, 0, amount, register, direction) with { Resolution = EnergyReadingResolution.DailyTotal, EndUtc = BelgianEnergyTime.MidnightUtc(day.AddDays(1)) };
     private static string FluviusRow(string day, string end, string amount, string register = "Afname Dag", string status = "Uitgelezen", string until = "00:00:00") =>
         $"{day};00:00:00;{end};{until};=\"{Ean}\";meter-a;Digitale meter;{register};{amount};kWh;{status};";
+    private static EnergyMonthlyPeak Peak(DateOnly month, decimal kw) => new() { Ean = Ean, Meter = "meter-a", Month = month, Kw = kw, Status = "Uitgelezen" };
+    private static string PeakRow(string month, string end, string amount, string status = "Uitgelezen", string unit = "kW") =>
+        $"{month};00:00:00;{end};00:00:00;=\"{Ean}\";meter-a;Digitale meter;Piekvermogen;{amount};{unit};{status};";
     private static EnergyCsvFile Csv(params string[] rows) => ReadCsv(Header, rows);
     private static EnergyCsvFile ReadCsv(string header, params string[] rows)
     {

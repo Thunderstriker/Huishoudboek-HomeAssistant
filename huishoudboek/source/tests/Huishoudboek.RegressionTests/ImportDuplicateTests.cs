@@ -16,6 +16,25 @@ internal static class ImportDuplicateTests
 
     public static IEnumerable<(string Name, Action Run)> All()
     {
+        yield return ("Unrecognized statement headers can be mapped without creating a committable preview", () => InDirectory(directory =>
+        {
+            using var f = new ServiceFixture(directory);
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes("Posted;Shop name;Total\n2026-10-25;Market;-10\n2026-11-05;Shop;-20\n"));
+            var upload = f.Imports.UploadAsync(stream, "synthetic.csv", CancellationToken.None).GetAwaiter().GetResult();
+            var before = f.Coordinator.Read();
+            var request = new PreviewRequest(upload.UploadId, f.AccountId, DateOnly.MinValue, DateOnly.MaxValue, AllowIncompleteMapping: true);
+            var incomplete = f.Imports.Preview(request, before);
+            True(incomplete.RequiresMapping); Equal(Guid.Empty, incomplete.PreviewId);
+            Equal("Posted", incomplete.Headers[0]); Equal(0, incomplete.Rows.Count);
+            Throws(() => f.Imports.Commit(new(incomplete.PreviewId, [], true), before.Revision, f.Coordinator, Today));
+            var mapped = f.Imports.Preview(request with { Profile = Profile with { DateColumn = "Posted", DescriptionColumn = "Shop name", AmountColumn = "Total", BalanceColumn = "" } }, before);
+            True(!mapped.RequiresMapping);
+            Equal<DateOnly?>(new(2026, 10, 25), mapped.Rows[0].Date);
+            Equal<DateOnly?>(new(2026, 11, 5), mapped.Rows[1].Date);
+            Equal(before.Revision, f.Coordinator.Read().Revision);
+            Equal(2, f.Commit(mapped).Count);
+            True(f.Coordinator.Read().Data.ImportBatches.Single().CoverageFrom == null);
+        }));
         yield return ("Reimporting a statement without running balances adds no transactions or empty history", () => InDirectory(directory =>
         {
             using var f = new ServiceFixture(directory);

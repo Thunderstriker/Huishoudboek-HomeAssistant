@@ -1,6 +1,6 @@
 <section class="card">
     <h3>@L["EnergyImportReview"]</h3>
-    <p>@L["EnergyImportSummary", Preview.File.Rows, Preview.File.Readings.Count, Preview.Unchanged, Preview.File.DuplicateRows, Preview.Conflicts]</p>
+    <p>@L["EnergyImportSummary", Preview.File.Rows, Preview.File.Readings.Count + Preview.File.Peaks.Count, Preview.Unchanged, Preview.File.DuplicateRows, Preview.Conflicts]</p>
     @foreach (var group in Preview.File.Readings.GroupBy(r => (r.Ean, r.Meter, r.Resolution)))
     {
         <p><strong>EAN @group.Key.Ean · @group.Key.Meter</strong> · @L[$"EnergyReading{group.Key.Resolution}"] · @Day(group.Min(r => r.StartUtc)) – @Day(group.Max(r => r.StartUtc))</p>
@@ -9,6 +9,13 @@
             {
                 <li>@L[$"Energy{register.Key.Direction}"] · @L[$"EnergyRegister{register.Key.Register}"] · @register.Count() · @N(register.Sum(r => r.Quantity)) kWh</li>
             }
+        </ul>
+    }
+    @foreach (var group in Preview.File.Peaks.GroupBy(p => (p.Ean, p.Meter)))
+    {
+        <p><strong>EAN @group.Key.Ean · @group.Key.Meter</strong> · @L["EnergyPeakImportRange", group.Count(), Month(group.Min(p => p.Month)), Month(group.Max(p => p.Month))]</p>
+        <ul>
+            @foreach (var peak in group.OrderByDescending(p => p.Month).Take(12)) { <li>@Month(peak.Month) · @DescribePeak(peak)</li> }
         </ul>
     }
     @if (Preview.File.IssueCount > 0)
@@ -24,12 +31,11 @@
         <details>
             <summary>@L["EnergyImportConflicts", Preview.Conflicts]</summary>
             <ul>
-                @foreach (var change in Preview.Changes.Where(c => c.NeedsReplacement).Skip(page * 20).Take(20))
+                @foreach (var change in Replacements().Skip(page * 20).Take(20))
                 {
-                    var reading = change.Before[0];
-                    <li><strong>@reading.Ean · @L[$"EnergyReading{reading.Resolution}"] · @(reading.Resolution == EnergyReadingResolution.DailyTotal ? Day(reading.StartUtc) : Local(reading.StartUtc))</strong>
-                        <div>@L["EnergyBefore"]: @Describe(change.Before)</div>
-                        <div>@L["EnergyAfter"]: @Describe(change.After)</div>
+                    <li><strong>@change.Title</strong>
+                        <div>@L["EnergyBefore"]: @change.Before</div>
+                        <div>@L["EnergyAfter"]: @change.After</div>
                     </li>
                 }
             </ul>
@@ -42,7 +48,7 @@
         <label class="check"><input type="checkbox" @bind="replace" />@L["EnergyConfirmReplace"]</label>
     }
     <div class="actions">
-        <button class="primary" disabled="@(Busy || Preview.Changes.Count == 0 || Preview.Conflicts > 0 && !replace || Preview.File.IssueCount > 0 && !acknowledge)"
+        <button class="primary" disabled="@(Busy || Preview.ChangeCount == 0 || Preview.Conflicts > 0 && !replace || Preview.File.IssueCount > 0 && !acknowledge)"
                 @onclick="() => OnConfirm.InvokeAsync(replace)">@L["EnergyConfirmImport"]</button>
         <button disabled="@Busy" @onclick="OnCancel">@L["Cancel"]</button>
     </div>
@@ -55,6 +61,20 @@
     [Parameter] public EventCallback OnCancel { get; set; }
     private bool acknowledge, replace;
     private int page;
+    private IEnumerable<(string Title, string Before, string After)> Replacements()
+    {
+        foreach (var change in Preview.Changes.Where(c => c.NeedsReplacement))
+        {
+            var reading = change.Before[0];
+            var period = reading.Resolution == EnergyReadingResolution.DailyTotal ? Day(reading.StartUtc) : Local(reading.StartUtc);
+            yield return ($"{reading.Ean} · {L[$"EnergyReading{reading.Resolution}"]} · {period}", Describe(change.Before), Describe(change.After));
+        }
+        foreach (var change in Preview.PeakChanges)
+            if (change.Before is { } peak)
+                yield return ($"{peak.Ean} · {L["EnergyMonthlyPeak"]} · {Month(peak.Month)}", DescribePeak(peak), DescribePeak(change.After));
+    }
+    private static string DescribePeak(EnergyMonthlyPeak peak) => $"{peak.Meter} · {N(peak.Kw)} kW ({peak.Status})";
+    private static string Month(DateOnly month) => month.ToString("MMM yyyy", UiCulture.Culture);
     private string Describe(IEnumerable<EnergyReading> readings) => string.Join("; ", readings.Select(r =>
         $"{r.Meter} · {L[$"Energy{r.Direction}"]}/{L[$"EnergyRegister{r.Register}"]}: {N(r.Quantity)} kWh ({r.Status})"));
     private static string N(decimal value) => value.ToString("0.############", UiCulture.Culture);

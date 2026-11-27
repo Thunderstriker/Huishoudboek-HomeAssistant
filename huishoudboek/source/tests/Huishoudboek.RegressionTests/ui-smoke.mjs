@@ -23,7 +23,8 @@ async function ready(path = "") {
     assert.equal(await page.locator("#blazor-error-ui").isVisible(), false);
 }
 async function noOverflow() {
-    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "Page must not horizontally overflow");
+    const sizes = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, viewport: innerWidth }));
+    assert.ok(sizes.document <= sizes.viewport + 1, `${new URL(page.url()).pathname} overflows horizontally (${sizes.document}px at ${sizes.viewport}px)`);
 }
 async function check(name, run) { await run(); console.log("PASS " + name); }
 try {
@@ -36,6 +37,33 @@ try {
         assert.match(page.url(), /transaction=/);
         await page.getByRole("button", { name: "Sluiten", exact: true }).click();
         await page.waitForSelector("dialog[open]", { state: "detached" });
+    });
+    await check("Task navigation reaches weekly checks, the next payment and specialist pages", async () => {
+        await ready();
+        await page.locator(".dashboard-quick-actions").getByRole("link", { name: "Te controleren", exact: true }).click();
+        await page.waitForURL(/weekcontrole/);
+        const importLink = page.locator('#weekly-review a[href^="importeren?account="]').first();
+        const account = new URL(await importLink.getAttribute("href"), base).searchParams.get("account");
+        await importLink.click();
+        await page.waitForURL(/importeren\?account=/);
+        assert.equal(await page.locator("#importAccount").inputValue(), account);
+        await page.locator(".app-shell > .sidebar").getByRole("link", { name: "Vooruitblik", exact: true }).click();
+        await page.locator(".outlook-links").getByRole("link", { name: "Komende betalingen", exact: true }).click();
+        await page.waitForSelector("#betalingsdetails[open]");
+        await page.locator(".app-shell > .sidebar").getByRole("link", { name: "Meer", exact: true }).click();
+        await page.locator('.feature-index a[href="beleggingen"]').waitFor();
+        await page.locator('.feature-index a[href="energie"]').click();
+        await page.waitForURL(/energie/);
+        await ready("weekcontrole");
+        await page.getByLabel("Te controleren verbergen op het dashboard").check();
+        await page.locator("main .page-heading").getByRole("link", { name: "Dashboard", exact: true }).click();
+        await page.waitForURL(base);
+        await page.locator('.dashboard-quick-actions').waitFor();
+        assert.equal(await page.locator('.dashboard-quick-actions a[href="weekcontrole"]').count(), 0);
+        await ready("beheer");
+        await page.getByLabel("Te controleren verbergen op het dashboard").uncheck();
+        await ready();
+        await page.locator('.dashboard-quick-actions a[href="weekcontrole"]').waitFor();
     });
     await check("Page-aware date controls", async () => {
         for (const path of ["kalender", "categorietrends", "inzichten", "rekeningen"] ) {
@@ -95,6 +123,27 @@ try {
         await screenshot("forecast-light");
         assert.equal(await page.locator("#daily-forecast-table table").count(), 1);
     });
+    await check("Calendar opens directly from Overviews with the month grid above collapsed notes and settings", async () => {
+        await ready();
+        const sidebar = page.locator(".app-shell > .sidebar");
+        await sidebar.getByRole("button", { name: "Overzichten", exact: true }).click();
+        const entries = sidebar.locator("#nav-overviews a");
+        assert.equal(await entries.first().getAttribute("href"), "kalender");
+        await entries.first().click();
+        await page.locator(".calendar-grid").waitFor();
+        assert.equal(await entries.first().getAttribute("aria-current"), "page");
+        assert.equal(await page.locator("main h1").count(), 1);
+        const firstRow = await page.locator(".calendar-day").first().boundingBox();
+        assert.ok(firstRow.y >= 0 && firstRow.y + firstRow.height <= page.viewportSize().height);
+        assert.equal(await page.locator("#calendar-notes[open], #calendar-settings[open]").count(), 0);
+        await screenshot("calendar-overviews");
+        await page.locator("#calendar-notes > summary").click();
+        await page.locator("#calendar-notes[open]").waitFor();
+        await page.locator("#calendar-settings > summary").click();
+        await page.locator("#spending-habits-title").waitFor();
+        await ready("vooruitblik");
+        assert.equal(await page.locator('.outlook-links a[href="kalender"]').count(), 0);
+    });
     await check("Main app dark theme persists across reload and updates charts", async () => {
         await page.locator(".theme-picker select").selectOption("dark");
         await page.waitForSelector('html[data-theme="dark"]');
@@ -111,32 +160,61 @@ try {
         await page.locator(".drawer-nav").getByRole("button", { name: "Overzichten", exact: true }).click();
         await page.locator(".drawer-nav").getByRole("link", { name: "Financiële kalender", exact: true }).click();
         await page.waitForSelector(".cash-calendar"); await noOverflow(); await screenshot("calendar-mobile-dark");
+        await page.locator(".mobile-bottom-nav").getByRole("link", { name: "Meer", exact: true }).click();
+        await page.locator(".feature-index").waitFor(); await noOverflow();
         await page.locator(".mobile-bottom-nav").getByRole("link", { name: "Uitgave toevoegen", exact: true }).click();
         await page.waitForSelector("dialog[open] #amount");
         await page.getByRole("button", { name: "Annuleren", exact: true }).click();
     });
-    await check("Four-stage bank import has mobile reviews and explicit saving", async () => {
+    await check("Recognized bank import goes straight to mobile review and still requires explicit saving", async () => {
         await ready("importeren");
-        assert.equal(await page.locator(".import-stepper button").count(), 4);
-        const date = (await page.locator("#from").inputValue()).replaceAll("-", "");
+        assert.equal(await page.locator(".import-stepper li").count(), 3);
+        assert.equal(await page.locator("#importAccount").inputValue(), "");
+        const account = await page.locator('#importAccount option:not([value=""])').first().getAttribute("value");
+        await page.locator("#importAccount").selectOption(account);
+        const yesterday = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10);
+        const date = yesterday.replaceAll("-", "");
         const csv = "Datum;Naam / Omschrijving;Mededelingen;Bedrag (EUR);Af Bij;Saldo na mutatie\n" +
             `${date};UX TEST SHOP ${Date.now()};Test only;12,34;Af;100,00\ninvalid;UX INVALID;Test only;2,00;Af;98,00\n`;
         await page.locator("#importFile").setInputFiles({ name: "ux-test.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
-        await page.getByRole("button", { name: "Doorgaan naar herkenning", exact: true }).click();
-        assert.equal(await page.locator(".card details[open]").count(), 0);
+        assert.equal(await page.locator("#import-options[open]").count(), 0);
         await page.locator("#preview").click(); await page.waitForSelector("#previewPanel");
         assert.equal(await page.locator(".import-review tbody tr").count(), 2);
         assert.equal(await page.locator(".import-review tbody tr").first().evaluate(el => getComputedStyle(el).display), "block");
         assert.equal(await page.locator('input[type="checkbox"]:disabled').count() > 0, true);
+        assert.match(await page.locator(".import-context").innerText(), /geen periodefilter/);
+        assert.equal(await page.getByLabel(/^Ik bevestig dat dit bestand/).count(), 0);
         await noOverflow(); await screenshot("import-mobile-dark");
         await page.locator("#commit").click(); await page.waitForSelector("dialog[open]");
         await page.getByRole("button", { name: "Import opslaan", exact: true }).click();
         await page.getByRole("button", { name: "Verder: categorieën controleren", exact: true }).waitFor();
         await page.getByRole("button", { name: "Verder: categorieën controleren", exact: true }).click();
-        await page.waitForURL(/categoriseren/);
+        await page.waitForURL(/categoriseren\?batch=[\w-]+&inbox=true/);
+        await page.reload();
+        await page.waitForSelector('html[data-interactive="true"]');
+        const batch = new URL(page.url()).searchParams.get("batch");
+        assert.equal(await page.getByRole("combobox", { name: "Import", exact: true }).inputValue(), batch);
+    });
+    await check("Unrecognized headers open column mapping without a committable preview", async () => {
+        await ready("importeren");
+        const account = await page.locator('#importAccount option:not([value=""])').first().getAttribute("value");
+        await page.locator("#importAccount").selectOption(account);
+        const date = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10);
+        const csv = `Posted;Payee;Total\n${date};LOCAL UX SAMPLE;-12,34\n`;
+        await page.locator("#importFile").setInputFiles({ name: "custom.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+        await page.locator("#preview").click();
+        const options = page.locator("#import-options[open]");
+        await options.locator("#import-column-DateColumn").selectOption("Posted");
+        assert.equal(await page.locator("#commit").count(), 0);
+        await options.locator("#import-column-DescriptionColumn").selectOption("Payee");
+        await options.locator("#import-column-AmountColumn").selectOption("Total");
+        await page.locator("#preview").click();
+        await page.waitForSelector("#previewPanel");
+        assert.equal(await page.locator(".import-review tbody tr").count(), 1);
+        assert.equal(await page.locator("#commit").isEnabled(), true);
     });
     await check("Mobile work screens do not overflow", async () => {
-        for (const path of ["", "transacties", "budgetten", "maand", "jaar", "categorietrends", "vooruitblik"]) {
+        for (const path of ["", "transacties", "budgetten", "maand", "jaar", "categorietrends", "vooruitblik", "meer", "weekcontrole"]) {
             await ready(path); await noOverflow();
         }
     });
